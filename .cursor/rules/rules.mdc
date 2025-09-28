@@ -24,3 +24,4 @@ alwaysApply: true
 3. Test builds: `npm run build`
 4. Let the user start servers manually when they're ready
 5. Must follow the rules in the RULE.md file for game design
+6. Every API in the Frontend must be use Redux slice 

@@ -33,7 +33,7 @@ const PICK_ORDER: ("blue" | "red")[] = [
 
 @Injectable()
 export class GameService {
-  constructor(@InjectModel(Game.name) private gameModel: Model<GameDocument>) {}
+  constructor(@InjectModel(Game.name) private gameModel: Model<GameDocument>) { }
 
   async findAll() {
     const games = await this.gameModel.find().exec();
@@ -546,6 +546,9 @@ export class GameService {
       );
       console.log("First piece stats:", updatedGame.board[0]?.stats);
 
+      // Import ChessObject for effective stats calculation
+      const { ChessObject } = await import("./class/chess");
+
       // Clean the board data to remove MongoDB-specific properties that cause casting errors
       const cleanedBoard = updatedGame.board.map((piece) => {
         // Debug: Check if champions have skills before cleaning
@@ -559,15 +562,19 @@ export class GameService {
             `Cleaning ${piece.name}: skill =`,
             piece.skill
               ? {
-                  name: piece.skill.name,
-                  type: piece.skill.type,
-                  cooldown: piece.skill.cooldown,
-                  currentCooldown: piece.skill.currentCooldown,
-                  targetTypes: piece.skill.targetTypes,
-                }
+                name: piece.skill.name,
+                type: piece.skill.type,
+                cooldown: piece.skill.cooldown,
+                currentCooldown: piece.skill.currentCooldown,
+                targetTypes: piece.skill.targetTypes,
+              }
               : "undefined"
           );
         }
+
+        // Create ChessObject to calculate effective stats
+        const chessObject = new ChessObject(piece, updatedGame);
+
         const cleanedPiece = {
           id: piece.id,
           name: piece.name,
@@ -581,6 +588,23 @@ export class GameService {
           cannotAttack: piece.cannotAttack,
           ownerId: piece.ownerId,
           stats: {
+            hp: piece.stats.hp, // Current HP is not affected by modifiers
+            maxHp: chessObject.getEffectiveStat(piece, "maxHp"),
+            ad: chessObject.getEffectiveStat(piece, "ad"),
+            ap: chessObject.getEffectiveStat(piece, "ap"),
+            physicalResistance: chessObject.getEffectiveStat(piece, "physicalResistance"),
+            magicResistance: chessObject.getEffectiveStat(piece, "magicResistance"),
+            speed: chessObject.getEffectiveStat(piece, "speed"),
+            attackRange: {
+              diagonal: piece.stats.attackRange.diagonal,
+              horizontal: piece.stats.attackRange.horizontal,
+              vertical: piece.stats.attackRange.vertical,
+              range: chessObject.getEffectiveStat(piece, "range") || piece.stats.attackRange.range,
+            },
+            goldValue: piece.stats.goldValue, // Gold value is not affected by modifiers
+          },
+          // Include raw stats for comparison/debugging if needed
+          rawStats: {
             hp: piece.stats.hp,
             maxHp: piece.stats.maxHp,
             ad: piece.stats.ad,
@@ -599,77 +623,77 @@ export class GameService {
           blue: piece.blue,
           items: piece.items
             ? piece.items.map((item) => ({
-                id: item.id,
-                name: item.name,
-                description: item.description,
-                stats: item.stats,
-                unique: item.unique,
-              }))
+              id: item.id,
+              name: item.name,
+              description: item.description,
+              stats: item.stats,
+              unique: item.unique,
+            }))
             : [],
           debuffs: piece.debuffs
             ? piece.debuffs.map((debuff) => ({
-                id: debuff.id,
-                name: debuff.name,
-                description: debuff.description,
-                duration: debuff.duration,
-                maxDuration: debuff.maxDuration,
-                effects: debuff.effects
-                  ? debuff.effects.map((effect) => ({
-                      stat: effect.stat,
-                      modifier: effect.modifier,
-                      type: effect.type,
-                    }))
-                  : [],
-                damagePerTurn: debuff.damagePerTurn || 0,
-                damageType: debuff.damageType || "0",
-                healPerTurn: debuff.healPerTurn || 0,
-                unique: debuff.unique || false,
-                appliedAt: debuff.appliedAt,
-                casterPlayerId: debuff.casterPlayerId,
-              }))
+              id: debuff.id,
+              name: debuff.name,
+              description: debuff.description,
+              duration: debuff.duration,
+              maxDuration: debuff.maxDuration,
+              effects: debuff.effects
+                ? debuff.effects.map((effect) => ({
+                  stat: effect.stat,
+                  modifier: effect.modifier,
+                  type: effect.type,
+                }))
+                : [],
+              damagePerTurn: debuff.damagePerTurn || 0,
+              damageType: debuff.damageType || "0",
+              healPerTurn: debuff.healPerTurn || 0,
+              unique: debuff.unique || false,
+              appliedAt: debuff.appliedAt,
+              casterPlayerId: debuff.casterPlayerId,
+            }))
             : [],
           auras: piece.auras
             ? piece.auras.map((aura) => ({
-                id: aura.id,
-                name: aura.name,
-                description: aura.description,
-                range: aura.range,
-                effects: aura.effects
-                  ? aura.effects.map((effect) => ({
-                      stat: effect.stat,
-                      modifier: effect.modifier,
-                      type: effect.type,
-                      target: effect.target,
-                    }))
-                  : [],
-                active: aura.active,
-                requiresAlive: aura.requiresAlive,
-                duration: aura.duration,
-              }))
+              id: aura.id,
+              name: aura.name,
+              description: aura.description,
+              range: aura.range,
+              effects: aura.effects
+                ? aura.effects.map((effect) => ({
+                  stat: effect.stat,
+                  modifier: effect.modifier,
+                  type: effect.type,
+                  target: effect.target,
+                }))
+                : [],
+              active: aura.active,
+              requiresAlive: aura.requiresAlive,
+              duration: aura.duration,
+            }))
             : [],
           skill: piece.skill
             ? {
-                name: piece.skill.name,
-                description: piece.skill.description,
-                cooldown: piece.skill.cooldown,
-                attackRange: piece.skill.attackRange
-                  ? {
-                      diagonal: piece.skill.attackRange.diagonal,
-                      horizontal: piece.skill.attackRange.horizontal,
-                      vertical: piece.skill.attackRange.vertical,
-                      range: piece.skill.attackRange.range,
-                    }
-                  : {
-                      diagonal: false,
-                      horizontal: false,
-                      vertical: false,
-                      range: 1,
-                    },
-                targetTypes: piece.skill.targetTypes,
-                currentCooldown: piece.skill.currentCooldown,
-                type: piece.skill.type,
-                payload: piece.skill.payload,
-              }
+              name: piece.skill.name,
+              description: piece.skill.description,
+              cooldown: piece.skill.cooldown,
+              attackRange: piece.skill.attackRange
+                ? {
+                  diagonal: piece.skill.attackRange.diagonal,
+                  horizontal: piece.skill.attackRange.horizontal,
+                  vertical: piece.skill.attackRange.vertical,
+                  range: piece.skill.attackRange.range,
+                }
+                : {
+                  diagonal: false,
+                  horizontal: false,
+                  vertical: false,
+                  range: 1,
+                },
+              targetTypes: piece.skill.targetTypes,
+              currentCooldown: piece.skill.currentCooldown,
+              type: piece.skill.type,
+              payload: piece.skill.payload,
+            }
             : undefined,
         };
 

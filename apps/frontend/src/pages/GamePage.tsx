@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Clock, Coins, RotateCcw, Users, Zap } from 'lucide-react'
+import { Clock, Coins, RotateCcw, Users, Zap, Shield, Package } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
@@ -87,7 +87,7 @@ const PlayerItem = styled.div`
   }
 `
 
-const PlayerInfoPanel = styled.div`
+const ChessDetailPanel = styled.div`
   grid-area: player-info;
   background: var(--secondary-bg);
   border: 1px solid var(--border);
@@ -97,23 +97,314 @@ const PlayerInfoPanel = styled.div`
   h3 {
     color: var(--gold);
     margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   
-  .player-resources {
+  .chess-header {
     display: flex;
-    gap: 20px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: var(--primary-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    
+    .chess-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: ${props => 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      img {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+      }
+      
+      &.red {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      }
+      
+      &.neutral {
+        background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+      }
+    }
+    
+    .chess-info {
+      flex: 1;
+      
+      .chess-name {
+        color: var(--primary-text);
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      
+      .chess-position {
+        color: var(--secondary-text);
+        font-size: 12px;
+      }
+    }
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
     margin-bottom: 20px;
     
-    .resource {
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--accent-bg);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      
+      .stat-label {
+        color: var(--secondary-text);
+        font-size: 12px;
+        font-weight: 500;
+      }
+      
+      .stat-value {
+        color: var(--primary-text);
+        font-weight: bold;
+        font-size: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        
+        &.modified {
+          color: #22c55e; // Green for buffed stats
+          
+          .base-value {
+            font-size: 10px;
+            font-weight: normal;
+            color: var(--secondary-text);
+            opacity: 0.7;
+            margin-top: 2px;
+          }
+        }
+        
+        // If stat is lower than base (debuffed), show in red
+        &.modified.debuffed {
+          color: #ef4444; // Red for debuffed stats
+        }
+      }
+      
+      &.hp {
+        .stat-value { 
+          color: #e74c3c;
+          &.modified { color: #e74c3c; }
+        }
+      }
+      
+      &.attack {
+        .stat-value { 
+          color: #f39c12;
+          &.modified { color: #f39c12; }
+          &.modified.buffed { color: #22c55e; }
+          &.modified.debuffed { color: #ef4444; }
+        }
+      }
+      
+      &.armor {
+        .stat-value { 
+          color: #3498db;
+          &.modified.buffed { color: #22c55e; }
+          &.modified.debuffed { color: #ef4444; }
+        }
+      }
+      
+      &.speed {
+        .stat-value { 
+          color: #2ecc71;
+          &.modified.buffed { color: #22c55e; }
+          &.modified.debuffed { color: #ef4444; }
+        }
+      }
+    }
+  }
+  
+  .hp-bar-section {
+    margin-bottom: 20px;
+    
+    .hp-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      
+      .hp-text {
+        color: var(--secondary-text);
+        font-size: 12px;
+        font-weight: 500;
+      }
+      
+      .hp-numbers {
+        color: #e74c3c;
+        font-weight: bold;
+        font-size: 12px;
+      }
+    }
+    
+    .hp-bar {
+      height: 8px;
+      background: var(--primary-bg);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      
+      .hp-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #22c55e 100%);
+        transition: width 0.3s ease;
+      }
+    }
+  }
+  
+  .skill-section, .debuff-section, .items-section {
+    margin-bottom: 20px;
+    
+    .section-header {
+      color: var(--gold);
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 8px;
-      color: var(--primary-text);
-      font-weight: bold;
+    }
+    
+    .skill-card, .debuff-card, .item-card {
+      background: var(--primary-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
       
-      &.health { color: #e74c3c; }
-      &.gold { color: var(--gold); }
-      &.level { color: var(--hover); }
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .skill-card-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .skill-icon {
+          width: 64px;
+          height: 64px;
+          border-radius: 8px;
+        }
+
+        .skill-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .skill-type {
+          color: var(--secondary-text);
+          font-size: 12px;
+          text-transform: uppercase;
+          font-weight: bold;
+        }
+      }
+      
+      .card-name {
+        color: var(--primary-text);
+        font-weight: bold;
+        font-size: 13px;
+        margin-bottom: 4px;
+      }
+      
+      .card-cooldown, .card-duration {
+        color: var(--secondary-text);
+        font-size: 11px;
+        margin-bottom: 8px;
+        
+        &.ready {
+          color: #22c55e;
+          font-weight: bold;
+        }
+        
+        &.cooling {
+          color: #ef4444;
+        }
+        
+        &.active {
+          color: #f39c12;
+        }
+      }
+      
+      .card-description {
+        color: var(--secondary-text);
+        font-size: 11px;
+        line-height: 1.4;
+      }
+    }
+    
+    .debuff-card {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.05);
+      
+      .card-name {
+        color: #ef4444;
+      }
+    }
+    
+    .item-card {
+      border-color: #9333ea;
+      background: rgba(147, 51, 234, 0.05);
+      
+      .card-name {
+        color: #9333ea;
+      }
+    }
+    
+    .no-items {
+      color: var(--secondary-text);
+      font-size: 12px;
+      text-align: center;
+      padding: 12px;
+      font-style: italic;
+    }
+  }
+  
+  .no-selection {
+    text-align: center;
+    color: var(--secondary-text);
+    
+    .placeholder-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      background: var(--accent-bg);
+      border: 2px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      color: var(--secondary-text);
+    }
+    
+    .placeholder-text {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    
+    .placeholder-hint {
+      font-size: 12px;
+      opacity: 0.7;
     }
   }
 `
@@ -232,7 +523,7 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   width: 90%;
   height: 90%;
   border-radius: 8px;
-  border: 2px solid ${props =>
+  border: 1px solid ${props =>
     props.isNeutral ? '#9333ea' :
       props.isBlue ? '#3b82f6' : '#ef4444'};
   background: ${props =>
@@ -245,26 +536,28 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   cursor: ${props => props.canSelect ? 'pointer' : 'default'};
   position: relative;
   z-index: ${props => props.isAttacking ? 10 : 1};
+  box-shadow: 0 0 2px 2px ${props =>
+    props.isNeutral ? '#9333ea' :
+      props.isBlue ? '#3b82f6' : '#ef4444'};
   
   .piece-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 2px;
     
     img {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
     }
   }
   
   .piece-name {
-    color: white;
+    position: absolute;
+    bottom: 8px;
+    color: var(--primary-text);
     font-size: 8px;
     font-weight: bold;
     text-align: center;
@@ -278,7 +571,7 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
     bottom: 2px;
     left: 2px;
     right: 2px;
-    height: 4px;
+    height: 5px;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 2px;
     overflow: hidden;
@@ -687,6 +980,9 @@ const GamePage: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(false)
   const prevDeadPiecesRef = useRef<Set<string>>(new Set())
 
+  // Detail view state - separate from action selection
+  const [detailViewPiece, setDetailViewPiece] = useState<ChessPiece | null>(null)
+
   // Get loading state from Redux for reset operation
   const isResetting = useAppSelector((state) => state.game.loading)
 
@@ -815,7 +1111,12 @@ const GamePage: React.FC = () => {
     })
   }, [selectedPiece, executeAction, animateAttack, animateMove])
 
-  // Handle square click
+  // Handle detail view click - can click any piece anytime
+  const handleDetailClick = (piece: ChessPiece) => {
+    setDetailViewPiece(piece)
+  }
+
+  // Handle square click for actions
   const handleSquareClick = (x: number, y: number) => {
     if (!gameState || !isMyTurn || isAnimating) return
     const clickedPosition = { x, y }
@@ -825,7 +1126,8 @@ const GamePage: React.FC = () => {
       piece.position.x === x && piece.position.y === y && piece.stats.hp > 0
     )
 
-    if (clickedPiece) {
+    if (clickedPiece && clickedPiece.ownerId === currentPlayer?.userId) {
+      // Only select own pieces for actions
       selectPiece(clickedPiece)
     }
 
@@ -869,6 +1171,7 @@ const GamePage: React.FC = () => {
         setDamageEffects([])
         setDeadPieces(new Set())
         setIsAnimating(false)
+        setDetailViewPiece(null)
         prevDeadPiecesRef.current = new Set()
         console.log('Gameplay reset successfully')
       } else {
@@ -953,7 +1256,11 @@ const GamePage: React.FC = () => {
                 isDead={deadPieces.has(piece.id)}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent square click
-                  // If it's your own piece, select it
+
+                  // Always set detail view for any piece
+                  handleDetailClick(piece);
+
+                  // Action selection logic (only for own pieces during turn)
                   if (isMyTurn && piece.ownerId === currentPlayer?.userId) {
                     selectPiece(piece);
                   }
@@ -1058,25 +1365,222 @@ const GamePage: React.FC = () => {
         )}
       </PlayersPanel>
 
-      <PlayerInfoPanel>
-        <h3>Game Info</h3>
-        <div className="player-resources">
-          <div className="resource gold">
-            <Coins size={18} />
-            Gold: {currentPlayer?.gold || 0}
-          </div>
-          <div className="resource level">
-            <Clock size={18} />
-            Round: {gameState.currentRound}
-          </div>
-        </div>
-        <p style={{ color: 'var(--secondary-text)', fontSize: '12px' }}>
-          Status: {gameState.status} • Phase: {gameState.phase}
-        </p>
-        <p style={{ color: 'var(--secondary-text)', fontSize: '12px' }}>
-          Game ID: {gameId}
-        </p>
-      </PlayerInfoPanel>
+      <ChessDetailPanel>
+        {detailViewPiece ? (
+          <>
+            <h3>
+              <Users size={20} />
+              Chess Details
+            </h3>
+
+            <div className="chess-header">
+              <div className={`chess-icon ${detailViewPiece.ownerId === 'neutral' ? 'neutral' : detailViewPiece.blue ? 'blue' : 'red'}`}>
+                <img
+                  src={getImageUrl(detailViewPiece)}
+                  alt={detailViewPiece.name}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </div>
+              <div className="chess-info">
+                <div className="chess-name">{detailViewPiece.name}</div>
+                <div className="chess-position">
+                  Position: ({detailViewPiece.position.x}, {detailViewPiece.position.y}) •
+                  Owner: {detailViewPiece.ownerId === 'neutral' ? 'Neutral' :
+                    detailViewPiece.ownerId === currentPlayer?.userId ? 'You' : 'Opponent'}
+                </div>
+              </div>
+            </div>
+
+            <div className="hp-bar-section">
+              <div className="hp-label">
+                <span className="hp-text">Health</span>
+                <span className="hp-numbers">
+                  {detailViewPiece.stats.hp} / {detailViewPiece.stats.maxHp}
+                  {detailViewPiece.rawStats && detailViewPiece.rawStats.maxHp !== detailViewPiece.stats.maxHp && (
+                    <span style={{
+                      fontSize: '10px',
+                      color: 'var(--secondary-text)',
+                      marginLeft: '4px',
+                      opacity: 0.7
+                    }}>
+                      (base: {detailViewPiece.rawStats.maxHp})
+                    </span>
+                  )}
+                </span>
+              </div>
+              <div className="hp-bar">
+                <div
+                  className="hp-fill"
+                  style={{ width: `${(detailViewPiece.stats.hp / detailViewPiece.stats.maxHp) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="stats-grid">
+              <div className="stat-item attack">
+                <span className="stat-label">Attack (AD)</span>
+                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.ad !== detailViewPiece.stats.ad
+                  ? `modified ${detailViewPiece.stats.ad > detailViewPiece.rawStats.ad ? 'buffed' : 'debuffed'}`
+                  : ''
+                  }`}>
+                  {detailViewPiece.stats.ad}
+                  {detailViewPiece.rawStats && detailViewPiece.rawStats.ad !== detailViewPiece.stats.ad && (
+                    <span className="base-value">({detailViewPiece.rawStats.ad})</span>
+                  )}
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Ability (AP)</span>
+                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.ap !== detailViewPiece.stats.ap
+                  ? `modified ${detailViewPiece.stats.ap > detailViewPiece.rawStats.ap ? 'buffed' : 'debuffed'}`
+                  : ''
+                  }`}>
+                  {detailViewPiece.stats.ap}
+                  {detailViewPiece.rawStats && detailViewPiece.rawStats.ap !== detailViewPiece.stats.ap && (
+                    <span className="base-value">({detailViewPiece.rawStats.ap})</span>
+                  )}
+                </span>
+              </div>
+              <div className="stat-item armor">
+                <span className="stat-label">Phys. Resist</span>
+                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.physicalResistance !== detailViewPiece.stats.physicalResistance
+                  ? `modified ${detailViewPiece.stats.physicalResistance > detailViewPiece.rawStats.physicalResistance ? 'buffed' : 'debuffed'}`
+                  : ''
+                  }`}>
+                  {detailViewPiece.stats.physicalResistance}
+                  {detailViewPiece.rawStats && detailViewPiece.rawStats.physicalResistance !== detailViewPiece.stats.physicalResistance && (
+                    <span className="base-value">({detailViewPiece.rawStats.physicalResistance})</span>
+                  )}
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Magic Resist</span>
+                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.magicResistance !== detailViewPiece.stats.magicResistance
+                  ? `modified ${detailViewPiece.stats.magicResistance > detailViewPiece.rawStats.magicResistance ? 'buffed' : 'debuffed'}`
+                  : ''
+                  }`}>
+                  {detailViewPiece.stats.magicResistance}
+                  {detailViewPiece.rawStats && detailViewPiece.rawStats.magicResistance !== detailViewPiece.stats.magicResistance && (
+                    <span className="base-value">({detailViewPiece.rawStats.magicResistance})</span>
+                  )}
+                </span>
+              </div>
+              <div className="stat-item speed">
+                <span className="stat-label">Speed</span>
+                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.speed !== detailViewPiece.stats.speed
+                  ? `modified ${detailViewPiece.stats.speed > detailViewPiece.rawStats.speed ? 'buffed' : 'debuffed'}`
+                  : ''
+                  }`}>
+                  {detailViewPiece.stats.speed}
+                  {detailViewPiece.rawStats && detailViewPiece.rawStats.speed !== detailViewPiece.stats.speed && (
+                    <span className="base-value">({detailViewPiece.rawStats.speed})</span>
+                  )}
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Range</span>
+                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.attackRange.range !== detailViewPiece.stats.attackRange.range
+                  ? `modified ${detailViewPiece.stats.attackRange.range > detailViewPiece.rawStats.attackRange.range ? 'buffed' : 'debuffed'}`
+                  : ''
+                  }`}>
+                  {detailViewPiece.stats.attackRange.range}
+                  {detailViewPiece.rawStats && detailViewPiece.rawStats.attackRange.range !== detailViewPiece.stats.attackRange.range && (
+                    <span className="base-value">({detailViewPiece.rawStats.attackRange.range})</span>
+                  )}
+                </span>
+              </div>
+            </div>
+
+            <div className="skill-section">
+              <div className="section-header">
+                <Zap size={16} />
+                Ability
+              </div>
+              {detailViewPiece.skill ? (
+                <div className="skill-card">
+                  <div className="skill-card-header">
+                    <img src={`/icons/${detailViewPiece.name.toLowerCase()}_skill.webp`} alt={detailViewPiece.name} className="skill-icon" />
+                    <div className="skill-info" >
+                      <div className="card-name">{detailViewPiece.skill.name}</div>
+                      <div className="skill-type">{detailViewPiece.skill.type}</div>
+                      <div className={`card-cooldown ${detailViewPiece.skill.currentCooldown > 0 ? 'cooling' : 'ready'}`}>
+                        {detailViewPiece.skill.currentCooldown > 0
+                          ? `Cooldown: ${detailViewPiece.skill.currentCooldown} turns`
+                          : 'Ready to use'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  <div className="card-description">
+                    {detailViewPiece.skill.description || 'No description available'}
+                  </div>
+                </div>
+              ) : (
+                <div className="no-items">No special ability</div>
+              )}
+            </div>
+
+            <div className="debuff-section">
+              <div className="section-header">
+                <Shield size={16} />
+                Debuffs ({(detailViewPiece as any).debuffs?.length || 0})
+              </div>
+              {(detailViewPiece as any).debuffs && (detailViewPiece as any).debuffs.length > 0 ? (
+                (detailViewPiece as any).debuffs.map((debuff: any, index: number) => (
+                  <div key={index} className="debuff-card">
+                    <div className="card-name">{debuff.name}</div>
+                    <div className="card-duration active">
+                      Duration: {debuff.duration} turns remaining
+                    </div>
+                    <div className="card-description">
+                      Effects: {debuff.effects?.map((effect: any) =>
+                        `${effect.stat} ${effect.type === 'percentage' ? '' : ''}${effect.modifier > 0 ? '+' : ''}${effect.modifier}${effect.type === 'percentage' ? '%' : ''}`
+                      ).join(', ') || 'No effect details available'}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-items">No active debuffs</div>
+              )}
+            </div>
+
+            <div className="items-section">
+              <div className="section-header">
+                <Package size={16} />
+                Items ({(detailViewPiece as any).items?.length || 0})
+              </div>
+              {(detailViewPiece as any).items && (detailViewPiece as any).items.length > 0 ? (
+                (detailViewPiece as any).items.map((item: any, index: number) => (
+                  <div key={index} className="item-card">
+                    <div className="card-name">{item.name}</div>
+                    <div className="card-description">
+                      {item.description || 'No description available'}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-items">No items equipped</div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <h3>
+              <Users size={20} />
+              Select a Chess Piece
+            </h3>
+            <div className="no-selection">
+              <div className="placeholder-icon">
+                <Users size={24} />
+              </div>
+              <div className="placeholder-text">No piece selected</div>
+              <div className="placeholder-hint">Click on any chess piece to view detailed information</div>
+            </div>
+          </>
+        )}
+      </ChessDetailPanel>
 
       <GameBoard>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -1123,13 +1627,16 @@ const GamePage: React.FC = () => {
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
               <button
-                onClick={() => clearSelection()}
+                onClick={() => {
+                  clearSelection()
+                  setDetailViewPiece(null)
+                }}
                 style={{ background: 'var(--accent-bg)' }}
               >
-                Cancel
+                Clear Selection
               </button>
 
-              {selectedPiece.skill && (
+              {selectedPiece.skill && selectedPiece.skill.type === 'active' && (
                 <button
                   onClick={handleSkill}
                   disabled={selectedPiece.skill.currentCooldown > 0}
@@ -1145,29 +1652,11 @@ const GamePage: React.FC = () => {
                 </button>
               )}
             </div>
-
-            <div style={{
-              marginTop: '12px',
-              padding: '8px',
-              background: 'var(--primary-bg)',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: 'var(--secondary-text)',
-              textAlign: 'center'
-            }}>
-              💡 <strong>Click green squares</strong> to move • <strong>Click red squares</strong> to attack
-              {selectedPiece.skill && (
-                <>
-                  <br />⚡ <strong>Click skill button</strong> to use {selectedPiece.skill.name}
-                </>
-              )}
-            </div>
           </GameActions>
         )}
       </GameBoard>
-
       {/* Development Tools - Only show in development environment */}
-      {import.meta.env.VITE_NODE_ENV === 'development' && (
+      {import.meta.env.VITE_NODE_ENV === 'development' || import.meta.env.VITE_NODE_ENV === undefined && (
         <DevToolsPanel>
           <h4>🔧 Dev Tools</h4>
           <button

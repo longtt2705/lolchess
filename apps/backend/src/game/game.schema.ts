@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document } from "mongoose";
+import mongoose, { Document } from "mongoose";
 
 export type GameDocument = Game & Document;
 export type SquareDocument = Square & Document;
@@ -22,7 +22,6 @@ export enum GameEvent {
   SKILL = "skill",
 }
 
-@Schema()
 export class Square {
   @Prop({ required: true })
   x: number;
@@ -31,7 +30,6 @@ export class Square {
   y: number;
 }
 
-@Schema()
 export class AttackRange {
   @Prop({ default: false })
   diagonal: boolean;
@@ -46,7 +44,6 @@ export class AttackRange {
   range: number;
 }
 
-@Schema()
 export class ChessStats {
   @Prop({ required: true })
   hp: number;
@@ -76,7 +73,6 @@ export class ChessStats {
   goldValue: number;
 }
 
-@Schema()
 export class DebuffEffect {
   @Prop({ required: true })
   stat: string; // 'speed', 'hp', 'ad', 'ap', etc.
@@ -88,7 +84,6 @@ export class DebuffEffect {
   type: string; // 'add', 'multiply', 'set'
 }
 
-@Schema()
 export class Debuff {
   @Prop({ required: true })
   id: string; // unique identifier
@@ -127,7 +122,6 @@ export class Debuff {
   casterPlayerId: string; // who applied this debuff
 }
 
-@Schema()
 export class AuraEffect {
   @Prop({ required: true })
   stat: string; // 'speed', 'ad', 'ap', etc.
@@ -142,7 +136,6 @@ export class AuraEffect {
   target: string; // 'allies', 'enemies', 'all'
 }
 
-@Schema()
 export class Aura {
   @Prop({ required: true })
   id: string; // unique identifier
@@ -183,7 +176,6 @@ export class Item {
   unique: boolean;
 }
 
-@Schema()
 export class Skill {
   @Prop({ required: true })
   name: string;
@@ -199,7 +191,7 @@ export class Skill {
   currentCooldown: number;
   @Prop({ required: true })
   type: "passive" | "active";
-  @Prop({ type: Object, required: false })
+  @Prop({ type: mongoose.Schema.Types.Mixed, required: false })
   payload?: any;
 }
 

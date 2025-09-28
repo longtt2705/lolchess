@@ -32,6 +32,22 @@ export interface ChessPiece {
       vertical: boolean;
     };
   };
+  rawStats?: {
+    hp: number;
+    maxHp: number;
+    ad: number;
+    ap: number;
+    physicalResistance: number;
+    magicResistance: number;
+    speed: number;
+    goldValue: number;
+    attackRange: {
+      range: number;
+      diagonal: boolean;
+      horizontal: boolean;
+      vertical: boolean;
+    };
+  };
   skill?: {
     name: string;
     description: string;
@@ -362,7 +378,7 @@ export const useGame = (gameId: string) => {
   const isMyTurn =
     gameState && currentUser
       ? gameState.currentRound % 2 ===
-        (gameState.bluePlayer === currentUser.id ? 1 : 0)
+      (gameState.bluePlayer === currentUser.id ? 1 : 0)
       : false;
 
   // Get current player data
