@@ -1,0 +1,86 @@
+# LOL Chess Project - Custom Cursor Rules
+
+## Development Environment
+- Always run `fnm use v22` before doing any development work to ensure using Node.js version 22
+- Verify the correct Node version with `node --version` after switching
+
+## Server Management
+- **NEVER start development servers automatically** (npm run dev, npm start, etc.)
+- The user always starts servers manually themselves
+- Only provide instructions on how to start servers, don't execute the commands
+- Focus on code changes, builds, and testing without starting servers
+
+## Project Structure
+- This is a monorepo with NestJS backend and React frontend
+- Use workspace commands when needed: `npm run build --workspace=apps/backend`
+- Always work from the project root directory: `/Users/long.tt/code/lolchess`
+
+## Game Design
+- This is a **1v1 game**, not 8-player multiplayer
+- Update all references to player counts accordingly
+
+## Frontend Styling Guidelines
+**CRITICAL: Maintain consistent styling across ALL components**
+
+### CSS Variables (Design System)
+Always use these predefined CSS variables from `src/index.css`:
+```css
+--primary-bg: #0a0e27        /* Main dark background */
+--secondary-bg: #1e2328      /* Card/component backgrounds */
+--accent-bg: #3c3c41         /* Accent elements */
+--primary-text: #f0e6d2      /* Main text color */
+--secondary-text: #a09b8c    /* Muted/secondary text */
+--gold: #c89b3c              /* Primary brand color */
+--blue: #0596aa              /* Info/secondary actions */
+--green: #0f2027             /* Success states */
+--red: #c8aa6e               /* Errors/danger */
+--border: #463714            /* Borders and dividers */
+--hover: #5bc0de             /* Hover states */
+```
+
+### Component Patterns
+1. **Styled Components**: Always use styled-components, never inline styles
+2. **Container Pattern**: 
+   - Use consistent padding: `padding: 20px;` or `padding: 40px;`
+   - Use consistent max-width: `max-width: 1200px; margin: 0 auto;`
+3. **Cards/Panels**:
+   - Background: `background: var(--secondary-bg);`
+   - Border: `border: 1px solid var(--border);`
+   - Border radius: `border-radius: 8px;` or `border-radius: 12px;`
+   - Box shadow: `box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);`
+4. **Buttons**:
+   - Primary: `background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);`
+   - Secondary: `background: transparent; border: 2px solid var(--border);`
+   - Hover effects: `transform: translateY(-2px);` with appropriate box-shadow
+5. **Inputs**:
+   - Background: `background: var(--primary-bg);`
+   - Border: `border: 2px solid var(--border);`
+   - Focus: `border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200, 155, 60, 0.1);`
+6. **Transitions**: Always use `transition: all 0.2s ease;` for interactive elements
+7. **Typography**:
+   - Font family: `font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;`
+   - Primary headings: `color: var(--gold);`
+   - Body text: `color: var(--primary-text);`
+   - Muted text: `color: var(--secondary-text);`
+8. **Gradients**: Use `linear-gradient(135deg, ...)` pattern for consistency
+9. **Spacing**: Use consistent gap values: 8px, 12px, 16px, 20px, 24px, 32px, 40px
+10. **Icons**: Use lucide-react icons with consistent sizing (16px, 18px, 20px, 24px, 32px)
+
+### Animation Guidelines
+- Use framer-motion for complex animations
+- Consistent animation durations: 0.2s for hover, 0.3s-0.6s for page transitions
+- Use `whileHover={{ scale: 1.02 }}` and `whileTap={{ scale: 0.98 }}` patterns
+- Entry animations: `initial={{ opacity: 0, y: 30 }}`, `animate={{ opacity: 1, y: 0 }}`
+
+### Responsive Design
+- Mobile-first approach with breakpoints
+- Use flexbox and CSS Grid consistently
+- Grid template: `grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))`
+
+**DO NOT DEVIATE FROM THESE PATTERNS** - Consistency is crucial for the user experience.
+
+## Preferred Workflow
+1. Switch to Node v22 with `fnm use v22`
+2. Make code changes following the styling guidelines above
+3. Test builds: `npm run build`
+4. Let the user start servers manually when they're ready

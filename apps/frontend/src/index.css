@@ -1,0 +1,153 @@
+:root {
+  /* League of Legends themed colors */
+  --primary-bg: #0a0e27;
+  --secondary-bg: #1e2328;
+  --accent-bg: #3c3c41;
+  --primary-text: #f0e6d2;
+  --secondary-text: #a09b8c;
+  --gold: #c89b3c;
+  --blue: #0596aa;
+  --green: #0f2027;
+  --red: #c8aa6e;
+  --border: #463714;
+  --hover: #5bc0de;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(
+    135deg,
+    var(--primary-bg) 0%,
+    var(--secondary-bg) 100%
+  );
+  color: var(--primary-text);
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--secondary-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gold);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--hover);
+}
+
+/* Button base styling */
+.btn {
+  padding: 12px 24px;
+  border: 2px solid var(--border);
+  background: linear-gradient(
+    135deg,
+    var(--secondary-bg) 0%,
+    var(--accent-bg) 100%
+  );
+  color: var(--primary-text);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(200, 155, 60, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+  border-color: var(--gold);
+  color: var(--primary-bg);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 20px rgba(200, 155, 60, 0.5);
+}
+
+/* Input styling */
+.input {
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  background: var(--secondary-bg);
+  color: var(--primary-text);
+  border-radius: 4px;
+  outline: none;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+.input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(200, 155, 60, 0.1);
+}
+
+.input::placeholder {
+  color: var(--secondary-text);
+}
+
+/* Card styling */
+.card {
+  background: var(--secondary-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(200, 155, 60, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(200, 155, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(200, 155, 60, 0);
+  }
+}

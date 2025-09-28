@@ -1,0 +1,537 @@
+import {
+  AttackRange,
+  Chess,
+  Game,
+  Skill,
+  Square,
+  Debuff,
+  Aura,
+  AuraEffect,
+} from "../game.schema";
+
+export class ChessObject {
+  public chess: Chess;
+  public game: Game;
+
+  constructor(chess: Chess, game: Game) {
+    if (!chess) {
+      throw new Error("Invalid chess");
+    }
+    this.chess = chess;
+    this.game = game;
+  }
+
+  protected damage(
+    chess: ChessObject,
+    damage: number,
+    damageType: "physical" | "magic" | "true"
+  ): void {
+    if (damageType === "physical") {
+      damage = Math.max(damage - chess.physicalResistance, 1);
+    } else if (damageType === "magic") {
+      damage = Math.max(damage - chess.magicResistance, 1);
+    } else if (damageType === "true") {
+      damage = Math.max(damage, 1);
+    }
+
+    const wasAlive = chess.chess.stats.hp > 0;
+    chess.chess.stats.hp -= damage;
+    chess.postTakenDamage(this, damage);
+
+    if (chess.chess.stats.hp <= 0) {
+      chess.chess.stats.hp = 0;
+
+      // Award gold to the killer if the target was alive before this damage
+      if (wasAlive) {
+        this.awardGoldForKill(chess);
+
+        // Check if killed monster was neutral for special rewards
+        if (
+          chess.chess.name === "Drake" ||
+          chess.chess.name === "Baron Nashor"
+        ) {
+          // Import GameLogic to award monster kill rewards
+          const { GameLogic } = require("../game.logic");
+          GameLogic.awardMonsterKillReward(
+            this.game,
+            this.chess.ownerId,
+            chess.chess.name
+          );
+        }
+      }
+    }
+  }
+
+  protected postTakenDamage(attacker: ChessObject, damage: number): void {
+    // Do nothing by default
+  }
+
+  // Award gold to the player who killed an enemy chess piece
+  protected awardGoldForKill(killedChess: ChessObject): void {
+    // Find the player who owns the killer chess piece
+    const killerPlayer = this.game.players.find(
+      (player) => player.id === this.chess.ownerId
+    );
+    if (killerPlayer) {
+      const baseGold = killedChess.chess.stats.goldValue || 30; // Default 30 gold if no goldValue set
+      let totalGold = baseGold;
+
+      // Check if killer is Twisted Fate for bonus gold
+      if (this.chess.name === "Twisted Fate") {
+        const bonusGold = this.chess.skill?.payload?.goldBonus || 10;
+        totalGold += bonusGold;
+      }
+
+      killerPlayer.gold += totalGold;
+
+      console.log(
+        `${killerPlayer.username} earned ${totalGold} gold for killing ${killedChess.chess.name}`
+      );
+    }
+  }
+
+  protected heal(chess: ChessObject, heal: number): void {
+    chess.chess.stats.hp = Math.min(
+      chess.chess.stats.hp + heal,
+      chess.chess.stats.maxHp
+    );
+  }
+
+  public preEnterTurn(isBlueTurn: boolean): void {
+    if (this.chess.blue === isBlueTurn) {
+      this.refreshCooldown(this);
+      this.processDebuffs(this);
+    }
+  }
+
+  refreshCooldown(chess: ChessObject): void {
+    if (!chess.chess.skill) {
+      return;
+    }
+    chess.chess.skill.currentCooldown -= 1;
+    if (chess.chess.skill.currentCooldown < 0) {
+      chess.chess.skill.currentCooldown = 0;
+    }
+  }
+
+  // Debuff Management
+  applyDebuff(chess: ChessObject, debuff: Debuff): boolean {
+    // Check if debuff is unique and already exists
+    if (debuff.unique) {
+      const existingDebuff = chess.chess.debuffs.find(
+        (d) => d.id === debuff.id
+      );
+      if (existingDebuff) {
+        return false; // Can't apply unique debuff twice
+      }
+    }
+
+    chess.chess.debuffs.push(debuff);
+    return true;
+  }
+
+  removeDebuff(chess: ChessObject, debuffId: string): boolean {
+    const index = chess.chess.debuffs.findIndex((d) => d.id === debuffId);
+    if (index !== -1) {
+      chess.chess.debuffs.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  processDebuffs(chess: ChessObject): void {
+    if (!chess.chess.debuffs || chess.chess.debuffs.length === 0) {
+      return;
+    }
+    for (let i = chess.chess.debuffs.length - 1; i >= 0; i--) {
+      const debuff = chess.chess.debuffs[i];
+
+      // Apply damage per turn
+      if (debuff.damagePerTurn > 0) {
+        this.damage(chess, debuff.damagePerTurn, debuff.damageType);
+      }
+
+      // Apply heal per turn
+      if (debuff.healPerTurn > 0) {
+        this.heal(chess, debuff.healPerTurn);
+      }
+
+      // Reduce duration
+      debuff.duration--;
+
+      // Remove expired debuffs
+      if (debuff.duration <= 0) {
+        chess.chess.debuffs.splice(i, 1);
+      }
+    }
+  }
+
+  get speed(): number {
+    return this.getEffectiveStat(this.chess, "speed");
+  }
+
+  get ad(): number {
+    return this.getEffectiveStat(this.chess, "ad");
+  }
+
+  get ap(): number {
+    return this.getEffectiveStat(this.chess, "ap");
+  }
+
+  get physicalResistance(): number {
+    return this.getEffectiveStat(this.chess, "physicalResistance");
+  }
+
+  get magicResistance(): number {
+    return this.getEffectiveStat(this.chess, "magicResistance");
+  }
+
+  get maxHp(): number {
+    return this.getEffectiveStat(this.chess, "maxHp");
+  }
+
+  getEffectiveStat(chess: Chess, stat: string): number {
+    let statValue = chess.stats[stat] || 0;
+
+    // Apply debuff effects
+    chess.debuffs.forEach((debuff) => {
+      debuff.effects.forEach((effect) => {
+        if (effect.stat === stat) {
+          statValue = this.applyStatModifier(
+            statValue,
+            effect.modifier,
+            effect.type
+          );
+        }
+      });
+    });
+
+    // Apply aura effects from other pieces
+    const auraEffects = this.getAuraEffectsForChess(chess, stat);
+    auraEffects.forEach((effect) => {
+      statValue = this.applyStatModifier(
+        statValue,
+        effect.modifier,
+        effect.type
+      );
+    });
+
+    return Math.max(0, statValue); // Stats can't be negative
+  }
+
+  private applyStatModifier(
+    currentValue: number,
+    modifier: number,
+    type: string
+  ): number {
+    if (type === "add") {
+      return currentValue + modifier;
+    } else if (type === "multiply") {
+      return currentValue * modifier;
+    } else if (type === "set") {
+      return modifier;
+    }
+    return currentValue;
+  }
+
+  // Get all aura effects that apply to a specific chess piece for a specific stat
+  getAuraEffectsForChess(targetChess: Chess, stat: string): AuraEffect[] {
+    const effects: AuraEffect[] = [];
+
+    this.game.board.forEach((sourceChess) => {
+      if (!sourceChess || sourceChess === targetChess) return;
+      if (sourceChess.stats.hp <= 0) return; // Dead pieces don't provide auras
+
+      sourceChess.auras.forEach((aura) => {
+        if (!aura.active) return;
+        if (aura.requiresAlive && sourceChess.stats.hp <= 0) return;
+
+        // Check if target is in range
+        if (this.isInAuraRange(sourceChess, targetChess, aura.range)) {
+          aura.effects.forEach((effect) => {
+            if (effect.stat === stat) {
+              // Check if this aura should affect the target
+              if (
+                this.shouldAuraAffectTarget(
+                  sourceChess,
+                  targetChess,
+                  effect.target
+                )
+              ) {
+                effects.push(effect);
+              }
+            }
+          });
+        }
+      });
+    });
+
+    return effects;
+  }
+
+  // Check if target chess is in aura range of source chess
+  isInAuraRange(
+    sourceChess: Chess,
+    targetChess: Chess,
+    range: number
+  ): boolean {
+    const deltaX = Math.abs(sourceChess.position.x - targetChess.position.x);
+    const deltaY = Math.abs(sourceChess.position.y - targetChess.position.y);
+    const distance = Math.max(deltaX, deltaY); // Chebyshev distance (considers diagonals as 1)
+
+    return distance <= range;
+  }
+
+  // Check if aura should affect target based on target type (allies, enemies, all)
+  shouldAuraAffectTarget(
+    sourceChess: Chess,
+    targetChess: Chess,
+    targetType: string
+  ): boolean {
+    const sameTeam = sourceChess.blue === targetChess.blue;
+
+    switch (targetType) {
+      case "allies":
+        return sameTeam;
+      case "enemies":
+        return !sameTeam;
+      case "all":
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  // Create an aura for a chess piece
+  createAura(
+    id: string,
+    name: string,
+    description: string,
+    range: number,
+    effects: AuraEffect[],
+    options: {
+      active?: boolean;
+      requiresAlive?: boolean;
+      duration?: string;
+    } = {}
+  ): Aura {
+    return {
+      id,
+      name,
+      description,
+      range,
+      effects,
+      active: options.active ?? true,
+      requiresAlive: options.requiresAlive ?? false,
+      duration: options.duration ?? "permanent",
+    } as Aura;
+  }
+
+  move(position: Square): void {
+    // Calculate effective speed with first move bonus for minions
+    let effectiveSpeed = this.speed;
+
+    // First move bonus: Minions get +1 speed on their first move
+    if (
+      !this.chess.hasMovedBefore &&
+      (this.chess.name === "Melee Minion" ||
+        this.chess.name === "Caster Minion")
+    ) {
+      effectiveSpeed += 1;
+    }
+
+    if (!this.validateMove(position, effectiveSpeed)) {
+      throw new Error("Invalid move");
+    }
+
+    this.chess.position = position;
+    this.chess.hasMovedBefore = true; // Mark as moved after successful move
+  }
+
+  attack(chess: ChessObject): void {
+    if (
+      !this.validateAttack(chess.chess.position, this.chess.stats.attackRange)
+    ) {
+      throw new Error("Invalid attack");
+    }
+
+    // Critical strike system from RULE.md: 20% chance, 150% damage
+    const isCriticalStrike = Math.random() < 0.2;
+    let damage = this.ad;
+
+    if (isCriticalStrike) {
+      damage = damage * 1.5; // 150% damage
+      console.log(`${this.chess.name} landed a critical strike!`);
+    }
+
+    this.damage(chess, damage, "physical");
+  }
+
+  skill(position?: Square): void {
+    if (!this.validateSkill(this.chess.skill, position)) {
+      throw new Error("Invalid skill");
+    }
+  }
+
+  validateSkill(skill?: Skill, position?: Square): boolean {
+    if (!skill) {
+      return false;
+    }
+    if (skill.type === "passive") {
+      return false;
+    }
+    if (skill.currentCooldown > 0) {
+      return false;
+    }
+    if (skill.targetTypes === "none") {
+      return true;
+    }
+    if (skill.targetTypes === "square") {
+      return this.validateMove(position, skill.attackRange.range);
+    }
+    return this.validateAttack(position, skill.attackRange);
+  }
+
+  validateMove(position: Square, speed: number): boolean {
+    // Can't move to the same position
+    if (
+      this.chess.position.x === position.x &&
+      this.chess.position.y === position.y
+    ) {
+      return false;
+    }
+
+    // Check backward movement restriction
+    if (this.chess.cannotMoveBackward) {
+      if (this.chess.blue && position.y < this.chess.position.y) {
+        return false;
+      }
+      if (!this.chess.blue && position.y > this.chess.position.y) {
+        return false;
+      }
+    }
+
+    // Calculate movement deltas
+    const deltaX = Math.abs(position.x - this.chess.position.x);
+    const deltaY = Math.abs(position.y - this.chess.position.y);
+
+    // Check vertical-only movement restriction
+    if (this.chess.canOnlyMoveVertically) {
+      // Vertical-only pieces can only move in Y direction (forward/backward)
+      // They cannot move horizontally (deltaX must be 0)
+      if (deltaX > 0) {
+        return false;
+      }
+    }
+
+    // Check if movement exceeds speed limit
+    const maxDistance = Math.max(deltaX, deltaY);
+    if (speed && maxDistance > speed) {
+      return false;
+    }
+
+    // Determine movement direction
+    const isHorizontal = deltaY === 0 && deltaX > 0;
+    const isVertical = deltaX === 0 && deltaY > 0;
+    const isDiagonal = deltaX === deltaY && deltaX > 0;
+
+    // Must move in exactly one valid direction
+    if (!isHorizontal && !isVertical && !isDiagonal) {
+      return false; // Invalid movement pattern
+    }
+
+    // Check if the path is clear (no pieces blocking)
+    if (!this.isPathClear(this.chess.position, position)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if the path between two positions is clear of pieces
+   */
+  private isPathClear(from: Square, to: Square): boolean {
+    const deltaX = to.x - from.x;
+    const deltaY = to.y - from.y;
+
+    // Determine step direction
+    const stepX = deltaX === 0 ? 0 : deltaX / Math.abs(deltaX);
+    const stepY = deltaY === 0 ? 0 : deltaY / Math.abs(deltaY);
+
+    // Check each square along the path (excluding start and end)
+    let currentX = from.x + stepX;
+    let currentY = from.y + stepY;
+
+    while (currentX !== to.x || currentY !== to.y) {
+      // Check if there's a piece at this position
+      const blockingPiece = this.game.board.find(
+        (piece) =>
+          piece.position.x === currentX &&
+          piece.position.y === currentY &&
+          piece.stats.hp > 0
+      );
+
+      if (blockingPiece) {
+        return false; // Path is blocked
+      }
+
+      currentX += stepX;
+      currentY += stepY;
+    }
+
+    return true; // Path is clear
+  }
+  validateAttack(position: Square, attackRange: AttackRange): boolean {
+    // Check if attackRange is defined
+    if (!attackRange) {
+      return false;
+    }
+
+    // Can't attack the same position
+    if (
+      this.chess.position.x === position.x &&
+      this.chess.position.y === position.y
+    ) {
+      return false;
+    }
+
+    // Calculate attack deltas
+    const deltaX = Math.abs(position.x - this.chess.position.x);
+    const deltaY = Math.abs(position.y - this.chess.position.y);
+
+    // Check if attack exceeds range limit
+    const maxDistance = Math.max(deltaX, deltaY);
+    if (attackRange.range && maxDistance > attackRange.range) {
+      return false;
+    }
+
+    // Determine attack direction
+    const isHorizontal = deltaY === 0 && deltaX > 0;
+    const isVertical = deltaX === 0 && deltaY > 0;
+    const isDiagonal = deltaX === deltaY && deltaX > 0;
+
+    // Must attack in exactly one valid direction
+    if (!isHorizontal && !isVertical && !isDiagonal) {
+      return false; // Invalid attack pattern
+    }
+
+    // Check if the piece can attack in the determined direction
+    if (isHorizontal && !attackRange.horizontal) {
+      return false;
+    }
+    if (isVertical && !attackRange.vertical) {
+      return false;
+    }
+    if (isDiagonal && !attackRange.diagonal) {
+      return false;
+    }
+
+    // For ranged attacks (distance > 1), check if path is clear
+    if (maxDistance > 1 && !this.isPathClear(this.chess.position, position)) {
+      return false;
+    }
+
+    return true;
+  }
+}

@@ -1,0 +1,26 @@
+---
+description: LOL Chess Project - Custom Cursor Rules
+globs:
+alwaysApply: true
+---
+## Development Environment
+- Always run `fnm use v22` before doing any development work to ensure using Node.js version 22
+- Verify the correct Node version with `node --version` after switching
+
+## Server Management
+- **NEVER start development servers automatically** (npm run dev, npm start, etc.)
+- The user always starts servers manually themselves
+- Only provide instructions on how to start servers, don't execute the commands
+- Focus on code changes, builds, and testing without starting servers
+
+## Project Structure
+- This is a monorepo with NestJS backend and React frontend
+- Use workspace commands when needed: `npm run build --workspace=apps/backend`
+- Always work from the project root directory: `/Users/long.tt/code/lolchess`
+
+## Preferred Workflow
+1. Switch to Node v22 with `fnm use v22`
+2. Make code changes and improvements
+3. Test builds: `npm run build`
+4. Let the user start servers manually when they're ready
+5. Must follow the rules in the RULE.md file for game design
