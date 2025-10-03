@@ -55,6 +55,21 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       console.log(`User ${username} (${userId}) joining queue`);
 
+      // Check if user is already in an active game
+      const activeGameResult =
+        await this.gameService.getActiveGameForUser(userId);
+      if (activeGameResult.hasActiveGame) {
+        console.log(
+          `User ${userId} is already in an active game: ${activeGameResult.game.id}`
+        );
+        client.emit("alreadyInGame", {
+          game: activeGameResult.game,
+          message:
+            "You are already in an active game. Please finish or leave that game first.",
+        });
+        return;
+      }
+
       // Store socket mapping
       this.socketUsers.set(client.id, userId);
 

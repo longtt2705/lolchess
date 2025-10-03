@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import styled from 'styled-components'
 import Header from './components/Header'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -18,9 +18,10 @@ const AppContainer = styled.div`
   flex-direction: column;
 `
 
-const MainContent = styled.main`
+const MainContent = styled.main<{ isGamePage?: boolean }>`
   flex: 1;
-  padding: 20px;
+  padding: ${props => props.isGamePage ? '0' : '20px'};
+  overflow: ${props => props.isGamePage ? 'hidden' : 'auto'};
 `
 
 const LoadingContainer = styled.div`
@@ -59,6 +60,10 @@ const LoadingContainer = styled.div`
 
 function App() {
   const { isInitialized, loading } = useAuthInit()
+  const location = useLocation()
+
+  // Check if current route is a game page
+  const isGamePage = location.pathname.startsWith('/game/')
 
   // Show loading screen while initializing auth
   if (!isInitialized) {
@@ -73,8 +78,9 @@ function App() {
 
   return (
     <AppContainer>
-      <Header />
-      <MainContent>
+      {/* Hide header on game page for immersive experience */}
+      {!isGamePage && <Header />}
+      <MainContent isGamePage={isGamePage}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />

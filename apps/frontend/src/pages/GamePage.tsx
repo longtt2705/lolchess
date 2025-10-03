@@ -29,31 +29,60 @@ interface DamageEffect {
 }
 
 const GameContainer = styled.div`
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 16px;
   display: grid;
   grid-template-areas: 
     "players-list game-board"
     "player-info game-board";
-  grid-template-columns: 300px 1fr;
-  gap: 20px;
-  min-height: calc(100vh - 140px);
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  height: 100vh;
+  overflow: hidden;
 `
 
 const PlayersPanel = styled.div`
   grid-area: players-list;
-  background: var(--secondary-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 20px;
+  background: linear-gradient(135deg, rgba(30, 35, 40, 0.95) 0%, rgba(20, 25, 35, 0.95) 100%);
+  border: 2px solid rgba(200, 155, 60, 0.3);
+  border-radius: 12px;
+  padding: 18px;
+  overflow-y: auto;
+  max-height: 30vh;
+  box-shadow: 
+    inset 0 0 20px rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.4);
   
   h3 {
     color: var(--gold);
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 17px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(10, 14, 39, 0.5);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #ffd700 0%, var(--gold) 100%);
   }
 `
 
@@ -61,45 +90,94 @@ const PlayerItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
-  margin-bottom: 8px;
-  background: var(--primary-bg);
-  border-radius: 6px;
-  border-left: 3px solid var(--gold);
+  padding: 14px;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, rgba(10, 14, 39, 0.6) 0%, rgba(20, 25, 45, 0.6) 100%);
+  border-radius: 8px;
+  border: 2px solid rgba(200, 155, 60, 0.4);
+  border-left: 4px solid var(--gold);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateX(4px);
+    border-left-width: 6px;
+    box-shadow: 0 4px 12px rgba(200, 155, 60, 0.3);
+  }
   
   .player-name {
     color: var(--primary-text);
     font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    font-size: 15px;
   }
   
   .player-stats {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--secondary-text);
     
     .stat {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      color: #ffd700;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
     }
   }
 `
 
 const ChessDetailPanel = styled.div`
   grid-area: player-info;
-  background: var(--secondary-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 20px;
+  background: linear-gradient(135deg, rgba(30, 35, 40, 0.95) 0%, rgba(20, 25, 35, 0.95) 100%);
+  border: 2px solid rgba(200, 155, 60, 0.3);
+  border-radius: 12px;
+  padding: 18px;
+  overflow-y: auto;
+  max-height: calc(70vh - 32px);
+  box-shadow: 
+    inset 0 0 20px rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.4);
   
   h3 {
     color: var(--gold);
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 17px;
+    position: sticky;
+    top: 0;
+    background: linear-gradient(135deg, rgba(30, 35, 40, 0.98) 0%, rgba(20, 25, 35, 0.98) 100%);
+    padding: 8px 0;
+    z-index: 10;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(200, 155, 60, 0.2);
+    margin-bottom: 16px;
+  }
+  
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(10, 14, 39, 0.5);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #ffd700 0%, var(--gold) 100%);
   }
   
   .chess-header {
@@ -411,17 +489,59 @@ const ChessDetailPanel = styled.div`
 
 const GameBoard = styled.div`
   grid-area: game-board;
-  background: var(--secondary-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(20, 25, 45, 0.95) 100%);
+  border: 2px solid rgba(200, 155, 60, 0.3);
+  border-radius: 12px;
   padding: 20px;
   position: relative;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 
+    inset 0 0 30px rgba(0, 0, 0, 0.5),
+    0 8px 32px rgba(0, 0, 0, 0.6);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(200, 155, 60, 0.1) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+    pointer-events: none;
+    border-radius: 12px;
+  }
   
   h3 {
     color: var(--gold);
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     text-align: center;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
+  }
+  
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(10, 14, 39, 0.5);
+    border-radius: 5px;
+    border: 1px solid rgba(200, 155, 60, 0.2);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #ffd700 0%, var(--gold) 100%);
+    box-shadow: 0 0 10px rgba(200, 155, 60, 0.5);
   }
 `
 
@@ -429,18 +549,24 @@ const Board = styled.div`
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   grid-template-rows: repeat(8, 1fr);
-  gap: 2px;
-  background: var(--primary-bg);
-  padding: 16px;
-  border-radius: 8px;
-  min-height: 600px;
-  max-width: 800px;
+  gap: 3px;
+  background-image: url('/ui/board.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  padding: 40px;
+  aspect-ratio: 10 / 8;
+  max-width: 1000px;
+  width: 100%;
   margin: 0 auto;
+  position: relative;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
   
   .square {
-    background: var(--accent-bg);
-    border: 2px solid var(--border);
-    border-radius: 4px;
+    background: rgba(30, 35, 40, 0.7);
+    border: 1px solid rgba(200, 155, 60, 0.3);
+    border-radius: 2px;
+    backdrop-filter: blur(2px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -498,6 +624,29 @@ const Board = styled.div`
       
       &:hover {
         background: rgba(239, 68, 68, 0.4);
+        transform: scale(1.02);
+      }
+    }
+    
+    &.valid-skill {
+      background: rgba(59, 130, 246, 0.3);
+      border-color: #3b82f6;
+      cursor: pointer;
+      position: relative;
+      
+      &:after {
+        content: '⚡';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #3b82f6;
+        font-size: 16px;
+        font-weight: bold;
+      }
+      
+      &:hover {
+        background: rgba(59, 130, 246, 0.4);
         transform: scale(1.02);
       }
     }
@@ -617,34 +766,48 @@ const AttackEffect = styled(motion.div)`
 
 const GameActions = styled.div`
   display: flex;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 20px;
   justify-content: center;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(20, 25, 35, 0.6) 0%, rgba(10, 14, 39, 0.6) 100%);
+  border-radius: 12px;
+  border: 2px solid rgba(200, 155, 60, 0.2);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
   
   button {
-    background: var(--accent-bg);
+    background: linear-gradient(135deg, rgba(60, 60, 65, 0.8) 0%, rgba(40, 40, 45, 0.8) 100%);
     border: 2px solid var(--border);
     color: var(--primary-text);
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 10px 20px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     
     &:hover {
       border-color: var(--gold);
-      background: var(--gold);
+      background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
       color: var(--primary-bg);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(200, 155, 60, 0.5);
+    }
+    
+    &:active {
+      transform: translateY(0);
     }
     
     &:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
       transform: none;
+      filter: grayscale(1);
     }
   }
 `
@@ -675,18 +838,37 @@ const LoadingOverlay = styled(motion.div)`
 
 const TurnIndicator = styled(motion.div) <{ isMyTurn: boolean }>`
   text-align: center;
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  background: ${props => props.isMyTurn ? 'var(--gold)' : 'var(--secondary-bg)'};
-  color: ${props => props.isMyTurn ? 'var(--primary-bg)' : 'var(--primary-text)'};
-  border: 2px solid ${props => props.isMyTurn ? 'var(--gold)' : 'var(--border)'};
+  padding: 16px 40px;
+  background-image: url('/ui/info.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  min-width: 280px;
+  position: relative;
+  filter: ${props => props.isMyTurn
+    ? 'drop-shadow(0 0 20px rgba(200, 155, 60, 0.8)) brightness(1.2)'
+    : 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5)) brightness(0.9)'};
+  transition: all 0.3s ease;
+  
   font-weight: bold;
+  font-size: 18px;
+  color: ${props => props.isMyTurn ? '#FFF' : 'var(--gold)'};
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  letter-spacing: 1px;
   
   .round-info {
-    font-size: 12px;
-    opacity: 0.8;
+    font-size: 13px;
+    opacity: 0.9;
     margin-top: 4px;
+    color: var(--gold);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  }
+  
+  animation: ${props => props.isMyTurn ? 'pulse 2s ease-in-out infinite' : 'none'};
+  
+  @keyframes pulse {
+    0%, 100% { filter: drop-shadow(0 0 20px rgba(200, 155, 60, 0.8)) brightness(1.2); }
+    50% { filter: drop-shadow(0 0 30px rgba(200, 155, 60, 1)) brightness(1.3); }
   }
 `
 
@@ -708,13 +890,14 @@ const ConnectionStatus = styled.div<{ connected: boolean }>`
 
 const DevToolsPanel = styled.div`
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 16px;
+  right: 16px;
   background: var(--secondary-bg);
   border: 2px solid #e74c3c;
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
   z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   
   h4 {
     color: #e74c3c;
@@ -957,6 +1140,8 @@ const GamePage: React.FC = () => {
     selectedPiece,
     validMoves,
     validAttacks,
+    validSkillTargets,
+    isSkillMode,
     isMyTurn,
     currentPlayer,
     opponent,
@@ -964,6 +1149,7 @@ const GamePage: React.FC = () => {
     clearSelection,
     executeAction,
     initializeGameplay,
+    activateSkillMode,
     connected: wsConnected,
     lastUpdate,
   } = useGame(gameId || '')
@@ -1126,6 +1312,19 @@ const GamePage: React.FC = () => {
       piece.position.x === x && piece.position.y === y && piece.stats.hp > 0
     )
 
+    // If in skill mode, check for valid skill target
+    if (isSkillMode && selectedPiece) {
+      const isValidSkillTarget = validSkillTargets.some(target => target.x === x && target.y === y)
+
+      if (isValidSkillTarget) {
+        executeActionWithAnimation('skill', selectedPiece.position, clickedPosition)
+      } else {
+        // Cancel skill mode if clicking invalid target
+        clearSelection()
+      }
+      return
+    }
+
     if (clickedPiece && clickedPiece.ownerId === currentPlayer?.userId) {
       // Only select own pieces for actions
       selectPiece(clickedPiece)
@@ -1146,14 +1345,22 @@ const GamePage: React.FC = () => {
     }
   }
 
-  // Use skill action
+  // Use skill action - enter targeting mode or execute immediately for non-targeted skills
   const handleSkill = () => {
-    if (!selectedPiece || !isMyTurn) return
+    if (!selectedPiece || !isMyTurn || !selectedPiece.skill) return
 
-    executeAction({
-      type: 'skill',
-      casterPosition: selectedPiece.position,
-    })
+    const skill = selectedPiece.skill
+
+    // If skill requires no target (passive or targetTypes === "none"), execute immediately
+    if (!skill.targetTypes || skill.targetTypes === "none") {
+      executeAction({
+        type: 'skill',
+        casterPosition: selectedPiece.position,
+      })
+    } else {
+      // Enter skill targeting mode
+      activateSkillMode(selectedPiece)
+    }
   }
 
   // Reset gameplay (dev tools)
@@ -1229,13 +1436,15 @@ const GamePage: React.FC = () => {
         const isSelected = selectedPiece && selectedPiece.position.x === x && selectedPiece.position.y === y
         const isValidMove = validMoves.some(move => move.x === x && move.y === y)
         const isValidAttack = validAttacks.some(attack => attack.x === x && attack.y === y)
+        const isValidSkill = validSkillTargets.some(target => target.x === x && target.y === y)
 
         const piece = gameState?.board.find(p => p.position.x === x && p.position.y === y && p.stats.hp > 0)
 
         let squareClass = 'square'
         if (isSelected) squareClass += ' selected'
-        if (isValidMove) squareClass += ' valid-move'
-        if (isValidAttack) squareClass += ' valid-attack'
+        if (isSkillMode && isValidSkill) squareClass += ' valid-skill'
+        else if (isValidMove) squareClass += ' valid-move'
+        else if (isValidAttack) squareClass += ' valid-attack'
 
         squares.push(
           <div
@@ -1260,8 +1469,12 @@ const GamePage: React.FC = () => {
                   // Always set detail view for any piece
                   handleDetailClick(piece);
 
+                  // If in skill mode and this is a valid target, execute skill
+                  if (isSkillMode && isValidSkill) {
+                    handleSquareClick(x, y);
+                  }
                   // Action selection logic (only for own pieces during turn)
-                  if (isMyTurn && piece.ownerId === currentPlayer?.userId) {
+                  else if (isMyTurn && piece.ownerId === currentPlayer?.userId) {
                     selectPiece(piece);
                   }
                   // If it's an enemy piece on a valid attack square, attack it
@@ -1337,11 +1550,11 @@ const GamePage: React.FC = () => {
         <PlayerItem>
           <div>
             <div className="player-name">
-              #{1} {currentPlayer?.username || 'You'} {isMyTurn ? '⚡' : ''}
+              {currentPlayer?.username || 'You'} {isMyTurn ? <img src="/icons/left-arrow.png" alt="Lightning" width={14} height={14} /> : ''}
             </div>
             <div className="player-stats">
               <div className="stat">
-                <Coins size={12} />
+                <img src="/icons/dollar.png" alt="Gold" width={14} height={14} />
                 {currentPlayer?.gold || 0}
               </div>
             </div>
@@ -1352,11 +1565,11 @@ const GamePage: React.FC = () => {
           <PlayerItem>
             <div>
               <div className="player-name">
-                #{2} {opponent.username} {!isMyTurn ? '⚡' : ''}
+                {opponent.username} {!isMyTurn ? <img src="/icons/left-arrow.png" alt="Lightning" width={14} height={14} /> : ''}
               </div>
               <div className="player-stats">
                 <div className="stat">
-                  <Coins size={12} />
+                  <img src="/icons/dollar.png" alt="Gold" width={14} height={14} />
                   {opponent.gold}
                 </div>
               </div>
@@ -1583,27 +1796,78 @@ const GamePage: React.FC = () => {
       </ChessDetailPanel>
 
       <GameBoard>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px' }}>
           <TurnIndicator isMyTurn={isMyTurn}>
             {isMyTurn ? "Your Turn" : "Opponent's Turn"}
             <div className="round-info">Round {gameState.currentRound}</div>
           </TurnIndicator>
 
-        </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              style={{
+                background: 'transparent',
+                border: '2px solid var(--blue)',
+                color: 'var(--blue)',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--blue)'
+                e.currentTarget.style.color = 'var(--primary-bg)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = 'var(--blue)'
+              }}
+              onClick={() => {
+                // TODO: Implement offer draw functionality
+                console.log('Offer draw clicked')
+              }}
+            >
+              🤝 Offer Draw
+            </button>
 
-        {lastUpdate && (
-          <div style={{
-            textAlign: 'center',
-            fontSize: '12px',
-            color: 'var(--secondary-text)',
-            marginBottom: '16px',
-            padding: '8px',
-            background: 'var(--accent-bg)',
-            borderRadius: '4px'
-          }}>
-            {lastUpdate}
+            <button
+              style={{
+                background: 'transparent',
+                border: '2px solid #ef4444',
+                color: '#ef4444',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#ef4444'
+                e.currentTarget.style.color = 'white'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = '#ef4444'
+              }}
+              onClick={() => {
+                if (window.confirm('Are you sure you want to resign? This will end the game.')) {
+                  // TODO: Implement resign functionality
+                  console.log('Resign clicked')
+                }
+              }}
+            >
+              🏳️ Resign
+            </button>
           </div>
-        )}
+        </div>
 
         <Board>
           {renderBoard()}
@@ -1619,9 +1883,17 @@ const GamePage: React.FC = () => {
             }}>
               <strong>{selectedPiece.name}</strong> selected
               <div style={{ fontSize: '12px', color: 'var(--secondary-text)', marginTop: '4px' }}>
-                {validMoves.length > 0 && `${validMoves.length} moves available`}
-                {validMoves.length > 0 && validAttacks.length > 0 && ' • '}
-                {validAttacks.length > 0 && `${validAttacks.length} attacks available`}
+                {isSkillMode ? (
+                  <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>
+                    ⚡ Select a target for {selectedPiece.skill?.name} ({validSkillTargets.length} targets available)
+                  </span>
+                ) : (
+                  <>
+                    {validMoves.length > 0 && `${validMoves.length} moves available`}
+                    {validMoves.length > 0 && validAttacks.length > 0 && ' • '}
+                    {validAttacks.length > 0 && `${validAttacks.length} attacks available`}
+                  </>
+                )}
               </div>
             </div>
 
@@ -1633,10 +1905,10 @@ const GamePage: React.FC = () => {
                 }}
                 style={{ background: 'var(--accent-bg)' }}
               >
-                Clear Selection
+                {isSkillMode ? 'Cancel Skill' : 'Clear Selection'}
               </button>
 
-              {selectedPiece.skill && selectedPiece.skill.type === 'active' && (
+              {!isSkillMode && selectedPiece.skill && selectedPiece.skill.type === 'active' && (
                 <button
                   onClick={handleSkill}
                   disabled={selectedPiece.skill.currentCooldown > 0}
@@ -1656,7 +1928,7 @@ const GamePage: React.FC = () => {
         )}
       </GameBoard>
       {/* Development Tools - Only show in development environment */}
-      {import.meta.env.VITE_NODE_ENV === 'development' || import.meta.env.VITE_NODE_ENV === undefined && (
+      {import.meta.env.DEV && (
         <DevToolsPanel>
           <h4>🔧 Dev Tools</h4>
           <button

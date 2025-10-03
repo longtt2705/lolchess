@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { motion } from 'framer-motion'
-import { Search, X, Users, Clock, Zap } from 'lucide-react'
+import { Search, X, Users, Clock, Zap, AlertCircle, ArrowRight } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useAppSelector } from '../hooks/redux'
 import { useQueue } from '../hooks/useQueue'
@@ -267,8 +268,62 @@ const StatCard = styled.div`
   }
 `
 
+const ActiveGameAlert = styled(motion.div)`
+  background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--accent-bg) 100%);
+  border: 2px solid var(--hover);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 6px 24px rgba(91, 192, 222, 0.3);
+  max-width: 500px;
+  width: 100%;
+  margin-bottom: 20px;
+  
+  .alert-icon {
+    color: var(--hover);
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  h3 {
+    color: var(--hover);
+    margin-bottom: 12px;
+    font-size: 1.5rem;
+  }
+  
+  p {
+    color: var(--primary-text);
+    margin-bottom: 20px;
+    font-size: 1rem;
+  }
+`
+
+const ReturnToGameButton = styled(motion.button)`
+  background: linear-gradient(135deg, var(--hover) 0%, #0596aa 100%);
+  color: var(--primary-bg);
+  border: none;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(91, 192, 222, 0.4);
+  }
+`
+
 const GameLobbyPage: React.FC = () => {
+  const navigate = useNavigate()
   const { user } = useAppSelector(state => state.auth)
+  const { activeGame } = useAppSelector(state => state.game)
   const { queue, joinQueue, cancelQueue, getQueueStatus, isConnected } = useQueue()
 
   useEffect(() => {
@@ -289,10 +344,28 @@ const GameLobbyPage: React.FC = () => {
       return
     }
 
+    if (activeGame) {
+      toast.error('You are already in an active game!')
+      return
+    }
+
     if (queue.inQueue) {
       cancelQueue()
     } else {
       joinQueue()
+    }
+  }
+
+  const handleReturnToGame = () => {
+    if (!activeGame) return
+
+    const gameId = activeGame.id || (activeGame as any)._id
+
+    // Navigate based on game status/phase
+    if (activeGame.status === 'ban_pick' || activeGame.phase === 'ban_phase' || activeGame.phase === 'pick_phase') {
+      navigate(`/ban-pick/${gameId}`)
+    } else {
+      navigate(`/game/${gameId}`)
     }
   }
 
@@ -306,7 +379,23 @@ const GameLobbyPage: React.FC = () => {
       </Header>
 
       <QueueSection>
-        {queue.matchFound ? (
+        {activeGame && !queue.matchFound ? (
+          <ActiveGameAlert
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="alert-icon">
+              <AlertCircle size={40} />
+            </div>
+            <h3>Active Game Found</h3>
+            <p>You have an ongoing game. Return to continue playing!</p>
+            <ReturnToGameButton onClick={handleReturnToGame}>
+              <ArrowRight size={20} />
+              Return to Game
+            </ReturnToGameButton>
+          </ActiveGameAlert>
+        ) : queue.matchFound ? (
           <MatchFoundCard
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -354,9 +443,16 @@ const GameLobbyPage: React.FC = () => {
             </div>
             <h2>Ready to Battle?</h2>
             <p>Click below to find an opponent for a 1v1 match</p>
-            <FindMatchButton onClick={handleFindMatch}>
+            <FindMatchButton
+              onClick={handleFindMatch}
+              style={{
+                opacity: activeGame ? 0.5 : 1,
+                cursor: activeGame ? 'not-allowed' : 'pointer'
+              }}
+              disabled={!!activeGame}
+            >
               <Search size={20} />
-              Find Match
+              {activeGame ? 'Already in Game' : 'Find Match'}
             </FindMatchButton>
             {queue.queueSize > 0 && (
               <QueueInfo>

@@ -17,7 +17,8 @@ export interface QueueState {
 interface Game {
   id: string;
   name: string;
-  status: "waiting" | "in_progress" | "finished";
+  status: "waiting" | "ban_pick" | "in_progress" | "finished";
+  phase?: "ban_phase" | "pick_phase" | "gameplay";
   players: any[];
   maxPlayers: number;
   createdAt: string;
@@ -25,6 +26,7 @@ interface Game {
 
 interface GameState {
   currentGame: Game | null;
+  activeGame: Game | null;
   availableGames: Game[];
   loading: boolean;
   error: string | null;
@@ -34,6 +36,7 @@ interface GameState {
 
 const initialState: GameState = {
   currentGame: null,
+  activeGame: null,
   availableGames: [],
   loading: false,
   error: null,
@@ -105,6 +108,20 @@ export const resetGameplay = createAsyncThunk(
   }
 );
 
+export const fetchActiveGame = createAsyncThunk(
+  "game/fetchActiveGame",
+  async (userId: string) => {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(`${API_URL}/games/active-game`, {
+      params: { userId },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  }
+);
+
 const gameSlice = createSlice({
   name: "game",
   initialState,
@@ -165,6 +182,10 @@ const gameSlice = createSlice({
       state.queue.inQueue = false;
       state.queue.opponent = action.payload.opponent;
       state.currentGame = action.payload.game;
+      state.activeGame = action.payload.game;
+    },
+    setActiveGame: (state, action: PayloadAction<Game | null>) => {
+      state.activeGame = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -223,6 +244,23 @@ const gameSlice = createSlice({
       .addCase(resetGameplay.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to reset gameplay";
+      })
+      // Fetch active game
+      .addCase(fetchActiveGame.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchActiveGame.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload.hasActiveGame) {
+          state.activeGame = action.payload.game;
+        } else {
+          state.activeGame = null;
+        }
+      })
+      .addCase(fetchActiveGame.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch active game";
       });
   },
 });
@@ -238,6 +276,7 @@ export const {
   joinQueue,
   leaveQueue,
   setMatchFound,
+  setActiveGame,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

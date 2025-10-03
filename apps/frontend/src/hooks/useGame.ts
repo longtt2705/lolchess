@@ -54,6 +54,13 @@ export interface ChessPiece {
     type: "passive" | "active";
     cooldown: number;
     currentCooldown: number;
+    attackRange?: {
+      range: number;
+      diagonal: boolean;
+      horizontal: boolean;
+      vertical: boolean;
+    };
+    targetTypes?: "square" | "ally" | "enemy" | "none";
   };
   cannotMoveBackward: boolean;
   canOnlyMoveVertically: boolean;
@@ -105,6 +112,10 @@ export const useGame = (gameId: string) => {
   const [selectedPiece, setSelectedPiece] = useState<ChessPiece | null>(null);
   const [validMoves, setValidMoves] = useState<ChessPosition[]>([]);
   const [validAttacks, setValidAttacks] = useState<ChessPosition[]>([]);
+  const [validSkillTargets, setValidSkillTargets] = useState<ChessPosition[]>(
+    []
+  );
+  const [isSkillMode, setIsSkillMode] = useState(false);
 
   // Update game state from WebSocket
   useEffect(() => {
@@ -178,6 +189,8 @@ export const useGame = (gameId: string) => {
       setSelectedPiece(null);
       setValidMoves([]);
       setValidAttacks([]);
+      setValidSkillTargets([]);
+      setIsSkillMode(false);
 
       // Use WebSocket if connected, otherwise fall back to HTTP
       if (wsConnected) {
@@ -372,13 +385,107 @@ export const useGame = (gameId: string) => {
     setSelectedPiece(null);
     setValidMoves([]);
     setValidAttacks([]);
+    setValidSkillTargets([]);
+    setIsSkillMode(false);
   }, []);
+
+  // Activate skill targeting mode
+  const activateSkillMode = useCallback(
+    (piece: ChessPiece) => {
+      if (!gameState || !piece.skill || piece.skill.type !== "active") return;
+
+      const skill = piece.skill;
+      const skillTargets: ChessPosition[] = [];
+
+      // If skill has no targetTypes or is "none", execute immediately
+      if (!skill.targetTypes || skill.targetTypes === "none") {
+        setIsSkillMode(false);
+        setValidSkillTargets([]);
+        return;
+      }
+
+      // Get skill range (default to 1 if not specified)
+      const skillRange = skill.attackRange || {
+        range: 1,
+        diagonal: true,
+        horizontal: true,
+        vertical: true,
+      };
+
+      // Define 8 directions
+      const directions = [
+        { dx: 0, dy: 1 }, // North
+        { dx: 0, dy: -1 }, // South
+        { dx: 1, dy: 0 }, // East
+        { dx: -1, dy: 0 }, // West
+        { dx: 1, dy: 1 }, // Northeast
+        { dx: 1, dy: -1 }, // Southeast
+        { dx: -1, dy: 1 }, // Northwest
+        { dx: -1, dy: -1 }, // Southwest
+      ];
+
+      // Calculate valid skill targets based on skill range and target type
+      directions.forEach(({ dx, dy }) => {
+        // Check if this direction is allowed
+        const isHorizontal = dy === 0;
+        const isVertical = dx === 0;
+        const isDiagonal = Math.abs(dx) === Math.abs(dy);
+
+        if (isHorizontal && !skillRange.horizontal) return;
+        if (isVertical && !skillRange.vertical) return;
+        if (isDiagonal && !skillRange.diagonal) return;
+
+        for (let step = 1; step <= skillRange.range; step++) {
+          const newX = piece.position.x + dx * step;
+          const newY = piece.position.y + dy * step;
+
+          // Check board bounds
+          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) break;
+
+          const targetPosition = { x: newX, y: newY };
+          const occupiedBy = gameState.board.find(
+            (p) =>
+              p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+          );
+
+          // Handle different target types
+          if (skill.targetTypes === "square") {
+            // Can target any square within range
+            skillTargets.push(targetPosition);
+          } else if (skill.targetTypes === "enemy") {
+            // Can only target enemy pieces
+            if (occupiedBy && occupiedBy.ownerId !== piece.ownerId) {
+              skillTargets.push(targetPosition);
+              break; // Stop at first enemy
+            } else if (occupiedBy) {
+              break; // Stop at ally
+            }
+          } else if (skill.targetTypes === "ally") {
+            // Can only target ally pieces
+            if (occupiedBy && occupiedBy.ownerId === piece.ownerId) {
+              skillTargets.push(targetPosition);
+              break; // Stop at first ally
+            } else if (occupiedBy) {
+              break; // Stop at enemy
+            }
+          }
+        }
+      });
+
+      setValidSkillTargets(skillTargets);
+      setIsSkillMode(true);
+      // Clear normal move/attack highlights
+      setValidMoves([]);
+      setValidAttacks([]);
+    },
+    [gameState]
+  );
 
   // Check if it's current user's turn
   const isMyTurn =
     gameState && currentUser
       ? gameState.currentRound % 2 ===
-      (gameState.bluePlayer === currentUser.id ? 1 : 0)
+        (gameState.bluePlayer === currentUser.id ? 1 : 0)
       : false;
 
   // Get current player data
@@ -396,6 +503,8 @@ export const useGame = (gameId: string) => {
     selectedPiece,
     validMoves,
     validAttacks,
+    validSkillTargets,
+    isSkillMode,
     isMyTurn,
     currentPlayer,
     opponent,
@@ -403,6 +512,7 @@ export const useGame = (gameId: string) => {
     clearSelection,
     executeAction,
     initializeGameplay,
+    activateSkillMode,
     // WebSocket status
     connected: wsConnected,
     lastUpdate,

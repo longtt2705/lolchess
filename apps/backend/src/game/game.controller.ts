@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, Query } from "@nestjs/common";
 import { GameService } from "./game.service";
 import { champions } from "./data/champion";
 
@@ -14,6 +14,11 @@ export class GameController {
   @Get("champions")
   getChampions() {
     return champions;
+  }
+
+  @Get("active-game")
+  getActiveGame(@Query("userId") userId: string) {
+    return this.gameService.getActiveGameForUser(userId);
   }
 
   @Get(":id")

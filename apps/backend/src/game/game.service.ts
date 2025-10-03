@@ -1,8 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Game, GameDocument } from "./game.schema";
 import { GameLogic } from "./game.logic";
+import { RedisGameCacheService } from "../redis/redis-game-cache.service";
 
 // Ban/Pick patterns from RULE.md
 const BAN_ORDER: ("blue" | "red")[] = [
@@ -33,7 +34,54 @@ const PICK_ORDER: ("blue" | "red")[] = [
 
 @Injectable()
 export class GameService {
-  constructor(@InjectModel(Game.name) private gameModel: Model<GameDocument>) { }
+  private readonly logger = new Logger(GameService.name);
+
+  constructor(
+    @InjectModel(Game.name) private gameModel: Model<GameDocument>,
+    private readonly redisCache: RedisGameCacheService
+  ) {}
+
+  /**
+   * Get game state - tries Redis cache first, falls back to MongoDB
+   */
+  private async getGameState(gameId: string): Promise<Game | null> {
+    // Try Redis cache first
+    let game = await this.redisCache.getGameState(gameId);
+
+    if (game) {
+      this.logger.debug(`Game ${gameId} retrieved from Redis cache`);
+      return game;
+    }
+
+    // Cache miss - fetch from MongoDB
+    this.logger.debug(`Game ${gameId} not in cache, fetching from MongoDB`);
+    const gameDoc = await this.gameModel.findById(gameId).exec();
+
+    if (gameDoc) {
+      // Cache the game state for future requests
+      const gameObj = gameDoc.toObject();
+      await this.redisCache.setGameState(gameId, gameObj, {
+        skipPersistence: true, // Don't queue persistence since it's already in DB
+      });
+      return gameObj;
+    }
+
+    return null;
+  }
+
+  /**
+   * Save game state - saves to Redis cache and queues MongoDB persistence
+   */
+  private async saveGameState(
+    gameId: string,
+    game: any, // Using any to handle cleaned board data
+    priority: number = 5
+  ): Promise<void> {
+    this.logger.debug(
+      `Saving game ${gameId} to Redis with priority ${priority}`
+    );
+    await this.redisCache.setGameState(gameId, game as Game, { priority });
+  }
 
   async findAll() {
     const games = await this.gameModel.find().exec();
@@ -44,11 +92,13 @@ export class GameService {
   }
 
   async findOne(id: string) {
-    const game = await this.gameModel.findById(id).exec();
+    const game = await this.getGameState(id);
     if (game) {
-      console.log(`FindOne: Game ${id} has ${game.board?.length || 0} pieces`);
+      this.logger.debug(
+        `FindOne: Game ${id} has ${game.board?.length || 0} pieces`
+      );
       if (game.board && game.board.length > 0) {
-        console.log(
+        this.logger.debug(
           `FindOne: First piece HP: ${game.board[0]?.stats?.hp || "N/A"}`
         );
       }
@@ -56,6 +106,40 @@ export class GameService {
     return {
       game,
       message: game ? "Game found" : "Game not found",
+    };
+  }
+
+  async getActiveGameForUser(userId: string) {
+    // Find games where the user is a player and the game is not finished
+    // Note: This query must go to MongoDB as we need to search across games
+    const gameDoc = await this.gameModel
+      .findOne({
+        $or: [{ bluePlayer: userId }, { redPlayer: userId }],
+        status: { $in: ["ban_pick", "in_progress"] },
+      })
+      .exec();
+
+    if (gameDoc) {
+      const game = gameDoc.toObject();
+      const gameId = game._id?.toString() || gameDoc._id.toString();
+      this.logger.log(`User ${userId} has an active game: ${gameId}`);
+
+      // Cache the game state for future requests
+      await this.redisCache.setGameState(gameId, game, {
+        skipPersistence: true,
+      });
+
+      return {
+        game,
+        hasActiveGame: true,
+        message: "Active game found",
+      };
+    }
+
+    return {
+      game: null,
+      hasActiveGame: false,
+      message: "No active game found",
     };
   }
 
@@ -433,7 +517,7 @@ export class GameService {
   async initializeGameplay(
     gameId: string
   ): Promise<{ game: Game; message: string }> {
-    const game = await this.gameModel.findById(gameId).exec();
+    const game = await this.getGameState(gameId);
     if (!game) {
       throw new Error("Game not found");
     }
@@ -456,7 +540,7 @@ export class GameService {
       const blueChampions = bluePlayer?.selectedChampions || [];
       const redChampions = redPlayer?.selectedChampions || [];
 
-      console.log("Initializing with champions:", {
+      this.logger.log("Initializing with champions:", {
         blueChampions,
         redChampions,
       });
@@ -469,31 +553,18 @@ export class GameService {
         redChampions
       );
 
-      console.log(
+      this.logger.log(
         "Initialized game board:",
         initializedGame.board.length,
         "pieces"
       );
 
-      // Save the initialized game with explicit board update
-      const updatedGame = await this.gameModel
-        .findByIdAndUpdate(
-          gameId,
-          {
-            $set: {
-              status: initializedGame.status,
-              phase: initializedGame.phase,
-              currentRound: initializedGame.currentRound,
-              board: initializedGame.board,
-              players: initializedGame.players,
-            },
-          },
-          { new: true }
-        )
-        .exec();
+      // Save to Redis cache and queue MongoDB persistence
+      // High priority (8) since this is a critical game state transition
+      await this.saveGameState(gameId, initializedGame, 8);
 
       return {
-        game: updatedGame,
+        game: initializedGame,
         message: "Game successfully initialized for gameplay",
       };
     } catch (error) {
@@ -508,7 +579,8 @@ export class GameService {
     gameId: string,
     actionData: any
   ): Promise<{ game: Game; message: string }> {
-    const game = await this.gameModel.findById(gameId).exec();
+    // Get game from Redis cache first
+    const game = await this.getGameState(gameId);
     if (!game) {
       return {
         game: null,
@@ -539,12 +611,12 @@ export class GameService {
 
       const updatedGame = GameLogic.processGame(game, eventPayload);
 
-      console.log(
+      this.logger.debug(
         "Game processed successfully, board has",
         updatedGame.board.length,
         "pieces"
       );
-      console.log("First piece stats:", updatedGame.board[0]?.stats);
+      this.logger.debug("First piece stats:", updatedGame.board[0]?.stats);
 
       // Import ChessObject for effective stats calculation
       const { ChessObject } = await import("./class/chess");
@@ -562,12 +634,12 @@ export class GameService {
             `Cleaning ${piece.name}: skill =`,
             piece.skill
               ? {
-                name: piece.skill.name,
-                type: piece.skill.type,
-                cooldown: piece.skill.cooldown,
-                currentCooldown: piece.skill.currentCooldown,
-                targetTypes: piece.skill.targetTypes,
-              }
+                  name: piece.skill.name,
+                  type: piece.skill.type,
+                  cooldown: piece.skill.cooldown,
+                  currentCooldown: piece.skill.currentCooldown,
+                  targetTypes: piece.skill.targetTypes,
+                }
               : "undefined"
           );
         }
@@ -592,14 +664,22 @@ export class GameService {
             maxHp: chessObject.getEffectiveStat(piece, "maxHp"),
             ad: chessObject.getEffectiveStat(piece, "ad"),
             ap: chessObject.getEffectiveStat(piece, "ap"),
-            physicalResistance: chessObject.getEffectiveStat(piece, "physicalResistance"),
-            magicResistance: chessObject.getEffectiveStat(piece, "magicResistance"),
+            physicalResistance: chessObject.getEffectiveStat(
+              piece,
+              "physicalResistance"
+            ),
+            magicResistance: chessObject.getEffectiveStat(
+              piece,
+              "magicResistance"
+            ),
             speed: chessObject.getEffectiveStat(piece, "speed"),
             attackRange: {
               diagonal: piece.stats.attackRange.diagonal,
               horizontal: piece.stats.attackRange.horizontal,
               vertical: piece.stats.attackRange.vertical,
-              range: chessObject.getEffectiveStat(piece, "range") || piece.stats.attackRange.range,
+              range:
+                chessObject.getEffectiveStat(piece, "range") ||
+                piece.stats.attackRange.range,
             },
             goldValue: piece.stats.goldValue, // Gold value is not affected by modifiers
           },
@@ -623,77 +703,77 @@ export class GameService {
           blue: piece.blue,
           items: piece.items
             ? piece.items.map((item) => ({
-              id: item.id,
-              name: item.name,
-              description: item.description,
-              stats: item.stats,
-              unique: item.unique,
-            }))
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                stats: item.stats,
+                unique: item.unique,
+              }))
             : [],
           debuffs: piece.debuffs
             ? piece.debuffs.map((debuff) => ({
-              id: debuff.id,
-              name: debuff.name,
-              description: debuff.description,
-              duration: debuff.duration,
-              maxDuration: debuff.maxDuration,
-              effects: debuff.effects
-                ? debuff.effects.map((effect) => ({
-                  stat: effect.stat,
-                  modifier: effect.modifier,
-                  type: effect.type,
-                }))
-                : [],
-              damagePerTurn: debuff.damagePerTurn || 0,
-              damageType: debuff.damageType || "0",
-              healPerTurn: debuff.healPerTurn || 0,
-              unique: debuff.unique || false,
-              appliedAt: debuff.appliedAt,
-              casterPlayerId: debuff.casterPlayerId,
-            }))
+                id: debuff.id,
+                name: debuff.name,
+                description: debuff.description,
+                duration: debuff.duration,
+                maxDuration: debuff.maxDuration,
+                effects: debuff.effects
+                  ? debuff.effects.map((effect) => ({
+                      stat: effect.stat,
+                      modifier: effect.modifier,
+                      type: effect.type,
+                    }))
+                  : [],
+                damagePerTurn: debuff.damagePerTurn || 0,
+                damageType: debuff.damageType || "0",
+                healPerTurn: debuff.healPerTurn || 0,
+                unique: debuff.unique || false,
+                appliedAt: debuff.appliedAt,
+                casterPlayerId: debuff.casterPlayerId,
+              }))
             : [],
           auras: piece.auras
             ? piece.auras.map((aura) => ({
-              id: aura.id,
-              name: aura.name,
-              description: aura.description,
-              range: aura.range,
-              effects: aura.effects
-                ? aura.effects.map((effect) => ({
-                  stat: effect.stat,
-                  modifier: effect.modifier,
-                  type: effect.type,
-                  target: effect.target,
-                }))
-                : [],
-              active: aura.active,
-              requiresAlive: aura.requiresAlive,
-              duration: aura.duration,
-            }))
+                id: aura.id,
+                name: aura.name,
+                description: aura.description,
+                range: aura.range,
+                effects: aura.effects
+                  ? aura.effects.map((effect) => ({
+                      stat: effect.stat,
+                      modifier: effect.modifier,
+                      type: effect.type,
+                      target: effect.target,
+                    }))
+                  : [],
+                active: aura.active,
+                requiresAlive: aura.requiresAlive,
+                duration: aura.duration,
+              }))
             : [],
           skill: piece.skill
             ? {
-              name: piece.skill.name,
-              description: piece.skill.description,
-              cooldown: piece.skill.cooldown,
-              attackRange: piece.skill.attackRange
-                ? {
-                  diagonal: piece.skill.attackRange.diagonal,
-                  horizontal: piece.skill.attackRange.horizontal,
-                  vertical: piece.skill.attackRange.vertical,
-                  range: piece.skill.attackRange.range,
-                }
-                : {
-                  diagonal: false,
-                  horizontal: false,
-                  vertical: false,
-                  range: 1,
-                },
-              targetTypes: piece.skill.targetTypes,
-              currentCooldown: piece.skill.currentCooldown,
-              type: piece.skill.type,
-              payload: piece.skill.payload,
-            }
+                name: piece.skill.name,
+                description: piece.skill.description,
+                cooldown: piece.skill.cooldown,
+                attackRange: piece.skill.attackRange
+                  ? {
+                      diagonal: piece.skill.attackRange.diagonal,
+                      horizontal: piece.skill.attackRange.horizontal,
+                      vertical: piece.skill.attackRange.vertical,
+                      range: piece.skill.attackRange.range,
+                    }
+                  : {
+                      diagonal: false,
+                      horizontal: false,
+                      vertical: false,
+                      range: 1,
+                    },
+                targetTypes: piece.skill.targetTypes,
+                currentCooldown: piece.skill.currentCooldown,
+                type: piece.skill.type,
+                payload: piece.skill.payload,
+              }
             : undefined,
         };
 
@@ -723,33 +803,23 @@ export class GameService {
         JSON.stringify(cleanedBoard[0], null, 2)
       );
 
-      // Save the updated game state
-      const savedGame = await this.gameModel
-        .findByIdAndUpdate(
-          gameId,
-          {
-            $set: {
-              status: updatedGame.status,
-              phase: updatedGame.phase,
-              currentRound: updatedGame.currentRound,
-              board: cleanedBoard,
-              players: updatedGame.players,
-              winner: updatedGame.winner,
-            },
-          },
-          { new: true }
-        )
-        .exec();
+      // Save to Redis cache and queue MongoDB persistence
+      // High priority (7) for gameplay actions
+      const gameToSave = {
+        ...updatedGame,
+        board: cleanedBoard, // Use cleaned board with effective stats
+      };
 
-      console.log(
-        "Game saved successfully, board now has",
-        savedGame?.board?.length,
+      await this.saveGameState(gameId, gameToSave, 7);
+
+      this.logger.log(
+        "Game saved successfully to Redis, board has",
+        gameToSave.board.length,
         "pieces"
       );
-      console.log("Saved piece HP example:", savedGame?.board?.[0]?.stats?.hp);
 
       return {
-        game: savedGame,
+        game: gameToSave as any,
         message: "Action executed successfully",
       };
     } catch (error) {
@@ -763,7 +833,8 @@ export class GameService {
   async resetGameplay(
     gameId: string
   ): Promise<{ game: Game; message: string }> {
-    const game = await this.gameModel.findById(gameId).exec();
+    // Get game from Redis cache first
+    const game = await this.getGameState(gameId);
     if (!game) {
       throw new Error("Game not found");
     }
@@ -784,25 +855,12 @@ export class GameService {
       blueChampions,
       redChampions
     );
-    // Save the initialized game with explicit board update
-    const updatedGame = await this.gameModel
-      .findByIdAndUpdate(
-        gameId,
-        {
-          $set: {
-            status: initializedGame.status,
-            phase: initializedGame.phase,
-            currentRound: initializedGame.currentRound,
-            board: initializedGame.board,
-            players: initializedGame.players,
-          },
-        },
-        { new: true }
-      )
-      .exec();
+    // Save to Redis cache and queue MongoDB persistence
+    // High priority (8) for gameplay reset
+    await this.saveGameState(gameId, initializedGame, 8);
 
     return {
-      game: updatedGame,
+      game: initializedGame,
       message: "Gameplay reset successfully",
     };
   }

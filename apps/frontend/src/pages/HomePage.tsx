@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { motion } from 'framer-motion'
-import { Play, Users, Trophy, Sword } from 'lucide-react'
-import { useAppSelector } from '../hooks/redux'
+import { Play, Users, Trophy, Sword, AlertCircle, ArrowRight } from 'lucide-react'
+import { useAppSelector, useAppDispatch } from '../hooks/redux'
+import { fetchActiveGame } from '../store/gameSlice'
 
 const HomeContainer = styled.div`
   min-height: calc(100vh - 200px);
@@ -118,8 +119,89 @@ const SecondaryButton = styled(Link)`
   }
 `
 
+const ActiveGameBanner = styled(motion.div)`
+  background: linear-gradient(135deg, var(--hover) 0%, #0596aa 100%);
+  border: 2px solid var(--hover);
+  border-radius: 12px;
+  padding: 20px 32px;
+  margin-bottom: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: 0 6px 24px rgba(91, 192, 222, 0.3);
+  max-width: 800px;
+  width: 100%;
+  
+  .alert-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    
+    .alert-icon {
+      color: var(--primary-bg);
+    }
+    
+    .alert-text {
+      h4 {
+        color: var(--primary-bg);
+        font-size: 1.3rem;
+        margin-bottom: 4px;
+      }
+      
+      p {
+        color: rgba(10, 14, 39, 0.8);
+        font-size: 0.95rem;
+      }
+    }
+  }
+`
+
+const ActiveGameButton = styled(motion.button)`
+  background: var(--primary-bg);
+  color: var(--hover);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  
+  &:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(10, 14, 39, 0.3);
+  }
+`
+
 const HomePage: React.FC = () => {
-  const { isAuthenticated } = useAppSelector(state => state.auth)
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const { isAuthenticated, user } = useAppSelector(state => state.auth)
+  const { activeGame } = useAppSelector(state => state.game)
+
+  useEffect(() => {
+    if (user && isAuthenticated) {
+      dispatch(fetchActiveGame(user.id))
+    }
+  }, [user, isAuthenticated, dispatch])
+
+  const handleReturnToGame = () => {
+    if (!activeGame) return
+
+    const gameId = activeGame.id || (activeGame as any)._id
+
+    // Navigate based on game status/phase
+    if (activeGame.status === 'ban_pick' || activeGame.phase === 'ban_phase' || activeGame.phase === 'pick_phase') {
+      navigate(`/ban-pick/${gameId}`)
+    } else {
+      navigate(`/game/${gameId}`)
+    }
+  }
 
   const features = [
     {
@@ -152,6 +234,28 @@ const HomePage: React.FC = () => {
           strategize your positioning, and defeat your opponent in epic battles!
         </p>
       </HeroSection>
+
+      {activeGame && isAuthenticated && (
+        <ActiveGameBanner
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="alert-content">
+            <div className="alert-icon">
+              <AlertCircle size={32} />
+            </div>
+            <div className="alert-text">
+              <h4>Active Game in Progress</h4>
+              <p>You have an ongoing match. Click to return!</p>
+            </div>
+          </div>
+          <ActiveGameButton onClick={handleReturnToGame}>
+            Return to Game
+            <ArrowRight size={18} />
+          </ActiveGameButton>
+        </ActiveGameBanner>
+      )}
 
       <FeatureGrid>
         {features.map((feature, index) => (
