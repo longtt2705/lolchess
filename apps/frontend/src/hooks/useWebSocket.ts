@@ -20,6 +20,8 @@ export const useWebSocket = (gameId: string | null) => {
   const [connected, setConnected] = useState(false);
   const [gameState, setGameState] = useState<any>(null);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
+  const [drawOfferReceived, setDrawOfferReceived] = useState(false);
+  const [drawOfferSent, setDrawOfferSent] = useState(false);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -92,6 +94,27 @@ export const useWebSocket = (gameId: string | null) => {
       setLastUpdate(`Error: ${data.message}`);
     });
 
+    socket.on(
+      "draw-offered",
+      (data: { fromUserId: string; message: string }) => {
+        console.log("Draw offered:", data);
+        setDrawOfferReceived(true);
+        setLastUpdate(data.message);
+      }
+    );
+
+    socket.on("draw-offer-sent", (data: { message: string }) => {
+      console.log("Draw offer sent:", data);
+      setDrawOfferSent(true);
+      setLastUpdate(data.message);
+    });
+
+    socket.on("draw-declined", (data: { message: string }) => {
+      console.log("Draw declined:", data);
+      setDrawOfferSent(false);
+      setLastUpdate(data.message);
+    });
+
     // Cleanup on unmount
     return () => {
       console.log("Cleaning up WebSocket connection");
@@ -126,11 +149,51 @@ export const useWebSocket = (gameId: string | null) => {
     socketRef.current.emit("initialize-gameplay", { gameId });
   };
 
+  // Resign from the game
+  const resign = () => {
+    if (!socketRef.current || !connected || !gameId) {
+      console.warn("Cannot resign: socket not connected");
+      return;
+    }
+
+    console.log("Resigning from game");
+    socketRef.current.emit("resign", { gameId });
+  };
+
+  // Offer a draw
+  const offerDraw = () => {
+    if (!socketRef.current || !connected || !gameId) {
+      console.warn("Cannot offer draw: socket not connected");
+      return;
+    }
+
+    console.log("Offering draw");
+    socketRef.current.emit("offer-draw", { gameId });
+  };
+
+  // Respond to draw offer
+  const respondToDraw = (accept: boolean) => {
+    if (!socketRef.current || !connected || !gameId) {
+      console.warn("Cannot respond to draw: socket not connected");
+      return;
+    }
+
+    console.log(`Responding to draw offer: ${accept ? "accept" : "decline"}`);
+    socketRef.current.emit("respond-draw", { gameId, accept });
+  };
+
   return {
     connected,
     gameState,
     lastUpdate,
     sendAction,
     initializeGameplay,
+    resign,
+    offerDraw,
+    respondToDraw,
+    drawOfferReceived,
+    setDrawOfferReceived,
+    drawOfferSent,
+    setDrawOfferSent,
   };
 };

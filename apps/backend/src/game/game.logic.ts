@@ -1,6 +1,12 @@
 import { ChessFactory } from "./class/chessFactory";
 import { ChampionData } from "./data/champion";
-import { GameEvent, EventPayload, Chess, Square } from "./game.schema";
+import {
+  GameEvent,
+  EventPayload,
+  Chess,
+  Square,
+  ActionDetails,
+} from "./game.schema";
 import { Game } from "./game.schema";
 import { champions } from "./data/champion";
 
@@ -17,21 +23,58 @@ export class GameLogic {
       throw new Error("Caster not found");
     }
 
+    // Initialize action details
+    const actionDetails: ActionDetails = {
+      timestamp: Date.now(),
+      actionType: event.event,
+      casterId: casterChess.id,
+      casterPosition: { x: casterChess.position.x, y: casterChess.position.y },
+      affectedPieceIds: [],
+      killedPieceIds: [],
+      killerPlayerId: event.playerId, // Track who performed the action for gold rewards
+    };
+
+    // Take snapshots of pieces before action
+    const pieceStatsBefore = new Map<string, any>();
+    game.board.forEach((piece) => {
+      pieceStatsBefore.set(piece.id, {
+        hp: piece.stats.hp,
+        ad: piece.stats.ad,
+        ap: piece.stats.ap,
+        speed: piece.stats.speed,
+        physicalResistance: piece.stats.physicalResistance,
+        magicResistance: piece.stats.magicResistance,
+        position: { x: piece.position.x, y: piece.position.y },
+      });
+    });
+
     switch (event.event) {
       case GameEvent.MOVE_CHESS:
-        this.processMoveChess(game, isBlue, casterChess, event.targetPosition);
+        this.processMoveChess(
+          game,
+          isBlue,
+          casterChess,
+          event.targetPosition,
+          actionDetails
+        );
         break;
       case GameEvent.ATTACK_CHESS: {
         this.processAttackChess(
           game,
           isBlue,
           casterChess,
-          event.targetPosition
+          event.targetPosition,
+          actionDetails
         );
         break;
       }
       case GameEvent.SKILL: {
-        this.processSkill(game, casterChess, event.targetPosition);
+        this.processSkill(
+          game,
+          casterChess,
+          event.targetPosition,
+          actionDetails
+        );
         break;
       }
       case GameEvent.BUY_ITEM: {
@@ -39,7 +82,8 @@ export class GameLogic {
           game,
           event.playerId,
           event.itemId!,
-          event.targetChampionId
+          event.targetChampionId,
+          actionDetails
         );
         break;
       }
@@ -47,21 +91,58 @@ export class GameLogic {
         break;
     }
 
+    // Detect stat changes and killed pieces
+    actionDetails.statChanges = {};
+    game.board.forEach((piece) => {
+      const before = pieceStatsBefore.get(piece.id);
+      if (before) {
+        if (before.hp !== piece.stats.hp) {
+          actionDetails.statChanges![`${piece.id}.hp`] = {
+            oldValue: before.hp,
+            newValue: piece.stats.hp,
+          };
+          if (!actionDetails.affectedPieceIds.includes(piece.id)) {
+            actionDetails.affectedPieceIds.push(piece.id);
+          }
+        }
+        // Track other stat changes
+        ["ad", "ap", "speed", "physicalResistance", "magicResistance"].forEach(
+          (stat) => {
+            if (before[stat] !== piece.stats[stat]) {
+              actionDetails.statChanges![`${piece.id}.${stat}`] = {
+                oldValue: before[stat],
+                newValue: piece.stats[stat],
+              };
+              if (!actionDetails.affectedPieceIds.includes(piece.id)) {
+                actionDetails.affectedPieceIds.push(piece.id);
+              }
+            }
+          }
+        );
+      }
+    });
+
+    // Find killed pieces
+    pieceStatsBefore.forEach((before, pieceId) => {
+      const piece = game.board.find((p) => p.id === pieceId);
+      if (!piece && before.hp > 0) {
+        actionDetails.killedPieceIds!.push(pieceId);
+      }
+    });
+
+    // Assign action details to game
+    game.lastAction = actionDetails;
+
     this.postProcessGame(game);
     return game;
   }
 
-  private static clearDeadChess(game: Game): Game {
-    game.board = game.board.filter((chess) => chess.stats.hp > 0);
-    return game;
-  }
-
   private static postProcessGame(game: Game): Game {
-    this.clearDeadChess(game);
     this.checkPawnPromotion(game);
     this.checkGameOver(game);
     this.spawnNeutralMonsters(game);
     this.startNextRound(game);
+    console.log(game.board.filter((chess) => chess.deadAtRound));
     return game;
   }
 
@@ -71,7 +152,10 @@ export class GameLogic {
     square: Square
   ): Chess | null {
     const chess = game.board.find(
-      (chess) => chess.position.x === square.x && chess.position.y === square.y
+      (chess) =>
+        chess.position.x === square.x &&
+        chess.position.y === square.y &&
+        chess.stats.hp > 0
     );
     if (!chess) {
       return null;
@@ -98,12 +182,20 @@ export class GameLogic {
     game: Game,
     isBlue: boolean,
     casterChess: Chess,
-    targetPosition: Square
+    targetPosition: Square,
+    actionDetails: ActionDetails
   ): Game {
     const targetChess = this.getChess(game, isBlue, targetPosition);
     if (targetChess) {
       throw new Error("Target is already occupied");
     }
+
+    actionDetails.fromPosition = {
+      x: casterChess.position.x,
+      y: casterChess.position.y,
+    };
+    actionDetails.targetPosition = targetPosition;
+
     const chessObject = ChessFactory.createChess(casterChess, game);
     chessObject.move(targetPosition);
 
@@ -114,16 +206,25 @@ export class GameLogic {
     game: Game,
     isBlue: boolean,
     casterChess: Chess,
-    targetPosition: Square
+    targetPosition: Square,
+    actionDetails: ActionDetails
   ): Game {
     const targetChess = this.getChess(game, !isBlue, targetPosition);
     if (!targetChess) {
       throw new Error("Target not found");
     }
 
+    actionDetails.targetId = targetChess.id;
+    actionDetails.targetPosition = targetPosition;
+
+    const hpBefore = targetChess.stats.hp;
+
     const chessObject = ChessFactory.createChess(casterChess, game);
     const targetChessObject = ChessFactory.createChess(targetChess, game);
     chessObject.attack(targetChessObject);
+
+    const hpAfter = targetChess.stats.hp;
+    actionDetails.damage = Math.max(0, hpBefore - hpAfter);
 
     return game;
   }
@@ -131,8 +232,14 @@ export class GameLogic {
   private static processSkill(
     game: Game,
     casterChess: Chess,
-    skillPosition?: Square
+    skillPosition?: Square,
+    actionDetails?: ActionDetails
   ): Game {
+    if (actionDetails && casterChess.skill) {
+      actionDetails.skillName = casterChess.skill.name;
+      actionDetails.targetPosition = skillPosition;
+    }
+
     const chessObject = ChessFactory.createChess(casterChess, game);
     chessObject.skill(skillPosition);
 
@@ -144,22 +251,44 @@ export class GameLogic {
   }
 
   private static startNextRound(game: Game): Game {
-    game.currentRound++;
-
-    // Award passive gold income (3 gold per turn) to current player
+    // Award passive gold income (3 gold per turn) to the player who just completed their turn
+    // BEFORE incrementing the round
     const currentPlayerId = this.isBlueTurn(game)
       ? game.bluePlayer
       : game.redPlayer;
-    const currentPlayer = game.players.find((p) => p.id === currentPlayerId);
-    if (currentPlayer) {
-      currentPlayer.gold += 3;
+
+    // Find the player by index to ensure proper mutation
+    const playerIndex = game.players.findIndex(
+      (p) => p.userId === currentPlayerId
+    );
+    if (playerIndex !== -1) {
+      game.players[playerIndex].gold += 3;
     }
 
+    // Now increment the round for the next player
+    game.currentRound++;
+
+    // Prepare pieces for the next turn
     game.board.forEach((chess) => {
       const chessObject = ChessFactory.createChess(chess, game);
       chessObject.preEnterTurn(this.isBlueTurn(game));
     });
     return game;
+  }
+
+  // Apply all active auras as debuffs
+  private static applyAuraDebuffs(game: Game): void {
+    // First, clean up expired aura debuffs
+    game.board.forEach((chess) => {
+      const chessObject = ChessFactory.createChess(chess, game);
+      chessObject.cleanupExpiredAuraDebuffs();
+    });
+
+    // Then apply current auras
+    game.board.forEach((chess) => {
+      const chessObject = ChessFactory.createChess(chess, game);
+      chessObject.applyAuraDebuffs();
+    });
   }
 
   // Debug method to show all active auras in the game
@@ -293,10 +422,19 @@ export class GameLogic {
     game.phase = "gameplay";
 
     // Initialize player gold (starting gold from game settings)
-    const bluePlayer = game.players.find((p) => p.id === game.bluePlayer);
-    const redPlayer = game.players.find((p) => p.id === game.redPlayer);
-    if (bluePlayer) bluePlayer.gold = game.gameSettings?.startingGold || 0;
-    if (redPlayer) redPlayer.gold = game.gameSettings?.startingGold || 0;
+    const bluePlayerIndex = game.players.findIndex(
+      (p) => p.userId === game.bluePlayer
+    );
+    const redPlayerIndex = game.players.findIndex(
+      (p) => p.userId === game.redPlayer
+    );
+    if (bluePlayerIndex !== -1) {
+      game.players[bluePlayerIndex].gold = game.gameSettings?.startingGold || 0;
+    }
+    if (redPlayerIndex !== -1) {
+      game.players[redPlayerIndex].gold = game.gameSettings?.startingGold || 0;
+    }
+    this.applyAuraDebuffs(game);
 
     console.log(
       "game.board",
@@ -437,11 +575,11 @@ export class GameLogic {
   private static getPieceBaseStats(type: string): any {
     const stats: { [key: string]: any } = {
       Poro: {
-        maxHp: 400,
+        maxHp: 100,
         ad: 0,
         ap: 0,
-        physicalResistance: 50,
-        magicResistance: 50,
+        physicalResistance: 0,
+        magicResistance: 0,
         speed: 1,
         attackRange: {
           range: 0,
@@ -665,10 +803,27 @@ export class GameLogic {
     const existingDrake = game.board.find((chess) => chess.name === "Drake");
     if (existingDrake) return;
 
+    const drakePosition = { x: 8, y: 3 }; // i4 position (i=8, 4=3 in 0-indexed)
+
+    // Check if position is occupied by another piece
+    const occupiedByPiece = game.board.find(
+      (chess) =>
+        chess.position.x === drakePosition.x &&
+        chess.position.y === drakePosition.y
+    );
+
+    // If position is occupied, don't spawn yet (will retry next turn)
+    if (occupiedByPiece) {
+      console.log(
+        `Drake spawn position (${drakePosition.x},${drakePosition.y}) is occupied by ${occupiedByPiece.name}. Waiting...`
+      );
+      return;
+    }
+
     const drake: Chess = {
       id: `drake_${game.currentRound}`,
       name: "Drake",
-      position: { x: 8, y: 3 }, // i4 position (i=8, 4=3 in 0-indexed)
+      position: drakePosition,
       cannotMoveBackward: false,
       cannotAttack: false,
       ownerId: "neutral",
@@ -695,6 +850,9 @@ export class GameLogic {
       auras: [],
     } as Chess;
 
+    console.log(
+      `Drake spawned at position (${drakePosition.x},${drakePosition.y})`
+    );
     game.board.push(drake);
   }
 
@@ -705,10 +863,27 @@ export class GameLogic {
     );
     if (existingBaron) return;
 
+    const baronPosition = { x: -1, y: 4 }; // z5 position (z=-1, 5=4 in 0-indexed)
+
+    // Check if position is occupied by another piece
+    const occupiedByPiece = game.board.find(
+      (chess) =>
+        chess.position.x === baronPosition.x &&
+        chess.position.y === baronPosition.y
+    );
+
+    // If position is occupied, don't spawn yet (will retry next turn)
+    if (occupiedByPiece) {
+      console.log(
+        `Baron spawn position (${baronPosition.x},${baronPosition.y}) is occupied by ${occupiedByPiece.name}. Waiting...`
+      );
+      return;
+    }
+
     const baron: Chess = {
       id: `baron_${game.currentRound}`,
       name: "Baron Nashor",
-      position: { x: -1, y: 4 }, // z5 position (z=-1, 5=4 in 0-indexed)
+      position: baronPosition,
       cannotMoveBackward: false,
       cannotAttack: false,
       ownerId: "neutral",
@@ -735,6 +910,9 @@ export class GameLogic {
       auras: [],
     } as Chess;
 
+    console.log(
+      `Baron Nashor spawned at position (${baronPosition.x},${baronPosition.y})`
+    );
     game.board.push(baron);
   }
 
@@ -764,12 +942,18 @@ export class GameLogic {
     game: Game,
     playerId: string,
     itemId: string,
-    championId?: string
+    championId?: string,
+    actionDetails?: ActionDetails
   ): Game {
-    const player = game.players.find((p) => p.id === playerId);
-    if (!player) {
+    if (actionDetails) {
+      actionDetails.itemId = itemId;
+      actionDetails.targetId = championId;
+    }
+    const playerIndex = game.players.findIndex((p) => p.userId === playerId);
+    if (playerIndex === -1) {
       throw new Error("Player not found");
     }
+    const player = game.players[playerIndex];
 
     // Find the item in shop (this would be implemented with an item system)
     const itemCost = this.getItemCost(itemId);
@@ -797,7 +981,7 @@ export class GameLogic {
       } as any);
     }
 
-    player.gold -= itemCost;
+    game.players[playerIndex].gold -= itemCost;
     return game;
   }
 
@@ -830,16 +1014,18 @@ export class GameLogic {
     killerPlayerId: string,
     monsterName: string
   ): void {
-    const player = game.players.find((p) => p.id === killerPlayerId);
-    if (!player) return;
+    const playerIndex = game.players.findIndex(
+      (p) => p.userId === killerPlayerId
+    );
+    if (playerIndex === -1) return;
 
     if (monsterName === "Drake") {
       // Award Drake Soul Buff: All pieces gain +10 AD
-      player.gold += 10;
+      game.players[playerIndex].gold += 10;
       this.applyDrakeSoulBuff(game, killerPlayerId);
     } else if (monsterName === "Baron Nashor") {
       // Award Hand of Baron Buff: All Minions and Siege Minions gain +20 AD and +20 Physical Resistance
-      player.gold += 50;
+      game.players[playerIndex].gold += 50;
       this.applyHandOfBaronBuff(game, killerPlayerId);
     }
   }
@@ -870,7 +1056,9 @@ export class GameLogic {
 
   // Enhanced game over detection with stalemate
   private static checkGameOver(game: Game): Game {
-    const poros = game.board.filter((chess) => chess.name === "Poro");
+    const poros = game.board.filter(
+      (chess) => chess.name === "Poro" && chess.stats.hp > 0
+    );
 
     // Check if a Poro is killed
     if (poros.length === 1) {

@@ -120,6 +120,9 @@ export class Debuff {
 
   @Prop({ required: true })
   casterPlayerId: string; // who applied this debuff
+
+  @Prop()
+  casterName?: string; // champion name of the caster (for icon display)
 }
 
 export class AuraEffect {
@@ -238,6 +241,9 @@ export class Chess {
 
   @Prop({ type: [Aura], default: [] })
   auras: Aura[];
+
+  @Prop()
+  deadAtRound?: number; // Track which round the piece died
 }
 
 @Schema()
@@ -260,6 +266,51 @@ export class EventPayload {
 
   @Prop()
   targetChampionId?: string;
+}
+
+// Action details for animation tracking
+export class ActionDetails {
+  @Prop({ required: true })
+  timestamp: number;
+
+  @Prop({ required: true, enum: GameEvent })
+  actionType: GameEvent;
+
+  @Prop({ required: true })
+  casterId: string; // Chess piece ID
+
+  @Prop({ type: Square, required: true })
+  casterPosition: Square;
+
+  @Prop()
+  targetId?: string; // Chess piece ID (if applicable)
+
+  @Prop({ type: Square })
+  targetPosition?: Square;
+
+  @Prop({ type: Square })
+  fromPosition?: Square; // For moves
+
+  @Prop({ default: 0 })
+  damage?: number; // Damage dealt
+
+  @Prop({ type: [String], default: [] })
+  affectedPieceIds: string[]; // All pieces affected by this action
+
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  statChanges?: Record<string, { oldValue: number; newValue: number }>;
+
+  @Prop()
+  itemId?: string; // For BUY_ITEM events
+
+  @Prop()
+  skillName?: string; // For SKILL events
+
+  @Prop({ type: [String], default: [] })
+  killedPieceIds?: string[]; // Pieces that died as a result of this action
+
+  @Prop()
+  killerPlayerId?: string; // Player who gets credit for kills (for gold)
 }
 
 @Schema()
@@ -390,6 +441,9 @@ export class Game {
 
   @Prop({ type: [Chess], default: [] })
   board: Chess[];
+
+  @Prop({ type: ActionDetails })
+  lastAction?: ActionDetails;
 }
 
 export const SquareSchema = SchemaFactory.createForClass(Square);
@@ -402,6 +456,7 @@ export const AuraSchema = SchemaFactory.createForClass(Aura);
 export const ChessSchema = SchemaFactory.createForClass(Chess);
 export const SkillSchema = SchemaFactory.createForClass(Skill);
 export const EventPayloadSchema = SchemaFactory.createForClass(EventPayload);
+export const ActionDetailsSchema = SchemaFactory.createForClass(ActionDetails);
 export const BanPickStateSchema = SchemaFactory.createForClass(BanPickState);
 export const PlayerSchema = SchemaFactory.createForClass(Player);
 export const GameSettingsSchema = SchemaFactory.createForClass(GameSettings);

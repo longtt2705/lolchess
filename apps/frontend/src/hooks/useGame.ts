@@ -66,6 +66,24 @@ export interface ChessPiece {
   canOnlyMoveVertically: boolean;
   hasMovedBefore: boolean;
   cannotAttack: boolean;
+  deadAtRound?: number;
+}
+
+export interface ActionDetails {
+  timestamp: number;
+  actionType: "move_chess" | "attack_chess" | "skill" | "buy_item";
+  casterId: string;
+  casterPosition: ChessPosition;
+  targetId?: string;
+  targetPosition?: ChessPosition;
+  fromPosition?: ChessPosition;
+  damage?: number;
+  affectedPieceIds: string[];
+  statChanges?: Record<string, { oldValue: number; newValue: number }>;
+  itemId?: string;
+  skillName?: string;
+  killedPieceIds?: string[];
+  killerPlayerId?: string;
 }
 
 export interface GameState {
@@ -83,6 +101,7 @@ export interface GameState {
     gold: number;
   }>;
   winner?: string;
+  lastAction?: ActionDetails;
 }
 
 export interface GameAction {
@@ -104,6 +123,13 @@ export const useGame = (gameId: string) => {
     lastUpdate,
     sendAction: wsSendAction,
     initializeGameplay: wsInitializeGameplay,
+    resign: wsResign,
+    offerDraw: wsOfferDraw,
+    respondToDraw: wsRespondToDraw,
+    drawOfferReceived,
+    setDrawOfferReceived,
+    drawOfferSent,
+    setDrawOfferSent,
   } = useWebSocket(gameId);
 
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -496,6 +522,30 @@ export const useGame = (gameId: string) => {
   // Get opponent data
   const opponent = gameState?.players.find((p) => p.userId !== currentUser?.id);
 
+  // Resign from the game
+  const resign = useCallback(() => {
+    if (wsConnected) {
+      wsResign();
+    }
+  }, [wsConnected, wsResign]);
+
+  // Offer a draw
+  const offerDraw = useCallback(() => {
+    if (wsConnected) {
+      wsOfferDraw();
+    }
+  }, [wsConnected, wsOfferDraw]);
+
+  // Respond to draw offer
+  const respondToDraw = useCallback(
+    (accept: boolean) => {
+      if (wsConnected) {
+        wsRespondToDraw(accept);
+      }
+    },
+    [wsConnected, wsRespondToDraw]
+  );
+
   return {
     gameState,
     loading,
@@ -513,6 +563,13 @@ export const useGame = (gameId: string) => {
     executeAction,
     initializeGameplay,
     activateSkillMode,
+    resign,
+    offerDraw,
+    respondToDraw,
+    drawOfferReceived,
+    setDrawOfferReceived,
+    drawOfferSent,
+    setDrawOfferSent,
     // WebSocket status
     connected: wsConnected,
     lastUpdate,

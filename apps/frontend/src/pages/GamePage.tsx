@@ -4,8 +4,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { ChessPiece, ChessPosition, useGame } from '../hooks/useGame'
+import { ChessPiece, ChessPosition, useGame, GameState } from '../hooks/useGame'
 import { resetGameplay } from '../store/gameSlice'
+import { AnimationEngine, AnimationAction } from '../utils/animationEngine'
 
 interface AttackAnimation {
   attackerId: string
@@ -432,11 +433,125 @@ const ChessDetailPanel = styled.div`
     }
     
     .debuff-card {
-      border-color: #ef4444;
-      background: rgba(239, 68, 68, 0.05);
+      border-color: rgba(239, 68, 68, 0.5);
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(220, 38, 38, 0.05) 100%);
+      transition: all 0.2s ease;
+      
+      &:hover {
+        border-color: #ef4444;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(220, 38, 38, 0.08) 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+      }
+      
+      &.aura-debuff {
+        border-color: rgba(250, 204, 21, 0.5);
+        background: linear-gradient(135deg, rgba(250, 204, 21, 0.08) 0%, rgba(251, 191, 36, 0.05) 100%);
+        
+        &:hover {
+          border-color: #facc15;
+          background: linear-gradient(135deg, rgba(250, 204, 21, 0.12) 0%, rgba(251, 191, 36, 0.08) 100%);
+          box-shadow: 0 4px 12px rgba(250, 204, 21, 0.15);
+        }
+        
+        .card-name {
+          color: #facc15;
+        }
+      }
+      
+      &.buff-debuff {
+        border-color: rgba(34, 197, 94, 0.5);
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(22, 163, 74, 0.05) 100%);
+        
+        &:hover {
+          border-color: #22c55e;
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(22, 163, 74, 0.08) 100%);
+          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+        }
+        
+        .card-name {
+          color: #22c55e;
+        }
+      }
+      
+      .debuff-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+        
+        .debuff-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 8px;
+          border: 2px solid rgba(239, 68, 68, 0.3);
+          background: rgba(0, 0, 0, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          overflow: hidden;
+          
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+          
+          .fallback-icon {
+            color: #ef4444;
+            font-size: 24px;
+          }
+        }
+        
+        .debuff-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+      }
       
       .card-name {
         color: #ef4444;
+      }
+      
+      .debuff-source {
+        color: var(--secondary-text);
+        font-size: 10px;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      
+      .debuff-effects {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+        
+        .effect-tag {
+          background: rgba(0, 0, 0, 0.3);
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          padding: 4px 8px;
+          font-size: 10px;
+          color: var(--primary-text);
+          font-weight: 600;
+          white-space: nowrap;
+          
+          &.positive {
+            border-color: rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+          }
+          
+          &.negative {
+            border-color: rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+          }
+        }
       }
     }
     
@@ -563,10 +678,9 @@ const Board = styled.div`
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
   
   .square {
-    background: rgba(30, 35, 40, 0.7);
+    background: rgba(30, 35, 40, 0.4);
     border: 1px solid rgba(200, 155, 60, 0.3);
     border-radius: 2px;
-    backdrop-filter: blur(2px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -668,7 +782,7 @@ const Board = styled.div`
   }
 `
 
-const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: boolean; canSelect: boolean; isAttacking?: boolean }>`
+const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: boolean; canSelect: boolean; isAttacking?: boolean; isMoving?: boolean }>`
   width: 90%;
   height: 90%;
   border-radius: 8px;
@@ -684,7 +798,7 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   justify-content: center;
   cursor: ${props => props.canSelect ? 'pointer' : 'default'};
   position: relative;
-  z-index: ${props => props.isAttacking ? 10 : 1};
+  z-index: ${props => props.isMoving ? 20 : props.isAttacking ? 10 : 1};
   box-shadow: 0 0 2px 2px ${props =>
     props.isNeutral ? '#9333ea' :
       props.isBlue ? '#3b82f6' : '#ef4444'};
@@ -738,6 +852,78 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   }
 `
 
+const SkillIcon = styled.div<{ isActive: boolean; onCooldown: boolean }>`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: ${props => props.isActive
+    ? '2px solid #ffd700'
+    : '2px solid #9333ea'};
+  background: ${props => props.onCooldown
+    ? 'rgba(0, 0, 0, 0.7)'
+    : props.isActive
+      ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(200, 155, 60, 0.3) 100%)'
+      : 'linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(124, 58, 237, 0.3) 100%)'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ${props => props.isActive && !props.onCooldown ? 'pointer' : 'default'};
+  z-index: 5;
+  box-shadow: ${props => props.isActive
+    ? '0 0 8px rgba(255, 215, 0, 0.6), inset 0 0 8px rgba(255, 215, 0, 0.2)'
+    : '0 0 6px rgba(147, 51, 234, 0.6), inset 0 0 6px rgba(147, 51, 234, 0.2)'};
+  transition: all 0.2s ease;
+  filter: ${props => props.onCooldown ? 'grayscale(1)' : 'none'};
+  opacity: ${props => props.onCooldown ? 0.5 : 1};
+  pointer-events: ${props => props.isActive && !props.onCooldown ? 'auto' : 'none'};
+  
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 2px;
+    object-fit: cover;
+  }
+  
+  &:hover {
+    ${props => props.isActive && !props.onCooldown && `
+      transform: scale(1.15);
+      border-width: 3px;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 1), inset 0 0 12px rgba(255, 215, 0, 0.4);
+    `}
+  }
+  
+  /* Cooldown overlay */
+  &::after {
+    content: ${props => props.onCooldown ? `'${props.onCooldown}'` : '""'};
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 1);
+    pointer-events: none;
+  }
+  
+  /* Active skill pulse animation */
+  ${props => props.isActive && !props.onCooldown && `
+    animation: skillPulse 2s ease-in-out infinite;
+    
+    @keyframes skillPulse {
+      0%, 100% {
+        box-shadow: 0 0 8px rgba(255, 215, 0, 0.6), inset 0 0 8px rgba(255, 215, 0, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 16px rgba(255, 215, 0, 1), inset 0 0 12px rgba(255, 215, 0, 0.4);
+      }
+    }
+  `}
+`
+
 const DamageNumber = styled(motion.div) <{ isDamage: boolean }>`
   position: absolute;
   top: 50%;
@@ -764,54 +950,6 @@ const AttackEffect = styled(motion.div)`
   z-index: 15;
 `
 
-const GameActions = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-  justify-content: center;
-  padding: 16px;
-  background: linear-gradient(135deg, rgba(20, 25, 35, 0.6) 0%, rgba(10, 14, 39, 0.6) 100%);
-  border-radius: 12px;
-  border: 2px solid rgba(200, 155, 60, 0.2);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
-  
-  button {
-    background: linear-gradient(135deg, rgba(60, 60, 65, 0.8) 0%, rgba(40, 40, 45, 0.8) 100%);
-    border: 2px solid var(--border);
-    color: var(--primary-text);
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    font-size: 14px;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    
-    &:hover {
-      border-color: var(--gold);
-      background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
-      color: var(--primary-bg);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(200, 155, 60, 0.5);
-    }
-    
-    &:active {
-      transform: translateY(0);
-    }
-    
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none;
-      filter: grayscale(1);
-    }
-  }
-`
-
 const LoadingOverlay = styled(motion.div)`
   position: absolute;
   top: 50%;
@@ -834,6 +972,231 @@ const LoadingOverlay = styled(motion.div)`
     font-size: 1rem;
     line-height: 1.5;
   }
+`
+
+const DrawOfferModal = styled(motion.div)`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--secondary-bg);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 32px;
+  z-index: 9998;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  min-width: 400px;
+  text-align: center;
+
+  h2 {
+    color: var(--gold);
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+
+  p {
+    color: var(--primary-text);
+    font-size: 16px;
+    margin-bottom: 24px;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  button {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+
+    &.accept {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+      }
+    }
+
+    &.decline {
+      background: transparent;
+      border: 2px solid var(--border);
+      color: var(--primary-text);
+
+      &:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+      }
+    }
+  }
+`
+
+const DrawOfferBackdrop = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9997;
+  backdrop-filter: blur(4px);
+`
+
+const DrawOfferSentNotification = styled(motion.div)`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--secondary-bg);
+  border: 2px solid var(--blue);
+  border-radius: 8px;
+  padding: 16px 24px;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+  .title {
+    color: var(--blue);
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .message {
+    color: var(--secondary-text);
+    font-size: 12px;
+  }
+`
+
+const VictoryOverlay = styled(motion.div) <{ isVictory: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: ${props => props.isVictory
+    ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(16, 185, 129, 0.95) 50%, rgba(5, 150, 105, 0.95) 100%)'
+    : 'linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 50%, rgba(185, 28, 28, 0.95) 100%)'
+  };
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  padding: 40px;
+`
+
+const VictoryContent = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  max-width: 600px;
+  text-align: center;
+`
+
+const VictoryTitle = styled(motion.h1) <{ isVictory: boolean }>`
+  font-size: 72px;
+  font-weight: bold;
+  margin: 0;
+  color: white;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  
+  ${props => props.isVictory && `
+    animation: victoryPulse 2s ease-in-out infinite;
+    
+    @keyframes victoryPulse {
+      0%, 100% {
+        transform: scale(1);
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      }
+      50% {
+        transform: scale(1.05);
+        text-shadow: 0 8px 40px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 255, 255, 0.5);
+      }
+    }
+  `}
+`
+
+const VictorySubtitle = styled(motion.p)`
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  font-weight: 500;
+`
+
+const VictoryStats = styled(motion.div)`
+  display: flex;
+  gap: 40px;
+  padding: 24px 40px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+`
+
+const StatItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  
+  .stat-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: white;
+  }
+`
+
+const VictoryButton = styled(motion.button)`
+  padding: 16px 48px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.7);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+`
+
+const Confetti = styled(motion.div)`
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: ${() => {
+    const colors = ['#FFD700', '#FFA500', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }};
+  border-radius: 50%;
 `
 
 const TurnIndicator = styled(motion.div) <{ isMyTurn: boolean }>`
@@ -869,22 +1232,6 @@ const TurnIndicator = styled(motion.div) <{ isMyTurn: boolean }>`
   @keyframes pulse {
     0%, 100% { filter: drop-shadow(0 0 20px rgba(200, 155, 60, 0.8)) brightness(1.2); }
     50% { filter: drop-shadow(0 0 30px rgba(200, 155, 60, 1)) brightness(1.3); }
-  }
-`
-
-const ConnectionStatus = styled.div<{ connected: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  background: ${props => props.connected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)'};
-  color: ${props => props.connected ? '#22c55e' : '#ef4444'};
-  border: 1px solid ${props => props.connected ? '#22c55e' : '#ef4444'};
-  
-  .status-text {
-    font-weight: 500;
   }
 `
 
@@ -975,7 +1322,9 @@ const ChessPieceRenderer: React.FC<{
   damageEffects?: DamageEffect[]
   isRedPlayer?: boolean
   isDead?: boolean
-}> = ({ piece, canSelect, onClick, attackAnimation, moveAnimation, isAnimating = false, damageEffects = [], isRedPlayer = false, isDead = false }) => {
+  onSkillClick?: () => void
+  boardRef: React.RefObject<HTMLDivElement>
+}> = ({ piece, canSelect, onClick, attackAnimation, moveAnimation, isAnimating = false, damageEffects = [], isRedPlayer = false, isDead = false, onSkillClick, boardRef }) => {
   const hpPercentage = (piece.stats.hp / piece.stats.maxHp) * 100
   const isNeutral = piece.ownerId === "neutral"
   const isAttacking = attackAnimation?.attackerId === piece.id
@@ -1002,11 +1351,21 @@ const ChessPieceRenderer: React.FC<{
       deltaY = -deltaY
     }
 
-    // Convert to visual movement accounting for coordinate system
-    // CSS grid flows left-to-right, top-to-bottom
-    // But game coordinates might have Y=0 at bottom, increasing upward
-    const moveX = deltaX * 30 // X direction
-    const moveY = -deltaY * 30 // Y direction (CSS coordinates are inverted)
+    // Get actual cell dimensions from the board
+    const { cellWidth, cellHeight } = getCellDimensions()
+
+    // Calculate direction to target
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+    if (distance === 0) return {}
+
+    const dirX = deltaX / distance
+    const dirY = deltaY / distance
+
+    // Move 30% of average cell size toward target for attack lunge
+    const avgCellSize = (cellWidth + cellHeight) / 2
+    const lungeDistance = avgCellSize * 0.3
+    const moveX = dirX * lungeDistance
+    const moveY = -dirY * lungeDistance // Y direction (CSS coordinates are inverted)
 
     return {
       x: [0, moveX, 0],
@@ -1020,11 +1379,33 @@ const ChessPieceRenderer: React.FC<{
     }
   }
 
+  // Calculate actual cell dimensions from board
+  const getCellDimensions = () => {
+    if (!boardRef.current) {
+      // Fallback values if board ref is not available
+      return { cellWidth: 60, cellHeight: 60 }
+    }
+
+    const boardElement = boardRef.current
+    const boardRect = boardElement.getBoundingClientRect()
+
+    // Board is 10 columns x 8 rows with 3px gap
+    const totalGapWidth = 9 * 3 // 9 gaps between 10 columns
+    const totalGapHeight = 7 * 3 // 7 gaps between 8 rows
+
+    const cellWidth = (boardRect.width - totalGapWidth) / 10
+    const cellHeight = (boardRect.height - totalGapHeight) / 8
+
+    return { cellWidth, cellHeight }
+  }
+
   // Calculate move animation values
   const getMoveAnimation = () => {
     if (!isMoving || !moveAnimation) return {}
 
     // Calculate the visual direction for movement
+    // The piece is now rendered at the NEW position, so we need to calculate
+    // where it WAS (old position) relative to where it IS (new position)
     let deltaX = moveAnimation.toPos.x - moveAnimation.fromPos.x
     let deltaY = moveAnimation.toPos.y - moveAnimation.fromPos.y
 
@@ -1034,16 +1415,21 @@ const ChessPieceRenderer: React.FC<{
       deltaY = -deltaY
     }
 
-    // Convert to pixel movement
-    const moveX = deltaX * 60 // Full movement to new position
-    const moveY = -deltaY * 60 // Y direction inverted for CSS
+    // Get actual cell dimensions from the board
+    const { cellWidth, cellHeight } = getCellDimensions()
+
+    // Convert to pixel movement based on actual cell size
+    // Since the piece is rendered at NEW position, we start at OLD position (negative offset)
+    // and animate TO the current position (0, 0)
+    const moveX = deltaX * (cellWidth + 3) // +3 for gap
+    const moveY = -deltaY * (cellHeight + 3) // Y direction inverted for CSS, +3 for gap
 
     return {
-      x: [0, moveX],
-      y: [0, moveY],
+      x: [-moveX, 0], // Start at old position, animate to new (current) position
+      y: [-moveY, 0],
       transition: {
-        duration: 0.2,
-        ease: "linear"
+        duration: 0.5,
+        iterations: 1
       }
     }
   }
@@ -1071,12 +1457,19 @@ const ChessPieceRenderer: React.FC<{
     return {}
   }
 
+  // Generate unique key to force remount on move
+  const animationKey = isMoving && moveAnimation
+    ? `${piece.id}-${moveAnimation.fromPos.x}-${moveAnimation.fromPos.y}-${moveAnimation.toPos.x}-${moveAnimation.toPos.y}`
+    : `${piece.id}-static`
+
   return (
     <ChessPieceComponent
+      key={animationKey}
       isBlue={piece.blue}
       isNeutral={isNeutral}
       canSelect={canSelect && !isAnimating && !isDead}
       isAttacking={isAttacking}
+      isMoving={isMoving}
       onClick={onClick}
       animate={getCombinedAnimation()}
       whileHover={canSelect && !isAnimating && !isDead ? { scale: 1.05 } : {}}
@@ -1099,6 +1492,52 @@ const ChessPieceRenderer: React.FC<{
           style={{ width: `${hpPercentage}%` }}
         />
       </div>
+
+      {/* Skill Icon Overlay */}
+      {piece.skill && (
+        <SkillIcon
+          isActive={piece.skill.type === 'active'}
+          onCooldown={piece.skill.currentCooldown > 0}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (piece.skill && piece.skill.type === 'active' && piece.skill.currentCooldown === 0 && onSkillClick) {
+              onSkillClick()
+            }
+          }}
+          title={`${piece.skill.name}${piece.skill.type === 'active' && piece.skill.currentCooldown > 0 ? ` (CD: ${piece.skill.currentCooldown})` : ''}`}
+        >
+          <img
+            src={`/icons/${piece.name.toLowerCase()}_skill.webp`}
+            alt={piece.skill.name}
+            onError={(e) => {
+              // Fallback - show first letter of skill name
+              e.currentTarget.style.display = 'none'
+              const parent = e.currentTarget.parentElement
+              if (parent && piece.skill) {
+                parent.innerHTML = piece.skill.name?.charAt(0).toUpperCase() || '?'
+                parent.style.fontSize = '14px'
+                parent.style.fontWeight = 'bold'
+                parent.style.color = piece.skill.type === 'active' ? '#ffd700' : '#9333ea'
+              }
+            }}
+          />
+          {piece.skill.currentCooldown > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: '#fff',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              textShadow: '0 0 4px rgba(0, 0, 0, 1)',
+              pointerEvents: 'none'
+            }}>
+              {piece.skill.currentCooldown}
+            </div>
+          )}
+        </SkillIcon>
+      )}
 
       {isBeingAttacked && (
         <AttackEffect
@@ -1150,6 +1589,13 @@ const GamePage: React.FC = () => {
     executeAction,
     initializeGameplay,
     activateSkillMode,
+    resign,
+    offerDraw,
+    respondToDraw,
+    drawOfferReceived,
+    setDrawOfferReceived,
+    drawOfferSent,
+    setDrawOfferSent,
     connected: wsConnected,
     lastUpdate,
   } = useGame(gameId || '')
@@ -1166,6 +1612,14 @@ const GamePage: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(false)
   const prevDeadPiecesRef = useRef<Set<string>>(new Set())
 
+  // Track previous game state for animation
+  const previousGameStateRef = useRef<GameState | null>(null)
+  const animationQueueRef = useRef<AnimationAction[]>([])
+  const isPlayingAnimationsRef = useRef(false)
+
+  // Board ref for calculating actual cell dimensions
+  const boardRef = useRef<HTMLDivElement>(null)
+
   // Detail view state - separate from action selection
   const [detailViewPiece, setDetailViewPiece] = useState<ChessPiece | null>(null)
 
@@ -1179,123 +1633,186 @@ const GamePage: React.FC = () => {
     }
   }, [gameState, initializeGameplay])
 
-  // Animate attack
-  const animateAttack = useCallback(async (attacker: ChessPiece, target: ChessPosition) => {
-    if (isAnimating) return
-
-    setIsAnimating(true)
-
-    // Set attack animation state
-    const animation: AttackAnimation = {
-      attackerId: attacker.id,
-      targetId: `target_${target.x}_${target.y}`,
-      attackerPos: attacker.position,
-      targetPos: target,
-    }
-
-    setAttackAnimation(animation)
-
-    // Wait for animation to complete
-    await new Promise(resolve => setTimeout(resolve, 600))
-
-    // Find the target piece to attach damage effect to
-    const targetPiece = gameState?.board.find(p =>
-      p.position.x === target.x && p.position.y === target.y && p.stats.hp > 0
-    )
-
-    if (targetPiece) {
-      // Create damage effect
-      const damageEffect: DamageEffect = {
-        id: `damage_${Date.now()}`,
-        targetId: targetPiece.id,
-        damage: Math.floor(Math.random() * 30) + 10, // Placeholder damage
-        isDamage: true,
-      }
-
-      setDamageEffects(prev => [...prev, damageEffect])
-
-      // Clean up damage effect after animation
-      setTimeout(() => {
-        setDamageEffects(prev => prev.filter(effect => effect.id !== damageEffect.id))
-      }, 1500) // Give damage text time to animate
-    }
-
-    // Clean up attack animation
-    setTimeout(() => {
-      setAttackAnimation(null)
-      setIsAnimating(false)
-    }, 1000)
-  }, [isAnimating, gameState])
-
-  // Animate move
-  const animateMove = useCallback(async (piece: ChessPiece, targetPos: ChessPosition) => {
-    if (isAnimating) return
-
-    setIsAnimating(true)
-
-    // Set move animation state
-    const animation: MoveAnimation = {
-      pieceId: piece.id,
-      fromPos: piece.position,
-      toPos: targetPos,
-    }
-
-    setMoveAnimation(animation)
-
-    // Wait for animation to complete
-    await new Promise(resolve => setTimeout(resolve, 400))
-
-    // Clean up move animation
-    setTimeout(() => {
-      setMoveAnimation(null)
-      setIsAnimating(false)
-    }, 100)
-  }, [isAnimating])
-
-  // Track piece deaths and animate
+  // Play animation sequence when game state updates
   useEffect(() => {
     if (!gameState) return
 
+    // Check if we should play animations
+    const shouldAnimate = AnimationEngine.shouldPlayAnimations(
+      gameState,
+      previousGameStateRef.current
+    )
+
+    if (shouldAnimate && !isPlayingAnimationsRef.current) {
+      // Generate animation sequence
+      const animations = AnimationEngine.generateAnimationSequence(
+        gameState,
+        previousGameStateRef.current
+      )
+
+      if (animations.length > 0) {
+        animationQueueRef.current = animations
+        playAnimationSequence(animations)
+      }
+    }
+
+    // Update previous game state
+    previousGameStateRef.current = gameState
+
+    // Update dead pieces set
     const newDeadPieces = new Set<string>()
     gameState.board.forEach(piece => {
       if (piece.stats.hp <= 0) {
         newDeadPieces.add(piece.id)
       }
     })
+    setDeadPieces(newDeadPieces)
+    prevDeadPiecesRef.current = newDeadPieces
+  }, [gameState])
 
-    // Check if there are any new deaths (using previous deadPieces from ref)
-    const prevDeadPieces = prevDeadPiecesRef.current
-    const newDeathIds = Array.from(newDeadPieces).filter(id => !prevDeadPieces.has(id))
+  // Play animation sequence
+  const playAnimationSequence = useCallback(async (animations: AnimationAction[]) => {
+    try {
+      isPlayingAnimationsRef.current = true
+      setIsAnimating(true)
 
-    if (newDeathIds.length > 0) {
-      // There are new deaths - delay the update to let damage animations finish
-      const timeoutId = setTimeout(() => {
-        setDeadPieces(newDeadPieces)
-        prevDeadPiecesRef.current = newDeadPieces
-      }, 500)
+      // Sort animations by delay
+      const sortedAnimations = [...animations].sort((a, b) => a.delay - b.delay)
 
-      return () => clearTimeout(timeoutId)
-    } else {
-      // No new deaths, update immediately
-      setDeadPieces(newDeadPieces)
-      prevDeadPiecesRef.current = newDeadPieces
+      // Group animations by delay to play them in parallel
+      const animationGroups = new Map<number, AnimationAction[]>()
+      sortedAnimations.forEach(anim => {
+        const group = animationGroups.get(anim.delay) || []
+        group.push(anim)
+        animationGroups.set(anim.delay, group)
+      })
+
+      // Play each group in sequence
+      const delays = Array.from(animationGroups.keys()).sort((a, b) => a - b)
+
+      for (let i = 0; i < delays.length; i++) {
+        const delay = delays[i]
+        const group = animationGroups.get(delay)!
+
+        // Wait until this delay time
+        if (i === 0 && delay > 0) {
+          await new Promise(resolve => setTimeout(resolve, delay))
+        } else if (i > 0) {
+          const waitTime = delay - delays[i - 1]
+          if (waitTime > 0) {
+            await new Promise(resolve => setTimeout(resolve, waitTime))
+          }
+        }
+
+        // Play all animations in this group simultaneously
+        const promises = group.map(anim => playAnimation(anim))
+        await Promise.all(promises)
+      }
+    } catch (error) {
+      console.error('Animation error:', error)
+    } finally {
+      // Always clean up, even if there's an error
+      isPlayingAnimationsRef.current = false
+      setIsAnimating(false)
+      // Clear any lingering animation states
+      setMoveAnimation(null)
+      setAttackAnimation(null)
     }
-  }, [gameState]) // Only depend on gameState
+  }, [])
 
-  // Enhanced execute action with animation
+  // Play individual animation
+  const playAnimation = useCallback(async (animation: AnimationAction) => {
+    switch (animation.type) {
+      case 'move': {
+        const { pieceId, fromPosition, toPosition } = animation.data
+        setMoveAnimation({
+          pieceId,
+          fromPos: fromPosition,
+          toPos: toPosition,
+        })
+        await new Promise(resolve => setTimeout(resolve, animation.duration))
+        setMoveAnimation(null)
+        break
+      }
+
+      case 'attack': {
+        const { attackerId, attackerPosition, targetId, targetPosition } = animation.data
+        setAttackAnimation({
+          attackerId,
+          targetId,
+          attackerPos: attackerPosition,
+          targetPos: targetPosition,
+        })
+        await new Promise(resolve => setTimeout(resolve, animation.duration))
+        setAttackAnimation(null)
+        break
+      }
+
+      case 'damage': {
+        const { pieceId, damage, isDamage } = animation.data
+        const damageEffect: DamageEffect = {
+          id: animation.id,
+          targetId: pieceId,
+          damage,
+          isDamage,
+        }
+        setDamageEffects(prev => [...prev, damageEffect])
+
+        // Clean up after animation
+        setTimeout(() => {
+          setDamageEffects(prev => prev.filter(e => e.id !== animation.id))
+        }, animation.duration)
+        break
+      }
+
+      case 'stat_change': {
+        const { pieceId, stat, oldValue, newValue } = animation.data
+        const diff = newValue - oldValue
+        const isIncrease = diff > 0
+
+        // Show stat change as floating text
+        const statEffect: DamageEffect = {
+          id: animation.id,
+          targetId: pieceId,
+          damage: Math.abs(diff),
+          isDamage: !isIncrease,
+        }
+        setDamageEffects(prev => [...prev, statEffect])
+
+        // Clean up after animation
+        setTimeout(() => {
+          setDamageEffects(prev => prev.filter(e => e.id !== animation.id))
+        }, animation.duration)
+        break
+      }
+
+      case 'skill': {
+        // For skills, we could add a special effect visual
+        // For now, just wait for the duration
+        await new Promise(resolve => setTimeout(resolve, animation.duration))
+        break
+      }
+
+      case 'death': {
+        // Death animation is handled by the CSS fade-out based on deadPieces set
+        await new Promise(resolve => setTimeout(resolve, animation.duration))
+        break
+      }
+
+      default:
+        break
+    }
+  }, [])
+
+  // Enhanced execute action - now animations are server-driven
   const executeActionWithAnimation = useCallback(async (type: string, casterPosition: ChessPosition, targetPosition: ChessPosition) => {
-    if (type === 'attack' && selectedPiece) {
-      await animateAttack(selectedPiece, targetPosition)
-    } else if (type === 'move' && selectedPiece) {
-      await animateMove(selectedPiece, targetPosition)
-    }
-
+    // Just execute the action, animations will be played when the server responds
     executeAction({
       type: type as any,
       casterPosition,
       targetPosition,
     })
-  }, [selectedPiece, executeAction, animateAttack, animateMove])
+  }, [executeAction])
 
   // Handle detail view click - can click any piece anytime
   const handleDetailClick = (piece: ChessPiece) => {
@@ -1438,7 +1955,7 @@ const GamePage: React.FC = () => {
         const isValidAttack = validAttacks.some(attack => attack.x === x && attack.y === y)
         const isValidSkill = validSkillTargets.some(target => target.x === x && target.y === y)
 
-        const piece = gameState?.board.find(p => p.position.x === x && p.position.y === y && p.stats.hp > 0)
+        const piece = gameState?.board.find(p => (p.position.x === x && p.position.y === y) && (p.stats.hp > 0 || p.deadAtRound === gameState?.currentRound - 1))
 
         let squareClass = 'square'
         if (isSelected) squareClass += ' selected'
@@ -1452,7 +1969,6 @@ const GamePage: React.FC = () => {
             className={squareClass}
             onClick={() => handleSquareClick(x, y)}
           >
-            <div className="coordinates">{x},{y}</div>
             {piece && (
               <ChessPieceRenderer
                 piece={piece}
@@ -1463,6 +1979,7 @@ const GamePage: React.FC = () => {
                 damageEffects={damageEffects}
                 isRedPlayer={isRedPlayer}
                 isDead={deadPieces.has(piece.id)}
+                boardRef={boardRef}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent square click
 
@@ -1480,6 +1997,12 @@ const GamePage: React.FC = () => {
                   // If it's an enemy piece on a valid attack square, attack it
                   else if (isValidAttack) {
                     handleSquareClick(x, y);
+                  }
+                }}
+                onSkillClick={() => {
+                  if (isMyTurn && piece.ownerId === currentPlayer?.userId && piece.skill?.type === 'active') {
+                    selectPiece(piece);
+                    handleSkill();
                   }
                 }}
               />
@@ -1540,409 +2063,565 @@ const GamePage: React.FC = () => {
     )
   }
 
-  return (
-    <GameContainer>
-      <PlayersPanel>
-        <h3>
-          <Users size={20} />
-          1v1 Match ({gameState.players.length}/2)
-        </h3>
-        <PlayerItem>
-          <div>
-            <div className="player-name">
-              {currentPlayer?.username || 'You'} {isMyTurn ? <img src="/icons/left-arrow.png" alt="Lightning" width={14} height={14} /> : ''}
-            </div>
-            <div className="player-stats">
-              <div className="stat">
-                <img src="/icons/dollar.png" alt="Gold" width={14} height={14} />
-                {currentPlayer?.gold || 0}
-              </div>
-            </div>
-          </div>
-        </PlayerItem>
+  // Check if game is finished
+  const isGameFinished = gameState.status === 'finished'
+  const isVictory = isGameFinished && gameState.winner && (
+    (gameState.winner === 'blue' && currentUser?.id === gameState.bluePlayer) ||
+    (gameState.winner === 'red' && currentUser?.id === gameState.redPlayer)
+  )
+  const isDraw = isGameFinished && !gameState.winner
 
-        {opponent && (
+  return (
+    <>
+      {/* Draw offer modal */}
+      {drawOfferReceived && (
+        <>
+          <DrawOfferBackdrop
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => {
+              // Clicking backdrop declines the offer
+              respondToDraw(false);
+              setDrawOfferReceived(false);
+            }}
+          />
+          <DrawOfferModal
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+          >
+            <h2>Draw Offer</h2>
+            <p>Your opponent has offered a draw. Do you accept?</p>
+            <div className="button-group">
+              <button
+                className="accept"
+                onClick={() => {
+                  respondToDraw(true);
+                  setDrawOfferReceived(false);
+                }}
+              >
+                ✅ Accept Draw
+              </button>
+              <button
+                className="decline"
+                onClick={() => {
+                  respondToDraw(false);
+                  setDrawOfferReceived(false);
+                }}
+              >
+                ❌ Decline
+              </button>
+            </div>
+          </DrawOfferModal>
+        </>
+      )}
+
+      {/* Draw offer sent notification */}
+      {drawOfferSent && (
+        <DrawOfferSentNotification
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 50 }}
+        >
+          <div className="title">Draw Offer Sent</div>
+          <div className="message">Waiting for opponent's response...</div>
+        </DrawOfferSentNotification>
+      )}
+
+      {/* Victory/Defeat Overlay */}
+      <AnimatePresence>
+        {isGameFinished && (
+          <VictoryOverlay
+            isVictory={isVictory || false}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
+            {/* Confetti for victory */}
+            {isVictory && Array.from({ length: 50 }).map((_, i) => (
+              <Confetti
+                key={i}
+                initial={{
+                  x: Math.random() * window.innerWidth,
+                  y: -20,
+                  rotate: 0,
+                  opacity: 1
+                }}
+                animate={{
+                  y: window.innerHeight + 20,
+                  rotate: Math.random() * 720 - 360,
+                  opacity: [1, 1, 0]
+                }}
+                transition={{
+                  duration: 3 + Math.random() * 2,
+                  delay: Math.random() * 2,
+                  ease: 'linear',
+                  repeat: Infinity
+                }}
+              />
+            ))}
+
+            <VictoryContent>
+              <VictoryTitle
+                isVictory={isVictory || false}
+                initial={{ y: -50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+              >
+                {isDraw ? 'DRAW' : isVictory ? 'VICTORY' : 'DEFEAT'}
+              </VictoryTitle>
+
+              <VictorySubtitle
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+              >
+                {isDraw
+                  ? 'The battle ends in a stalemate!'
+                  : isVictory
+                    ? 'You have conquered the battlefield!'
+                    : 'Your Poro has fallen...'}
+              </VictorySubtitle>
+
+              <VictoryStats
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+              >
+                <StatItem>
+                  <span className="stat-label">Round</span>
+                  <span className="stat-value">{gameState.currentRound}</span>
+                </StatItem>
+                <StatItem>
+                  <span className="stat-label">Your Gold</span>
+                  <span className="stat-value">{currentPlayer?.gold || 0}</span>
+                </StatItem>
+                <StatItem>
+                  <span className="stat-label">Pieces Left</span>
+                  <span className="stat-value">
+                    {gameState.board.filter(p => p.ownerId === currentUser?.id && p.stats.hp > 0).length}
+                  </span>
+                </StatItem>
+              </VictoryStats>
+
+              <VictoryButton
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.8, duration: 0.6 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.location.href = '/'}
+              >
+                Return to Lobby
+              </VictoryButton>
+            </VictoryContent>
+          </VictoryOverlay>
+        )}
+      </AnimatePresence>
+
+      {/* Main Game UI */}
+      <GameContainer>
+        <PlayersPanel>
+          <h3>
+            <Users size={20} />
+            1v1 Match ({gameState.players.length}/2)
+          </h3>
           <PlayerItem>
             <div>
               <div className="player-name">
-                {opponent.username} {!isMyTurn ? <img src="/icons/left-arrow.png" alt="Lightning" width={14} height={14} /> : ''}
+                {currentPlayer?.username || 'You'} {isMyTurn ? <img src="/icons/left-arrow.png" alt="Lightning" width={14} height={14} /> : ''}
               </div>
               <div className="player-stats">
                 <div className="stat">
                   <img src="/icons/dollar.png" alt="Gold" width={14} height={14} />
-                  {opponent.gold}
+                  {currentPlayer?.gold || 0}
                 </div>
               </div>
             </div>
           </PlayerItem>
-        )}
-      </PlayersPanel>
 
-      <ChessDetailPanel>
-        {detailViewPiece ? (
-          <>
-            <h3>
-              <Users size={20} />
-              Chess Details
-            </h3>
-
-            <div className="chess-header">
-              <div className={`chess-icon ${detailViewPiece.ownerId === 'neutral' ? 'neutral' : detailViewPiece.blue ? 'blue' : 'red'}`}>
-                <img
-                  src={getImageUrl(detailViewPiece)}
-                  alt={detailViewPiece.name}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                  }}
-                />
-              </div>
-              <div className="chess-info">
-                <div className="chess-name">{detailViewPiece.name}</div>
-                <div className="chess-position">
-                  Position: ({detailViewPiece.position.x}, {detailViewPiece.position.y}) •
-                  Owner: {detailViewPiece.ownerId === 'neutral' ? 'Neutral' :
-                    detailViewPiece.ownerId === currentPlayer?.userId ? 'You' : 'Opponent'}
+          {opponent && (
+            <PlayerItem>
+              <div>
+                <div className="player-name">
+                  {opponent.username} {!isMyTurn ? <img src="/icons/left-arrow.png" alt="Lightning" width={14} height={14} /> : ''}
+                </div>
+                <div className="player-stats">
+                  <div className="stat">
+                    <img src="/icons/dollar.png" alt="Gold" width={14} height={14} />
+                    {opponent.gold}
+                  </div>
                 </div>
               </div>
-            </div>
+            </PlayerItem>
+          )}
+        </PlayersPanel>
 
-            <div className="hp-bar-section">
-              <div className="hp-label">
-                <span className="hp-text">Health</span>
-                <span className="hp-numbers">
-                  {detailViewPiece.stats.hp} / {detailViewPiece.stats.maxHp}
-                  {detailViewPiece.rawStats && detailViewPiece.rawStats.maxHp !== detailViewPiece.stats.maxHp && (
-                    <span style={{
-                      fontSize: '10px',
-                      color: 'var(--secondary-text)',
-                      marginLeft: '4px',
-                      opacity: 0.7
-                    }}>
-                      (base: {detailViewPiece.rawStats.maxHp})
-                    </span>
-                  )}
-                </span>
-              </div>
-              <div className="hp-bar">
-                <div
-                  className="hp-fill"
-                  style={{ width: `${(detailViewPiece.stats.hp / detailViewPiece.stats.maxHp) * 100}%` }}
-                />
-              </div>
-            </div>
+        <ChessDetailPanel>
+          {detailViewPiece ? (
+            <>
+              <h3>
+                <Users size={20} />
+                Chess Details
+              </h3>
 
-            <div className="stats-grid">
-              <div className="stat-item attack">
-                <span className="stat-label">Attack (AD)</span>
-                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.ad !== detailViewPiece.stats.ad
-                  ? `modified ${detailViewPiece.stats.ad > detailViewPiece.rawStats.ad ? 'buffed' : 'debuffed'}`
-                  : ''
-                  }`}>
-                  {detailViewPiece.stats.ad}
-                  {detailViewPiece.rawStats && detailViewPiece.rawStats.ad !== detailViewPiece.stats.ad && (
-                    <span className="base-value">({detailViewPiece.rawStats.ad})</span>
-                  )}
-                </span>
+              <div className="chess-header">
+                <div className={`chess-icon ${detailViewPiece.ownerId === 'neutral' ? 'neutral' : detailViewPiece.blue ? 'blue' : 'red'}`}>
+                  <img
+                    src={getImageUrl(detailViewPiece)}
+                    alt={detailViewPiece.name}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                </div>
+                <div className="chess-info">
+                  <div className="chess-name">{detailViewPiece.name}</div>
+                  <div className="chess-position">
+                    Position: ({detailViewPiece.position.x}, {detailViewPiece.position.y}) •
+                    Owner: {detailViewPiece.ownerId === 'neutral' ? 'Neutral' :
+                      detailViewPiece.ownerId === currentPlayer?.userId ? 'You' : 'Opponent'}
+                  </div>
+                </div>
               </div>
-              <div className="stat-item">
-                <span className="stat-label">Ability (AP)</span>
-                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.ap !== detailViewPiece.stats.ap
-                  ? `modified ${detailViewPiece.stats.ap > detailViewPiece.rawStats.ap ? 'buffed' : 'debuffed'}`
-                  : ''
-                  }`}>
-                  {detailViewPiece.stats.ap}
-                  {detailViewPiece.rawStats && detailViewPiece.rawStats.ap !== detailViewPiece.stats.ap && (
-                    <span className="base-value">({detailViewPiece.rawStats.ap})</span>
-                  )}
-                </span>
-              </div>
-              <div className="stat-item armor">
-                <span className="stat-label">Phys. Resist</span>
-                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.physicalResistance !== detailViewPiece.stats.physicalResistance
-                  ? `modified ${detailViewPiece.stats.physicalResistance > detailViewPiece.rawStats.physicalResistance ? 'buffed' : 'debuffed'}`
-                  : ''
-                  }`}>
-                  {detailViewPiece.stats.physicalResistance}
-                  {detailViewPiece.rawStats && detailViewPiece.rawStats.physicalResistance !== detailViewPiece.stats.physicalResistance && (
-                    <span className="base-value">({detailViewPiece.rawStats.physicalResistance})</span>
-                  )}
-                </span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Magic Resist</span>
-                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.magicResistance !== detailViewPiece.stats.magicResistance
-                  ? `modified ${detailViewPiece.stats.magicResistance > detailViewPiece.rawStats.magicResistance ? 'buffed' : 'debuffed'}`
-                  : ''
-                  }`}>
-                  {detailViewPiece.stats.magicResistance}
-                  {detailViewPiece.rawStats && detailViewPiece.rawStats.magicResistance !== detailViewPiece.stats.magicResistance && (
-                    <span className="base-value">({detailViewPiece.rawStats.magicResistance})</span>
-                  )}
-                </span>
-              </div>
-              <div className="stat-item speed">
-                <span className="stat-label">Speed</span>
-                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.speed !== detailViewPiece.stats.speed
-                  ? `modified ${detailViewPiece.stats.speed > detailViewPiece.rawStats.speed ? 'buffed' : 'debuffed'}`
-                  : ''
-                  }`}>
-                  {detailViewPiece.stats.speed}
-                  {detailViewPiece.rawStats && detailViewPiece.rawStats.speed !== detailViewPiece.stats.speed && (
-                    <span className="base-value">({detailViewPiece.rawStats.speed})</span>
-                  )}
-                </span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Range</span>
-                <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.attackRange.range !== detailViewPiece.stats.attackRange.range
-                  ? `modified ${detailViewPiece.stats.attackRange.range > detailViewPiece.rawStats.attackRange.range ? 'buffed' : 'debuffed'}`
-                  : ''
-                  }`}>
-                  {detailViewPiece.stats.attackRange.range}
-                  {detailViewPiece.rawStats && detailViewPiece.rawStats.attackRange.range !== detailViewPiece.stats.attackRange.range && (
-                    <span className="base-value">({detailViewPiece.rawStats.attackRange.range})</span>
-                  )}
-                </span>
-              </div>
-            </div>
 
-            <div className="skill-section">
-              <div className="section-header">
-                <Zap size={16} />
-                Ability
+              <div className="hp-bar-section">
+                <div className="hp-label">
+                  <span className="hp-text">Health</span>
+                  <span className="hp-numbers">
+                    {detailViewPiece.stats.hp} / {detailViewPiece.stats.maxHp}
+                    {detailViewPiece.rawStats && detailViewPiece.rawStats.maxHp !== detailViewPiece.stats.maxHp && (
+                      <span style={{
+                        fontSize: '10px',
+                        color: 'var(--secondary-text)',
+                        marginLeft: '4px',
+                        opacity: 0.7
+                      }}>
+                        (base: {detailViewPiece.rawStats.maxHp})
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="hp-bar">
+                  <div
+                    className="hp-fill"
+                    style={{ width: `${(detailViewPiece.stats.hp / detailViewPiece.stats.maxHp) * 100}%` }}
+                  />
+                </div>
               </div>
-              {detailViewPiece.skill ? (
-                <div className="skill-card">
-                  <div className="skill-card-header">
-                    <img src={`/icons/${detailViewPiece.name.toLowerCase()}_skill.webp`} alt={detailViewPiece.name} className="skill-icon" />
-                    <div className="skill-info" >
-                      <div className="card-name">{detailViewPiece.skill.name}</div>
-                      <div className="skill-type">{detailViewPiece.skill.type}</div>
-                      <div className={`card-cooldown ${detailViewPiece.skill.currentCooldown > 0 ? 'cooling' : 'ready'}`}>
-                        {detailViewPiece.skill.currentCooldown > 0
-                          ? `Cooldown: ${detailViewPiece.skill.currentCooldown} turns`
-                          : 'Ready to use'
-                        }
+
+              <div className="stats-grid">
+                <div className="stat-item attack">
+                  <span className="stat-label">Attack (AD)</span>
+                  <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.ad !== detailViewPiece.stats.ad
+                    ? `modified ${detailViewPiece.stats.ad > detailViewPiece.rawStats.ad ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {detailViewPiece.stats.ad}
+                    {detailViewPiece.rawStats && detailViewPiece.rawStats.ad !== detailViewPiece.stats.ad && (
+                      <span className="base-value">({detailViewPiece.rawStats.ad})</span>
+                    )}
+                  </span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Ability (AP)</span>
+                  <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.ap !== detailViewPiece.stats.ap
+                    ? `modified ${detailViewPiece.stats.ap > detailViewPiece.rawStats.ap ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {detailViewPiece.stats.ap}
+                    {detailViewPiece.rawStats && detailViewPiece.rawStats.ap !== detailViewPiece.stats.ap && (
+                      <span className="base-value">({detailViewPiece.rawStats.ap})</span>
+                    )}
+                  </span>
+                </div>
+                <div className="stat-item armor">
+                  <span className="stat-label">Phys. Resist</span>
+                  <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.physicalResistance !== detailViewPiece.stats.physicalResistance
+                    ? `modified ${detailViewPiece.stats.physicalResistance > detailViewPiece.rawStats.physicalResistance ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {detailViewPiece.stats.physicalResistance}
+                    {detailViewPiece.rawStats && detailViewPiece.rawStats.physicalResistance !== detailViewPiece.stats.physicalResistance && (
+                      <span className="base-value">({detailViewPiece.rawStats.physicalResistance})</span>
+                    )}
+                  </span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Magic Resist</span>
+                  <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.magicResistance !== detailViewPiece.stats.magicResistance
+                    ? `modified ${detailViewPiece.stats.magicResistance > detailViewPiece.rawStats.magicResistance ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {detailViewPiece.stats.magicResistance}
+                    {detailViewPiece.rawStats && detailViewPiece.rawStats.magicResistance !== detailViewPiece.stats.magicResistance && (
+                      <span className="base-value">({detailViewPiece.rawStats.magicResistance})</span>
+                    )}
+                  </span>
+                </div>
+                <div className="stat-item speed">
+                  <span className="stat-label">Speed</span>
+                  <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.speed !== detailViewPiece.stats.speed
+                    ? `modified ${detailViewPiece.stats.speed > detailViewPiece.rawStats.speed ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {detailViewPiece.stats.speed}
+                    {detailViewPiece.rawStats && detailViewPiece.rawStats.speed !== detailViewPiece.stats.speed && (
+                      <span className="base-value">({detailViewPiece.rawStats.speed})</span>
+                    )}
+                  </span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Range</span>
+                  <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.attackRange.range !== detailViewPiece.stats.attackRange.range
+                    ? `modified ${detailViewPiece.stats.attackRange.range > detailViewPiece.rawStats.attackRange.range ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {detailViewPiece.stats.attackRange.range}
+                    {detailViewPiece.rawStats && detailViewPiece.rawStats.attackRange.range !== detailViewPiece.stats.attackRange.range && (
+                      <span className="base-value">({detailViewPiece.rawStats.attackRange.range})</span>
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              <div className="skill-section">
+                <div className="section-header">
+                  <Zap size={16} />
+                  Ability
+                </div>
+                {detailViewPiece.skill ? (
+                  <div className="skill-card">
+                    <div className="skill-card-header">
+                      <img src={`/icons/${detailViewPiece.name.toLowerCase()}_skill.webp`} alt={detailViewPiece.name} className="skill-icon" />
+                      <div className="skill-info" >
+                        <div className="card-name">{detailViewPiece.skill.name}</div>
+                        <div className="skill-type">{detailViewPiece.skill.type}</div>
+                        <div className={`card-cooldown ${detailViewPiece.skill.currentCooldown > 0 ? 'cooling' : 'ready'}`}>
+                          {detailViewPiece.skill.currentCooldown > 0
+                            ? `Cooldown: ${detailViewPiece.skill.currentCooldown} turns`
+                            : 'Ready to use'
+                          }
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="card-description">
-                    {detailViewPiece.skill.description || 'No description available'}
-                  </div>
-                </div>
-              ) : (
-                <div className="no-items">No special ability</div>
-              )}
-            </div>
-
-            <div className="debuff-section">
-              <div className="section-header">
-                <Shield size={16} />
-                Debuffs ({(detailViewPiece as any).debuffs?.length || 0})
-              </div>
-              {(detailViewPiece as any).debuffs && (detailViewPiece as any).debuffs.length > 0 ? (
-                (detailViewPiece as any).debuffs.map((debuff: any, index: number) => (
-                  <div key={index} className="debuff-card">
-                    <div className="card-name">{debuff.name}</div>
-                    <div className="card-duration active">
-                      Duration: {debuff.duration} turns remaining
-                    </div>
                     <div className="card-description">
-                      Effects: {debuff.effects?.map((effect: any) =>
-                        `${effect.stat} ${effect.type === 'percentage' ? '' : ''}${effect.modifier > 0 ? '+' : ''}${effect.modifier}${effect.type === 'percentage' ? '%' : ''}`
-                      ).join(', ') || 'No effect details available'}
+                      {detailViewPiece.skill.description || 'No description available'}
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="no-items">No active debuffs</div>
-              )}
-            </div>
-
-            <div className="items-section">
-              <div className="section-header">
-                <Package size={16} />
-                Items ({(detailViewPiece as any).items?.length || 0})
-              </div>
-              {(detailViewPiece as any).items && (detailViewPiece as any).items.length > 0 ? (
-                (detailViewPiece as any).items.map((item: any, index: number) => (
-                  <div key={index} className="item-card">
-                    <div className="card-name">{item.name}</div>
-                    <div className="card-description">
-                      {item.description || 'No description available'}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="no-items">No items equipped</div>
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <h3>
-              <Users size={20} />
-              Select a Chess Piece
-            </h3>
-            <div className="no-selection">
-              <div className="placeholder-icon">
-                <Users size={24} />
-              </div>
-              <div className="placeholder-text">No piece selected</div>
-              <div className="placeholder-hint">Click on any chess piece to view detailed information</div>
-            </div>
-          </>
-        )}
-      </ChessDetailPanel>
-
-      <GameBoard>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px' }}>
-          <TurnIndicator isMyTurn={isMyTurn}>
-            {isMyTurn ? "Your Turn" : "Opponent's Turn"}
-            <div className="round-info">Round {gameState.currentRound}</div>
-          </TurnIndicator>
-
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              style={{
-                background: 'transparent',
-                border: '2px solid var(--blue)',
-                color: 'var(--blue)',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--blue)'
-                e.currentTarget.style.color = 'var(--primary-bg)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = 'var(--blue)'
-              }}
-              onClick={() => {
-                // TODO: Implement offer draw functionality
-                console.log('Offer draw clicked')
-              }}
-            >
-              🤝 Offer Draw
-            </button>
-
-            <button
-              style={{
-                background: 'transparent',
-                border: '2px solid #ef4444',
-                color: '#ef4444',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#ef4444'
-                e.currentTarget.style.color = 'white'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = '#ef4444'
-              }}
-              onClick={() => {
-                if (window.confirm('Are you sure you want to resign? This will end the game.')) {
-                  // TODO: Implement resign functionality
-                  console.log('Resign clicked')
-                }
-              }}
-            >
-              🏳️ Resign
-            </button>
-          </div>
-        </div>
-
-        <Board>
-          {renderBoard()}
-        </Board>
-
-        {selectedPiece && (
-          <GameActions>
-            <div style={{
-              color: 'var(--primary-text)',
-              textAlign: 'center',
-              marginBottom: '12px',
-              fontSize: '14px'
-            }}>
-              <strong>{selectedPiece.name}</strong> selected
-              <div style={{ fontSize: '12px', color: 'var(--secondary-text)', marginTop: '4px' }}>
-                {isSkillMode ? (
-                  <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>
-                    ⚡ Select a target for {selectedPiece.skill?.name} ({validSkillTargets.length} targets available)
-                  </span>
                 ) : (
-                  <>
-                    {validMoves.length > 0 && `${validMoves.length} moves available`}
-                    {validMoves.length > 0 && validAttacks.length > 0 && ' • '}
-                    {validAttacks.length > 0 && `${validAttacks.length} attacks available`}
-                  </>
+                  <div className="no-items">No special ability</div>
                 )}
               </div>
-            </div>
 
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              <div className="debuff-section">
+                <div className="section-header">
+                  <Shield size={16} />
+                  Status Effects ({(detailViewPiece as any).debuffs?.length || 0})
+                </div>
+                {(detailViewPiece as any).debuffs && (detailViewPiece as any).debuffs.length > 0 ? (
+                  (detailViewPiece as any).debuffs.map((debuff: any, index: number) => {
+                    const isAura = debuff.duration === -1;
+                    const isBuff = debuff.effects?.some((e: any) => e.modifier > 0) || false;
+                    const debuffClass = isAura ? 'aura-debuff' : (isBuff ? 'buff-debuff' : '');
+
+                    return (
+                      <div key={index} className={`debuff-card ${debuffClass}`}>
+                        <div className="debuff-card-header">
+                          <div className="debuff-icon">
+                            {debuff.casterName ? (
+                              <img
+                                src={`/icons/${debuff.casterName.toLowerCase().replace(/\s+/g, '')}_skill.webp`}
+                                alt={debuff.casterName}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
+                                  if (fallback) (fallback as HTMLElement).style.display = 'block';
+                                }}
+                              />
+                            ) : null}
+                            <div className="fallback-icon" style={{ display: debuff.casterName ? 'none' : 'block' }}>
+                              {isAura ? '✨' : isBuff ? '⬆' : '⬇'}
+                            </div>
+                          </div>
+                          <div className="debuff-info">
+                            <div className="card-name">{debuff.name}</div>
+                            {debuff.casterName && (
+                              <div className="debuff-source">From: {debuff.casterName}</div>
+                            )}
+                            <div className={`card-duration ${isAura ? 'active' : debuff.duration <= 1 ? 'cooling' : 'ready'}`}>
+                              {isAura
+                                ? "🌟 Active (Aura)"
+                                : `⏱ ${debuff.duration} turn${debuff.duration !== 1 ? 's' : ''} left`}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="card-description">
+                          {debuff.description || 'No description available'}
+                        </div>
+                        {debuff.effects && debuff.effects.length > 0 && (
+                          <div className="debuff-effects">
+                            {debuff.effects.map((effect: any, idx: number) => (
+                              <div key={idx} className={`effect-tag ${effect.modifier > 0 ? 'positive' : 'negative'}`}>
+                                {effect.stat.toUpperCase()} {effect.modifier > 0 ? '+' : ''}{effect.modifier}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {debuff.damagePerTurn > 0 && (
+                          <div className="debuff-effects">
+                            <div className="effect-tag negative">
+                              💥 {debuff.damagePerTurn} {debuff.damageType} dmg/turn
+                            </div>
+                          </div>
+                        )}
+                        {debuff.healPerTurn > 0 && (
+                          <div className="debuff-effects">
+                            <div className="effect-tag positive">
+                              💚 {debuff.healPerTurn} heal/turn
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="no-items">No active status effects</div>
+                )}
+              </div>
+
+              <div className="items-section">
+                <div className="section-header">
+                  <Package size={16} />
+                  Items ({(detailViewPiece as any).items?.length || 0})
+                </div>
+                {(detailViewPiece as any).items && (detailViewPiece as any).items.length > 0 ? (
+                  (detailViewPiece as any).items.map((item: any, index: number) => (
+                    <div key={index} className="item-card">
+                      <div className="card-name">{item.name}</div>
+                      <div className="card-description">
+                        {item.description || 'No description available'}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-items">No items equipped</div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <h3>
+                <Users size={20} />
+                Select a Chess Piece
+              </h3>
+              <div className="no-selection">
+                <div className="placeholder-icon">
+                  <Users size={24} />
+                </div>
+                <div className="placeholder-text">No piece selected</div>
+                <div className="placeholder-hint">Click on any chess piece to view detailed information</div>
+              </div>
+            </>
+          )}
+        </ChessDetailPanel>
+
+        <GameBoard>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px' }}>
+            <TurnIndicator isMyTurn={isMyTurn}>
+              {isMyTurn ? "Your Turn" : "Opponent's Turn"}
+              <div className="round-info">Round {gameState.currentRound}</div>
+            </TurnIndicator>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                onClick={() => {
-                  clearSelection()
-                  setDetailViewPiece(null)
+                style={{
+                  background: 'transparent',
+                  border: '2px solid var(--blue)',
+                  color: 'var(--blue)',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}
-                style={{ background: 'var(--accent-bg)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--blue)'
+                  e.currentTarget.style.color = 'var(--primary-bg)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'var(--blue)'
+                }}
+                onClick={() => {
+                  offerDraw();
+                }}
               >
-                {isSkillMode ? 'Cancel Skill' : 'Clear Selection'}
+                🤝 Offer Draw
               </button>
 
-              {!isSkillMode && selectedPiece.skill && selectedPiece.skill.type === 'active' && (
-                <button
-                  onClick={handleSkill}
-                  disabled={selectedPiece.skill.currentCooldown > 0}
-                  style={{
-                    background: selectedPiece.skill.currentCooldown > 0
-                      ? 'var(--accent-bg)'
-                      : 'linear-gradient(135deg, var(--blue) 0%, #0891b2 100%)'
-                  }}
-                >
-                  <Zap size={16} />
-                  {selectedPiece.skill.name}
-                  {selectedPiece.skill.currentCooldown > 0 && ` (${selectedPiece.skill.currentCooldown})`}
-                </button>
-              )}
+              <button
+                style={{
+                  background: 'transparent',
+                  border: '2px solid #ef4444',
+                  color: '#ef4444',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#ef4444'
+                  e.currentTarget.style.color = 'white'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = '#ef4444'
+                }}
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to resign? This will end the game.')) {
+                    resign();
+                  }
+                }}
+              >
+                🏳️ Resign
+              </button>
             </div>
-          </GameActions>
+          </div>
+
+          <Board ref={boardRef}>
+            {renderBoard()}
+          </Board>
+
+        </GameBoard>
+        {/* Development Tools - Only show in development environment */}
+        {import.meta.env.DEV && (
+          <DevToolsPanel>
+            <h4>🔧 Dev Tools</h4>
+            <button
+              className="dev-button"
+              onClick={handleResetGameplay}
+              disabled={isResetting || !gameState}
+              title="Reset the game to initial state"
+            >
+              <RotateCcw size={14} />
+              {isResetting ? 'Resetting...' : 'Reset Game'}
+            </button>
+          </DevToolsPanel>
         )}
-      </GameBoard>
-      {/* Development Tools - Only show in development environment */}
-      {import.meta.env.DEV && (
-        <DevToolsPanel>
-          <h4>🔧 Dev Tools</h4>
-          <button
-            className="dev-button"
-            onClick={handleResetGameplay}
-            disabled={isResetting || !gameState}
-            title="Reset the game to initial state"
-          >
-            <RotateCcw size={14} />
-            {isResetting ? 'Resetting...' : 'Reset Game'}
-          </button>
-        </DevToolsPanel>
-      )}
-    </GameContainer>
+      </GameContainer>
+    </>
   )
 }
 

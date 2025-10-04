@@ -24,6 +24,7 @@ export class Viktor extends ChessObject {
       unique: true,
       appliedAt: Date.now(),
       casterPlayerId: this.chess.ownerId,
+      casterName: this.chess.name,
     } as Debuff;
   }
 

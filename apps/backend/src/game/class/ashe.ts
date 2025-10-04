@@ -23,6 +23,7 @@ export class Ashe extends ChessObject {
       unique: true,
       appliedAt: Date.now(),
       casterPlayerId: casterPlayerId,
+      casterName: this.chess.name,
     } as Debuff;
   }
 

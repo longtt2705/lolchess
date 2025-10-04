@@ -177,6 +177,106 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage("resign")
+  async handleResign(
+    @MessageBody() data: { gameId: string },
+    @ConnectedSocket() client: Socket
+  ) {
+    try {
+      const { gameId } = data;
+      const userId = this.socketUsers.get(client.id);
+
+      if (!userId) {
+        client.emit("error", { message: "User not authenticated" });
+        return;
+      }
+
+      const result = await this.gameService.resign(gameId, userId);
+
+      if (result.game) {
+        // Broadcast game over to all players
+        this.server.to(gameId).emit("game-state", { game: result.game });
+        this.server.to(gameId).emit("game-over", {
+          winner: result.game.winner,
+          game: result.game,
+          reason: "resignation",
+        });
+      } else {
+        client.emit("error", { message: result.message });
+      }
+    } catch (error) {
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("offer-draw")
+  async handleOfferDraw(
+    @MessageBody() data: { gameId: string },
+    @ConnectedSocket() client: Socket
+  ) {
+    try {
+      const { gameId } = data;
+      const userId = this.socketUsers.get(client.id);
+
+      if (!userId) {
+        client.emit("error", { message: "User not authenticated" });
+        return;
+      }
+
+      // Notify the other player about the draw offer
+      client.to(gameId).emit("draw-offered", {
+        fromUserId: userId,
+        message: "Your opponent has offered a draw",
+      });
+
+      // Confirm to the offering player
+      client.emit("draw-offer-sent", {
+        message: "Draw offer sent to opponent",
+      });
+
+      console.log(`User ${userId} offered draw in game ${gameId}`);
+    } catch (error) {
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("respond-draw")
+  async handleRespondDraw(
+    @MessageBody() data: { gameId: string; accept: boolean },
+    @ConnectedSocket() client: Socket
+  ) {
+    try {
+      const { gameId, accept } = data;
+      const userId = this.socketUsers.get(client.id);
+
+      if (!userId) {
+        client.emit("error", { message: "User not authenticated" });
+        return;
+      }
+
+      if (accept) {
+        // Accept draw - end game as draw
+        const result = await this.gameService.acceptDraw(gameId);
+
+        if (result.game) {
+          this.server.to(gameId).emit("game-state", { game: result.game });
+          this.server.to(gameId).emit("game-over", {
+            winner: null,
+            game: result.game,
+            reason: "draw by agreement",
+          });
+        }
+      } else {
+        // Decline draw - notify the other player
+        client.to(gameId).emit("draw-declined", {
+          message: "Your opponent declined the draw offer",
+        });
+      }
+    } catch (error) {
+      client.emit("error", { message: error.message });
+    }
+  }
+
   // Helper method to broadcast game state updates
   broadcastGameUpdate(gameId: string, gameState: any) {
     this.server.to(gameId).emit("game-state", { game: gameState });

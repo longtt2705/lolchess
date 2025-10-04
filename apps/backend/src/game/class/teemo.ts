@@ -17,6 +17,7 @@ export class Teemo extends ChessObject {
       unique: false, // Multiple toxic shots can stack
       appliedAt: Date.now(),
       casterPlayerId: casterPlayerId,
+      casterName: this.chess.name,
     } as Debuff;
   }
 

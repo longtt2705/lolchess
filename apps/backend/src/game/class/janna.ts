@@ -27,6 +27,7 @@ export class Janna extends ChessObject {
       unique: true,
       appliedAt: Date.now(),
       casterPlayerId: this.chess.ownerId,
+      casterName: this.chess.name,
     } as Debuff;
   }
 
@@ -41,8 +42,8 @@ export class Janna extends ChessObject {
       throw new Error("Invalid skill");
     }
 
-    // Add +2 Move Speed to nearby allies for until next turn
-    GameLogic.getAdjacentSquares(position).forEach((square) => {
+    // Add +2 Move Speed to nearby allies for 2 turns (does not stack with aura)
+    GameLogic.getAdjacentSquares(this.chess.position).forEach((square) => {
       const targetChess = GameLogic.getChess(
         this.game,
         this.chess.blue,
@@ -50,8 +51,17 @@ export class Janna extends ChessObject {
       );
       if (targetChess) {
         const targetChessObject = new ChessObject(targetChess, this.game);
-        this.applySpeedBoost(targetChessObject);
+        // Only apply if the target doesn't already have the speed boost
+        const hasSpeedBoost = targetChess.debuffs.some(
+          (d) => d.id === "speed_boost"
+        );
+        if (!hasSpeedBoost) {
+          this.applySpeedBoost(targetChessObject);
+        }
       }
     });
+
+    // Set skill on cooldown
+    this.chess.skill.currentCooldown = this.chess.skill.cooldown;
   }
 }

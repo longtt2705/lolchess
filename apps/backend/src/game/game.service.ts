@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { Game, GameDocument } from "./game.schema";
+import { Chess, Game, GameDocument } from "./game.schema";
 import { GameLogic } from "./game.logic";
 import { RedisGameCacheService } from "../redis/redis-game-cache.service";
 
@@ -611,39 +611,11 @@ export class GameService {
 
       const updatedGame = GameLogic.processGame(game, eventPayload);
 
-      this.logger.debug(
-        "Game processed successfully, board has",
-        updatedGame.board.length,
-        "pieces"
-      );
-      this.logger.debug("First piece stats:", updatedGame.board[0]?.stats);
-
       // Import ChessObject for effective stats calculation
       const { ChessObject } = await import("./class/chess");
 
       // Clean the board data to remove MongoDB-specific properties that cause casting errors
       const cleanedBoard = updatedGame.board.map((piece) => {
-        // Debug: Check if champions have skills before cleaning
-        if (
-          piece.name !== "Melee Minion" &&
-          piece.name !== "Caster Minion" &&
-          piece.name !== "Siege Minion" &&
-          piece.name !== "Poro"
-        ) {
-          console.log(
-            `Cleaning ${piece.name}: skill =`,
-            piece.skill
-              ? {
-                  name: piece.skill.name,
-                  type: piece.skill.type,
-                  cooldown: piece.skill.cooldown,
-                  currentCooldown: piece.skill.currentCooldown,
-                  targetTypes: piece.skill.targetTypes,
-                }
-              : "undefined"
-          );
-        }
-
         // Create ChessObject to calculate effective stats
         const chessObject = new ChessObject(piece, updatedGame);
 
@@ -730,6 +702,7 @@ export class GameService {
                 unique: debuff.unique || false,
                 appliedAt: debuff.appliedAt,
                 casterPlayerId: debuff.casterPlayerId,
+                casterName: debuff.casterName,
               }))
             : [],
           auras: piece.auras
@@ -775,33 +748,11 @@ export class GameService {
                 payload: piece.skill.payload,
               }
             : undefined,
+          deadAtRound: piece.deadAtRound,
         };
-
-        // Debug: Check if skill survived cleaning
-        if (
-          piece.name !== "Melee Minion" &&
-          piece.name !== "Caster Minion" &&
-          piece.name !== "Siege Minion" &&
-          piece.name !== "Poro"
-        ) {
-          console.log(
-            `After cleaning ${piece.name}: skill =`,
-            cleanedPiece.skill ? "present" : "filtered out"
-          );
-        }
 
         return cleanedPiece;
       });
-
-      console.log(
-        "About to save cleaned board with",
-        cleanedBoard.length,
-        "pieces"
-      );
-      console.log(
-        "Sample cleaned piece:",
-        JSON.stringify(cleanedBoard[0], null, 2)
-      );
 
       // Save to Redis cache and queue MongoDB persistence
       // High priority (7) for gameplay actions
@@ -810,13 +761,17 @@ export class GameService {
         board: cleanedBoard, // Use cleaned board with effective stats
       };
 
-      await this.saveGameState(gameId, gameToSave, 7);
-
-      this.logger.log(
-        "Game saved successfully to Redis, board has",
-        gameToSave.board.length,
-        "pieces"
+      // Log player gold for debugging
+      this.logger.debug(
+        "Players gold after action:",
+        gameToSave.players.map((p) => ({
+          id: p.id,
+          username: p.username,
+          gold: p.gold,
+        }))
       );
+
+      await this.saveGameState(gameId, gameToSave, 7);
 
       return {
         game: gameToSave as any,
@@ -863,5 +818,79 @@ export class GameService {
       game: initializedGame,
       message: "Gameplay reset successfully",
     };
+  }
+
+  async resign(gameId: string, userId: string) {
+    const game = await this.getGameState(gameId);
+    if (!game) {
+      return { success: false, message: "Game not found" };
+    }
+
+    if (game.status === "finished") {
+      return { success: false, message: "Game already finished" };
+    }
+
+    try {
+      // Determine winner (the other player)
+      let winner: string;
+      if (userId === game.bluePlayer) {
+        winner = "red";
+      } else if (userId === game.redPlayer) {
+        winner = "blue";
+      } else {
+        return { success: false, message: "User is not a player in this game" };
+      }
+
+      // Update game state
+      game.status = "finished";
+      game.winner = winner;
+
+      // Save to database
+      await this.saveGameState(gameId, game);
+
+      this.logger.log(
+        `Game ${gameId}: Player ${userId} resigned. Winner: ${winner}`
+      );
+
+      return {
+        success: true,
+        game,
+        message: `Player resigned. ${winner === "blue" ? "Blue" : "Red"} player wins!`,
+      };
+    } catch (error) {
+      this.logger.error(`Error processing resignation: ${error.message}`);
+      return { success: false, message: error.message };
+    }
+  }
+
+  async acceptDraw(gameId: string) {
+    const game = await this.getGameState(gameId);
+    if (!game) {
+      return { success: false, message: "Game not found" };
+    }
+
+    if (game.status === "finished") {
+      return { success: false, message: "Game already finished" };
+    }
+
+    try {
+      // End game as draw
+      game.status = "finished";
+      game.winner = null;
+
+      // Save to database
+      await this.saveGameState(gameId, game);
+
+      this.logger.log(`Game ${gameId}: Draw accepted by both players`);
+
+      return {
+        success: true,
+        game,
+        message: "Game ended in a draw by mutual agreement",
+      };
+    } catch (error) {
+      this.logger.error(`Error accepting draw: ${error.message}`);
+      return { success: false, message: error.message };
+    }
   }
 }

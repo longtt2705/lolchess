@@ -35,7 +35,7 @@ export class ChessObject {
     }
 
     const wasAlive = chess.chess.stats.hp > 0;
-    chess.chess.stats.hp -= damage;
+    chess.chess.stats.hp -= damage * 100;
     chess.postTakenDamage(this, damage);
 
     if (chess.chess.stats.hp <= 0) {
@@ -44,6 +44,8 @@ export class ChessObject {
       // Award gold to the killer if the target was alive before this damage
       if (wasAlive) {
         this.awardGoldForKill(chess);
+        chess.chess.deadAtRound = this.game.currentRound;
+        console.log("chess.chess.deadAtRound", chess.chess.deadAtRound);
 
         // Check if killed monster was neutral for special rewards
         if (
@@ -70,7 +72,7 @@ export class ChessObject {
   protected awardGoldForKill(killedChess: ChessObject): void {
     // Find the player who owns the killer chess piece
     const killerPlayer = this.game.players.find(
-      (player) => player.id === this.chess.ownerId
+      (player) => player.userId === this.chess.ownerId
     );
     if (killerPlayer) {
       const baseGold = killedChess.chess.stats.goldValue || 30; // Default 30 gold if no goldValue set
@@ -83,10 +85,6 @@ export class ChessObject {
       }
 
       killerPlayer.gold += totalGold;
-
-      console.log(
-        `${killerPlayer.username} earned ${totalGold} gold for killing ${killedChess.chess.name}`
-      );
     }
   }
 
@@ -146,6 +144,11 @@ export class ChessObject {
     for (let i = chess.chess.debuffs.length - 1; i >= 0; i--) {
       const debuff = chess.chess.debuffs[i];
 
+      // Skip aura debuffs - they are managed by cleanupExpiredAuraDebuffs()
+      if (debuff.id.startsWith("aura_")) {
+        continue;
+      }
+
       // Apply damage per turn
       if (debuff.damagePerTurn > 0) {
         this.damage(chess, debuff.damagePerTurn, debuff.damageType);
@@ -193,7 +196,7 @@ export class ChessObject {
   getEffectiveStat(chess: Chess, stat: string): number {
     let statValue = chess.stats[stat] || 0;
 
-    // Apply debuff effects
+    // Apply debuff effects (auras now apply debuffs instead of direct modification)
     chess.debuffs.forEach((debuff) => {
       debuff.effects.forEach((effect) => {
         if (effect.stat === stat) {
@@ -204,16 +207,6 @@ export class ChessObject {
           );
         }
       });
-    });
-
-    // Apply aura effects from other pieces
-    const auraEffects = this.getAuraEffectsForChess(chess, stat);
-    auraEffects.forEach((effect) => {
-      statValue = this.applyStatModifier(
-        statValue,
-        effect.modifier,
-        effect.type
-      );
     });
 
     return Math.max(0, statValue); // Stats can't be negative
@@ -234,39 +227,111 @@ export class ChessObject {
     return currentValue;
   }
 
-  // Get all aura effects that apply to a specific chess piece for a specific stat
-  getAuraEffectsForChess(targetChess: Chess, stat: string): AuraEffect[] {
-    const effects: AuraEffect[] = [];
+  // Create an aura debuff from an aura
+  createAuraDebuff(aura: any, casterPlayerId: string): Debuff {
+    return {
+      id: `aura_${aura.id}`,
+      name: aura.name,
+      description: aura.description,
+      duration: -1, // Infinite - persists until out of range (not processed by processDebuffs)
+      maxDuration: -1,
+      effects: aura.effects.map((effect: AuraEffect) => ({
+        stat: effect.stat,
+        modifier: effect.modifier,
+        type: effect.type,
+      })),
+      damagePerTurn: 0,
+      damageType: "physical",
+      healPerTurn: 0,
+      unique: true, // Each aura can only be applied once
+      appliedAt: Date.now(),
+      casterPlayerId: casterPlayerId,
+      casterName: this.chess.name,
+    } as Debuff;
+  }
 
-    this.game.board.forEach((sourceChess) => {
-      if (!sourceChess || sourceChess === targetChess) return;
-      if (sourceChess.stats.hp <= 0) return; // Dead pieces don't provide auras
+  // Apply aura debuffs to all units in range
+  applyAuraDebuffs(): void {
+    if (!this.chess.auras || this.chess.auras.length === 0) return;
+    if (this.chess.stats.hp <= 0) return; // Dead pieces don't provide auras
 
-      sourceChess.auras.forEach((aura) => {
+    this.chess.auras.forEach((aura) => {
+      if (!aura.active) return;
+      if (aura.requiresAlive && this.chess.stats.hp <= 0) return;
+
+      // Find all targets in range
+      this.game.board.forEach((targetChess: any) => {
+        if (!targetChess || targetChess === this.chess) return;
+        if (targetChess.stats.hp <= 0) return;
+
+        // Check if target is in range
+        if (this.isInAuraRange(this.chess, targetChess, aura.range)) {
+          // Check if this aura should affect the target based on effect targets
+          aura.effects.forEach((effect: any) => {
+            if (
+              this.shouldAuraAffectTarget(
+                this.chess,
+                targetChess,
+                effect.target
+              )
+            ) {
+              const targetChessObject = new ChessObject(targetChess, this.game);
+              const auraDebuff = this.createAuraDebuff(
+                aura,
+                this.chess.ownerId
+              );
+
+              // Remove old aura debuff and apply new one to refresh duration
+              this.removeDebuff(targetChessObject, auraDebuff.id);
+              this.applyDebuff(targetChessObject, auraDebuff);
+            }
+          });
+        }
+      });
+    });
+  }
+
+  // Clean up aura debuffs that are no longer in range
+  cleanupExpiredAuraDebuffs(): void {
+    if (!this.chess.debuffs || this.chess.debuffs.length === 0) return;
+
+    // Get all current aura debuff IDs that should be affecting this piece
+    const activeAuraDebuffIds = new Set<string>();
+
+    this.game.board.forEach((sourceChess: any) => {
+      if (!sourceChess || sourceChess === this.chess) return;
+      if (sourceChess.stats.hp <= 0) return;
+
+      sourceChess.auras?.forEach((aura: any) => {
         if (!aura.active) return;
         if (aura.requiresAlive && sourceChess.stats.hp <= 0) return;
 
-        // Check if target is in range
-        if (this.isInAuraRange(sourceChess, targetChess, aura.range)) {
-          aura.effects.forEach((effect) => {
-            if (effect.stat === stat) {
-              // Check if this aura should affect the target
-              if (
-                this.shouldAuraAffectTarget(
-                  sourceChess,
-                  targetChess,
-                  effect.target
-                )
-              ) {
-                effects.push(effect);
-              }
+        if (this.isInAuraRange(sourceChess, this.chess, aura.range)) {
+          aura.effects.forEach((effect: any) => {
+            if (
+              this.shouldAuraAffectTarget(
+                sourceChess,
+                this.chess,
+                effect.target
+              )
+            ) {
+              activeAuraDebuffIds.add(`aura_${aura.id}`);
             }
           });
         }
       });
     });
 
-    return effects;
+    // Remove aura debuffs that are no longer active
+    for (let i = this.chess.debuffs.length - 1; i >= 0; i--) {
+      const debuff = this.chess.debuffs[i];
+      if (
+        debuff.id.startsWith("aura_") &&
+        !activeAuraDebuffIds.has(debuff.id)
+      ) {
+        this.chess.debuffs.splice(i, 1);
+      }
+    }
   }
 
   // Check if target chess is in aura range of source chess

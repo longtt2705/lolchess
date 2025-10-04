@@ -152,6 +152,12 @@ export function testAuraSystem(): void {
 
   const game = createTestGame();
 
+  // Apply aura debuffs (this is now how auras work)
+  game.board.forEach((chess) => {
+    const chessObject = ChessFactory.createChess(chess, game);
+    chessObject.applyAuraDebuffs();
+  });
+
   // Get all pieces and test their effective speeds
   game.board.forEach((chess) => {
     const chessObject = ChessFactory.createChess(chess, game);
@@ -163,7 +169,10 @@ export function testAuraSystem(): void {
     );
     console.log(`  Base Speed: ${baseSpeed}`);
     console.log(`  Effective Speed: ${effectiveSpeed}`);
-    console.log(`  Speed Difference: ${effectiveSpeed - baseSpeed}\n`);
+    console.log(`  Speed Difference: ${effectiveSpeed - baseSpeed}`);
+    console.log(
+      `  Debuffs: ${chess.debuffs.map((d) => d.name).join(", ") || "None"}\n`
+    );
   });
 
   console.log("=== Active Auras in Game ===");
@@ -191,7 +200,7 @@ export function testAuraSystem(): void {
   console.log("\n=== Test Janna's Skill ===");
   const jannaObject = ChessFactory.createChess(janna!, game);
 
-  // Test Janna's skill (should increase aura range)
+  // Test Janna's skill (applies temporary speed boost)
   console.log(
     "Before skill: Janna's aura range =",
     janna!.auras[0]?.range || "No aura"
@@ -199,18 +208,24 @@ export function testAuraSystem(): void {
   try {
     jannaObject.skill();
     console.log(
-      "After skill: Janna's aura range =",
-      janna!.auras[0]?.range || "No aura"
+      "After skill: Applied temporary speed boosts to adjacent allies"
     );
 
-    // Check if distant ally now gets the buff
-    const distantAlly = game.board.find((c) => c.name === "Ahri");
-    if (distantAlly) {
-      const distantAllyObject = ChessFactory.createChess(distantAlly, game);
-      const newEffectiveSpeed = distantAllyObject.speed;
-      console.log(
-        `Distant ally (Ahri) speed after Janna's skill: ${newEffectiveSpeed} (was ${distantAlly.stats.speed})`
-      );
+    // Re-apply aura debuffs after skill
+    game.board.forEach((chess) => {
+      const chessObj = ChessFactory.createChess(chess, game);
+      chessObj.applyAuraDebuffs();
+    });
+
+    // Check debuffs on ally
+    const ally = game.board.find((c) => c.name === "Aatrox");
+    if (ally) {
+      console.log(`\nAlly (Aatrox) debuffs after skill:`);
+      ally.debuffs.forEach((d) => {
+        console.log(
+          `  - ${d.name}: ${d.description} (duration: ${d.duration})`
+        );
+      });
     }
   } catch (error) {
     console.log("Skill failed:", error.message);
