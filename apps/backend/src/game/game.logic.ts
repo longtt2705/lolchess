@@ -142,7 +142,6 @@ export class GameLogic {
     this.checkGameOver(game);
     this.spawnNeutralMonsters(game);
     this.startNextRound(game);
-    console.log(game.board.filter((chess) => chess.deadAtRound));
     return game;
   }
 
@@ -287,6 +286,9 @@ export class GameLogic {
     // Then apply current auras
     game.board.forEach((chess) => {
       const chessObject = ChessFactory.createChess(chess, game);
+      if (chess.name === "Janna") {
+        console.log("applyAuraDebuffs", chess.name);
+      }
       chessObject.applyAuraDebuffs();
     });
   }
@@ -429,10 +431,12 @@ export class GameLogic {
       (p) => p.userId === game.redPlayer
     );
     if (bluePlayerIndex !== -1) {
-      game.players[bluePlayerIndex].gold = game.gameSettings?.startingGold || 0;
+      game.players[bluePlayerIndex].gold =
+        game.gameSettings?.startingGold || 100;
     }
     if (redPlayerIndex !== -1) {
-      game.players[redPlayerIndex].gold = game.gameSettings?.startingGold || 0;
+      game.players[redPlayerIndex].gold =
+        game.gameSettings?.startingGold || 100;
     }
     this.applyAuraDebuffs(game);
 
@@ -588,6 +592,9 @@ export class GameLogic {
           vertical: false,
         },
         goldValue: 0, // Game ends if killed
+        sunder: 0,
+        criticalChance: 0,
+        criticalDamage: 150,
       },
       Champion: {
         maxHp: 80,
@@ -603,6 +610,9 @@ export class GameLogic {
           vertical: true,
         },
         goldValue: 50,
+        sunder: 0,
+        criticalChance: 0,
+        criticalDamage: 150,
       },
       "Siege Minion": {
         maxHp: 250,
@@ -618,6 +628,9 @@ export class GameLogic {
           vertical: true,
         },
         goldValue: 30,
+        sunder: 0,
+        criticalChance: 0,
+        criticalDamage: 150,
       },
       "Melee Minion": {
         maxHp: 100,
@@ -633,6 +646,9 @@ export class GameLogic {
           vertical: true,
         },
         goldValue: 10,
+        sunder: 0,
+        criticalChance: 0,
+        criticalDamage: 150,
       },
       "Caster Minion": {
         maxHp: 50,
@@ -648,6 +664,9 @@ export class GameLogic {
           vertical: true,
         },
         goldValue: 15,
+        sunder: 0,
+        criticalChance: 0,
+        criticalDamage: 150,
       },
       "Super Minion": {
         maxHp: 500,
@@ -663,6 +682,9 @@ export class GameLogic {
           vertical: true,
         },
         goldValue: 40,
+        sunder: 0,
+        criticalChance: 0,
+        criticalDamage: 150,
       },
     };
 
@@ -720,6 +742,9 @@ export class GameLogic {
           vertical: true,
         },
         goldValue: championData.stats.goldValue || 50,
+        sunder: championData.stats.sunder || 0,
+        criticalChance: championData.stats.criticalChance || 0,
+        criticalDamage: championData.stats.criticalDamage || 150,
       },
       skill: championData.skill
         ? {
@@ -843,6 +868,9 @@ export class GameLogic {
           vertical: false,
         },
         goldValue: 10,
+        sunder: 0,
+        criticalChance: 0,
+        criticalDamage: 150,
       },
       skill: undefined,
       items: [],
@@ -903,6 +931,9 @@ export class GameLogic {
           vertical: false,
         },
         goldValue: 50,
+        sunder: 0,
+        criticalChance: 0,
+        criticalDamage: 150,
       },
       skill: undefined,
       items: [],
@@ -955,57 +986,153 @@ export class GameLogic {
     }
     const player = game.players[playerIndex];
 
-    // Find the item in shop (this would be implemented with an item system)
-    const itemCost = this.getItemCost(itemId);
-    if (player.gold < itemCost) {
+    // Import item system
+    const { getItemById, findCombinedItem } = require("./data/items");
+    const itemData = getItemById(itemId);
+
+    if (!itemData) {
+      throw new Error("Item not found");
+    }
+
+    // Only basic items can be purchased
+    if (!itemData.isBasic) {
+      throw new Error(
+        "Can only purchase basic items. Combined items are created automatically."
+      );
+    }
+
+    if (player.gold < itemData.cost) {
       throw new Error("Insufficient gold");
     }
 
-    if (championId) {
-      const champion = game.board.find(
-        (chess) => chess.id === championId && chess.ownerId === playerId
-      );
-      if (!champion) {
-        throw new Error("Champion not found or not owned by player");
-      }
-
-      if (champion.items.length >= 3) {
-        throw new Error("Champion already has maximum items (3)");
-      }
-
-      // Add item to champion (simplified - would need full item system)
-      champion.items.push({
-        id: itemId,
-        name: itemId, // Simplified
-        stats: this.getItemStats(itemId),
-      } as any);
+    if (!championId) {
+      throw new Error("Must specify a champion to give the item to");
     }
 
-    game.players[playerIndex].gold -= itemCost;
+    const champion = game.board.find(
+      (chess) => chess.id === championId && chess.ownerId === playerId
+    );
+    if (!champion) {
+      throw new Error("Champion not found or not owned by player");
+    }
+
+    if (champion.items.length >= 3) {
+      throw new Error("Champion already has maximum items (3)");
+    }
+
+    // Add item to champion
+    const newItem = {
+      id: itemData.id,
+      name: itemData.name,
+      description: itemData.description,
+      stats: this.convertItemEffectsToStats(itemData.effects),
+      unique: itemData.unique || false,
+    };
+
+    champion.items.push(newItem as any);
+
+    // Check for item combining (TFT-style)
+    this.checkAndCombineItems(champion);
+
+    // Apply item stats to champion
+    this.applyItemStatsToChampion(champion);
+
+    // Deduct gold
+    game.players[playerIndex].gold -= itemData.cost;
     return game;
   }
 
-  private static getItemCost(itemId: string): number {
-    // Simplified item cost system - would be expanded with full item database
-    const itemCosts: { [key: string]: number } = {
-      sword: 20,
-      shield: 25,
-      boots: 15,
-      armor: 30,
-      // Add more items as needed
-    };
-    return itemCosts[itemId] || 10;
+  // Convert item effects to ChessStats format
+  private static convertItemEffectsToStats(effects: any[]): any {
+    const stats: any = {};
+    effects.forEach((effect) => {
+      if (effect.type === "add") {
+        stats[effect.stat] = effect.value;
+      }
+    });
+    return stats;
   }
 
-  private static getItemStats(itemId: string): any {
-    // Simplified item stats - would be expanded with full item database
-    const itemStats: { [key: string]: any } = {
-      sword: { ad: 10 },
-      shield: { physicalResistance: 5 },
-      boots: { speed: 1 },
-      armor: { physicalResistance: 10, magicResistance: 5 },
-    };
-    return itemStats[itemId] || {};
+  // Check if two basic items can combine into a stronger item
+  private static checkAndCombineItems(champion: Chess): void {
+    if (champion.items.length < 2) return;
+
+    const { getItemById, findCombinedItem } = require("./data/items");
+
+    // Check all pairs of items for possible combinations
+    for (let i = 0; i < champion.items.length - 1; i++) {
+      for (let j = i + 1; j < champion.items.length; j++) {
+        const item1 = champion.items[i];
+        const item2 = champion.items[j];
+
+        const item1Data = getItemById(item1.id);
+        const item2Data = getItemById(item2.id);
+
+        // Only combine basic items
+        if (!item1Data?.isBasic || !item2Data?.isBasic) continue;
+
+        const combinedItemData = findCombinedItem(item1.id, item2.id);
+
+        if (combinedItemData) {
+          // Check if champion already has this unique item
+          if (combinedItemData.unique) {
+            const hasUnique = champion.items.some(
+              (item) => item.id === combinedItemData.id
+            );
+            if (hasUnique) continue; // Skip if already has this unique item
+          }
+
+          // Remove the two basic items
+          champion.items.splice(j, 1); // Remove second item first (higher index)
+          champion.items.splice(i, 1); // Then remove first item
+
+          // Add the combined item
+          const combinedItem = {
+            id: combinedItemData.id,
+            name: combinedItemData.name,
+            description: combinedItemData.description,
+            stats: this.convertItemEffectsToStats(combinedItemData.effects),
+            unique: combinedItemData.unique || false,
+          };
+
+          champion.items.push(combinedItem as any);
+
+          console.log(
+            `Combined ${item1Data.name} + ${item2Data.name} = ${combinedItemData.name}`
+          );
+
+          // Recursively check for more combinations
+          this.checkAndCombineItems(champion);
+          return;
+        }
+      }
+    }
+  }
+
+  // Apply all item stats to champion
+  private static applyItemStatsToChampion(champion: Chess): void {
+    // Reset to base stats first (would need to store base stats separately in production)
+    // For now, we'll just add item bonuses on top
+
+    champion.items.forEach((item) => {
+      if (item.stats) {
+        Object.keys(item.stats).forEach((statKey) => {
+          const value = item.stats[statKey];
+          if (typeof value === "number") {
+            if (statKey === "maxHp") {
+              // Update max HP and current HP
+              const hpIncrease = value;
+              champion.stats.maxHp = (champion.stats.maxHp || 0) + hpIncrease;
+              champion.stats.hp = (champion.stats.hp || 0) + hpIncrease;
+            } else if (champion.stats[statKey] !== undefined) {
+              // Add to existing stat
+              (champion.stats as any)[statKey] =
+                ((champion.stats as any)[statKey] || 0) + value;
+            }
+          }
+        });
+      }
+    });
   }
 
   // Award buffs for killing neutral monsters

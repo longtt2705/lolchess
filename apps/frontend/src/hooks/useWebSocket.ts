@@ -182,6 +182,17 @@ export const useWebSocket = (gameId: string | null) => {
     socketRef.current.emit("respond-draw", { gameId, accept });
   };
 
+  // Buy item
+  const buyItem = (itemId: string, championId: string) => {
+    if (!socketRef.current || !connected || !gameId) {
+      console.warn("Cannot buy item: socket not connected");
+      return;
+    }
+
+    console.log(`Buying item ${itemId} for champion ${championId}`);
+    socketRef.current.emit("buy-item", { gameId, itemId, championId });
+  };
+
   return {
     connected,
     gameState,
@@ -191,6 +202,7 @@ export const useWebSocket = (gameId: string | null) => {
     resign,
     offerDraw,
     respondToDraw,
+    buyItem,
     drawOfferReceived,
     setDrawOfferReceived,
     drawOfferSent,

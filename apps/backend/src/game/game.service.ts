@@ -4,6 +4,7 @@ import { Model } from "mongoose";
 import { Chess, Game, GameDocument } from "./game.schema";
 import { GameLogic } from "./game.logic";
 import { RedisGameCacheService } from "../redis/redis-game-cache.service";
+import { ChessObject } from "./class/chess";
 
 // Ban/Pick patterns from RULE.md
 const BAN_ORDER: ("blue" | "red")[] = [
@@ -615,174 +616,168 @@ export class GameService {
       const { ChessObject } = await import("./class/chess");
 
       // Clean the board data to remove MongoDB-specific properties that cause casting errors
-      const cleanedBoard = updatedGame.board.map((piece) => {
-        // Create ChessObject to calculate effective stats
-        const chessObject = new ChessObject(piece, updatedGame);
+      const cleanedBoard = this.cleanBoard(updatedGame);
 
-        const cleanedPiece = {
-          id: piece.id,
-          name: piece.name,
-          position: {
-            x: piece.position.x,
-            y: piece.position.y,
-          },
-          cannotMoveBackward: piece.cannotMoveBackward,
-          canOnlyMoveVertically: piece.canOnlyMoveVertically || false,
-          hasMovedBefore: piece.hasMovedBefore || false,
-          cannotAttack: piece.cannotAttack,
-          ownerId: piece.ownerId,
-          stats: {
-            hp: piece.stats.hp, // Current HP is not affected by modifiers
-            maxHp: chessObject.getEffectiveStat(piece, "maxHp"),
-            ad: chessObject.getEffectiveStat(piece, "ad"),
-            ap: chessObject.getEffectiveStat(piece, "ap"),
-            physicalResistance: chessObject.getEffectiveStat(
-              piece,
-              "physicalResistance"
-            ),
-            magicResistance: chessObject.getEffectiveStat(
-              piece,
-              "magicResistance"
-            ),
-            speed: chessObject.getEffectiveStat(piece, "speed"),
-            attackRange: {
-              diagonal: piece.stats.attackRange.diagonal,
-              horizontal: piece.stats.attackRange.horizontal,
-              vertical: piece.stats.attackRange.vertical,
-              range:
-                chessObject.getEffectiveStat(piece, "range") ||
-                piece.stats.attackRange.range,
-            },
-            goldValue: piece.stats.goldValue, // Gold value is not affected by modifiers
-          },
-          // Include raw stats for comparison/debugging if needed
-          rawStats: {
-            hp: piece.stats.hp,
-            maxHp: piece.stats.maxHp,
-            ad: piece.stats.ad,
-            ap: piece.stats.ap,
-            physicalResistance: piece.stats.physicalResistance,
-            magicResistance: piece.stats.magicResistance,
-            speed: piece.stats.speed,
-            attackRange: {
-              diagonal: piece.stats.attackRange.diagonal,
-              horizontal: piece.stats.attackRange.horizontal,
-              vertical: piece.stats.attackRange.vertical,
-              range: piece.stats.attackRange.range,
-            },
-            goldValue: piece.stats.goldValue,
-          },
-          blue: piece.blue,
-          items: piece.items
-            ? piece.items.map((item) => ({
-                id: item.id,
-                name: item.name,
-                description: item.description,
-                stats: item.stats,
-                unique: item.unique,
-              }))
-            : [],
-          debuffs: piece.debuffs
-            ? piece.debuffs.map((debuff) => ({
-                id: debuff.id,
-                name: debuff.name,
-                description: debuff.description,
-                duration: debuff.duration,
-                maxDuration: debuff.maxDuration,
-                effects: debuff.effects
-                  ? debuff.effects.map((effect) => ({
-                      stat: effect.stat,
-                      modifier: effect.modifier,
-                      type: effect.type,
-                    }))
-                  : [],
-                damagePerTurn: debuff.damagePerTurn || 0,
-                damageType: debuff.damageType || "0",
-                healPerTurn: debuff.healPerTurn || 0,
-                unique: debuff.unique || false,
-                appliedAt: debuff.appliedAt,
-                casterPlayerId: debuff.casterPlayerId,
-                casterName: debuff.casterName,
-              }))
-            : [],
-          auras: piece.auras
-            ? piece.auras.map((aura) => ({
-                id: aura.id,
-                name: aura.name,
-                description: aura.description,
-                range: aura.range,
-                effects: aura.effects
-                  ? aura.effects.map((effect) => ({
-                      stat: effect.stat,
-                      modifier: effect.modifier,
-                      type: effect.type,
-                      target: effect.target,
-                    }))
-                  : [],
-                active: aura.active,
-                requiresAlive: aura.requiresAlive,
-                duration: aura.duration,
-              }))
-            : [],
-          skill: piece.skill
-            ? {
-                name: piece.skill.name,
-                description: piece.skill.description,
-                cooldown: piece.skill.cooldown,
-                attackRange: piece.skill.attackRange
-                  ? {
-                      diagonal: piece.skill.attackRange.diagonal,
-                      horizontal: piece.skill.attackRange.horizontal,
-                      vertical: piece.skill.attackRange.vertical,
-                      range: piece.skill.attackRange.range,
-                    }
-                  : {
-                      diagonal: false,
-                      horizontal: false,
-                      vertical: false,
-                      range: 1,
-                    },
-                targetTypes: piece.skill.targetTypes,
-                currentCooldown: piece.skill.currentCooldown,
-                type: piece.skill.type,
-                payload: piece.skill.payload,
-              }
-            : undefined,
-          deadAtRound: piece.deadAtRound,
-        };
-
-        return cleanedPiece;
-      });
-
-      // Save to Redis cache and queue MongoDB persistence
-      // High priority (7) for gameplay actions
-      const gameToSave = {
-        ...updatedGame,
-        board: cleanedBoard, // Use cleaned board with effective stats
-      };
-
-      // Log player gold for debugging
-      this.logger.debug(
-        "Players gold after action:",
-        gameToSave.players.map((p) => ({
-          id: p.id,
-          username: p.username,
-          gold: p.gold,
-        }))
-      );
-
-      await this.saveGameState(gameId, gameToSave, 7);
+      await this.saveGameState(gameId, updatedGame, 7);
 
       return {
-        game: gameToSave as any,
+        game: { ...updatedGame, board: cleanedBoard } as any,
         message: "Action executed successfully",
       };
     } catch (error) {
+      this.logger.error(`Error executing action: ${error.message}`);
       return {
         game,
         message: `Failed to execute action: ${error.message}`,
       };
     }
+  }
+
+  cleanBoard(updatedGame: Game): any[] {
+    return updatedGame.board.map((piece) => {
+      // Create ChessObject to calculate effective stats
+      const chessObject = new ChessObject(piece, updatedGame);
+
+      const cleanedPiece = {
+        id: piece.id,
+        name: piece.name,
+        position: {
+          x: piece.position.x,
+          y: piece.position.y,
+        },
+        cannotMoveBackward: piece.cannotMoveBackward,
+        canOnlyMoveVertically: piece.canOnlyMoveVertically || false,
+        hasMovedBefore: piece.hasMovedBefore || false,
+        cannotAttack: piece.cannotAttack,
+        ownerId: piece.ownerId,
+        stats: {
+          hp: piece.stats.hp, // Current HP is not affected by modifiers
+          maxHp: chessObject.getEffectiveStat(piece, "maxHp"),
+          ad: chessObject.getEffectiveStat(piece, "ad"),
+          ap: chessObject.getEffectiveStat(piece, "ap"),
+          physicalResistance: chessObject.getEffectiveStat(
+            piece,
+            "physicalResistance"
+          ),
+          magicResistance: chessObject.getEffectiveStat(
+            piece,
+            "magicResistance"
+          ),
+          speed: chessObject.getEffectiveStat(piece, "speed"),
+          attackRange: {
+            diagonal: piece.stats.attackRange.diagonal,
+            horizontal: piece.stats.attackRange.horizontal,
+            vertical: piece.stats.attackRange.vertical,
+            range:
+              chessObject.getEffectiveStat(piece, "range") ||
+              piece.stats.attackRange.range,
+          },
+          goldValue: piece.stats.goldValue, // Gold value is not affected by modifiers
+          sunder: chessObject.getEffectiveStat(piece, "sunder"),
+          criticalChance: chessObject.getEffectiveStat(piece, "criticalChance"),
+          criticalDamage: chessObject.getEffectiveStat(piece, "criticalDamage"),
+        },
+        // Include raw stats for comparison/debugging if needed
+        rawStats: {
+          hp: piece.stats.hp,
+          maxHp: piece.stats.maxHp,
+          ad: piece.stats.ad,
+          ap: piece.stats.ap,
+          physicalResistance: piece.stats.physicalResistance,
+          magicResistance: piece.stats.magicResistance,
+          speed: piece.stats.speed,
+          attackRange: {
+            diagonal: piece.stats.attackRange.diagonal,
+            horizontal: piece.stats.attackRange.horizontal,
+            vertical: piece.stats.attackRange.vertical,
+            range: piece.stats.attackRange.range,
+          },
+          goldValue: piece.stats.goldValue,
+          sunder: piece.stats.sunder || 0,
+          criticalChance: piece.stats.criticalChance || 0,
+          criticalDamage: piece.stats.criticalDamage || 150,
+        },
+        blue: piece.blue,
+        items: piece.items
+          ? piece.items.map((item) => ({
+              id: item.id,
+              name: item.name,
+              description: item.description,
+              stats: item.stats,
+              unique: item.unique,
+            }))
+          : [],
+        debuffs: piece.debuffs
+          ? piece.debuffs.map((debuff) => ({
+              id: debuff.id,
+              name: debuff.name,
+              description: debuff.description,
+              duration: debuff.duration,
+              maxDuration: debuff.maxDuration,
+              effects: debuff.effects
+                ? debuff.effects.map((effect) => ({
+                    stat: effect.stat,
+                    modifier: effect.modifier,
+                    type: effect.type,
+                  }))
+                : [],
+              damagePerTurn: debuff.damagePerTurn || 0,
+              damageType: debuff.damageType || "0",
+              healPerTurn: debuff.healPerTurn || 0,
+              unique: debuff.unique || false,
+              appliedAt: debuff.appliedAt,
+              casterPlayerId: debuff.casterPlayerId,
+              casterName: debuff.casterName,
+            }))
+          : [],
+        auras: piece.auras
+          ? piece.auras.map((aura) => ({
+              id: aura.id,
+              name: aura.name,
+              description: aura.description,
+              range: aura.range,
+              effects: aura.effects
+                ? aura.effects.map((effect) => ({
+                    stat: effect.stat,
+                    modifier: effect.modifier,
+                    type: effect.type,
+                    target: effect.target,
+                  }))
+                : [],
+              active: aura.active,
+              requiresAlive: aura.requiresAlive,
+              duration: aura.duration,
+            }))
+          : [],
+        skill: piece.skill
+          ? {
+              name: piece.skill.name,
+              description: piece.skill.description,
+              cooldown: piece.skill.cooldown,
+              attackRange: piece.skill.attackRange
+                ? {
+                    diagonal: piece.skill.attackRange.diagonal,
+                    horizontal: piece.skill.attackRange.horizontal,
+                    vertical: piece.skill.attackRange.vertical,
+                    range: piece.skill.attackRange.range,
+                  }
+                : {
+                    diagonal: false,
+                    horizontal: false,
+                    vertical: false,
+                    range: 1,
+                  },
+              targetTypes: piece.skill.targetTypes,
+              currentCooldown: piece.skill.currentCooldown,
+              type: piece.skill.type,
+              payload: piece.skill.payload,
+            }
+          : undefined,
+        deadAtRound: piece.deadAtRound,
+      };
+
+      return cleanedPiece;
+    });
   }
 
   async resetGameplay(
@@ -818,6 +813,69 @@ export class GameService {
       game: initializedGame,
       message: "Gameplay reset successfully",
     };
+  }
+
+  async buyItem(
+    gameId: string,
+    buyItemData: { itemId: string; championId: string }
+  ): Promise<{ game: Game; message: string }> {
+    const game = await this.getGameState(gameId);
+    if (!game) {
+      return {
+        game: null,
+        message: "Game not found",
+      };
+    }
+
+    if (game.status !== "in_progress" || game.phase !== "gameplay") {
+      return {
+        game,
+        message: "Game is not in progress or not in gameplay phase",
+      };
+    }
+
+    try {
+      // Get the current user from the request (would need to be passed in properly)
+      // For now, we'll determine from the championId ownership
+      const champion = game.board.find(
+        (piece) => piece.id === buyItemData.championId
+      );
+      if (!champion) {
+        throw new Error("Champion not found");
+      }
+
+      const playerId = champion.ownerId;
+
+      // Create BUY_ITEM event
+      const eventPayload = {
+        playerId: playerId,
+        event: "buy_item" as any,
+        itemId: buyItemData.itemId,
+        targetChampionId: buyItemData.championId,
+      };
+
+      // Import GameLogic and process the buy item action
+      const { GameLogic } = await import("./game.logic");
+      const updatedGame = GameLogic.processGame(game, eventPayload);
+
+      // Import ChessObject for effective stats calculation
+      // Clean the board data (similar to executeAction)
+      const cleanedBoard = this.cleanBoard(updatedGame);
+
+      // Save to Redis cache and queue MongoDB persistence
+      await this.saveGameState(gameId, updatedGame, 7);
+
+      return {
+        game: { ...updatedGame, board: cleanedBoard } as any,
+        message: "Item purchased successfully",
+      };
+    } catch (error) {
+      this.logger.error(`Error buying item: ${error.message}`);
+      return {
+        game,
+        message: `Failed to buy item: ${error.message}`,
+      };
+    }
   }
 
   async resign(gameId: string, userId: string) {

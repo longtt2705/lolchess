@@ -122,6 +122,31 @@ export const fetchActiveGame = createAsyncThunk(
   }
 );
 
+export const buyItem = createAsyncThunk(
+  "game/buyItem",
+  async ({
+    gameId,
+    itemId,
+    championId,
+  }: {
+    gameId: string;
+    itemId: string;
+    championId: string;
+  }) => {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+      `${API_URL}/games/${gameId}/buy-item`,
+      { itemId, championId },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  }
+);
+
 const gameSlice = createSlice({
   name: "game",
   initialState,
@@ -261,6 +286,18 @@ const gameSlice = createSlice({
       .addCase(fetchActiveGame.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to fetch active game";
+      })
+      // Buy item
+      .addCase(buyItem.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(buyItem.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(buyItem.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to buy item";
       });
   },
 });

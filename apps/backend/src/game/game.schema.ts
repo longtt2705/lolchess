@@ -71,6 +71,15 @@ export class ChessStats {
 
   @Prop({ required: true })
   goldValue: number;
+
+  @Prop({ default: 0 })
+  sunder: number;
+
+  @Prop({ default: 0 })
+  criticalChance: number;
+
+  @Prop({ default: 150 })
+  criticalDamage: number; // Default 150% (1.5x multiplier)
 }
 
 export class DebuffEffect {

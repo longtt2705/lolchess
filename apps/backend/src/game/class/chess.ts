@@ -35,7 +35,7 @@ export class ChessObject {
     }
 
     const wasAlive = chess.chess.stats.hp > 0;
-    chess.chess.stats.hp -= damage * 100;
+    chess.chess.stats.hp -= damage;
     chess.postTakenDamage(this, damage);
 
     if (chess.chess.stats.hp <= 0) {
@@ -191,6 +191,18 @@ export class ChessObject {
 
   get maxHp(): number {
     return this.getEffectiveStat(this.chess, "maxHp");
+  }
+
+  get criticalChance(): number {
+    return this.getEffectiveStat(this.chess, "criticalChance");
+  }
+
+  get criticalDamage(): number {
+    return this.getEffectiveStat(this.chess, "criticalDamage");
+  }
+
+  get sunder(): number {
+    return this.getEffectiveStat(this.chess, "sunder");
   }
 
   getEffectiveStat(chess: Chess, stat: string): number {
@@ -421,11 +433,11 @@ export class ChessObject {
     }
 
     // Critical strike system from RULE.md: 20% chance, 150% damage
-    const isCriticalStrike = Math.random() < 0.2;
+    const isCriticalStrike = Math.random() < this.criticalChance / 100;
     let damage = this.ad;
 
     if (isCriticalStrike) {
-      damage = damage * 1.5; // 150% damage
+      damage = (damage * this.criticalDamage) / 100; // 150% damage
       console.log(`${this.chess.name} landed a critical strike!`);
     }
 

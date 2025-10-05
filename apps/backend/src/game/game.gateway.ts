@@ -277,6 +277,41 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage("buy-item")
+  async handleBuyItem(
+    @MessageBody() data: { gameId: string; itemId: string; championId: string },
+    @ConnectedSocket() client: Socket
+  ) {
+    try {
+      const { gameId, itemId, championId } = data;
+      const userId = this.socketUsers.get(client.id);
+
+      if (!userId) {
+        client.emit("error", { message: "User not authenticated" });
+        return;
+      }
+
+      // Execute the buy item action
+      const result = await this.gameService.buyItem(gameId, {
+        itemId,
+        championId,
+      });
+
+      if (result.game) {
+        // Broadcast updated game state to all players in the room
+        this.server.to(gameId).emit("game-state", {
+          game: result.game,
+          message: result.message,
+        });
+      } else {
+        // Send error back to the client who made the action
+        client.emit("action-error", { message: result.message });
+      }
+    } catch (error) {
+      client.emit("error", { message: error.message });
+    }
+  }
+
   // Helper method to broadcast game state updates
   broadcastGameUpdate(gameId: string, gameState: any) {
     this.server.to(gameId).emit("game-state", { game: gameState });

@@ -79,7 +79,7 @@ export const champions: ChampionData[] = [
       name: "Perseverance",
       description:
         "If Garen has not recently been struck by damage or enemy abilities, he regenerates a percentage of his total health each turn.",
-      cooldown: 1,
+      cooldown: 2,
       currentCooldown: 0,
     },
   },
