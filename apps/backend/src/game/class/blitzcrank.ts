@@ -19,7 +19,7 @@ export class Blitzcrank extends ChessObject {
       const targetChessObject = new ChessObject(targetChess, this.game);
 
       // Deal magic damage
-      this.damage(targetChessObject, 15 + this.ap * 0.6, "magic");
+      this.damage(targetChessObject, 15 + this.ap * 0.6, "magic", this.sunder);
 
       // Pull the target to Blitzcrank (find adjacent square)
       const adjacentSquares = GameLogic.getAdjacentSquares(this.chess.position);
@@ -35,6 +35,6 @@ export class Blitzcrank extends ChessObject {
     }
 
     // Set skill on cooldown
-    this.chess.skill.currentCooldown = this.chess.skill.cooldown;
+    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 }

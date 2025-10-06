@@ -7,7 +7,7 @@ export class Malphite extends ChessObject {
     // Granite Shield: deal damage equal to 10% of physical resistance
     const bonusDamage = Math.floor(this.physicalResistance * 0.1);
     if (bonusDamage > 0) {
-      this.damage(chess, bonusDamage, "physical");
+      this.damage(chess, bonusDamage, "magic", this.sunder);
     }
   }
 

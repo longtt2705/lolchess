@@ -8,7 +8,7 @@ export class TwistedFate extends ChessObject {
     super.attack(chess);
 
     if (bonusDamage > 0) {
-      this.damage(chess, bonusDamage, "magic");
+      this.damage(chess, bonusDamage, "magic", this.sunder);
     }
 
     // Note: Gold bonus for Twisted Fate is now handled automatically

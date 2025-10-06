@@ -40,7 +40,7 @@ export class Jhin extends ChessObject {
     if (isCritical) {
       // Deal critical damage (double damage)
       const criticalDamage = this.ad * 2;
-      this.damage(chess, criticalDamage, "physical");
+      this.damage(chess, criticalDamage, "physical", this.sunder);
 
       // Grant +2 Move Speed
       const speedBoost = this.createSpeedBoostDebuff();

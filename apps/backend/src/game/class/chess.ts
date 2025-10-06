@@ -21,15 +21,20 @@ export class ChessObject {
     this.game = game;
   }
 
+  protected postCritDamage(chess: ChessObject, damage: number): void {
+    // Do nothing by default
+  }
+
   protected damage(
     chess: ChessObject,
     damage: number,
-    damageType: "physical" | "magic" | "true"
-  ): void {
+    damageType: "physical" | "magic" | "true",
+    sunder: number = 0
+  ): number {
     if (damageType === "physical") {
-      damage = Math.max(damage - chess.physicalResistance, 1);
+      damage = Math.max(damage - Math.max(chess.physicalResistance - sunder, 0), 1);
     } else if (damageType === "magic") {
-      damage = Math.max(damage - chess.magicResistance, 1);
+      damage = Math.max(damage - Math.max(chess.magicResistance - sunder, 0), 1);
     } else if (damageType === "true") {
       damage = Math.max(damage, 1);
     }
@@ -62,6 +67,8 @@ export class ChessObject {
         }
       }
     }
+
+    return damage; // Return the actual damage dealt
   }
 
   protected postTakenDamage(attacker: ChessObject, damage: number): void {
@@ -100,6 +107,13 @@ export class ChessObject {
       this.refreshCooldown(this);
       this.processDebuffs(this);
     }
+  }
+
+  get skillCooldown(): number {
+    if (this.chess.skill) {
+      return this.chess.skill.cooldown - this.getEffectiveStat(this.chess, "cooldownReduction") / 10;
+    }
+    return 0;
   }
 
   refreshCooldown(chess: ChessObject): void {
@@ -151,7 +165,7 @@ export class ChessObject {
 
       // Apply damage per turn
       if (debuff.damagePerTurn > 0) {
-        this.damage(chess, debuff.damagePerTurn, debuff.damageType);
+        this.damage(chess, debuff.damagePerTurn, debuff.damageType, 0);
       }
 
       // Apply heal per turn
@@ -205,8 +219,27 @@ export class ChessObject {
     return this.getEffectiveStat(this.chess, "sunder");
   }
 
+  get cooldownReduction(): number {
+    return this.getEffectiveStat(this.chess, "cooldownReduction");
+  }
+
+  get lifesteal(): number {
+    return this.getEffectiveStat(this.chess, "lifesteal");
+  }
+
   getEffectiveStat(chess: Chess, stat: string): number {
     let statValue = chess.stats[stat] || 0;
+
+    // Apply item bonuses
+    chess.items.forEach((item) => {
+      if (item.stats && item.stats[stat]) {
+        statValue = this.applyStatModifier(
+          statValue,
+          item.stats[stat],
+          "add" // Items use additive bonuses
+        );
+      }
+    });
 
     // Apply debuff effects (auras now apply debuffs instead of direct modification)
     chess.debuffs.forEach((debuff) => {
@@ -438,10 +471,21 @@ export class ChessObject {
 
     if (isCriticalStrike) {
       damage = (damage * this.criticalDamage) / 100; // 150% damage
-      console.log(`${this.chess.name} landed a critical strike!`);
+      this.postCritDamage(chess, damage);
     }
 
-    this.damage(chess, damage, "physical");
+    const actualDamageDealt = this.damage(chess, damage, "physical", this.sunder);
+
+    // Apply lifesteal: heal for a percentage of physical damage dealt
+    if (this.lifesteal > 0) {
+      const healAmount = (actualDamageDealt * this.lifesteal) / 100;
+      const newHp = Math.min(this.chess.stats.hp + healAmount, this.maxHp);
+      this.chess.stats.hp = newHp;
+
+      if (healAmount > 0) {
+        console.log(`${this.chess.name} healed ${healAmount.toFixed(1)} HP from lifesteal (${this.lifesteal}%)`);
+      }
+    }
   }
 
   skill(position?: Square): void {

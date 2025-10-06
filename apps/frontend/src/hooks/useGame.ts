@@ -25,6 +25,11 @@ export interface ChessPiece {
     magicResistance: number;
     speed: number;
     goldValue: number;
+    sunder?: number;
+    criticalChance?: number;
+    criticalDamage?: number;
+    cooldownReduction?: number;
+    lifesteal?: number;
     attackRange: {
       range: number;
       diagonal: boolean;
@@ -41,6 +46,11 @@ export interface ChessPiece {
     magicResistance: number;
     speed: number;
     goldValue: number;
+    sunder?: number;
+    criticalChance?: number;
+    criticalDamage?: number;
+    cooldownReduction?: number;
+    lifesteal?: number;
     attackRange: {
       range: number;
       diagonal: boolean;
@@ -512,7 +522,7 @@ export const useGame = (gameId: string) => {
   const isMyTurn =
     gameState && currentUser
       ? gameState.currentRound % 2 ===
-        (gameState.bluePlayer === currentUser.id ? 1 : 0)
+      (gameState.bluePlayer === currentUser.id ? 1 : 0)
       : false;
 
   // Get current player data

@@ -6,7 +6,7 @@ import styled from 'styled-components'
 import { useAppSelector, useAppDispatch } from '../hooks/redux'
 import { ChessPiece, ChessPosition, useGame, GameState } from '../hooks/useGame'
 import { resetGameplay } from '../store/gameSlice'
-import { fetchBasicItems, ItemData } from '../store/itemsSlice'
+import { fetchBasicItems, fetchAllItems, ItemData } from '../store/itemsSlice'
 import { AnimationEngine, AnimationAction } from '../utils/animationEngine'
 
 interface AttackAnimation {
@@ -1743,14 +1743,17 @@ const GamePage: React.FC = () => {
   const dispatch = useAppDispatch()
 
   // Get items from Redux store
-  const { basicItems: shopItems, loading: itemsLoading } = useAppSelector((state) => state.items)
+  const { basicItems: shopItems, allItems, loading: itemsLoading } = useAppSelector((state) => state.items)
 
   // Fetch items on component mount
   useEffect(() => {
     if (shopItems.length === 0 && !itemsLoading) {
       dispatch(fetchBasicItems())
     }
-  }, [dispatch, shopItems.length, itemsLoading])
+    if (allItems.length === 0 && !itemsLoading) {
+      dispatch(fetchAllItems())
+    }
+  }, [dispatch, shopItems.length, allItems.length, itemsLoading])
 
   // Animation state
   const [attackAnimation, setAttackAnimation] = useState<AttackAnimation | null>(null)
@@ -1773,6 +1776,16 @@ const GamePage: React.FC = () => {
 
   // Get loading state from Redux for reset operation
   const isResetting = useAppSelector((state) => state.game.loading)
+
+  // Update detailViewPiece when gameState changes (to reflect item purchases, etc.)
+  useEffect(() => {
+    if (detailViewPiece && gameState) {
+      const updatedPiece = gameState.board.find(p => p.id === detailViewPiece.id)
+      if (updatedPiece) {
+        setDetailViewPiece(updatedPiece)
+      }
+    }
+  }, [gameState, detailViewPiece?.id])
 
   // Handle buying items
   const handleBuyItem = useCallback((itemId: string, championId: string) => {
@@ -2663,16 +2676,47 @@ const GamePage: React.FC = () => {
                 </div>
                 {(detailViewPiece as any).items && (detailViewPiece as any).items.length > 0 ? (
                   <div className="items-grid">
-                    {(detailViewPiece as any).items.map((item: any, index: number) => (
-                      <div key={index} className="item-card equipped">
-                        <div className="item-header">
-                          <div className="card-name">{item.name}</div>
+                    {(detailViewPiece as any).items.map((item: any, index: number) => {
+                      // Find the item data from all items to get the icon (includes combined items)
+                      const itemData = allItems.find((allItem: ItemData) => allItem.id === item.id)
+
+                      return (
+                        <div key={index} className="item-card equipped">
+                          <div className="item-header" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                            {itemData?.icon && (
+                              <div style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '8px',
+                                border: '2px solid rgba(34, 197, 94, 0.5)',
+                                background: 'rgba(0, 0, 0, 0.3)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                overflow: 'hidden',
+                                padding: '4px'
+                              }}>
+                                <img
+                                  src={itemData.icon}
+                                  alt={item.name}
+                                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none'
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <div style={{ flex: 1 }}>
+                              <div className="card-name">{item.name}</div>
+                              <div className="card-description" style={{ fontSize: '10px', marginTop: '4px' }}>
+                                {item.description || 'No description available'}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="card-description">
-                          {item.description || 'No description available'}
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="no-items">No items equipped</div>

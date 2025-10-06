@@ -8,7 +8,7 @@ export class Ahri extends ChessObject {
     return {
       id: "spirit_rush",
       name: "Spirit Rush",
-      description: "Reduces speed by 1 and deals damage each turn",
+      description: "Reduces speed by 1 and deals 10 + 50% AP magic damage each turn",
       duration: 2,
       maxDuration: 2,
       effects: [
@@ -18,7 +18,7 @@ export class Ahri extends ChessObject {
           type: "add",
         },
       ],
-      damagePerTurn: 10, // Adjust damage as needed
+      damagePerTurn: 10 + this.ap * 0.5, // Adjust damage as needed
       damageType: "magic",
       healPerTurn: 0,
       unique: true,
@@ -49,7 +49,7 @@ export class Ahri extends ChessObject {
       if (targetChess) {
         const targetChessObject = new ChessObject(targetChess, this.game);
         // Deal damage
-        this.damage(targetChessObject, 10 + this.ap * 0.5, "magic");
+        this.damage(targetChessObject, 10 + this.ap * 0.5, "magic", this.sunder); // Adjust damage as needed
 
         // Apply Spirit Rush debuff
         const wasApplied = this.applySpiritRush(
@@ -67,5 +67,6 @@ export class Ahri extends ChessObject {
         }
       }
     });
+    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 }

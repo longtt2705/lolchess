@@ -26,8 +26,8 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Deathbringer Stance",
       description:
-        "Aatrox's next basic attack deals bonus magic damage and heals him, based on the target's max health.",
-      cooldown: 2,
+        "Aatrox's next basic attack deals bonus 10% target's max health + 50% AP magic damage and heals him.",
+      cooldown: 3,
     },
   },
   {
@@ -48,8 +48,8 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Spirit Rush",
       description:
-        "Ahri dashes to a square, dealing magic damage and applying a slow to any piece at or adjacent to that square.",
-      cooldown: 4,
+        "Ahri dashes to a square, dealing 10 + 50% AP magic damage and applying a slow and damage each turn to any piece at or adjacent to that square.",
+      cooldown: 5,
       attackRange: {
         range: 8,
         diagonal: true,
@@ -78,8 +78,8 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Perseverance",
       description:
-        "If Garen has not recently been struck by damage or enemy abilities, he regenerates a percentage of his total health each turn.",
-      cooldown: 2,
+        "If Garen has not recently been struck by damage or enemy abilities, he regenerates 10% of his total health each turn.",
+      cooldown: 4,
       currentCooldown: 0,
     },
   },
@@ -104,8 +104,8 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Tailwind",
       description:
-        "Janna's allies gain +1 Move Speed if adjacent to her. You can activate this skill to +2 Move Speed of nearby allies for until next turn.",
-      cooldown: 4,
+        "Janna's allies gain +1 if adjacent to her. You can activate this skill to +2 + 20% of AP Move Speed of nearby allies for 2 turns.",
+      cooldown: 5,
       targetTypes: "none",
       attackRange: {
         range: 2,
@@ -117,7 +117,7 @@ export const champions: ChampionData[] = [
     aura: {
       id: "janna_tailwind",
       name: "Tailwind",
-      description: "Grants +1 Move Speed to adjacent allied chess pieces",
+      description: "Grants +1 to adjacent allied chess pieces",
       range: 1,
       effects: [{ stat: "speed", modifier: 1, type: "add", target: "allies" }],
       active: true,
@@ -144,7 +144,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Frost Shot",
       description:
-        "Ashe's attacks slow their target, causing her to deal increased 10% damage to these targets.",
+        "Ashe's attacks slow their target, causing her to deal increased (10+10% of AP) physical damage to these targets.",
       cooldown: 0,
     },
   },
@@ -166,7 +166,7 @@ export const champions: ChampionData[] = [
     skill: {
       type: "passive",
       name: "Draw a Bead",
-      description: "Increases Tristana's Attack Range.",
+      description: "Increases Tristana's Attack Range to 8.",
       cooldown: 0,
     },
   },
@@ -188,7 +188,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Rocket Grab",
       description:
-        "Blitzcrank launches a rocket, dealing magic damage and pulling the target to him.",
+        "Blitzcrank launches a rocket, dealing 15 + 60% AP magic damage and pulling the target to him.",
       cooldown: 3,
       attackRange: {
         range: 4,
@@ -217,7 +217,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Taste Their Fear",
       description:
-        "Deals physical damage to the target. Damage increased on Isolated targets.",
+        "Deals 20 + 80% AD + 50% AP physical damage to the target. Damage increased on Isolated targets.",
       cooldown: 2,
       attackRange: {
         range: 2,
@@ -244,7 +244,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Contempt for the Weak",
       description:
-        "Zed's basic attacks against low health targets deals bonus Magic Damage.",
+        "Zed's basic attacks against low health targets deals bonus (10+10% of AP) magic damage.",
       cooldown: 0,
     },
   },
@@ -267,7 +267,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Granite Shield",
       description:
-        "Malphite gains 15 physical resistance. His attack range is increased by 1 and deals damage equal to 10% of his physical resistance to his target.",
+        "Malphite gains 15 physical resistance. His attack range is increased by 1 and deals damage equal to (10+10% of AP) magic damage to his target.",
       cooldown: 0,
     },
   },
@@ -312,7 +312,7 @@ export const champions: ChampionData[] = [
     skill: {
       type: "passive",
       name: "Whisper",
-      description: "Every 4th attack deals critical damage and +2 Move Speed.",
+      description: "Every 4th attack deals critical damage and +2 + 10% of AP Move Speed.",
       cooldown: 0,
     },
   },
@@ -335,7 +335,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Astral Infusion",
       description:
-        "Soraka sacrifices a portion of her own health to heal another friendly champion.",
+        "Soraka sacrifices a portion of her own health to heal another friendly champion. Heals for 20 + 10% of AP.",
       cooldown: 3,
       attackRange: {
         range: 3,
@@ -365,7 +365,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Siphoning Strike",
       description:
-        "Nasus strikes his foe, dealing damage and increasing the power of his future Siphoning Strikes if he slays his target.",
+        "Nasus strikes his foe, dealing 20 + 10% of AP magic damage and increasing the power of his future Siphoning Strikes if he slays his target.",
       cooldown: 2,
       attackRange: {
         range: 1,
@@ -395,7 +395,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Toxic Shot",
       description:
-        "Teemo's basic attacks apply a debuff to the target, dealing damage each turn.",
+        "Teemo's basic attacks apply a debuff to the target, dealing (10+10% of AP) physical damage each turn.",
       cooldown: 0,
     },
   },
@@ -418,7 +418,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Defensive Ball Curl",
       description:
-        "Rammus returns damage to enemies that attack him based on his physical resistance.",
+        "Rammus returns damage to enemies that attack him based on his physical resistance. Heals for 10% of his physical resistance each turn.",
       cooldown: 0,
     },
   },
@@ -441,7 +441,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Way of the Wanderer",
       description:
-        "Yasuo's Critical Strike Chance is doubled. After a Critical Strike, Yasuo gains +3 AD.",
+        "Yasuo's Critical Strike Chance is doubled. After a Critical Strike, Yasuo gains (+3 + 10% of AP) Sunder.",
       cooldown: 0,
     },
   },
@@ -464,7 +464,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Undying Rage",
       description:
-        "The first time Tryndamere is slain, he will survive with 1 HP. His attack deals bonus 1 physical damage for each 3 HP he lost.",
+        "The first time Tryndamere is slain, he will survive with 1 HP. His attack deals bonus (1 + 10% of AP) physical damage for each 3 HP he lost.",
       cooldown: 0,
     },
   },
@@ -487,7 +487,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Siphon Power",
       description:
-        "Viktor deals magic damage to a target, and empowers his next basic attack.",
+        "Viktor deals 20 + 10% of AP magic damage to a target, and empowers his next basic attack.",
       cooldown: 3,
       attackRange: {
         range: 2,
@@ -517,7 +517,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Stacked Deck",
       description:
-        "Twisted Fate deals bonus damage. He earns more 10 gold for each enemy killed.",
+        "Twisted Fate deals bonus (10+10% of AP) magic damage. He earns more 10 gold for each enemy killed.",
       cooldown: 0,
     },
   },

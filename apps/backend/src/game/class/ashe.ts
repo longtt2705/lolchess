@@ -41,12 +41,12 @@ export class Ashe extends ChessObject {
     const hasFrostShot = chess.chess.debuffs.some(
       (debuff) => debuff.id === "frost_shot"
     );
-    const bonusDamage = hasFrostShot ? Math.floor(this.ad * 0.1) : 0;
+    const bonusDamage = hasFrostShot ? Math.floor(this.ad * (0.1 + this.ap * 0.1)) : 0;
 
     super.attack(chess);
 
     if (bonusDamage > 0) {
-      this.damage(chess, bonusDamage, "physical");
+      this.damage(chess, bonusDamage, "physical", this.sunder);
     }
   }
 }

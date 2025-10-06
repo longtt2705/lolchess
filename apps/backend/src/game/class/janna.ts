@@ -11,13 +11,13 @@ export class Janna extends ChessObject {
     return {
       id: "speed_boost",
       name: "Speed Boost",
-      description: "Increases speed by 2",
+      description: "Increases speed by 2 + 20% of AP",
       duration: 2,
       maxDuration: 2,
       effects: [
         {
           stat: "speed",
-          modifier: 2,
+          modifier: 2 + Math.floor(this.ap * 0.2),
           type: "add",
         },
       ],
@@ -62,6 +62,6 @@ export class Janna extends ChessObject {
     });
 
     // Set skill on cooldown
-    this.chess.skill.currentCooldown = this.chess.skill.cooldown;
+    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 }

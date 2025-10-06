@@ -45,7 +45,7 @@ export class Viktor extends ChessObject {
 
       // Deal magic damage
       const damage = 25 + this.ap * 0.7;
-      this.damage(targetChessObject, damage, "magic");
+      this.damage(targetChessObject, damage, "magic", this.sunder);
 
       // Empower next basic attack
       const empowermentDebuff = this.createEmpoweredAttackDebuff();
@@ -59,7 +59,7 @@ export class Viktor extends ChessObject {
     }
 
     // Set skill on cooldown
-    this.chess.skill.currentCooldown = this.chess.skill.cooldown;
+    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 
   attack(chess: ChessObject): void {

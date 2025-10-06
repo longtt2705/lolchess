@@ -2,7 +2,7 @@ import { ChessObject } from "./chess";
 
 export class Garen extends ChessObject {
   postTakenDamage(): void {
-    this.chess.skill.currentCooldown = this.chess.skill.cooldown;
+    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 
   preEnterTurn(isBlueTurn: boolean): void {

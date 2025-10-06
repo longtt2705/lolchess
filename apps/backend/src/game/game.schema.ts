@@ -80,6 +80,12 @@ export class ChessStats {
 
   @Prop({ default: 150 })
   criticalDamage: number; // Default 150% (1.5x multiplier)
+
+  @Prop({ default: 0 })
+  cooldownReduction: number; // Reduces skill cooldowns (percentage)
+
+  @Prop({ default: 0 })
+  lifesteal: number; // Heals for a percentage of physical damage dealt
 }
 
 export class DebuffEffect {

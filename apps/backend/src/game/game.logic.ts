@@ -18,7 +18,14 @@ export class GameLogic {
 
     const isBlue = event.playerId === game.bluePlayer;
 
-    const casterChess = this.getChess(game, isBlue, event.casterPosition);
+    let casterChess: Chess | null = null;
+    if (event.event === GameEvent.BUY_ITEM) {
+      casterChess = game.board.find(
+        (chess) => chess.id === event.targetChampionId && chess.ownerId === event.playerId
+      );
+    } else {
+      casterChess = this.getChess(game, isBlue, event.casterPosition);
+    }
     if (!casterChess) {
       throw new Error("Caster not found");
     }
@@ -748,20 +755,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-            type: championData.skill.type,
-            name: championData.skill.name,
-            description: championData.skill.description,
-            cooldown: championData.skill.cooldown,
-            currentCooldown: championData.skill.currentCooldown || 0,
-            attackRange: championData.skill.attackRange ||
-              championData.stats.attackRange || {
-                range: 1,
-                diagonal: true,
-                horizontal: true,
-                vertical: true,
-              },
-            targetTypes: championData.skill.targetTypes || "none",
-          }
+          type: championData.skill.type,
+          name: championData.skill.name,
+          description: championData.skill.description,
+          cooldown: championData.skill.cooldown,
+          currentCooldown: championData.skill.currentCooldown || 0,
+          attackRange: championData.skill.attackRange ||
+            championData.stats.attackRange || {
+            range: 1,
+            diagonal: true,
+            horizontal: true,
+            vertical: true,
+          },
+          targetTypes: championData.skill.targetTypes || "none",
+        }
         : undefined,
       items: [],
       debuffs: [],
@@ -772,15 +779,15 @@ export class GameLogic {
       `Final champion ${championName} skill:`,
       championData.skill
         ? {
-            name: championData.skill.name,
-            type: championData.skill.type,
-            cooldown: championData.skill.cooldown,
-            targetTypes: championData.skill.targetTypes || "none",
-            currentCooldown: championData.skill.currentCooldown || 0,
-            hasAttackRange: !!(
-              championData.skill.attackRange || championData.stats.attackRange
-            ),
-          }
+          name: championData.skill.name,
+          type: championData.skill.type,
+          cooldown: championData.skill.cooldown,
+          targetTypes: championData.skill.targetTypes || "none",
+          currentCooldown: championData.skill.currentCooldown || 0,
+          hasAttackRange: !!(
+            championData.skill.attackRange || championData.stats.attackRange
+          ),
+        }
         : "no skill data"
     );
 
@@ -1029,6 +1036,7 @@ export class GameLogic {
       unique: itemData.unique || false,
     };
 
+
     champion.items.push(newItem as any);
 
     // Check for item combining (TFT-style)
@@ -1097,6 +1105,18 @@ export class GameLogic {
 
           champion.items.push(combinedItem as any);
 
+          // Calculate the effective maxHp (base + items) and cap current HP if needed
+          let effectiveMaxHp = champion.stats.maxHp || 0;
+          champion.items.forEach((item) => {
+            if (item.stats?.maxHp) {
+              effectiveMaxHp += item.stats.maxHp;
+            }
+          });
+
+          if (champion.stats.hp > effectiveMaxHp) {
+            champion.stats.hp = effectiveMaxHp;
+          }
+
           console.log(
             `Combined ${item1Data.name} + ${item2Data.name} = ${combinedItemData.name}`
           );
@@ -1109,30 +1129,18 @@ export class GameLogic {
     }
   }
 
-  // Apply all item stats to champion
+  // Apply item effects (now only handles HP changes, other stats are calculated dynamically)
   private static applyItemStatsToChampion(champion: Chess): void {
-    // Reset to base stats first (would need to store base stats separately in production)
-    // For now, we'll just add item bonuses on top
+    // Item stats are now calculated dynamically via getEffectiveStat()
+    // We only need to handle current HP when maxHp-boosting items are added
 
-    champion.items.forEach((item) => {
-      if (item.stats) {
-        Object.keys(item.stats).forEach((statKey) => {
-          const value = item.stats[statKey];
-          if (typeof value === "number") {
-            if (statKey === "maxHp") {
-              // Update max HP and current HP
-              const hpIncrease = value;
-              champion.stats.maxHp = (champion.stats.maxHp || 0) + hpIncrease;
-              champion.stats.hp = (champion.stats.hp || 0) + hpIncrease;
-            } else if (champion.stats[statKey] !== undefined) {
-              // Add to existing stat
-              (champion.stats as any)[statKey] =
-                ((champion.stats as any)[statKey] || 0) + value;
-            }
-          }
-        });
-      }
-    });
+    // Calculate total maxHp bonus from the most recently added item
+    const lastItem = champion.items[champion.items.length - 1];
+    if (lastItem?.stats?.maxHp) {
+      const hpIncrease = lastItem.stats.maxHp;
+      // Increase current HP by the same amount when maxHp item is added
+      champion.stats.hp = (champion.stats.hp || 0) + hpIncrease;
+    }
   }
 
   // Award buffs for killing neutral monsters

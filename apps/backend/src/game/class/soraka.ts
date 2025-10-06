@@ -28,6 +28,6 @@ export class Soraka extends ChessObject {
     }
 
     // Set skill on cooldown
-    this.chess.skill.currentCooldown = this.chess.skill.cooldown;
+    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 }
