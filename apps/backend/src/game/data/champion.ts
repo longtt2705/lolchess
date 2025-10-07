@@ -218,7 +218,7 @@ export const champions: ChampionData[] = [
       name: "Taste Their Fear",
       description:
         "Deals 20 + 80% AD + 50% AP physical damage to the target. Damage increased on Isolated targets.",
-      cooldown: 2,
+      cooldown: 4,
       attackRange: {
         range: 2,
         diagonal: true,
@@ -312,7 +312,8 @@ export const champions: ChampionData[] = [
     skill: {
       type: "passive",
       name: "Whisper",
-      description: "Every 4th attack deals critical damage and +2 + 10% of AP Move Speed.",
+      description:
+        "Every 4th attack deals critical damage and +2 + 10% of AP Move Speed.",
       cooldown: 0,
     },
   },

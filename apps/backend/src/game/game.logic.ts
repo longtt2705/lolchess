@@ -9,6 +9,7 @@ import {
 } from "./game.schema";
 import { Game } from "./game.schema";
 import { champions } from "./data/champion";
+import { ItemData } from "./data/items";
 
 export class GameLogic {
   public static processGame(game: Game, event: EventPayload): Game {
@@ -21,7 +22,9 @@ export class GameLogic {
     let casterChess: Chess | null = null;
     if (event.event === GameEvent.BUY_ITEM) {
       casterChess = game.board.find(
-        (chess) => chess.id === event.targetChampionId && chess.ownerId === event.playerId
+        (chess) =>
+          chess.id === event.targetChampionId &&
+          chess.ownerId === event.playerId
       );
     } else {
       casterChess = this.getChess(game, isBlue, event.casterPosition);
@@ -139,6 +142,8 @@ export class GameLogic {
 
     // Assign action details to game
     game.lastAction = actionDetails;
+
+    this.applyAuraDebuffs(game);
 
     this.postProcessGame(game);
     return game;
@@ -293,9 +298,6 @@ export class GameLogic {
     // Then apply current auras
     game.board.forEach((chess) => {
       const chessObject = ChessFactory.createChess(chess, game);
-      if (chess.name === "Janna") {
-        console.log("applyAuraDebuffs", chess.name);
-      }
       chessObject.applyAuraDebuffs();
     });
   }
@@ -602,6 +604,7 @@ export class GameLogic {
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
+        damageAmplification: 0,
       },
       Champion: {
         maxHp: 80,
@@ -620,6 +623,7 @@ export class GameLogic {
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
+        damageAmplification: 0,
       },
       "Siege Minion": {
         maxHp: 250,
@@ -638,6 +642,7 @@ export class GameLogic {
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
+        damageAmplification: 0,
       },
       "Melee Minion": {
         maxHp: 100,
@@ -656,6 +661,7 @@ export class GameLogic {
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
+        damageAmplification: 0,
       },
       "Caster Minion": {
         maxHp: 50,
@@ -674,6 +680,7 @@ export class GameLogic {
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
+        damageAmplification: 0,
       },
       "Super Minion": {
         maxHp: 500,
@@ -692,6 +699,7 @@ export class GameLogic {
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
+        damageAmplification: 0,
       },
     };
 
@@ -752,23 +760,24 @@ export class GameLogic {
         sunder: championData.stats.sunder || 0,
         criticalChance: championData.stats.criticalChance || 0,
         criticalDamage: championData.stats.criticalDamage || 150,
+        damageAmplification: championData.stats.damageAmplification || 0,
       },
       skill: championData.skill
         ? {
-          type: championData.skill.type,
-          name: championData.skill.name,
-          description: championData.skill.description,
-          cooldown: championData.skill.cooldown,
-          currentCooldown: championData.skill.currentCooldown || 0,
-          attackRange: championData.skill.attackRange ||
-            championData.stats.attackRange || {
-            range: 1,
-            diagonal: true,
-            horizontal: true,
-            vertical: true,
-          },
-          targetTypes: championData.skill.targetTypes || "none",
-        }
+            type: championData.skill.type,
+            name: championData.skill.name,
+            description: championData.skill.description,
+            cooldown: championData.skill.cooldown,
+            currentCooldown: championData.skill.currentCooldown || 0,
+            attackRange: championData.skill.attackRange ||
+              championData.stats.attackRange || {
+                range: 1,
+                diagonal: true,
+                horizontal: true,
+                vertical: true,
+              },
+            targetTypes: championData.skill.targetTypes || "none",
+          }
         : undefined,
       items: [],
       debuffs: [],
@@ -779,15 +788,15 @@ export class GameLogic {
       `Final champion ${championName} skill:`,
       championData.skill
         ? {
-          name: championData.skill.name,
-          type: championData.skill.type,
-          cooldown: championData.skill.cooldown,
-          targetTypes: championData.skill.targetTypes || "none",
-          currentCooldown: championData.skill.currentCooldown || 0,
-          hasAttackRange: !!(
-            championData.skill.attackRange || championData.stats.attackRange
-          ),
-        }
+            name: championData.skill.name,
+            type: championData.skill.type,
+            cooldown: championData.skill.cooldown,
+            targetTypes: championData.skill.targetTypes || "none",
+            currentCooldown: championData.skill.currentCooldown || 0,
+            hasAttackRange: !!(
+              championData.skill.attackRange || championData.stats.attackRange
+            ),
+          }
         : "no skill data"
     );
 
@@ -878,6 +887,7 @@ export class GameLogic {
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
+        damageAmplification: 0,
       },
       skill: undefined,
       items: [],
@@ -941,6 +951,7 @@ export class GameLogic {
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
+        damageAmplification: 0,
       },
       skill: undefined,
       items: [],
@@ -1036,7 +1047,6 @@ export class GameLogic {
       unique: itemData.unique || false,
     };
 
-
     champion.items.push(newItem as any);
 
     // Check for item combining (TFT-style)
@@ -1105,17 +1115,7 @@ export class GameLogic {
 
           champion.items.push(combinedItem as any);
 
-          // Calculate the effective maxHp (base + items) and cap current HP if needed
-          let effectiveMaxHp = champion.stats.maxHp || 0;
-          champion.items.forEach((item) => {
-            if (item.stats?.maxHp) {
-              effectiveMaxHp += item.stats.maxHp;
-            }
-          });
-
-          if (champion.stats.hp > effectiveMaxHp) {
-            champion.stats.hp = effectiveMaxHp;
-          }
+          this.applyItemStatsToChampion(champion);
 
           console.log(
             `Combined ${item1Data.name} + ${item2Data.name} = ${combinedItemData.name}`
@@ -1129,6 +1129,11 @@ export class GameLogic {
     }
   }
 
+  private static getItemById(itemId: string): ItemData | undefined {
+    const { getItemById } = require("./data/items");
+    return getItemById(itemId);
+  }
+
   // Apply item effects (now only handles HP changes, other stats are calculated dynamically)
   private static applyItemStatsToChampion(champion: Chess): void {
     // Item stats are now calculated dynamically via getEffectiveStat()
@@ -1136,8 +1141,10 @@ export class GameLogic {
 
     // Calculate total maxHp bonus from the most recently added item
     const lastItem = champion.items[champion.items.length - 1];
-    if (lastItem?.stats?.maxHp) {
-      const hpIncrease = lastItem.stats.maxHp;
+    const itemData = this.getItemById(lastItem.id);
+    if (itemData?.effects.some((effect) => effect.stat === "maxHp")) {
+      const hpIncrease =
+        itemData.effects.find((effect) => effect.stat === "maxHp")?.value || 0;
       // Increase current HP by the same amount when maxHp item is added
       champion.stats.hp = (champion.stats.hp || 0) + hpIncrease;
     }

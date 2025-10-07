@@ -1,9 +1,11 @@
+import { ChessObject } from "../class/chess";
 import { ChessStats } from "../game.schema";
 
 export interface ItemEffect {
   stat: keyof ChessStats;
   value: number;
   type: "add" | "multiply";
+  condition?: (chess: ChessObject) => boolean;
 }
 
 export interface ItemData {
@@ -23,7 +25,7 @@ export const basicItems: ItemData[] = [
   {
     id: "bf_sword",
     name: "B.F. Sword",
-    description: "Grants bonus Attack Damage",
+    description: "",
     cost: 50,
     icon: "/icons/BFSword.png",
     effects: [{ stat: "ad", value: 10, type: "add" }],
@@ -32,7 +34,7 @@ export const basicItems: ItemData[] = [
   {
     id: "recurve_bow",
     name: "Recurve Bow",
-    description: "Grants bonus Attack Damage",
+    description: "",
     cost: 50,
     icon: "/icons/RecurveBow.png",
     effects: [{ stat: "sunder", value: 15, type: "add" }],
@@ -41,7 +43,7 @@ export const basicItems: ItemData[] = [
   {
     id: "needlessly_rod",
     name: "Needlessly Large Rod",
-    description: "Grants bonus Ability Power",
+    description: "",
     cost: 50,
     icon: "/icons/NeedlesslyLargeRod.png",
     effects: [{ stat: "ap", value: 10, type: "add" }],
@@ -50,7 +52,7 @@ export const basicItems: ItemData[] = [
   {
     id: "tear",
     name: "Tear of the Goddess",
-    description: "Grants bonus maximum Health",
+    description: "",
     cost: 50,
     icon: "/icons/TearoftheGoddess.png",
     effects: [{ stat: "cooldownReduction", value: 5, type: "add" }],
@@ -59,7 +61,7 @@ export const basicItems: ItemData[] = [
   {
     id: "chain_vest",
     name: "Chain Vest",
-    description: "Grants bonus Physical Resistance",
+    description: "",
     cost: 50,
     icon: "/icons/ChainVest.png",
     effects: [{ stat: "physicalResistance", value: 10, type: "add" }],
@@ -68,7 +70,7 @@ export const basicItems: ItemData[] = [
   {
     id: "negatron_cloak",
     name: "Negatron Cloak",
-    description: "Grants bonus Magic Resistance",
+    description: "",
     cost: 50,
     icon: "/icons/NegatronCloak.png",
     effects: [{ stat: "magicResistance", value: 10, type: "add" }],
@@ -77,7 +79,7 @@ export const basicItems: ItemData[] = [
   {
     id: "giants_belt",
     name: "Giant's Belt",
-    description: "Grants a large amount of bonus Health",
+    description: "",
     cost: 50,
     icon: "/icons/GiantsBelt.png",
     effects: [{ stat: "maxHp", value: 30, type: "add" }],
@@ -86,12 +88,10 @@ export const basicItems: ItemData[] = [
   {
     id: "sparring_gloves",
     name: "Sparring Gloves",
-    description: "Grants bonus Critical Chance",
+    description: "",
     cost: 50,
     icon: "/icons/SparringGloves.png",
-    effects: [
-      { stat: "criticalChance", value: 20, type: "add" },
-    ],
+    effects: [{ stat: "criticalChance", value: 20, type: "add" }],
     isBasic: true,
   },
 ];
@@ -102,7 +102,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "infinity_edge",
     name: "Infinity Edge",
-    description: "Grants 15 AD, 15% Critical Chance, and 50% Critical Damage",
+    description: "",
     cost: 0,
     icon: "/icons/InfinityEdge.png",
     effects: [
@@ -111,13 +111,14 @@ export const combinedItems: ItemData[] = [
       { stat: "criticalDamage", value: 50, type: "add" },
     ],
     isBasic: false,
-    recipe: ["bf_sword", "bf_sword"],
+    recipe: ["bf_sword", "sparring_gloves"],
     unique: true,
   },
   {
     id: "giant_slayer",
     name: "Giant Slayer",
-    description: "Gain 15% additional Damage Amplification against chess having more than 200 HP.",
+    description:
+      "15% additional Damage Amplification against chess having more than 200 HP.",
     cost: 0,
     icon: "/icons/GiantSlayer.png",
     effects: [
@@ -130,7 +131,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "hextech_gunblade",
     name: "Hextech Gunblade",
-    description: "Grants 25 AD and 25 AP",
+    description: "",
     cost: 0,
     icon: "/icons/HextechGunblade.png",
     effects: [
@@ -143,22 +144,30 @@ export const combinedItems: ItemData[] = [
   {
     id: "bloodthirster",
     name: "Bloodthirster",
-    description: "Grants Attack Damage and maximum Health",
+    description: "Gains additional 25% lifesteal effect when HP is below 50%",
     cost: 0,
     icon: "/icons/Bloodthirster.png",
     effects: [
       { stat: "ad", value: 12, type: "add" },
-      { stat: "maxHp", value: 25, type: "add" },
+      { stat: "lifesteal", value: 25, type: "add" },
+      {
+        stat: "lifesteal",
+        value: 25,
+        type: "add",
+        condition: (chess) =>
+          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.5,
+      },
     ],
     isBasic: false,
-    recipe: ["bf_sword", "tear"],
+    recipe: ["bf_sword", "cloak"],
   },
   {
     id: "edge_of_night",
     name: "Edge of Night",
-    description: "Grants Attack Damage and Physical Resistance",
+    description:
+      "Once per game, when this chess is about to be killed, they survive with 1 HP",
     cost: 0,
-    icon: "/icons/EdgeOfNight.png",
+    icon: "/icons/EdgeofNight.png",
     effects: [
       { stat: "ad", value: 12, type: "add" },
       { stat: "physicalResistance", value: 12, type: "add" },
@@ -169,9 +178,9 @@ export const combinedItems: ItemData[] = [
   {
     id: "quicksilver",
     name: "Quicksilver",
-    description: "Grants Attack Damage and Magic Resistance",
+    description: "Resistant to debuff from enemy (cooldown 5 rounds)",
     cost: 0,
-    icon: "/icons/quicksilver.png",
+    icon: "/icons/Quicksilver.png",
     effects: [
       { stat: "ad", value: 12, type: "add" },
       { stat: "magicResistance", value: 12, type: "add" },
@@ -182,55 +191,48 @@ export const combinedItems: ItemData[] = [
   {
     id: "sterak_gage",
     name: "Sterak's Gage",
-    description: "Grants Attack Damage and massive Health",
+    description: "Grants to 30 AD when the chess is below 50% HP",
     cost: 0,
-    icon: "/icons/sterak_gage.png",
+    icon: "/icons/SteraksGage.png",
     effects: [
       { stat: "ad", value: 12, type: "add" },
       { stat: "maxHp", value: 35, type: "add" },
+      {
+        stat: "ad",
+        value: 18,
+        type: "add",
+        condition: (chess) =>
+          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.5,
+      },
     ],
     isBasic: false,
     recipe: ["bf_sword", "giants_belt"],
   },
   {
-    id: "infinity_blade",
-    name: "Infinity Blade",
-    description: "Grants Attack Damage and Critical Chance",
+    id: "spear_of_shojin",
+    name: "Spear of Shojin",
+    description: "Reduce 0.5 rounds of cooldown of skill for each attack",
     cost: 0,
-    icon: "/icons/InfinityBlade.png",
+    icon: "/icons/SpearofShojin.png",
     effects: [
       { stat: "ad", value: 12, type: "add" },
-      { stat: "criticalChance", value: 25, type: "add" },
+      { stat: "cooldownReduction", value: 10, type: "add" },
     ],
     isBasic: false,
-    recipe: ["bf_sword", "cloak"],
+    recipe: ["bf_sword", "tear"],
   },
   {
-    id: "deadly_force",
-    name: "Deadly Force",
-    description: "Grants Attack Damage and Critical Damage",
+    id: "deathblade",
+    name: "Deathblade",
+    description: "",
     cost: 0,
-    icon: "/icons/DeadlyForce.png",
+    icon: "/icons/Deathblade.png",
     effects: [
-      { stat: "ad", value: 12, type: "add" },
-      { stat: "criticalDamage", value: 30, type: "add" },
+      { stat: "ad", value: 25, type: "add" },
+      { stat: "damageAmplification", value: 10, type: "add" },
     ],
     isBasic: false,
-    recipe: ["bf_sword", "gloves"],
-  },
-  {
-    id: "divine_sunderer",
-    name: "Divine Sunderer",
-    description: "Grants balanced offensive stats",
-    cost: 0,
-    icon: "/icons/DivineSunderer.png",
-    effects: [
-      { stat: "ad", value: 10, type: "add" },
-      { stat: "ap", value: 5, type: "add" },
-      { stat: "sunder", value: 5, type: "add" },
-    ],
-    isBasic: false,
-    recipe: ["sparring_gloves", "pickaxe"],
+    recipe: ["bf_sword", "bf_sword"],
   },
   {
     id: "phantom_dancer",
@@ -277,7 +279,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/ExecutionersCalling.png",
     effects: [{ stat: "criticalDamage", value: 60, type: "add" }],
     isBasic: false,
-    recipe: ["gloves", "gloves"],
+    recipe: ["sparring_gloves", "sparring_gloves"],
     unique: true,
   },
 

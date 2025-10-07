@@ -105,7 +105,7 @@ export class GameService {
       }
     }
     return {
-      game,
+      game: { ...game, board: this.cleanBoard(game) },
       message: game ? "Game found" : "Game not found",
     };
   }
@@ -612,9 +612,6 @@ export class GameService {
 
       const updatedGame = GameLogic.processGame(game, eventPayload);
 
-      // Import ChessObject for effective stats calculation
-      const { ChessObject } = await import("./class/chess");
-
       // Clean the board data to remove MongoDB-specific properties that cause casting errors
       const cleanedBoard = this.cleanBoard(updatedGame);
 
@@ -676,6 +673,10 @@ export class GameService {
           sunder: chessObject.getEffectiveStat(piece, "sunder"),
           criticalChance: chessObject.getEffectiveStat(piece, "criticalChance"),
           criticalDamage: chessObject.getEffectiveStat(piece, "criticalDamage"),
+          damageAmplification: chessObject.getEffectiveStat(
+            piece,
+            "damageAmplification"
+          ),
         },
         // Include raw stats for comparison/debugging if needed
         rawStats: {
@@ -696,6 +697,7 @@ export class GameService {
           sunder: piece.stats.sunder || 0,
           criticalChance: piece.stats.criticalChance || 0,
           criticalDamage: piece.stats.criticalDamage || 150,
+          damageAmplification: piece.stats.damageAmplification || 0,
         },
         blue: piece.blue,
         items: piece.items
@@ -703,7 +705,7 @@ export class GameService {
               id: item.id,
               name: item.name,
               description: item.description,
-              stats: item.stats,
+              payload: item.payload,
               unique: item.unique,
             }))
           : [],

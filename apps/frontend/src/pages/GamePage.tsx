@@ -139,6 +139,7 @@ const ChessDetailPanel = styled.div`
   border-radius: 12px;
   padding: 18px;
   overflow-y: auto;
+  overflow-x: hidden;
   max-height: calc(70vh - 32px);
   box-shadow: 
     inset 0 0 20px rgba(0, 0, 0, 0.3),
@@ -251,6 +252,52 @@ const ChessDetailPanel = styled.div`
       background: var(--accent-bg);
       border-radius: 6px;
       border: 1px solid var(--border);
+      position: relative;
+      cursor: help;
+      
+      &::before {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-8px);
+        background: rgba(10, 14, 39, 0.98);
+        color: var(--primary-text);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 1000;
+        border: 1px solid var(--gold);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      }
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-2px);
+        border: 6px solid transparent;
+        border-top-color: var(--gold);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 1000;
+      }
+      
+      &:hover::before,
+      &:hover::after {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-4px);
+      }
+      
+      &:hover::after {
+        transform: translateX(-50%) translateY(2px);
+      }
       
       .stat-label {
         color: var(--secondary-text);
@@ -402,6 +449,7 @@ const ChessDetailPanel = styled.div`
         color: var(--secondary-text);
         font-size: 11px;
         line-height: 1.4;
+        margin-top: 8px;
       }
     }
     
@@ -537,6 +585,69 @@ const ChessDetailPanel = styled.div`
       }
     }
     
+    .item-tooltip {
+      position: fixed;
+      background: linear-gradient(135deg, rgba(10, 14, 39, 0.98) 0%, rgba(20, 25, 45, 0.98) 100%);
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      padding: 12px;
+      min-width: 250px;
+      max-width: 350px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      z-index: 10000;
+      pointer-events: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      
+      /* Position will be calculated via JS or use a reasonable default */
+      bottom: auto;
+      left: auto;
+      transform: translateY(-5px);
+      
+      .tooltip-title {
+        color: var(--gold);
+        font-weight: bold;
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+      
+      .tooltip-effects {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+        
+        .effect-item {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          background: rgba(200, 155, 60, 0.15);
+          border: 1px solid rgba(200, 155, 60, 0.3);
+          border-radius: 4px;
+          padding: 4px 8px;
+          font-size: 11px;
+          color: var(--primary-text);
+          font-weight: 600;
+          
+          img {
+            width: 14px;
+            height: 14px;
+          }
+          
+          .effect-value {
+            color: var(--gold);
+          }
+        }
+      }
+      
+      .tooltip-description {
+        color: var(--primary-text);
+        font-size: 10px;
+        line-height: 1.5;
+      }
+    }
+    
     .no-items {
       color: var(--secondary-text);
       font-size: 12px;
@@ -664,28 +775,59 @@ const ChessDetailPanel = styled.div`
       }
       
       .shop-item-tooltip {
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%) translateY(-5px);
+        position: fixed;
         background: linear-gradient(135deg, rgba(10, 14, 39, 0.98) 0%, rgba(20, 25, 45, 0.98) 100%);
         border: 2px solid var(--gold);
         border-radius: 8px;
-        padding: 8px;
+        padding: 12px;
         min-width: 200px;
-        max-width: 250px;
+        max-width: 300px;
         opacity: 0;
         visibility: hidden;
         transition: all 0.2s ease;
-        z-index: 1000;
+        z-index: 10000;
         pointer-events: none;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        
+        /* Position will be calculated via JS or use a reasonable default */
+        bottom: auto;
+        left: auto;
+        transform: translateY(-5px);
         
         .tooltip-title {
           color: var(--gold);
           font-weight: bold;
           font-size: 12px;
           margin-bottom: 4px;
+        }
+        
+        .tooltip-effects {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-bottom: 8px;
+          
+          .effect-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(200, 155, 60, 0.15);
+            border: 1px solid rgba(200, 155, 60, 0.3);
+            border-radius: 4px;
+            padding: 3px 6px;
+            font-size: 11px;
+            color: var(--primary-text);
+            font-weight: 600;
+            
+            img {
+              width: 14px;
+              height: 14px;
+            }
+            
+            .effect-value {
+              color: var(--gold);
+            }
+          }
         }
         
         .tooltip-description {
@@ -1707,6 +1849,26 @@ const ChessPieceRenderer: React.FC<{
   )
 }
 
+// Helper function to get stat icon path
+const getStatIcon = (stat: string): string => {
+  const iconMap: { [key: string]: string } = {
+    ad: '/icons/AD.svg',
+    ap: '/icons/AP.svg',
+    maxHp: '/icons/icon-hp.svg',
+    physicalResistance: '/icons/Armor.svg',
+    magicResistance: '/icons/MagicResist.svg',
+    speed: '/icons/speed.png',
+    attackRange: '/icons/Range.svg',
+    sunder: '/icons/AS.svg',
+    criticalChance: '/icons/CritChance.svg',
+    criticalDamage: '/icons/CritDamage.svg',
+    damageAmplification: '/icons/icon-da.png',
+    cooldownReduction: '/icons/icon-cdr.webp',
+    lifesteal: '/icons/icon-sv.png',
+  };
+  return iconMap[stat] || '/icons/AD.svg';
+};
+
 const GamePage: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>()
   const {
@@ -1792,7 +1954,9 @@ const GamePage: React.FC = () => {
     if (!gameId || !isMyTurn || !buyItemWS) return;
 
     buyItemWS(itemId, championId);
-  }, [gameId, isMyTurn, buyItemWS]);
+    // Clear selection to remove valid move/attack indicators
+    clearSelection();
+  }, [gameId, isMyTurn, buyItemWS, clearSelection]);
 
   // Initialize gameplay if game is in ban_pick phase
   useEffect(() => {
@@ -2481,7 +2645,7 @@ const GamePage: React.FC = () => {
               </div>
 
               <div className="stats-grid">
-                <div className="stat-item">
+                <div className="stat-item" data-tooltip="Attack Damage">
                   <span className="stat-label"><img src="/icons/AD.svg" alt="Attack" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.ad !== detailViewPiece.stats.ad
                     ? `modified ${detailViewPiece.stats.ad > detailViewPiece.rawStats.ad ? 'buffed' : 'debuffed'}`
@@ -2490,7 +2654,7 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.ad}
                   </span>
                 </div>
-                <div className="stat-item">
+                <div className="stat-item" data-tooltip="Ability Power">
                   <span className="stat-label"><img src="/icons/AP.svg" alt="Ability" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.ap !== detailViewPiece.stats.ap
                     ? `modified ${detailViewPiece.stats.ap > detailViewPiece.rawStats.ap ? 'buffed' : 'debuffed'}`
@@ -2499,7 +2663,7 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.ap}
                   </span>
                 </div>
-                <div className="stat-item">
+                <div className="stat-item" data-tooltip="Physical Resistance">
                   <span className="stat-label"><img src="/icons/Armor.svg" alt="Physical Resistance" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.physicalResistance !== detailViewPiece.stats.physicalResistance
                     ? `modified ${detailViewPiece.stats.physicalResistance > detailViewPiece.rawStats.physicalResistance ? 'buffed' : 'debuffed'}`
@@ -2508,7 +2672,7 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.physicalResistance}
                   </span>
                 </div>
-                <div className="stat-item">
+                <div className="stat-item" data-tooltip="Magic Resistance">
                   <span className="stat-label"><img src="/icons/MagicResist.svg" alt="Magic Resistance" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.magicResistance !== detailViewPiece.stats.magicResistance
                     ? `modified ${detailViewPiece.stats.magicResistance > detailViewPiece.rawStats.magicResistance ? 'buffed' : 'debuffed'}`
@@ -2517,7 +2681,7 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.magicResistance}
                   </span>
                 </div>
-                <div className="stat-item">
+                <div className="stat-item" data-tooltip="Movement Speed">
                   <span className="stat-label"><img src="/icons/speed.png" alt="Speed" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.speed !== detailViewPiece.stats.speed
                     ? `modified ${detailViewPiece.stats.speed > detailViewPiece.rawStats.speed ? 'buffed' : 'debuffed'}`
@@ -2526,7 +2690,7 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.speed}
                   </span>
                 </div>
-                <div className="stat-item">
+                <div className="stat-item" data-tooltip="Attack Range">
                   <span className="stat-label"><img src="/icons/Range.svg" alt="Range" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.attackRange.range !== detailViewPiece.stats.attackRange.range
                     ? `modified ${detailViewPiece.stats.attackRange.range > detailViewPiece.rawStats.attackRange.range ? 'buffed' : 'debuffed'}`
@@ -2535,7 +2699,7 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.attackRange.range}
                   </span>
                 </div>
-                <div className="stat-item">
+                <div className="stat-item" data-tooltip="Sunder (Armor Penetration)">
                   <span className="stat-label"><img src="/icons/AS.svg" alt="Sunder" width={14} height={14} /></span>
                   <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.sunder !== (detailViewPiece as any).stats.sunder
                     ? `modified ${(detailViewPiece as any).stats.sunder > (detailViewPiece as any).rawStats.sunder ? 'buffed' : 'debuffed'}`
@@ -2544,7 +2708,7 @@ const GamePage: React.FC = () => {
                     {(detailViewPiece as any).stats.sunder || 0}
                   </span>
                 </div>
-                <div className="stat-item">
+                <div className="stat-item" data-tooltip="Critical Strike Chance (%)">
                   <span className="stat-label"><img src="/icons/CritChance.svg" alt="Critical Chance" width={14} height={14} /></span>
                   <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.criticalChance !== (detailViewPiece as any).stats.criticalChance
                     ? `modified ${(detailViewPiece as any).stats.criticalChance > (detailViewPiece as any).rawStats.criticalChance ? 'buffed' : 'debuffed'}`
@@ -2553,13 +2717,40 @@ const GamePage: React.FC = () => {
                     {(detailViewPiece as any).stats.criticalChance || 0}
                   </span>
                 </div>
-                <div className="stat-item">
+                <div className="stat-item" data-tooltip="Critical Strike Damage (%)">
                   <span className="stat-label"><img src="/icons/CritDamage.svg" alt="Critical Damage" width={14} height={14} /></span>
                   <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.criticalDamage !== (detailViewPiece as any).stats.criticalDamage
                     ? `modified ${(detailViewPiece as any).stats.criticalDamage > (detailViewPiece as any).rawStats.criticalDamage ? 'buffed' : 'debuffed'}`
                     : ''
                     }`}>
                     {(detailViewPiece as any).stats.criticalDamage || 150}
+                  </span>
+                </div>
+                <div className="stat-item" data-tooltip="Damage Amplification (%)">
+                  <span className="stat-label"><img src="/icons/icon-da.png" alt="Damage Amplification" width={14} height={14} /></span>
+                  <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.damageAmplification !== (detailViewPiece as any).stats.damageAmplification
+                    ? `modified ${(detailViewPiece as any).stats.damageAmplification > (detailViewPiece as any).rawStats.damageAmplification ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {(detailViewPiece as any).stats.damageAmplification || 0}
+                  </span>
+                </div>
+                <div className="stat-item" data-tooltip="Cooldown Reduction (%)">
+                  <span className="stat-label"><img src="/icons/icon-cdr.webp" alt="Cooldown Reduction" width={14} height={14} /></span>
+                  <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.cooldownReduction !== (detailViewPiece as any).stats.cooldownReduction
+                    ? `modified ${(detailViewPiece as any).stats.cooldownReduction > (detailViewPiece as any).rawStats.cooldownReduction ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {(detailViewPiece as any).stats.cooldownReduction || 0}
+                  </span>
+                </div>
+                <div className="stat-item" data-tooltip="Lifesteal (%)">
+                  <span className="stat-label"><img src="/icons/icon-sv.png" alt="Lifesteal" width={14} height={14} /></span>
+                  <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.lifesteal !== (detailViewPiece as any).stats.lifesteal
+                    ? `modified ${(detailViewPiece as any).stats.lifesteal > (detailViewPiece as any).rawStats.lifesteal ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {(detailViewPiece as any).stats.lifesteal || 0}
                   </span>
                 </div>
               </div>
@@ -2608,7 +2799,12 @@ const GamePage: React.FC = () => {
                       <div key={index} className={`debuff-card ${debuffClass}`}>
                         <div className="debuff-card-header">
                           <div className="debuff-icon">
-                            {debuff.casterName ? (
+                            {debuff.id === "wounded" ? (
+                              <img
+                                src="/icons/wounded.webp"
+                                alt="Wounded"
+                              />
+                            ) : (debuff.casterName ? (
                               <img
                                 src={`/icons/${debuff.casterName.toLowerCase().replace(/\s+/g, '')}_skill.webp`}
                                 alt={debuff.casterName}
@@ -2618,7 +2814,7 @@ const GamePage: React.FC = () => {
                                   if (fallback) (fallback as HTMLElement).style.display = 'block';
                                 }}
                               />
-                            ) : null}
+                            ) : null)}
                             <div className="fallback-icon" style={{ display: debuff.casterName ? 'none' : 'block' }}>
                               {isAura ? '✨' : isBuff ? '⬆' : '⬇'}
                             </div>
@@ -2682,7 +2878,7 @@ const GamePage: React.FC = () => {
 
                       return (
                         <div key={index} className="item-card equipped">
-                          <div className="item-header" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                          <div className="item-header" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                             {itemData?.icon && (
                               <div style={{
                                 width: '48px',
@@ -2708,10 +2904,48 @@ const GamePage: React.FC = () => {
                               </div>
                             )}
                             <div style={{ flex: 1 }}>
-                              <div className="card-name">{item.name}</div>
-                              <div className="card-description" style={{ fontSize: '10px', marginTop: '4px' }}>
-                                {item.description || 'No description available'}
-                              </div>
+                              <div className="card-name" style={{ marginBottom: '8px' }}>{item.name}</div>
+
+                              {/* Stat Effects */}
+                              {itemData?.effects && itemData.effects.length > 0 && (
+                                <div style={{
+                                  display: 'flex',
+                                  flexWrap: 'wrap',
+                                  gap: '6px',
+                                  marginBottom: '8px'
+                                }}>
+                                  {itemData.effects.map((effect, idx) => (
+                                    <div key={idx} style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      background: 'rgba(200, 155, 60, 0.15)',
+                                      border: '1px solid rgba(200, 155, 60, 0.3)',
+                                      borderRadius: '4px',
+                                      padding: '3px 6px',
+                                      fontSize: '11px',
+                                      color: 'var(--primary-text)',
+                                      fontWeight: 600,
+                                    }}>
+                                      <img
+                                        src={getStatIcon(effect.stat)}
+                                        alt={effect.stat}
+                                        style={{ width: '14px', height: '14px' }}
+                                      />
+                                      <span style={{ color: 'var(--gold)' }}>
+                                        +{effect.value}{effect.type === 'multiply' ? '%' : ''}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Description */}
+                              {(item.description || itemData?.description) && (
+                                <div className="card-description">
+                                  {item.description || itemData?.description}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -2747,7 +2981,15 @@ const GamePage: React.FC = () => {
                         <div
                           key={item.id}
                           className="shop-item-container"
-                          title={`${item.name}\n${item.description}\nCost: ${item.cost} gold`}
+                          onMouseEnter={(e) => {
+                            const tooltip = e.currentTarget.querySelector('.shop-item-tooltip') as HTMLElement;
+                            if (tooltip) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              tooltip.style.top = `${rect.top - 10}px`;
+                              tooltip.style.left = `${rect.left + rect.width / 2}px`;
+                              tooltip.style.transform = 'translate(-50%, -100%)';
+                            }
+                          }}
                         >
                           <button
                             className={`shop-item-icon ${(detailViewPiece as any).items?.length >= 3 || currentPlayer.gold < item.cost || !isMyTurn ? 'disabled' : ''}`}
@@ -2774,7 +3016,21 @@ const GamePage: React.FC = () => {
                           </button>
                           <div className="shop-item-tooltip">
                             <div className="tooltip-title">{item.name}</div>
-                            <div className="tooltip-description">{item.description}</div>
+                            {item.effects && item.effects.length > 0 && (
+                              <div className="tooltip-effects">
+                                {item.effects.map((effect, idx) => (
+                                  <div key={idx} className="effect-item">
+                                    <img src={getStatIcon(effect.stat)} alt={effect.stat} />
+                                    <span className="effect-value">
+                                      +{effect.value}{effect.type === 'multiply' ? '%' : ''}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {item.description && (
+                              <div className="tooltip-description">{item.description}</div>
+                            )}
                             <div className="tooltip-cost">
                               <Coins size={12} /> {item.cost} gold
                             </div>

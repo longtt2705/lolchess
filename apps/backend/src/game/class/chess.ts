@@ -1,3 +1,4 @@
+import { getItemById } from "../data/items";
 import {
   AttackRange,
   Chess,
@@ -32,16 +33,26 @@ export class ChessObject {
     sunder: number = 0
   ): number {
     if (damageType === "physical") {
-      damage = Math.max(damage - Math.max(chess.physicalResistance - sunder, 0), 1);
+      damage = Math.max(
+        damage - Math.max(chess.physicalResistance - sunder, 0),
+        1
+      );
     } else if (damageType === "magic") {
-      damage = Math.max(damage - Math.max(chess.magicResistance - sunder, 0), 1);
+      damage = Math.max(
+        damage - Math.max(chess.magicResistance - sunder, 0),
+        1
+      );
     } else if (damageType === "true") {
       damage = Math.max(damage, 1);
     }
 
+    const floorDamage = Math.floor(
+      (damage * (this.damageAmplification + 100)) / 100
+    );
+
     const wasAlive = chess.chess.stats.hp > 0;
-    chess.chess.stats.hp -= damage;
-    chess.postTakenDamage(this, damage);
+    chess.chess.stats.hp -= floorDamage;
+    chess.postTakenDamage(this, floorDamage);
 
     if (chess.chess.stats.hp <= 0) {
       chess.chess.stats.hp = 0;
@@ -95,9 +106,31 @@ export class ChessObject {
     }
   }
 
+  createWoundedDebuff(turn: number): Debuff {
+    return {
+      id: "wounded",
+      name: "Wounded",
+      description: "Reduces all of a unit's healing received by 50%.",
+      duration: turn,
+      maxDuration: turn,
+      effects: [],
+      damagePerTurn: 0,
+      damageType: "physical",
+      healPerTurn: 0,
+      unique: true,
+      appliedAt: Date.now(),
+      casterPlayerId: this.chess.ownerId,
+      casterName: this.chess.name,
+    } as Debuff;
+  }
+
   protected heal(chess: ChessObject, heal: number): void {
+    let healAmount = heal;
+    if (chess.chess.debuffs.some((debuff) => debuff.id === "wounded")) {
+      healAmount = Math.floor(heal * 0.5);
+    }
     chess.chess.stats.hp = Math.min(
-      chess.chess.stats.hp + heal,
+      chess.chess.stats.hp + Math.floor(healAmount),
       chess.chess.stats.maxHp
     );
   }
@@ -111,7 +144,10 @@ export class ChessObject {
 
   get skillCooldown(): number {
     if (this.chess.skill) {
-      return this.chess.skill.cooldown - this.getEffectiveStat(this.chess, "cooldownReduction") / 10;
+      return (
+        this.chess.skill.cooldown -
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10
+      );
     }
     return 0;
   }
@@ -227,18 +263,31 @@ export class ChessObject {
     return this.getEffectiveStat(this.chess, "lifesteal");
   }
 
+  get damageAmplification(): number {
+    return this.getEffectiveStat(this.chess, "damageAmplification");
+  }
+
   getEffectiveStat(chess: Chess, stat: string): number {
     let statValue = chess.stats[stat] || 0;
 
     // Apply item bonuses
     chess.items.forEach((item) => {
-      if (item.stats && item.stats[stat]) {
+      const itemData = getItemById(item.id);
+      const listEffect =
+        itemData?.effects.filter((effect) => effect.stat === stat) || [];
+      listEffect.forEach((effect) => {
+        if (
+          effect.condition &&
+          !effect.condition(new ChessObject(chess, this.game))
+        ) {
+          return;
+        }
         statValue = this.applyStatModifier(
           statValue,
-          item.stats[stat],
-          "add" // Items use additive bonuses
+          effect.value,
+          effect.type
         );
-      }
+      });
     });
 
     // Apply debuff effects (auras now apply debuffs instead of direct modification)
@@ -474,16 +523,22 @@ export class ChessObject {
       this.postCritDamage(chess, damage);
     }
 
-    const actualDamageDealt = this.damage(chess, damage, "physical", this.sunder);
+    const actualDamageDealt = this.damage(
+      chess,
+      damage,
+      "physical",
+      this.sunder
+    );
 
     // Apply lifesteal: heal for a percentage of physical damage dealt
     if (this.lifesteal > 0) {
       const healAmount = (actualDamageDealt * this.lifesteal) / 100;
-      const newHp = Math.min(this.chess.stats.hp + healAmount, this.maxHp);
-      this.chess.stats.hp = newHp;
+      this.heal(this, Math.floor(healAmount));
 
       if (healAmount > 0) {
-        console.log(`${this.chess.name} healed ${healAmount.toFixed(1)} HP from lifesteal (${this.lifesteal}%)`);
+        console.log(
+          `${this.chess.name} healed ${healAmount.toFixed(1)} HP from lifesteal (${this.lifesteal}%)`
+        );
       }
     }
   }

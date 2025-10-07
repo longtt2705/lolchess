@@ -86,6 +86,9 @@ export class ChessStats {
 
   @Prop({ default: 0 })
   lifesteal: number; // Heals for a percentage of physical damage dealt
+
+  @Prop({ default: 0 })
+  damageAmplification: number; // Increases all damage dealt (percentage)
 }
 
 export class DebuffEffect {
@@ -180,7 +183,6 @@ export class Aura {
   duration: string; // 'permanent', 'turn', 'combat'
 }
 
-@Schema()
 export class Item {
   @Prop({ required: true })
   id: string;
@@ -188,8 +190,8 @@ export class Item {
   name: string;
   @Prop({ required: true })
   description: string;
-  @Prop({ type: ChessStats, required: true })
-  stats: ChessStats;
+  @Prop({ type: mongoose.Schema.Types.Mixed, required: false })
+  payload?: any;
   @Prop({ required: true })
   unique: boolean;
 }
