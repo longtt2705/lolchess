@@ -9,7 +9,7 @@ export class Zed extends ChessObject {
     // Contempt for the Weak: bonus magic damage to low health targets
     if (isLowHealth) {
       const bonusDamage = Math.floor(chess.maxHp * 0.1) + this.ap * 0.5;
-      this.damage(chess, bonusDamage, "magic", this.sunder);
+      this.damage(chess, bonusDamage, "magic", this, this.sunder);
     }
   }
 }

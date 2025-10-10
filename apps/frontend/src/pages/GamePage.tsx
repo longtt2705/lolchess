@@ -667,14 +667,23 @@ const ChessDetailPanel = styled.div`
     .item-card.equipped {
       background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(22, 163, 74, 0.05) 100%);
       border-color: rgba(34, 197, 94, 0.5);
-      
+      &.unique {
+        border-color: #9333ea;
+        background: rgba(147, 51, 234, 0.05);
+      }
       &:hover {
         border-color: #22c55e;
         background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(22, 163, 74, 0.08) 100%);
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+        &.unique {
+          border-color: #9333ea;
+          background: rgba(147, 51, 234, 0.05);
+          box-shadow: 0 4px 12px rgba(147, 51, 234, 0.15);
+        }
       }
     }
+
   }
 
   /* Shop Section */
@@ -1587,6 +1596,20 @@ const getImageUrl = (piece: ChessPiece) => {
     return "/icons/baron.webp"
   }
   return `/icons/${piece.name.toLowerCase().replace(/\s+/g, '')}.webp`
+}
+
+// Helper function to check if a piece is a champion (can buy items)
+const isChampion = (piece: ChessPiece): boolean => {
+  const nonChampionTypes = [
+    "Poro",
+    "Melee Minion",
+    "Caster Minion",
+    "Siege Minion",
+    "Super Minion",
+    "Drake",
+    "Baron Nashor",
+  ]
+  return !nonChampionTypes.includes(piece.name)
 }
 
 // Render individual chess piece
@@ -2877,7 +2900,7 @@ const GamePage: React.FC = () => {
                       const itemData = allItems.find((allItem: ItemData) => allItem.id === item.id)
 
                       return (
-                        <div key={index} className="item-card equipped">
+                        <div key={index} className={`item-card equipped ${item.unique ? 'unique' : ''}`}>
                           <div className="item-header" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                             {itemData?.icon && (
                               <div style={{
@@ -2914,7 +2937,7 @@ const GamePage: React.FC = () => {
                                   gap: '6px',
                                   marginBottom: '8px'
                                 }}>
-                                  {itemData.effects.map((effect, idx) => (
+                                  {itemData.effects.filter((effect) => !effect.conditional).map((effect, idx) => (
                                     <div key={idx} style={{
                                       display: 'flex',
                                       alignItems: 'center',
@@ -2933,7 +2956,7 @@ const GamePage: React.FC = () => {
                                         style={{ width: '14px', height: '14px' }}
                                       />
                                       <span style={{ color: 'var(--gold)' }}>
-                                        +{effect.value}{effect.type === 'multiply' ? '%' : ''}
+                                        +{effect.type === 'multiply' ? Math.floor(effect.value * 100 - 100) : effect.value}{effect.type === 'multiply' ? '%' : ''}
                                       </span>
                                     </div>
                                   ))}
@@ -2958,7 +2981,7 @@ const GamePage: React.FC = () => {
               </div>
 
               {/* Item Shop - Only show for owned champions */}
-              {detailViewPiece.ownerId === currentPlayer?.userId && (
+              {detailViewPiece.ownerId === currentPlayer?.userId && isChampion(detailViewPiece) && (
                 <div className="shop-section">
                   <div className="section-header">
                     <ShoppingCart size={16} />

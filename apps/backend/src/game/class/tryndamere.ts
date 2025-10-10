@@ -27,7 +27,7 @@ export class Tryndamere extends ChessObject {
     const bonusDamage = Math.floor(missingHp / 3);
 
     if (bonusDamage > 0) {
-      this.damage(chess, bonusDamage, "physical", this.sunder);
+      this.damage(chess, bonusDamage, "physical", this, this.sunder);
     }
   }
 }

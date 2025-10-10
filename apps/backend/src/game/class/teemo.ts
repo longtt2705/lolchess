@@ -8,10 +8,10 @@ export class Teemo extends ChessObject {
       id: "toxic_shot",
       name: "Toxic Shot",
       description: "Poisoned by Teemo's toxic darts, taking damage each turn",
-      duration: 3,
-      maxDuration: 3,
+      duration: 2,
+      maxDuration: 2,
       effects: [],
-      damagePerTurn: 8 + this.ap * 0.3,
+      damagePerTurn: 10 + this.ap * 0.1,
       damageType: "magic",
       healPerTurn: 0,
       unique: false, // Multiple toxic shots can stack
@@ -32,5 +32,6 @@ export class Teemo extends ChessObject {
 
     // Apply Toxic Shot debuff on every basic attack
     this.applyToxicShot(chess, this.chess.ownerId);
+    this.damage(chess, 5 + this.ap * 0.4, "magic", this, this.sunder);
   }
 }

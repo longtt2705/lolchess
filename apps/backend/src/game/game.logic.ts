@@ -10,6 +10,7 @@ import {
 import { Game } from "./game.schema";
 import { champions } from "./data/champion";
 import { ItemData } from "./data/items";
+import { ChessObject } from "./class/chess";
 
 export class GameLogic {
   public static processGame(game: Game, event: EventPayload): Game {
@@ -441,11 +442,11 @@ export class GameLogic {
     );
     if (bluePlayerIndex !== -1) {
       game.players[bluePlayerIndex].gold =
-        game.gameSettings?.startingGold || 100;
+        game.gameSettings?.startingGold || 500;
     }
     if (redPlayerIndex !== -1) {
       game.players[redPlayerIndex].gold =
-        game.gameSettings?.startingGold || 100;
+        game.gameSettings?.startingGold || 500;
     }
     this.applyAuraDebuffs(game);
 
@@ -784,22 +785,6 @@ export class GameLogic {
       auras: championData.aura ? [championData.aura] : [],
     } as Chess;
 
-    console.log(
-      `Final champion ${championName} skill:`,
-      championData.skill
-        ? {
-            name: championData.skill.name,
-            type: championData.skill.type,
-            cooldown: championData.skill.cooldown,
-            targetTypes: championData.skill.targetTypes || "none",
-            currentCooldown: championData.skill.currentCooldown || 0,
-            hasAttackRange: !!(
-              championData.skill.attackRange || championData.stats.attackRange
-            ),
-          }
-        : "no skill data"
-    );
-
     return result;
   }
 
@@ -1034,8 +1019,28 @@ export class GameLogic {
       throw new Error("Champion not found or not owned by player");
     }
 
+    // Only champions can receive items (not minions, Poro, or neutral monsters)
+    const nonChampionTypes = [
+      "Poro",
+      "Melee Minion",
+      "Caster Minion",
+      "Siege Minion",
+      "Super Minion",
+      "Drake",
+      "Baron Nashor",
+    ];
+    if (nonChampionTypes.includes(champion.name)) {
+      throw new Error("Only champions can equip items");
+    }
+
     if (champion.items.length >= 3) {
-      throw new Error("Champion already has maximum items (3)");
+      if (champion.items.length === 3) {
+        if (champion.items.every((item) => !getItemById(item.id)?.isBasic)) {
+          throw new Error("Champion already has maximum items (3)");
+        }
+      } else {
+        throw new Error("Champion already has maximum items (3)");
+      }
     }
 
     // Add item to champion
@@ -1047,13 +1052,24 @@ export class GameLogic {
       unique: itemData.unique || false,
     };
 
-    champion.items.push(newItem as any);
+    let maxHpBefore = new ChessObject(champion, game).maxHp;
+    console.log(
+      `BuyItem: Champion ${champion.name} maxHp before: ${maxHpBefore}`
+    );
 
+    champion.items.push(newItem as any);
     // Check for item combining (TFT-style)
     this.checkAndCombineItems(champion);
 
-    // Apply item stats to champion
-    this.applyItemStatsToChampion(champion);
+    let maxHpAfter = new ChessObject(champion, game).maxHp;
+    let hpIncrease = maxHpAfter - maxHpBefore;
+    champion.stats.hp += hpIncrease;
+    console.log(
+      `BuyItem: Champion ${champion.name} maxHp after: ${maxHpAfter}`
+    );
+    console.log(
+      `BuyItem: Champion ${champion.name} hp increase: ${hpIncrease}`
+    );
 
     // Deduct gold
     game.players[playerIndex].gold -= itemData.cost;
@@ -1115,8 +1131,6 @@ export class GameLogic {
 
           champion.items.push(combinedItem as any);
 
-          this.applyItemStatsToChampion(champion);
-
           console.log(
             `Combined ${item1Data.name} + ${item2Data.name} = ${combinedItemData.name}`
           );
@@ -1126,27 +1140,6 @@ export class GameLogic {
           return;
         }
       }
-    }
-  }
-
-  private static getItemById(itemId: string): ItemData | undefined {
-    const { getItemById } = require("./data/items");
-    return getItemById(itemId);
-  }
-
-  // Apply item effects (now only handles HP changes, other stats are calculated dynamically)
-  private static applyItemStatsToChampion(champion: Chess): void {
-    // Item stats are now calculated dynamically via getEffectiveStat()
-    // We only need to handle current HP when maxHp-boosting items are added
-
-    // Calculate total maxHp bonus from the most recently added item
-    const lastItem = champion.items[champion.items.length - 1];
-    const itemData = this.getItemById(lastItem.id);
-    if (itemData?.effects.some((effect) => effect.stat === "maxHp")) {
-      const hpIncrease =
-        itemData.effects.find((effect) => effect.stat === "maxHp")?.value || 0;
-      // Increase current HP by the same amount when maxHp item is added
-      champion.stats.hp = (champion.stats.hp || 0) + hpIncrease;
     }
   }
 

@@ -13,6 +13,7 @@ import {
 export class ChessObject {
   public chess: Chess;
   public game: Game;
+  protected willCrit: boolean = false;
 
   constructor(chess: Chess, game: Game) {
     if (!chess) {
@@ -30,6 +31,7 @@ export class ChessObject {
     chess: ChessObject,
     damage: number,
     damageType: "physical" | "magic" | "true",
+    attacker: ChessObject,
     sunder: number = 0
   ): number {
     if (damageType === "physical") {
@@ -46,8 +48,15 @@ export class ChessObject {
       damage = Math.max(damage, 1);
     }
 
+    let damageAmplification = this.damageAmplification;
+    if (
+      chess.chess.stats.hp > 200 &&
+      this.chess.items.some((item) => item.id === "giant_slayer")
+    ) {
+      damageAmplification += 15;
+    }
     const floorDamage = Math.floor(
-      (damage * (this.damageAmplification + 100)) / 100
+      (damage * (damageAmplification + 100)) / 100
     );
 
     const wasAlive = chess.chess.stats.hp > 0;
@@ -83,7 +92,20 @@ export class ChessObject {
   }
 
   protected postTakenDamage(attacker: ChessObject, damage: number): void {
-    // Do nothing by default
+    if (
+      this.chess.items.some((item) => item.id === "edge_of_night") &&
+      this.chess.stats.hp <= 0
+    ) {
+      const edgeOfNight = this.chess.items.find(
+        (item) => item.id === "edge_of_night"
+      );
+      if (edgeOfNight && !edgeOfNight.payload.hasUsedEdgeOfNight) {
+        edgeOfNight.payload = {
+          hasUsedEdgeOfNight: true,
+        };
+      }
+      this.chess.stats.hp = 1;
+    }
   }
 
   // Award gold to the player who killed an enemy chess piece
@@ -131,7 +153,7 @@ export class ChessObject {
     }
     chess.chess.stats.hp = Math.min(
       chess.chess.stats.hp + Math.floor(healAmount),
-      chess.chess.stats.maxHp
+      chess.maxHp
     );
   }
 
@@ -164,6 +186,33 @@ export class ChessObject {
 
   // Debuff Management
   applyDebuff(chess: ChessObject, debuff: Debuff): boolean {
+    // Implement quicksilver item
+    const quicksilver = chess.chess.items.find(
+      (item) => item.id === "quicksilver"
+    );
+    if (quicksilver && !quicksilver.payload.hasUsedQuicksilver) {
+      quicksilver.payload.hasUsedQuicksilver = true;
+      chess.chess.debuffs.push({
+        id: "quicksilver",
+        name: "Quicksilver",
+        description: "Resistance to all active debuffs for 3 turns.",
+        duration: 3,
+        maxDuration: 3,
+        effects: [],
+        damagePerTurn: 0,
+        damageType: "physical",
+        healPerTurn: 0,
+        unique: true,
+        appliedAt: Date.now(),
+        casterPlayerId: this.chess.ownerId,
+        casterName: this.chess.name,
+      } as Debuff);
+      return true;
+    }
+
+    if (chess.chess.debuffs.some((d) => d.id === "quicksilver")) {
+      return false;
+    }
     // Check if debuff is unique and already exists
     if (debuff.unique) {
       const existingDebuff = chess.chess.debuffs.find(
@@ -201,7 +250,7 @@ export class ChessObject {
 
       // Apply damage per turn
       if (debuff.damagePerTurn > 0) {
-        this.damage(chess, debuff.damagePerTurn, debuff.damageType, 0);
+        this.damage(chess, debuff.damagePerTurn, debuff.damageType, this, 0);
       }
 
       // Apply heal per turn
@@ -303,7 +352,7 @@ export class ChessObject {
       });
     });
 
-    return Math.max(0, statValue); // Stats can't be negative
+    return Math.floor(Math.max(0, statValue)); // Stats can't be negative
   }
 
   private applyStatModifier(
@@ -355,7 +404,7 @@ export class ChessObject {
 
       // Find all targets in range
       this.game.board.forEach((targetChess: any) => {
-        if (!targetChess || targetChess === this.chess) return;
+        if (!targetChess) return;
         if (targetChess.stats.hp <= 0) return;
 
         // Check if target is in range
@@ -507,7 +556,7 @@ export class ChessObject {
     this.chess.hasMovedBefore = true; // Mark as moved after successful move
   }
 
-  attack(chess: ChessObject): void {
+  attack(chess: ChessObject, forceCritical: boolean = false): void {
     if (
       !this.validateAttack(chess.chess.position, this.chess.stats.attackRange)
     ) {
@@ -515,10 +564,10 @@ export class ChessObject {
     }
 
     // Critical strike system from RULE.md: 20% chance, 150% damage
-    const isCriticalStrike = Math.random() < this.criticalChance / 100;
+    this.willCrit = forceCritical || Math.random() < this.criticalChance / 100;
     let damage = this.ad;
 
-    if (isCriticalStrike) {
+    if (this.willCrit) {
       damage = (damage * this.criticalDamage) / 100; // 150% damage
       this.postCritDamage(chess, damage);
     }
@@ -527,6 +576,7 @@ export class ChessObject {
       chess,
       damage,
       "physical",
+      this,
       this.sunder
     );
 

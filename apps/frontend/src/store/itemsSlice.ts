@@ -9,7 +9,12 @@ export interface ItemData {
   description: string;
   cost: number;
   icon?: string;
-  effects: Array<{ stat: string; value: number; type: string }>;
+  effects: Array<{
+    stat: string;
+    value: number;
+    type: string;
+    conditional: boolean;
+  }>;
   isBasic: boolean;
   recipe?: [string, string];
   unique?: boolean;

@@ -23,7 +23,7 @@ export class Soraka extends ChessObject {
       this.chess.stats.hp = Math.max(1, this.chess.stats.hp - sacrificeAmount);
 
       // Heal the target for more than sacrificed
-      const healAmount = sacrificeAmount + 15;
+      const healAmount = sacrificeAmount + this.ap * 0.2;
       this.heal(targetChessObject, healAmount);
     }
 

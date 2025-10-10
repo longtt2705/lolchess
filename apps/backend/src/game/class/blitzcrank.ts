@@ -19,7 +19,13 @@ export class Blitzcrank extends ChessObject {
       const targetChessObject = new ChessObject(targetChess, this.game);
 
       // Deal magic damage
-      this.damage(targetChessObject, 15 + this.ap * 0.6, "magic", this.sunder);
+      this.damage(
+        targetChessObject,
+        15 + this.ap * 0.6,
+        "magic",
+        this,
+        this.sunder
+      );
 
       // Pull the target to Blitzcrank (find adjacent square)
       const adjacentSquares = GameLogic.getAdjacentSquares(this.chess.position);

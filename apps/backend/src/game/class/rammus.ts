@@ -7,7 +7,7 @@ export class Rammus extends ChessObject {
     // Defensive Ball Curl: return damage based on physical resistance
     const returnDamage = Math.floor(this.physicalResistance * 0.2);
     if (returnDamage > 0) {
-      this.damage(attacker, returnDamage, "magic", this.sunder);
+      this.damage(attacker, returnDamage, "magic", this, this.sunder);
     }
   }
 }

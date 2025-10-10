@@ -3,12 +3,12 @@ import { ChessObject } from "./chess";
 export class TwistedFate extends ChessObject {
   attack(chess: ChessObject): void {
     // Stacked Deck: deal bonus damage
-    const bonusDamage = Math.floor(this.ap * 0.25);
+    const bonusDamage = 5 + Math.floor(this.ap * 0.8);
 
     super.attack(chess);
 
     if (bonusDamage > 0) {
-      this.damage(chess, bonusDamage, "magic", this.sunder);
+      this.damage(chess, bonusDamage, "magic", this, this.sunder);
     }
 
     // Note: Gold bonus for Twisted Fate is now handled automatically

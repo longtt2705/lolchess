@@ -44,7 +44,7 @@ export class KhaZix extends ChessObject {
       }
 
       // Deal physical damage
-      this.damage(targetChessObject, damage, "physical", this.sunder);
+      this.damage(targetChessObject, damage, "physical", this, this.sunder);
     }
 
     // Set skill on cooldown

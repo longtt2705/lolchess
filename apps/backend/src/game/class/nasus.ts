@@ -15,16 +15,18 @@ export class Nasus extends ChessObject {
       position
     );
 
+    const bonusDamage = this.chess.skill.payload?.bonusDamage || 0;
+
     if (targetChess) {
       const targetChessObject = new ChessObject(targetChess, this.game);
 
       // Deal enhanced damage
-      const damage = this.ad + 20;
-      this.damage(targetChessObject, damage, "physical", this.sunder);
+      const damage = 20 + this.ap * 0.4 + bonusDamage;
+      this.damage(targetChessObject, damage, "physical", this, this.sunder);
 
       // If target dies, increase future Siphoning Strike damage
       if (targetChess.stats.hp <= 0) {
-        this.chess.stats.ad += 3;
+        this.chess.skill.payload.bonusDamage = bonusDamage + 15;
       }
     }
 

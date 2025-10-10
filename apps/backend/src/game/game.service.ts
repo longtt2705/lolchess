@@ -94,16 +94,6 @@ export class GameService {
 
   async findOne(id: string) {
     const game = await this.getGameState(id);
-    if (game) {
-      this.logger.debug(
-        `FindOne: Game ${id} has ${game.board?.length || 0} pieces`
-      );
-      if (game.board && game.board.length > 0) {
-        this.logger.debug(
-          `FindOne: First piece HP: ${game.board[0]?.stats?.hp || "N/A"}`
-        );
-      }
-    }
     return {
       game: { ...game, board: this.cleanBoard(game) },
       message: game ? "Game found" : "Game not found",

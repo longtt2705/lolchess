@@ -20,17 +20,49 @@ export class GameController {
   @Get("items")
   getItems(@Query("type") type?: string) {
     if (type === "basic") {
-      return { items: basicItems };
+      return {
+        items: basicItems.map((item) => ({
+          ...item,
+          effects: item.effects.map((effect) => ({
+            ...effect,
+            conditional: effect.condition ? true : false,
+          })),
+        })),
+      };
     } else if (type === "combined") {
-      return { items: combinedItems };
+      return {
+        items: combinedItems.map((item) => ({
+          ...item,
+          effects: item.effects.map((effect) => ({
+            ...effect,
+            conditional: effect.condition ? true : false,
+          })),
+        })),
+      };
     } else {
-      return { items: allItems };
+      return {
+        items: allItems.map((item) => ({
+          ...item,
+          effects: item.effects.map((effect) => ({
+            ...effect,
+            conditional: effect.condition ? true : false,
+          })),
+        })),
+      };
     }
   }
 
   @Get("items/basic")
   getBasicItems() {
-    return { items: basicItems };
+    return {
+      items: basicItems.map((item) => ({
+        ...item,
+        effects: item.effects.map((effect) => ({
+          ...effect,
+          conditional: effect.condition ? true : false,
+        })),
+      })),
+    };
   }
 
   @Get("active-game")

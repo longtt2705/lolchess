@@ -8,18 +8,19 @@ export class Viktor extends ChessObject {
     return {
       id: "viktor_empowered",
       name: "Empowered Attack",
-      description: "Viktor's next attack deals bonus damage",
-      duration: 1,
-      maxDuration: 1,
+      description:
+        "Viktor's next attack deals bonus (15 + 50% of AP) magic damage",
+      duration: 3,
+      maxDuration: 3,
       effects: [
         {
           stat: "ad",
-          modifier: 15,
+          modifier: 15 + this.ap * 0.5,
           type: "add",
         },
       ],
       damagePerTurn: 0,
-      damageType: "physical",
+      damageType: "magic",
       healPerTurn: 0,
       unique: true,
       appliedAt: Date.now(),
@@ -44,8 +45,8 @@ export class Viktor extends ChessObject {
       const targetChessObject = new ChessObject(targetChess, this.game);
 
       // Deal magic damage
-      const damage = 25 + this.ap * 0.7;
-      this.damage(targetChessObject, damage, "magic", this.sunder);
+      const damage = 20 + this.ap * 1;
+      this.damage(targetChessObject, damage, "magic", this, this.sunder);
 
       // Empower next basic attack
       const empowermentDebuff = this.createEmpoweredAttackDebuff();

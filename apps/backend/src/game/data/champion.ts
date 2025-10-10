@@ -313,7 +313,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Whisper",
       description:
-        "Every 4th attack deals critical damage and +2 + 10% of AP Move Speed.",
+        "Every 4th attack deals critical damage and deals bonus (10+50% of AP) physical damage. When critical, Jhin gains +1 Move Speed for 2 turns.",
       cooldown: 0,
     },
   },
@@ -336,7 +336,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Astral Infusion",
       description:
-        "Soraka sacrifices a portion of her own health to heal another friendly champion. Heals for 20 + 10% of AP.",
+        "Soraka sacrifices a 20% of her own health to heal another friendly champion. Heals for (20 + 20% of AP).",
       cooldown: 3,
       attackRange: {
         range: 3,
@@ -366,7 +366,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Siphoning Strike",
       description:
-        "Nasus strikes his foe, dealing 20 + 10% of AP magic damage and increasing the power of his future Siphoning Strikes if he slays his target.",
+        "Nasus strikes his foe, dealing (20 + 40% of AP) magic damage and increasing 15 damage of his future Siphoning Strikes if he slays his target.",
       cooldown: 2,
       attackRange: {
         range: 1,
@@ -396,7 +396,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Toxic Shot",
       description:
-        "Teemo's basic attacks apply a debuff to the target, dealing (10+10% of AP) physical damage each turn.",
+        "Teemo's basic attacks apply a debuff to the target, dealing more (5 + 40% of AP) magic damage and applying (10 + 10% of AP) magic damage each turn for 2 turns.",
       cooldown: 0,
     },
   },
@@ -488,7 +488,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Siphon Power",
       description:
-        "Viktor deals 20 + 10% of AP magic damage to a target, and empowers his next basic attack.",
+        "Viktor deals (20 + 100% of AP) magic damage to a target, and empowers his next basic attack.",
       cooldown: 3,
       attackRange: {
         range: 2,
@@ -518,7 +518,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Stacked Deck",
       description:
-        "Twisted Fate deals bonus (10+10% of AP) magic damage. He earns more 10 gold for each enemy killed.",
+        "Twisted Fate deals bonus (5+80% of AP) magic damage. He earns more 10 gold for each enemy killed.",
       cooldown: 0,
     },
   },

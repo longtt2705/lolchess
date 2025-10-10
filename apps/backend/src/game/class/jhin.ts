@@ -13,7 +13,7 @@ export class Jhin extends ChessObject {
       effects: [
         {
           stat: "speed",
-          modifier: 2,
+          modifier: 1,
           type: "add",
         },
       ],
@@ -36,17 +36,11 @@ export class Jhin extends ChessObject {
 
     // Every 4th attack is critical
     const isCritical = this.chess.skill.payload.attackCount % 4 === 0;
+    super.attack(chess, isCritical);
 
-    if (isCritical) {
-      // Deal critical damage (double damage)
-      const criticalDamage = this.ad * 2;
-      this.damage(chess, criticalDamage, "physical", this.sunder);
-
-      // Grant +2 Move Speed
+    if (this.willCrit) {
       const speedBoost = this.createSpeedBoostDebuff();
       this.applyDebuff(this, speedBoost);
-    } else {
-      super.attack(chess);
     }
   }
 }
