@@ -33,7 +33,7 @@ export class Ashe extends ChessObject {
     return this.applyDebuff(target, frostShotDebuff);
   }
 
-  attack(chess: ChessObject): void {
+  attack(chess: ChessObject): number {
     // Apply Frost Shot debuff
     this.applyFrostShot(chess, this.chess.ownerId);
 
@@ -42,13 +42,14 @@ export class Ashe extends ChessObject {
       (debuff) => debuff.id === "frost_shot"
     );
     const bonusDamage = hasFrostShot
-      ? Math.floor(this.ad * (0.1 + this.ap * 0.1))
+      ? Math.floor(this.ad * (0.2 + this.ap * 0.1))
       : 0;
 
-    super.attack(chess);
+    let baseDamage = super.attack(chess);
 
     if (bonusDamage > 0) {
-      this.damage(chess, bonusDamage, "physical", this, this.sunder);
+      baseDamage += this.damage(chess, bonusDamage, "physical", this, this.sunder);
     }
+    return baseDamage;
   }
 }

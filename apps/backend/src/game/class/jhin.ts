@@ -26,7 +26,7 @@ export class Jhin extends ChessObject {
     } as Debuff;
   }
 
-  attack(chess: ChessObject): void {
+  attack(chess: ChessObject): number {
     // Initialize or get attack count from skill payload
     if (!this.chess.skill?.payload) {
       this.chess.skill.payload = { attackCount: 0 };
@@ -36,11 +36,12 @@ export class Jhin extends ChessObject {
 
     // Every 4th attack is critical
     const isCritical = this.chess.skill.payload.attackCount % 4 === 0;
-    super.attack(chess, isCritical);
+    const baseDamage = super.attack(chess, isCritical);
 
     if (this.willCrit) {
       const speedBoost = this.createSpeedBoostDebuff();
       this.applyDebuff(this, speedBoost);
     }
+    return baseDamage;
   }
 }

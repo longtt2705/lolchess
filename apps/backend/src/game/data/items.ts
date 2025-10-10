@@ -144,7 +144,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "bloodthirster",
     name: "Bloodthirster",
-    description: "Gains additional 25% lifesteal effect when HP is below 50%",
+    description: "Gains additional 25% lifesteal effect when HP is below 25%",
     cost: 0,
     icon: "/icons/Bloodthirster.png",
     effects: [
@@ -155,7 +155,7 @@ export const combinedItems: ItemData[] = [
         value: 25,
         type: "add",
         condition: (chess) =>
-          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.5,
+          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.25,
       },
     ],
     isBasic: false,
@@ -180,19 +180,12 @@ export const combinedItems: ItemData[] = [
   {
     id: "sterak_gage",
     name: "Sterak's Gage",
-    description: "Grants to 30 AD when the chess is below 50% HP",
+    description: "At 40% Health, gain a shield equal to 50% of the wearer's maximum Health that decays over 3 turns.",
     cost: 0,
     icon: "/icons/SteraksGage.png",
     effects: [
       { stat: "ad", value: 12, type: "add" },
       { stat: "maxHp", value: 35, type: "add" },
-      {
-        stat: "ad",
-        value: 18,
-        type: "add",
-        condition: (chess) =>
-          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.5,
-      },
     ],
     isBasic: false,
     recipe: ["bf_sword", "giants_belt"],
@@ -201,7 +194,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "spear_of_shojin",
     name: "Spear of Shojin",
-    description: "Reduce 0.5 rounds of cooldown of skill for each attack",
+    description: "Reduce 0.5 rounds of cooldown of skill for each attack.",
     cost: 0,
     icon: "/icons/SpearofShojin.png",
     effects: [
@@ -230,7 +223,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "red_buff",
     name: "Red Buff",
-    description: "Attacks and Abilities Burn and Wound enemies for 3 turns.",
+    description: "Deal damage will Burn and Wound enemies for 3 turns.",
     cost: 0,
     icon: "/icons/RedBuff.png",
     effects: [
@@ -244,11 +237,11 @@ export const combinedItems: ItemData[] = [
   {
     id: "guinsoo_rageblade",
     name: "Guinsoo's Rageblade",
-    description: "Grants attack speed and Ability Power",
+    description: "Each attack grant 2 permanent Sunder.",
     cost: 0,
-    icon: "/icons/guinsoo_rageblade.png",
+    icon: "/icons/GuinsooRageblade.png",
     effects: [
-      { stat: "ad", value: 7, type: "add" },
+      { stat: "sunder", value: 17, type: "add" },
       { stat: "ap", value: 12, type: "add" },
     ],
     isBasic: false,
@@ -257,41 +250,54 @@ export const combinedItems: ItemData[] = [
   {
     id: "titans_resolve",
     name: "Titan's Resolve",
-    description: "Grants attack speed and Health",
+    description: "Each times being attacked, grant 5 damage amplification + armor + magic resistance for 3 turns. (Max 4 times)",
     cost: 0,
-    icon: "/icons/titans_resolve.png",
+    icon: "/icons/TitansResolve.png",
     effects: [
-      { stat: "ad", value: 7, type: "add" },
-      { stat: "maxHp", value: 25, type: "add" },
-    ],
-    isBasic: false,
-    recipe: ["recurve_bow", "tear"],
-  },
-  {
-    id: "runaans_hurricane",
-    name: "Runaan's Hurricane",
-    description: "Grants attack speed and Physical Resistance",
-    cost: 0,
-    icon: "/icons/runaans_hurricane.png",
-    effects: [
-      { stat: "ad", value: 7, type: "add" },
+      { stat: "sunder", value: 18, type: "add" },
       { stat: "physicalResistance", value: 12, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "chain_vest"],
   },
   {
-    id: "zeke_herald",
-    name: "Zeke's Herald",
-    description: "Grants attack speed and Magic Resistance",
+    id: "wit_s_end",
+    name: "Wit's End",
+    description: "Each attacks grant 3 permanent magic resistance.",
     cost: 0,
-    icon: "/icons/zeke_herald.png",
+    icon: "/icons/WitsEnd.png",
     effects: [
-      { stat: "ad", value: 7, type: "add" },
+      { stat: "sunder", value: 18, type: "add" },
       { stat: "magicResistance", value: 12, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "negatron_cloak"],
+  },
+  {
+    id: "void_staff",
+    name: "Void Staff",
+    description: "Ignore 30% of enemy magic resistance.",
+    cost: 0,
+    icon: "/icons/VoidStaff.png",
+    effects: [
+      { stat: "sunder", value: 18, type: "add" },
+      { stat: "cooldownReduction", value: 10, type: "add" },
+    ],
+    isBasic: false,
+    recipe: ["recurve_bow", "tear"],
+  },
+  {
+    id: "last_whisper",
+    name: "Last Whisper",
+    description: "Ignore 30% of enemy physical resistance.",
+    cost: 0,
+    icon: "/icons/LastWhisper.png",
+    effects: [
+      { stat: "sunder", value: 18, type: "add" },
+      { stat: "criticalChance", value: 25, type: "add" },
+    ],
+    isBasic: false,
+    recipe: ["recurve_bow", "sparring_gloves"],
   },
 
   // Needlessly Large Rod Combinations
@@ -312,25 +318,25 @@ export const combinedItems: ItemData[] = [
   {
     id: "archangel_staff",
     name: "Archangel's Staff",
-    description: "",
+    description: "Each times using an active skill, grant 5 permanent Ability Power.",
     cost: 0,
     icon: "/icons/ArchangelsStaff.png",
     effects: [
       { stat: "ap", value: 12, type: "add" },
-      { stat: "maxHp", value: 25, type: "add" },
+      { stat: "cooldownReduction", value: 10, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "tear"],
   },
   {
-    id: "morellonomicon",
-    name: "Morellonomicon",
-    description: "Grants Ability Power and Physical Resistance",
+    id: "crownguard",
+    name: "Crownguard",
+    description: "Immidiate gain a 25% max Health Shield.",
     cost: 0,
-    icon: "/icons/morellonomicon.png",
+    icon: "/icons/Crownguard.png",
     effects: [
-      { stat: "ap", value: 12, type: "add" },
-      { stat: "physicalResistance", value: 12, type: "add" },
+      { stat: "ap", value: 15, type: "add" },
+      { stat: "physicalResistance", value: 15, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "chain_vest"],
@@ -392,17 +398,17 @@ export const combinedItems: ItemData[] = [
   {
     id: "dragon_claw",
     name: "Dragon's Claw",
-    description: "+10 more magic resistance when HP is below 50%",
+    description: "+15 more magic resistance when HP is below 40%",
     cost: 0,
     icon: "/icons/DragonsClaw.png",
     effects: [
       { stat: "magicResistance", value: 25, type: "add" },
       {
         stat: "magicResistance",
-        value: 10,
+        value: 15,
         type: "add",
         condition: (chess) =>
-          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.5,
+          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
       },
     ],
     isBasic: false,

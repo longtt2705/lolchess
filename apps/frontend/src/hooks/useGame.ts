@@ -72,6 +72,10 @@ export interface ChessPiece {
     };
     targetTypes?: "square" | "ally" | "enemy" | "none";
   };
+  shields?: Array<{
+    amount: number;
+    duration: number;
+  }>;
   cannotMoveBackward: boolean;
   canOnlyMoveVertically: boolean;
   hasMovedBefore: boolean;

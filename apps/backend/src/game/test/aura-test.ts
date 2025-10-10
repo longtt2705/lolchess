@@ -206,7 +206,7 @@ export function testAuraSystem(): void {
     janna!.auras[0]?.range || "No aura"
   );
   try {
-    jannaObject.skill();
+    jannaObject.executeSkill();
     console.log(
       "After skill: Applied temporary speed boosts to adjacent allies"
     );

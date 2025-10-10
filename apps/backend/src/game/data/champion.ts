@@ -144,7 +144,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Frost Shot",
       description:
-        "Ashe's attacks slow their target, causing her to deal increased (10+10% of AP) physical damage to these targets.",
+        "Ashe's attacks slow their target, causing her to deal increased (20+10% of AP) physical damage to these targets.",
       cooldown: 0,
     },
   },
@@ -465,7 +465,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Undying Rage",
       description:
-        "The first time Tryndamere is slain, he will survive with 1 HP. His attack deals bonus (1 + 10% of AP) physical damage for each 3 HP he lost.",
+        "The first time Tryndamere is slain, he will survive with 1 HP. His attack deals bonus 1 physical damage for each (10 - 5% of AP) HP he lost.",
       cooldown: 0,
     },
   },

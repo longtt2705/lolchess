@@ -1069,7 +1069,7 @@ const Board = styled.div`
   }
 `
 
-const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: boolean; canSelect: boolean; isAttacking?: boolean; isMoving?: boolean }>`
+const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: boolean; canSelect: boolean; isAttacking?: boolean; isMoving?: boolean; hasShield?: boolean }>`
   width: 90%;
   height: 90%;
   border-radius: 8px;
@@ -1086,9 +1086,10 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   cursor: ${props => props.canSelect ? 'pointer' : 'default'};
   position: relative;
   z-index: ${props => props.isMoving ? 20 : props.isAttacking ? 10 : 1};
-  box-shadow: 0 0 2px 2px ${props =>
-    props.isNeutral ? '#9333ea' :
-      props.isBlue ? '#3b82f6' : '#ef4444'};
+  box-shadow: ${props => props.hasShield
+    ? '0 0 8px 3px rgba(255, 255, 255, 0.6), 0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
+    : '0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
+  };
   
   .piece-icon {
     width: 100%;
@@ -1133,9 +1134,58 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
     }
   }
   
+  .shield-bar {
+    position: absolute;
+    bottom: 7px;
+    left: 2px;
+    right: 2px;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+    
+    .shield-fill {
+      height: 100%;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 220, 0.9) 100%);
+      transition: width 0.3s ease;
+      box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+    }
+  }
+  
   &:hover {
     transform: ${props => props.canSelect ? 'scale(1.05)' : 'none'};
     border-color: var(--gold);
+  }
+`
+
+const ShieldIcon = styled.div`
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(200, 200, 220, 0.95) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  animation: shieldPulse 2s ease-in-out infinite;
+  
+  &::before {
+    content: '🛡️';
+    font-size: 12px;
+  }
+  
+  @keyframes shieldPulse {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 16px rgba(255, 255, 255, 1), inset 0 0 8px rgba(255, 255, 255, 0.8);
+    }
   }
 `
 
@@ -1184,7 +1234,7 @@ const SkillIcon = styled.div<{ isActive: boolean; onCooldown: boolean, currentCo
   
   /* Cooldown overlay */
   &::after {
-    content: ${props => props.onCooldown ? `'${props.currentCooldown}'` : '""'};
+    content: ${props => props.onCooldown ? `'${Math.ceil(props.currentCooldown)}'` : '""'};
     position: absolute;
     top: 50%;
     left: 50%;
@@ -1763,6 +1813,8 @@ const ChessPieceRenderer: React.FC<{
     ? `${piece.id}-${moveAnimation.fromPos.x}-${moveAnimation.fromPos.y}-${moveAnimation.toPos.x}-${moveAnimation.toPos.y}`
     : `${piece.id}-static`
 
+  const hasShield = piece.shields && piece.shields.length > 0 && piece.shields.reduce((sum, s) => sum + s.amount, 0) > 0
+
   return (
     <ChessPieceComponent
       key={animationKey}
@@ -1771,6 +1823,7 @@ const ChessPieceRenderer: React.FC<{
       canSelect={canSelect && !isAnimating && !isDead}
       isAttacking={isAttacking}
       isMoving={isMoving}
+      hasShield={hasShield}
       onClick={onClick}
       animate={getCombinedAnimation()}
       whileHover={canSelect && !isAnimating && !isDead ? { scale: 1.05 } : {}}
@@ -1787,6 +1840,22 @@ const ChessPieceRenderer: React.FC<{
         />
       </div>
       <div className="piece-name">{piece.name}</div>
+
+      {/* Shield Icon Indicator */}
+      {hasShield && <ShieldIcon />}
+
+      {/* Shield Bar (above HP bar) */}
+      {piece.shields && piece.shields.length > 0 && (
+        <div className="shield-bar">
+          <div
+            className="shield-fill"
+            style={{
+              width: `${Math.min(100, (piece.shields.reduce((sum, s) => sum + s.amount, 0) / piece.stats.maxHp) * 100)}%`
+            }}
+          />
+        </div>
+      )}
+
       <div className="hp-bar">
         <div
           className="hp-fill"
@@ -1799,14 +1868,14 @@ const ChessPieceRenderer: React.FC<{
         <SkillIcon
           isActive={piece.skill.type === 'active'}
           onCooldown={piece.skill.currentCooldown > 0}
-          currentCooldown={piece.skill.currentCooldown}
+          currentCooldown={Math.ceil(piece.skill.currentCooldown)}
           onClick={(e) => {
             e.stopPropagation()
             if (piece.skill && piece.skill.type === 'active' && piece.skill.currentCooldown === 0 && onSkillClick) {
               onSkillClick()
             }
           }}
-          title={`${piece.skill.name}${piece.skill.type === 'active' && piece.skill.currentCooldown > 0 ? ` (CD: ${piece.skill.currentCooldown})` : ''}`}
+          title={`${piece.skill.name}${piece.skill.type === 'active' && piece.skill.currentCooldown > 0 ? ` (CD: ${Math.ceil(piece.skill.currentCooldown)})` : ''}`}
         >
           <img
             src={`/icons/${piece.name.toLowerCase()}_skill.webp`}
@@ -1835,7 +1904,7 @@ const ChessPieceRenderer: React.FC<{
               textShadow: '0 0 4px rgba(0, 0, 0, 1)',
               pointerEvents: 'none'
             }}>
-              {piece.skill.currentCooldown}
+              {Math.ceil(piece.skill.currentCooldown)}
             </div>
           )}
         </SkillIcon>
@@ -2659,6 +2728,41 @@ const GamePage: React.FC = () => {
                     )}
                   </span>
                 </div>
+
+                {/* Shield Bar (if shields exist) */}
+                {detailViewPiece.shields && detailViewPiece.shields.length > 0 && (
+                  <>
+                    <div className="hp-label" style={{ marginTop: '12px' }}>
+                      <span className="hp-text" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                        🛡️ Shield
+                      </span>
+                      <span className="hp-numbers" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                        {detailViewPiece.shields.reduce((sum, s) => sum + s.amount, 0)}
+                        {detailViewPiece.shields.length > 0 && (
+                          <span style={{
+                            fontSize: '10px',
+                            color: 'var(--secondary-text)',
+                            marginLeft: '4px',
+                            opacity: 0.7
+                          }}>
+                            ({detailViewPiece.shields[0].duration} {detailViewPiece.shields[0].duration === 1 ? 'turn' : 'turns'})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="hp-bar" style={{ marginBottom: '8px' }}>
+                      <div
+                        className="hp-fill"
+                        style={{
+                          width: `${Math.min(100, (detailViewPiece.shields.reduce((sum, s) => sum + s.amount, 0) / detailViewPiece.stats.maxHp) * 100)}%`,
+                          background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 220, 0.9) 50%, rgba(180, 180, 200, 0.9) 100%)',
+                          boxShadow: '0 0 8px rgba(255, 255, 255, 0.6)'
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div className="hp-bar">
                   <div
                     className="hp-fill"
@@ -2792,7 +2896,7 @@ const GamePage: React.FC = () => {
                         <div className="skill-type">{detailViewPiece.skill.type}</div>
                         <div className={`card-cooldown ${detailViewPiece.skill.currentCooldown > 0 ? 'cooling' : 'ready'}`}>
                           {detailViewPiece.skill.currentCooldown > 0
-                            ? `Cooldown: ${detailViewPiece.skill.currentCooldown} turns`
+                            ? `Cooldown: ${Math.ceil(detailViewPiece.skill.currentCooldown)} turns`
                             : 'Ready to use'
                           }
                         </div>

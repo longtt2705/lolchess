@@ -1,14 +1,15 @@
 import { ChessObject } from "./chess";
 
 export class Malphite extends ChessObject {
-  attack(chess: ChessObject): void {
-    super.attack(chess);
+  attack(chess: ChessObject): number {
+    const baseDamage = super.attack(chess);
 
     // Granite Shield: deal damage equal to 10% of physical resistance
     const bonusDamage = Math.floor(this.physicalResistance * 0.1);
     if (bonusDamage > 0) {
       this.damage(chess, bonusDamage, "magic", this, this.sunder);
     }
+    return baseDamage;
   }
 
   // Override physical resistance calculation to include the +15 bonus

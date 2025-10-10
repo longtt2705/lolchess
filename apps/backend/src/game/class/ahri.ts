@@ -35,9 +35,6 @@ export class Ahri extends ChessObject {
   }
 
   skill(position?: Square): void {
-    if (!this.validateSkill(this.chess.skill, position)) {
-      throw new Error("Invalid skill");
-    }
     this.move(position);
 
     // Deal damage and apply Spirit Rush debuff to any piece at or adjacent to the target square
@@ -74,6 +71,5 @@ export class Ahri extends ChessObject {
         }
       }
     });
-    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 }

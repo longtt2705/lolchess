@@ -21,10 +21,6 @@ export class KhaZix extends ChessObject {
   }
 
   skill(position?: Square): void {
-    if (!this.validateSkill(this.chess.skill, position)) {
-      throw new Error("Invalid skill");
-    }
-
     // Find the target chess piece
     const targetChess = GameLogic.getChess(
       this.game,
@@ -46,8 +42,5 @@ export class KhaZix extends ChessObject {
       // Deal physical damage
       this.damage(targetChessObject, damage, "physical", this, this.sunder);
     }
-
-    // Set skill on cooldown
-    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 }

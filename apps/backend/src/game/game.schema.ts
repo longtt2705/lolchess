@@ -215,6 +215,13 @@ export class Skill {
   payload?: any;
 }
 
+export class Shield {
+  @Prop({ required: true })
+  amount: number;
+  @Prop({ required: true })
+  duration: number;
+}
+
 @Schema()
 export class Chess {
   @Prop({ required: true })
@@ -258,6 +265,9 @@ export class Chess {
 
   @Prop({ type: [Aura], default: [] })
   auras: Aura[];
+
+  @Prop({ type: [Shield], default: [] })
+  shields: Shield[];
 
   @Prop()
   deadAtRound?: number; // Track which round the piece died
@@ -479,3 +489,4 @@ export const PlayerSchema = SchemaFactory.createForClass(Player);
 export const GameSettingsSchema = SchemaFactory.createForClass(GameSettings);
 export const GameSchema = SchemaFactory.createForClass(Game);
 export const ItemSchema = SchemaFactory.createForClass(Item);
+export const ShieldSchema = SchemaFactory.createForClass(Shield);

@@ -19,15 +19,16 @@ export class Tryndamere extends ChessObject {
     }
   }
 
-  attack(chess: ChessObject): void {
-    super.attack(chess);
+  attack(chess: ChessObject): number {
+    const baseDamage = super.attack(chess);
 
     // Deal bonus damage based on missing health
     const missingHp = this.maxHp - this.chess.stats.hp;
-    const bonusDamage = Math.floor(missingHp / 3);
+    const bonusDamage = Math.floor(missingHp / (Math.max(10 - this.ap * 0.05, 1)));
 
     if (bonusDamage > 0) {
       this.damage(chess, bonusDamage, "physical", this, this.sunder);
     }
+    return baseDamage;
   }
 }

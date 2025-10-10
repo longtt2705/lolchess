@@ -8,6 +8,7 @@ import {
   Debuff,
   Aura,
   AuraEffect,
+  Shield,
 } from "../game.schema";
 
 export class ChessObject {
@@ -55,11 +56,27 @@ export class ChessObject {
     ) {
       damageAmplification += 15;
     }
-    const floorDamage = Math.floor(
+    let floorDamage = Math.floor(
       (damage * (damageAmplification + 100)) / 100
     );
 
     const wasAlive = chess.chess.stats.hp > 0;
+
+    // Check if the target has a shield
+    const shields = chess.chess.shields || [];
+    while (shields.length > 0 || floorDamage > 0) {
+      const shield = shields[0] || { amount: 0, duration: 0 };
+      if (shield.amount > floorDamage) {
+        shield.amount -= floorDamage;
+        floorDamage = 0;
+      }
+      else {
+        floorDamage -= shield.amount;
+        shield.amount = 0;
+        shields.shift();
+      }
+    }
+
     chess.chess.stats.hp -= floorDamage;
     chess.postTakenDamage(this, floorDamage);
 
@@ -106,6 +123,35 @@ export class ChessObject {
       }
       this.chess.stats.hp = 1;
     }
+    if (
+      this.chess.items.some((item) => item.id === "sterak_gage") &&
+      this.chess.stats.hp <= this.chess.stats.maxHp * 0.4
+    ) {
+      const sterakGage = this.chess.items.find(
+        (item) => item.id === "sterak_gage"
+      );
+      if (sterakGage && !sterakGage.payload.hasUsedSterakGage) {
+        const shieldDuration = sterakGage.payload.shieldDuration || 3;
+        sterakGage.payload = {
+          hasUsedSterakGage: true,
+          shieldDuration: shieldDuration,
+        };
+        this.applyShield(this.chess.stats.maxHp * 0.5, shieldDuration);
+      }
+    }
+    if (this.chess.items.some((item) => item.id === "red_buff")) {
+      if (damage > 0) {
+        this.applyDebuff(this, this.createBurnedDebuff(3));
+        this.applyDebuff(this, this.createWoundedDebuff(3));
+      }
+    }
+  }
+
+  protected applyShield(amount: number, duration: number): void {
+    this.chess.shields.push({
+      amount: amount,
+      duration: duration,
+    } as Shield);
   }
 
   // Award gold to the player who killed an enemy chess piece
@@ -146,6 +192,24 @@ export class ChessObject {
     } as Debuff;
   }
 
+  createBurnedDebuff(turn: number): Debuff {
+    return {
+      id: "burned",
+      name: "Burned",
+      description: "Burns enemies for 5 true damage each turn.",
+      duration: turn,
+      maxDuration: turn,
+      effects: [],
+      damagePerTurn: 5,
+      damageType: "true",
+      healPerTurn: 0,
+      unique: true,
+      appliedAt: Date.now(),
+      casterPlayerId: this.chess.ownerId,
+      casterName: this.chess.name,
+    } as Debuff;
+  }
+
   protected heal(chess: ChessObject, heal: number): void {
     let healAmount = heal;
     if (chess.chess.debuffs.some((debuff) => debuff.id === "wounded")) {
@@ -166,9 +230,11 @@ export class ChessObject {
 
   get skillCooldown(): number {
     if (this.chess.skill) {
-      return (
+      return (Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        0
+      )
       );
     }
     return 0;
@@ -219,6 +285,12 @@ export class ChessObject {
         (d) => d.id === debuff.id
       );
       if (existingDebuff) {
+        // If the debuff is already applied, check if the new debuff has a longer duration
+        if (debuff.duration > existingDebuff.duration) {
+          chess.chess.debuffs.splice(chess.chess.debuffs.indexOf(existingDebuff), 1);
+          chess.chess.debuffs.push(debuff);
+          return true;
+        }
         return false; // Can't apply unique debuff twice
       }
     }
@@ -556,7 +628,20 @@ export class ChessObject {
     this.chess.hasMovedBefore = true; // Mark as moved after successful move
   }
 
-  attack(chess: ChessObject, forceCritical: boolean = false): void {
+  public executeAttack(chess: ChessObject, forceCritical: boolean = false, damageMultiplier: number = 1): void {
+    const damage = this.attack(chess, forceCritical, damageMultiplier);
+    this.postAttack(chess, damage);
+  }
+
+  protected postAttack(chess: ChessObject, damage: number): void {
+    // Apply lifesteal: heal for a percentage of physical damage dealt
+    if (this.lifesteal > 0) {
+      const healAmount = (damage * this.lifesteal) / 100;
+      this.heal(this, Math.floor(healAmount));
+    }
+  }
+
+  protected attack(chess: ChessObject, forceCritical: boolean = false, damageMultiplier: number = 1): number {
     if (
       !this.validateAttack(chess.chess.position, this.chess.stats.attackRange)
     ) {
@@ -572,28 +657,38 @@ export class ChessObject {
       this.postCritDamage(chess, damage);
     }
 
-    const actualDamageDealt = this.damage(
+    if (this.chess.items.some((item) => item.id === "spear_of_shojin")) {
+      if (chess.chess.skill?.currentCooldown > 0) {
+        chess.chess.skill.currentCooldown -= 0.5;
+      }
+    }
+
+    return this.damage(
       chess,
-      damage,
+      damage * damageMultiplier,
       "physical",
       this,
       this.sunder
     );
+  }
 
-    // Apply lifesteal: heal for a percentage of physical damage dealt
-    if (this.lifesteal > 0) {
-      const healAmount = (actualDamageDealt * this.lifesteal) / 100;
-      this.heal(this, Math.floor(healAmount));
-
-      if (healAmount > 0) {
-        console.log(
-          `${this.chess.name} healed ${healAmount.toFixed(1)} HP from lifesteal (${this.lifesteal}%)`
-        );
-      }
+  protected postSkill(chess: ChessObject): void {
+    // Set skill on cooldown
+    this.chess.skill.currentCooldown = this.skillCooldown;
+    if (this.chess.items.some((item) => item.id === "archangel_staff")) {
+      this.chess.stats.ap += 5;
     }
   }
 
-  skill(position?: Square): void {
+  executeSkill(position?: Square): void {
+    if (!this.validateSkill(this.chess.skill, position)) {
+      throw new Error("Invalid skill");
+    }
+    this.skill(position);
+    this.postSkill(this);
+  }
+
+  protected skill(position?: Square): void {
     if (!this.validateSkill(this.chess.skill, position)) {
       throw new Error("Invalid skill");
     }

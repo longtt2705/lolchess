@@ -4,10 +4,6 @@ import { ChessObject } from "./chess";
 
 export class Blitzcrank extends ChessObject {
   skill(position?: Square): void {
-    if (!this.validateSkill(this.chess.skill, position)) {
-      throw new Error("Invalid skill");
-    }
-
     // Find the target chess piece to pull
     const targetChess = GameLogic.getChess(
       this.game,
@@ -39,8 +35,5 @@ export class Blitzcrank extends ChessObject {
         targetChess.position = emptyAdjacent;
       }
     }
-
-    // Set skill on cooldown
-    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 }

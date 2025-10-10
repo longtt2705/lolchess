@@ -233,7 +233,7 @@ export class GameLogic {
 
     const chessObject = ChessFactory.createChess(casterChess, game);
     const targetChessObject = ChessFactory.createChess(targetChess, game);
-    chessObject.attack(targetChessObject);
+    chessObject.executeAttack(targetChessObject);
 
     const hpAfter = targetChess.stats.hp;
     actionDetails.damage = Math.max(0, hpBefore - hpAfter);
@@ -253,7 +253,7 @@ export class GameLogic {
     }
 
     const chessObject = ChessFactory.createChess(casterChess, game);
-    chessObject.skill(skillPosition);
+    chessObject.executeSkill(skillPosition);
 
     return game;
   }
@@ -765,20 +765,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-            type: championData.skill.type,
-            name: championData.skill.name,
-            description: championData.skill.description,
-            cooldown: championData.skill.cooldown,
-            currentCooldown: championData.skill.currentCooldown || 0,
-            attackRange: championData.skill.attackRange ||
-              championData.stats.attackRange || {
-                range: 1,
-                diagonal: true,
-                horizontal: true,
-                vertical: true,
-              },
-            targetTypes: championData.skill.targetTypes || "none",
-          }
+          type: championData.skill.type,
+          name: championData.skill.name,
+          description: championData.skill.description,
+          cooldown: championData.skill.cooldown,
+          currentCooldown: championData.skill.currentCooldown || 0,
+          attackRange: championData.skill.attackRange ||
+            championData.stats.attackRange || {
+            range: 1,
+            diagonal: true,
+            horizontal: true,
+            vertical: true,
+          },
+          targetTypes: championData.skill.targetTypes || "none",
+        }
         : undefined,
       items: [],
       debuffs: [],

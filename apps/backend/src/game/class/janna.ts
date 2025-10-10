@@ -1,5 +1,5 @@
 import { GameLogic } from "../game.logic";
-import { Chess, Aura, AuraEffect, Debuff } from "../game.schema";
+import { Chess, Aura, AuraEffect, Debuff, Square } from "../game.schema";
 import { ChessObject } from "./chess";
 
 export class Janna extends ChessObject {
@@ -37,11 +37,7 @@ export class Janna extends ChessObject {
   }
 
   // Override skill method if Janna has special abilities
-  skill(position?: any): void {
-    if (!this.validateSkill(this.chess.skill, position)) {
-      throw new Error("Invalid skill");
-    }
-
+  skill(position?: Square): void {
     // Add +2 Move Speed to nearby allies for 2 turns (does not stack with aura)
     GameLogic.getAdjacentSquares(this.chess.position).forEach((square) => {
       const targetChess = GameLogic.getChess(
@@ -60,8 +56,5 @@ export class Janna extends ChessObject {
         }
       }
     });
-
-    // Set skill on cooldown
-    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 }

@@ -30,10 +30,6 @@ export class Viktor extends ChessObject {
   }
 
   skill(position?: Square): void {
-    if (!this.validateSkill(this.chess.skill, position)) {
-      throw new Error("Invalid skill");
-    }
-
     // Find the target enemy chess piece
     const targetChess = GameLogic.getChess(
       this.game,
@@ -58,18 +54,16 @@ export class Viktor extends ChessObject {
       }
       this.chess.skill.payload.nextAttackEmpowered = true;
     }
-
-    // Set skill on cooldown
-    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 
-  attack(chess: ChessObject): void {
-    super.attack(chess);
+  attack(chess: ChessObject): number {
+    const baseDamage = super.attack(chess);
 
     // Reset empowerment after attack
     if (this.chess.skill?.payload?.nextAttackEmpowered) {
       this.chess.skill.payload.nextAttackEmpowered = false;
       this.removeDebuff(this, "viktor_empowered");
     }
+    return baseDamage;
   }
 }

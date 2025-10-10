@@ -4,10 +4,6 @@ import { ChessObject } from "./chess";
 
 export class Nasus extends ChessObject {
   skill(position?: Square): void {
-    if (!this.validateSkill(this.chess.skill, position)) {
-      throw new Error("Invalid skill");
-    }
-
     // Find the target enemy chess piece
     const targetChess = GameLogic.getChess(
       this.game,
@@ -29,8 +25,5 @@ export class Nasus extends ChessObject {
         this.chess.skill.payload.bonusDamage = bonusDamage + 15;
       }
     }
-
-    // Set skill on cooldown
-    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 }
