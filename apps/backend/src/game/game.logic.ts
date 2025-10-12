@@ -1052,24 +1052,15 @@ export class GameLogic {
       unique: itemData.unique || false,
     };
 
-    let maxHpBefore = new ChessObject(champion, game).maxHp;
-    console.log(
-      `BuyItem: Champion ${champion.name} maxHp before: ${maxHpBefore}`
-    );
-
-    champion.items.push(newItem as any);
+    const championObject = new ChessObject(champion, game);
+    let maxHpBefore = championObject.maxHp;
+    championObject.acquireItem(newItem);
     // Check for item combining (TFT-style)
-    this.checkAndCombineItems(champion);
+    this.checkAndCombineItems(championObject);
 
-    let maxHpAfter = new ChessObject(champion, game).maxHp;
+    let maxHpAfter = championObject.maxHp;
     let hpIncrease = maxHpAfter - maxHpBefore;
-    champion.stats.hp += hpIncrease;
-    console.log(
-      `BuyItem: Champion ${champion.name} maxHp after: ${maxHpAfter}`
-    );
-    console.log(
-      `BuyItem: Champion ${champion.name} hp increase: ${hpIncrease}`
-    );
+    championObject.chess.stats.hp += hpIncrease;
 
     // Deduct gold
     game.players[playerIndex].gold -= itemData.cost;
@@ -1088,16 +1079,16 @@ export class GameLogic {
   }
 
   // Check if two basic items can combine into a stronger item
-  private static checkAndCombineItems(champion: Chess): void {
-    if (champion.items.length < 2) return;
+  private static checkAndCombineItems(champion: ChessObject): void {
+    if (champion.chess.items.length < 2) return;
 
     const { getItemById, findCombinedItem } = require("./data/items");
 
     // Check all pairs of items for possible combinations
-    for (let i = 0; i < champion.items.length - 1; i++) {
-      for (let j = i + 1; j < champion.items.length; j++) {
-        const item1 = champion.items[i];
-        const item2 = champion.items[j];
+    for (let i = 0; i < champion.chess.items.length - 1; i++) {
+      for (let j = i + 1; j < champion.chess.items.length; j++) {
+        const item1 = champion.chess.items[i];
+        const item2 = champion.chess.items[j];
 
         const item1Data = getItemById(item1.id);
         const item2Data = getItemById(item2.id);
@@ -1110,15 +1101,15 @@ export class GameLogic {
         if (combinedItemData) {
           // Check if champion already has this unique item
           if (combinedItemData.unique) {
-            const hasUnique = champion.items.some(
+            const hasUnique = champion.chess.items.some(
               (item) => item.id === combinedItemData.id
             );
             if (hasUnique) continue; // Skip if already has this unique item
           }
 
           // Remove the two basic items
-          champion.items.splice(j, 1); // Remove second item first (higher index)
-          champion.items.splice(i, 1); // Then remove first item
+          champion.chess.items.splice(j, 1); // Remove second item first (higher index)
+          champion.chess.items.splice(i, 1); // Then remove first item
 
           // Add the combined item
           const combinedItem = {
@@ -1129,12 +1120,7 @@ export class GameLogic {
             unique: combinedItemData.unique || false,
           };
 
-          champion.items.push(combinedItem as any);
-
-          console.log(
-            `Combined ${item1Data.name} + ${item2Data.name} = ${combinedItemData.name}`
-          );
-
+          champion.acquireItem(combinedItem);
           // Recursively check for more combinations
           this.checkAndCombineItems(champion);
           return;

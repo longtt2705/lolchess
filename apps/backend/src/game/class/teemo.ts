@@ -18,7 +18,9 @@ export class Teemo extends ChessObject {
       appliedAt: Date.now(),
       casterPlayerId: casterPlayerId,
       casterName: this.chess.name,
-    } as Debuff;
+      currentStacks: 1,
+      maximumStacks: 99,
+    };
   }
 
   // Apply Toxic Shot debuff to target
@@ -29,6 +31,11 @@ export class Teemo extends ChessObject {
 
   attack(chess: ChessObject): number {
     const baseDamage = super.attack(chess);
+
+    // Check if passive is disabled by Evenshroud
+    if (this.isPassiveDisabled()) {
+      return baseDamage;
+    }
 
     // Apply Toxic Shot debuff on every basic attack
     this.applyToxicShot(chess, this.chess.ownerId);

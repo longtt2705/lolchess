@@ -144,7 +144,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "bloodthirster",
     name: "Bloodthirster",
-    description: "Gains additional 25% lifesteal effect when HP is below 25%",
+    description: "Gains additional 25% lifesteal effect when HP is below 40%",
     cost: 0,
     icon: "/icons/Bloodthirster.png",
     effects: [
@@ -155,7 +155,7 @@ export const combinedItems: ItemData[] = [
         value: 25,
         type: "add",
         condition: (chess) =>
-          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.25,
+          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
       },
     ],
     isBasic: false,
@@ -199,7 +199,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/SpearofShojin.png",
     effects: [
       { stat: "ad", value: 12, type: "add" },
-      { stat: "cooldownReduction", value: 10, type: "add" },
+      { stat: "cooldownReduction", value: 5, type: "add" },
     ],
     isBasic: false,
     recipe: ["bf_sword", "tear"],
@@ -281,7 +281,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/VoidStaff.png",
     effects: [
       { stat: "sunder", value: 18, type: "add" },
-      { stat: "cooldownReduction", value: 10, type: "add" },
+      { stat: "cooldownReduction", value: 5, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "tear"],
@@ -298,6 +298,19 @@ export const combinedItems: ItemData[] = [
     ],
     isBasic: false,
     recipe: ["recurve_bow", "sparring_gloves"],
+  },
+  {
+    id: 'nashors_tooth',
+    name: 'Nashor\'s Tooth',
+    description: 'After using an active skill, grant 10% damage amplification for 2 turns.',
+    cost: 0,
+    icon: '/icons/NashorsTooth.png',
+    effects: [
+      { stat: 'sunder', value: 18, type: 'add' },
+      { stat: 'maxHp', value: 25, type: 'add' },
+    ],
+    isBasic: false,
+    recipe: ['recurve_bow', 'sparring_gloves'],
   },
 
   // Needlessly Large Rod Combinations
@@ -323,7 +336,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/ArchangelsStaff.png",
     effects: [
       { stat: "ap", value: 12, type: "add" },
-      { stat: "cooldownReduction", value: 10, type: "add" },
+      { stat: "cooldownReduction", value: 5, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "tear"],
@@ -342,11 +355,11 @@ export const combinedItems: ItemData[] = [
     recipe: ["needlessly_rod", "chain_vest"],
   },
   {
-    id: "ionic_spark",
-    name: "Ionic Spark",
-    description: "Grants Ability Power and Magic Resistance",
+    id: "thiefs_gloves",
+    name: "Thief's Gloves",
+    description: "Steal 2 points from random stats (AD/AP/Armor/Magic Resist) of the enemy for each attack.",
     cost: 0,
-    icon: "/icons/ionic_spark.png",
+    icon: "/icons/ThiefsGloves.png",
     effects: [
       { stat: "ap", value: 12, type: "add" },
       { stat: "magicResistance", value: 12, type: "add" },
@@ -354,15 +367,44 @@ export const combinedItems: ItemData[] = [
     isBasic: false,
     recipe: ["needlessly_rod", "negatron_cloak"],
   },
+  {
+    id: 'morellonomicon',
+    name: 'Morellonomicon',
+    description: 'Deal damage will Burn and Wound enemies for 3 turns.',
+    cost: 0,
+    icon: '/icons/Morellonomicon.png',
+    effects: [
+      { stat: 'ap', value: 15, type: 'add' },
+      { stat: 'maxHp', value: 25, type: 'add' },
+    ],
+    isBasic: false,
+    recipe: ['needlessly_rod', 'negatron_cloak'],
+  },
+  {
+    id: 'jeweled_gauntlet',
+    name: 'Jeweled Gauntlet',
+    description: 'Active skills can critically strike.',
+    cost: 0,
+    icon: '/icons/JeweledGauntlet.png',
+    effects: [
+      { stat: 'ap', value: 15, type: 'add' },
+      { stat: 'criticalChance', value: 25, type: 'add' },
+    ],
+    isBasic: false,
+    recipe: ['needlessly_rod', 'sparring_gloves'],
+    unique: true,
+  },
 
   // Chain Vest Combinations
   {
     id: "bramble_vest",
     name: "Bramble Vest",
-    description: "Grants massive Physical Resistance",
+    description: "Take 8% reduced damage from attacks. When struck by any attack, deal 5 true damage to all adjacent enemies.",
     cost: 0,
-    icon: "/icons/bramble_vest.png",
-    effects: [{ stat: "physicalResistance", value: 25, type: "add" }],
+    icon: "/icons/BrambleVest.png",
+    effects: [
+      { stat: "physicalResistance", value: 25, type: "add" },
+    ],
     isBasic: false,
     recipe: ["chain_vest", "chain_vest"],
     unique: true,
@@ -370,28 +412,58 @@ export const combinedItems: ItemData[] = [
   {
     id: "gargoyle_stoneplate",
     name: "Gargoyle Stoneplate",
-    description: "Grants Physical and Magic Resistance",
+    description: "Gain 10 Armor and 10 Magic Resist when HP is below 40%.",
     cost: 0,
     icon: "/icons/GargoyleStoneplate.png",
     effects: [
       { stat: "physicalResistance", value: 15, type: "add" },
       { stat: "magicResistance", value: 15, type: "add" },
+      {
+        stat: "physicalResistance",
+        value: 10,
+        type: "add",
+        condition: (chess) =>
+          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
+      },
+      {
+        stat: "magicResistance",
+        value: 10,
+        type: "add",
+        condition: (chess) =>
+          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
+      },
     ],
     isBasic: false,
     recipe: ["chain_vest", "negatron_cloak"],
+    unique: true,
   },
   {
     id: "sunfire_cape",
     name: "Sunfire Cape",
-    description: "Grants Physical Resistance and Health",
+    description: "Deal Burn and Wound to adjacent enemies for 3 turns.",
     cost: 0,
-    icon: "/icons/sunfire_cape.png",
+    icon: "/icons/SunfireCape.png",
     effects: [
-      { stat: "physicalResistance", value: 12, type: "add" },
-      { stat: "maxHp", value: 35, type: "add" },
+      { stat: "physicalResistance", value: 25, type: "add" },
+      { stat: "magicResistance", value: 25, type: "add" },
     ],
     isBasic: false,
     recipe: ["chain_vest", "giants_belt"],
+    unique: true,
+  },
+  {
+    id: "steadfast_heart",
+    name: "Steadfast Heart",
+    description: "Gain 10% Durability. While above 50% Health, instead gain 18% Durability.",
+    cost: 0,
+    icon: "/icons/SteadfastHeart.png",
+    effects: [
+      { stat: "physicalResistance", value: 15, type: "add" },
+      { stat: "criticalChance", value: 25, type: "add" },
+    ],
+    isBasic: false,
+    recipe: ["chain_vest", "sparring_gloves"],
+    unique: true,
   },
 
   // Negatron Cloak Combinations
@@ -413,6 +485,20 @@ export const combinedItems: ItemData[] = [
     ],
     isBasic: false,
     recipe: ["negatron_cloak", "negatron_cloak"],
+    unique: true,
+  },
+  {
+    id: 'Evenshroud',
+    name: 'Evenshroud',
+    description: 'Disables all enemies\' passive skills adjacent to the wearer.',
+    cost: 0,
+    icon: '/icons/Evenshroud.png',
+    effects: [
+      { stat: 'maxHp', value: 25, type: 'add' },
+      { stat: 'magicResistance', value: 12, type: 'add' },
+    ],
+    isBasic: false,
+    recipe: ['giants_belt', 'negatron_cloak'],
     unique: true,
   },
   {
@@ -445,55 +531,100 @@ export const combinedItems: ItemData[] = [
     isBasic: false,
     recipe: ["giants_belt", "giants_belt"],
   },
+  {
+    id: "strikers_flail",
+    name: "Striker's Flail",
+    description: "Critical Strike increases Damage Amplification by 10 for 2 turns.",
+    cost: 0,
+    icon: "/icons/StrikersFlail.png",
+    effects: [
+      { stat: "criticalChance", value: 25, type: "add" },
+      { stat: "maxHp", value: 25, type: "add" },
+    ],
+    isBasic: false,
+    recipe: ["giants_belt", "sparring_gloves"],
+    unique: true,
+  },
 
   // Tear Combinations
   {
     id: "blue_buff",
     name: "Blue Buff",
-    description: "Grants Health and sustain",
+    description: "Reduce 1 round of cooldown of skill after using it.",
     cost: 0,
-    icon: "/icons/blue_buff.png",
-    effects: [{ stat: "maxHp", value: 50, type: "add" }],
+    icon: "/icons/BlueBuff.png",
+    effects: [{ stat: "cooldownReduction", value: 10, type: "add" }],
     isBasic: false,
     recipe: ["tear", "tear"],
     unique: true,
   },
   {
-    id: "redemption",
-    name: "Redemption",
-    description: "Grants Health and Physical Resistance",
+    id: "protectors_vow",
+    name: "Protector's Vow",
+    description: "Gain 15% max Health shield for 2 turns after using an active skill.",
     cost: 0,
-    icon: "/icons/redemption.png",
+    icon: "/icons/ProtectorsVow.png",
     effects: [
-      { stat: "maxHp", value: 25, type: "add" },
+      { stat: "cooldownReduction", value: 5, type: "add" },
       { stat: "physicalResistance", value: 12, type: "add" },
     ],
     isBasic: false,
     recipe: ["tear", "chain_vest"],
   },
   {
-    id: "chalice_of_power",
-    name: "Chalice of Power",
-    description: "Grants Health and Magic Resistance",
+    id: "hand_of_justice",
+    name: "Hand of Justice",
+    description: "Gain additional 15 damage when HP is below 40%.",
     cost: 0,
-    icon: "/icons/chalice_of_power.png",
+    icon: "/icons/HandofJustice.png",
     effects: [
-      { stat: "maxHp", value: 25, type: "add" },
-      { stat: "magicResistance", value: 12, type: "add" },
+      { stat: "criticalChance", value: 25, type: "add" },
+      { stat: "cooldownReduction", value: 5, type: "add" },
+      { stat: "ad", value: 15, type: "add", condition: (chess) => chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4 },
+    ],
+    isBasic: false,
+    recipe: ["tear", "giants_belt"],
+  },
+  {
+    id: "adaptive_helm",
+    name: "Adaptive Helm",
+    description: "Gain 15 Armor or 15 Magic Resist for 3 turns when taken damage based on the damage type.",
+    cost: 0,
+    icon: "/icons/AdaptiveHelm.png",
+    effects: [
+      { stat: "cooldownReduction", value: 5, type: "add" },
+      { stat: "magicResistance", value: 15, type: "add" },
+
     ],
     isBasic: false,
     recipe: ["tear", "negatron_cloak"],
   },
   {
-    id: "protector_vow",
-    name: "Protector's Vow",
-    description: "Grants massive Health bonus",
+    id: "spirit_visage",
+    name: "Spirit Visage",
+    description: "Grants 30% health heal from all sources.",
     cost: 0,
-    icon: "/icons/protector_vow.png",
-    effects: [{ stat: "maxHp", value: 60, type: "add" }],
+    icon: "/icons/SpiritVisage.png",
+    effects: [
+      { stat: "maxHp", value: 25, type: "add" },
+      { stat: "cooldownReduction", value: 5, type: "add" },
+    ],
     isBasic: false,
     recipe: ["tear", "giants_belt"],
   },
+  {
+    id: "serpents_fang",
+    name: "Serpent's Fang",
+    description: "Deal damage will inflict the venom debuff on the enemy for 3 turns. If the enemy doesn't have the venom debuff, reduce all their active shields by 50%.",
+    cost: 0,
+    icon: "/icons/SerpentsFang.png",
+    effects: [
+      { stat: "criticalChance", value: 50, type: "add" },
+    ],
+    isBasic: false,
+    recipe: ["sparring_gloves", "sparring_gloves"],
+    unique: true,
+  }
 ];
 
 // All items combined

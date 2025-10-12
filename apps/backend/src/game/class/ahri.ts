@@ -47,28 +47,19 @@ export class Ahri extends ChessObject {
       if (targetChess) {
         const targetChessObject = new ChessObject(targetChess, this.game);
         // Deal damage
-        this.damage(
+        this.activeSkillDamage(
           targetChessObject,
           10 + this.ap * 0.5,
           "magic",
           this,
-          this.sunder
-        ); // Adjust damage as needed
+          this.sunder,
+        );
 
         // Apply Spirit Rush debuff
-        const wasApplied = this.applySpiritRush(
+        this.applySpiritRush(
           targetChessObject,
           this.chess.ownerId
         );
-        if (wasApplied) {
-          console.log(
-            `Spirit Rush debuff applied to ${targetChess.name} by ${this.chess.name}`
-          );
-        } else {
-          console.log(
-            `Spirit Rush debuff already exists on ${targetChess.name}`
-          );
-        }
       }
     });
   }

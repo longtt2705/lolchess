@@ -133,6 +133,12 @@ export class Debuff {
   @Prop({ default: false })
   unique: boolean; // can only have one instance
 
+  @Prop({ default: 1, required: false })
+  currentStacks: number; // current number of stacks
+
+  @Prop({ default: 1, required: false })
+  maximumStacks: number; // maximum number of stacks
+
   @Prop({ required: true })
   appliedAt: number; // timestamp when applied
 

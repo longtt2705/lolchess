@@ -18,7 +18,7 @@ export class Nasus extends ChessObject {
 
       // Deal enhanced damage
       const damage = 20 + this.ap * 0.4 + bonusDamage;
-      this.damage(targetChessObject, damage, "physical", this, this.sunder);
+      this.activeSkillDamage(targetChessObject, damage, "physical", this, this.sunder);
 
       // If target dies, increase future Siphoning Strike damage
       if (targetChess.stats.hp <= 0) {

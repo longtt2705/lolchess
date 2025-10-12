@@ -2,9 +2,14 @@ import { ChessObject } from "./chess";
 
 export class Zed extends ChessObject {
   attack(chess: ChessObject): number {
-    const isLowHealth = chess.chess.stats.hp < chess.maxHp * 0.5; // Below 50% health
-
     const baseDamage = super.attack(chess);
+
+    // Check if passive is disabled by Evenshroud
+    if (this.isPassiveDisabled()) {
+      return baseDamage;
+    }
+
+    const isLowHealth = chess.chess.stats.hp < chess.maxHp * 0.5; // Below 50% health
 
     // Contempt for the Weak: bonus magic damage to low health targets
     if (isLowHealth) {

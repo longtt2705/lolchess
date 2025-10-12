@@ -2,10 +2,15 @@ import { ChessObject } from "./chess";
 
 export class TwistedFate extends ChessObject {
   attack(chess: ChessObject): number {
+    const baseDamage = super.attack(chess);
+
+    // Check if passive is disabled by Evenshroud
+    if (this.isPassiveDisabled()) {
+      return baseDamage;
+    }
+
     // Stacked Deck: deal bonus damage
     const bonusDamage = 5 + Math.floor(this.ap * 0.8);
-
-    const baseDamage = super.attack(chess);
 
     if (bonusDamage > 0) {
       this.damage(chess, bonusDamage, "magic", this, this.sunder);

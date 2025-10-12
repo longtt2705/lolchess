@@ -4,6 +4,11 @@ export class Malphite extends ChessObject {
   attack(chess: ChessObject): number {
     const baseDamage = super.attack(chess);
 
+    // Check if passive is disabled by Evenshroud
+    if (this.isPassiveDisabled()) {
+      return baseDamage;
+    }
+
     // Granite Shield: deal damage equal to 10% of physical resistance
     const bonusDamage = Math.floor(this.physicalResistance * 0.1);
     if (bonusDamage > 0) {
@@ -14,6 +19,10 @@ export class Malphite extends ChessObject {
 
   // Override physical resistance calculation to include the +15 bonus
   get physicalResistance(): number {
+    // Check if passive is disabled by Evenshroud
+    if (this.isPassiveDisabled()) {
+      return super.physicalResistance;
+    }
     return super.physicalResistance + 15;
   }
 

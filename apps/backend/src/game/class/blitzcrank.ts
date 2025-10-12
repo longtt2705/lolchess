@@ -15,7 +15,7 @@ export class Blitzcrank extends ChessObject {
       const targetChessObject = new ChessObject(targetChess, this.game);
 
       // Deal magic damage
-      this.damage(
+      this.activeSkillDamage(
         targetChessObject,
         15 + this.ap * 0.6,
         "magic",

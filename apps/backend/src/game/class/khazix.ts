@@ -40,7 +40,7 @@ export class KhaZix extends ChessObject {
       }
 
       // Deal physical damage
-      this.damage(targetChessObject, damage, "physical", this, this.sunder);
+      this.activeSkillDamage(targetChessObject, damage, "physical", this, this.sunder);
     }
   }
 }

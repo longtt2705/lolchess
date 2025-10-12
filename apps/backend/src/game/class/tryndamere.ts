@@ -1,8 +1,13 @@
 import { ChessObject } from "./chess";
 
 export class Tryndamere extends ChessObject {
-  protected postTakenDamage(attacker: ChessObject, damage: number): void {
-    super.postTakenDamage(attacker, damage);
+  protected postTakenDamage(attacker: ChessObject, damage: number, damageType: "physical" | "magic" | "true"): void {
+    super.postTakenDamage(attacker, damage, damageType);
+
+    // Check if passive is disabled by Evenshroud
+    if (this.isPassiveDisabled()) {
+      return;
+    }
 
     // Initialize skill payload if needed
     if (!this.chess.skill?.payload) {
@@ -21,6 +26,11 @@ export class Tryndamere extends ChessObject {
 
   attack(chess: ChessObject): number {
     const baseDamage = super.attack(chess);
+
+    // Check if passive is disabled by Evenshroud
+    if (this.isPassiveDisabled()) {
+      return baseDamage;
+    }
 
     // Deal bonus damage based on missing health
     const missingHp = this.maxHp - this.chess.stats.hp;

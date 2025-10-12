@@ -1,8 +1,13 @@
 import { ChessObject } from "./chess";
 
 export class Sion extends ChessObject {
-  attack(chess: ChessObject): void {
-    super.attack(chess);
+  protected attack(chess: ChessObject): number {
+    const baseDamage = super.attack(chess);
+
+    // Check if passive is disabled by Evenshroud
+    if (this.isPassiveDisabled()) {
+      return baseDamage;
+    }
 
     // Soul Furnace: gain max health when killing enemies
     if (chess.chess.stats.hp <= 0) {
@@ -13,5 +18,6 @@ export class Sion extends ChessObject {
         this.chess.stats.maxHp
       );
     }
+    return baseDamage;
   }
 }
