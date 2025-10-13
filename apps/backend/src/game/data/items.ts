@@ -239,7 +239,7 @@ export const combinedItems: ItemData[] = [
     name: "Guinsoo's Rageblade",
     description: "Each attack grant 2 permanent Sunder.",
     cost: 0,
-    icon: "/icons/GuinsooRageblade.png",
+    icon: "/icons/GuinsoosRageblade.png",
     effects: [
       { stat: "sunder", value: 17, type: "add" },
       { stat: "ap", value: 12, type: "add" },

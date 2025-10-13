@@ -1,20 +1,23 @@
 import { ChessObject } from "./chess";
 
 export class Malphite extends ChessObject {
-  attack(chess: ChessObject): number {
-    const baseDamage = super.attack(chess);
 
-    // Check if passive is disabled by Evenshroud
+  preEnterTurn(isBlueTurn: boolean): void {
+    super.preEnterTurn(isBlueTurn);
+    if (this.chess.skill.currentCooldown > 0) {
+      return;
+    }
     if (this.isPassiveDisabled()) {
-      return baseDamage;
+      return;
     }
+    this.applyShield(this.chess.stats.maxHp * 0.1, 2, "granite_shield");
+  }
 
-    // Granite Shield: deal damage equal to 10% of physical resistance
-    const bonusDamage = Math.floor(this.physicalResistance * 0.1);
-    if (bonusDamage > 0) {
-      this.damage(chess, bonusDamage, "magic", this, this.sunder);
+  protected postTakenDamage(attacker: ChessObject, damage: number, damageType: "physical" | "magic" | "true"): void {
+    super.postTakenDamage(attacker, damage, damageType);
+    if (damage > 0) {
+      this.chess.skill.currentCooldown = this.skillCooldown;
     }
-    return baseDamage;
   }
 
   // Override physical resistance calculation to include the +15 bonus
@@ -23,17 +26,9 @@ export class Malphite extends ChessObject {
     if (this.isPassiveDisabled()) {
       return super.physicalResistance;
     }
-    return super.physicalResistance + 15;
-  }
-
-  // Override attack range to include the +1 range bonus
-  validateAttack(position: any, attackRange: any): boolean {
-    // Create modified attack range with +1 range
-    const modifiedRange = {
-      ...attackRange,
-      range: (attackRange.range || 1) + 1,
-    };
-
-    return super.validateAttack(position, modifiedRange);
+    if (this.chess.shields.length > 0) {
+      return super.physicalResistance + 15;
+    }
+    return super.physicalResistance;
   }
 }

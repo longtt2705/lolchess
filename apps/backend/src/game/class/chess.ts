@@ -1,17 +1,15 @@
 import { getItemById } from "../data/items";
-import { GameLogic } from "../game.logic";
 import {
   AttackRange,
-  Chess,
-  Game,
-  Skill,
-  Square,
-  Debuff,
   Aura,
   AuraEffect,
-  Shield,
-  ChessStats,
+  Chess,
+  Debuff,
+  Game,
   Item,
+  Shield,
+  Skill,
+  Square
 } from "../game.schema";
 
 export class ChessObject {
@@ -122,7 +120,7 @@ export class ChessObject {
         shield.amount = Math.floor(shield.amount * 0.5);
       });
     }
-    while (shields.length > 0 || calDamage > 0) {
+    while (shields.length > 0 && calDamage > 0) {
       const shield = shields[0] || { amount: 0, duration: 0 };
       if (shield.amount > calDamage) {
         shield.amount -= calDamage;
@@ -252,8 +250,21 @@ export class ChessObject {
     }
   }
 
-  protected applyShield(amount: number, duration: number): void {
+  protected applyShield(amount: number, duration: number, id?: string): void {
+    if (!this.chess.shields) {
+      this.chess.shields = [];
+    }
+    if (id && this.chess.shields.some((shield) => shield.id === id)) {
+      this.chess.shields.forEach((shield) => {
+        if (shield.id === id) {
+          shield.amount = amount;
+          shield.duration = duration;
+        }
+      });
+      return;
+    }
     this.chess.shields.push({
+      id: id || `shield_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       amount: amount,
       duration: duration,
     } as Shield);
@@ -383,6 +394,7 @@ export class ChessObject {
 
       // Apply Sunfire Cape effect
       if (this.chess.items.some((item) => item.id === "sunfire_cape")) {
+        const { GameLogic } = require("../game.logic");
         GameLogic.getAdjacentSquares(this.chess.position).forEach((square) => {
           const targetChess = GameLogic.getChess(this.game, !this.chess.blue, square);
           if (targetChess) {
@@ -801,21 +813,9 @@ export class ChessObject {
     } as Aura;
   }
 
-  // Check if this champion's passive is disabled by adjacent Evenshroud
+  // Check if this champion's passive is disabled by Evenshroud debuff
   isPassiveDisabled(): boolean {
-    // Check all adjacent squares for enemy chess with Evenshroud
-    const adjacentSquares = GameLogic.getAdjacentSquares(this.chess.position);
-
-    for (const square of adjacentSquares) {
-      const adjacentChess = GameLogic.getChess(this.game, !this.chess.blue, square);
-      if (adjacentChess && adjacentChess.stats.hp > 0) {
-        if (adjacentChess.items.some((item) => item.id === "Evenshroud")) {
-          return true; // Passive is disabled
-        }
-      }
-    }
-
-    return false; // Passive is not disabled
+    return this.chess.debuffs.some((debuff) => debuff.id === "aura_evenshroud_passive_disable");
   }
 
   move(position: Square): void {
@@ -906,6 +906,7 @@ export class ChessObject {
     }
 
     if (this.chess.items.some((item) => item.id === "bramble_vest")) {
+      const { GameLogic } = require("../game.logic");
       GameLogic.getAdjacentSquares(this.chess.position).forEach((square) => {
         const targetChess = GameLogic.getChess(
           this.game,
@@ -1006,7 +1007,26 @@ export class ChessObject {
   acquireItem(item: Item): void {
     this.chess.items.push(item);
     if (item.id === 'crownguard') {
-      this.applyShield(this.chess.stats.maxHp * 0.25, Number.MAX_SAFE_INTEGER);
+      this.applyShield(this.chess.stats.maxHp * 0.25, Number.MAX_SAFE_INTEGER, 'crownguard_shield');
+    }
+    if (item.id === 'Evenshroud') {
+      // Create aura that disables enemy passives
+      const evenshroudAura = this.createAura(
+        'evenshroud_passive_disable',
+        'Evenshroud',
+        'Disables all enemies\' passive skills adjacent to the wearer.',
+        1, // Adjacent squares only
+        [],
+        {
+          active: true,
+          requiresAlive: true,
+          duration: 'permanent',
+        }
+      );
+      if (!this.chess.auras) {
+        this.chess.auras = [];
+      }
+      this.chess.auras.push(evenshroudAura);
     }
   }
 

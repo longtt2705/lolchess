@@ -1,13 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Clock, Coins, RotateCcw, Users, Zap, Shield, Package, ShoppingCart } from 'lucide-react'
+import { Coins, Package, RotateCcw, Shield, ShoppingCart, Users, Zap } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { ChessPiece, ChessPosition, useGame, GameState } from '../hooks/useGame'
+import { useAppDispatch, useAppSelector } from '../hooks/redux'
+import { ChessPiece, ChessPosition, GameState, useGame } from '../hooks/useGame'
 import { resetGameplay } from '../store/gameSlice'
-import { fetchBasicItems, fetchAllItems, ItemData } from '../store/itemsSlice'
-import { AnimationEngine, AnimationAction } from '../utils/animationEngine'
+import { fetchAllItems, fetchBasicItems, ItemData } from '../store/itemsSlice'
+import { AnimationAction, AnimationEngine } from '../utils/animationEngine'
 
 interface AttackAnimation {
   attackerId: string
@@ -28,6 +28,13 @@ interface DamageEffect {
   targetId: string // ID of the piece that took damage
   damage: number
   isDamage: boolean // true for damage, false for healing
+}
+
+interface ItemPurchaseAnimation {
+  id: string
+  targetId: string // ID of the champion who bought the item
+  itemId: string
+  itemIcon?: string
 }
 
 const GameContainer = styled.div`
@@ -1261,6 +1268,48 @@ const SkillIcon = styled.div<{ isActive: boolean; onCooldown: boolean, currentCo
   `}
 `
 
+const ItemIconsContainer = styled.div`
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 5;
+`
+
+const ItemIcon = styled.div`
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1.5px solid rgba(200, 155, 60, 0.6);
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 4px rgba(200, 155, 60, 0.4);
+  transition: all 0.2s ease;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 2px;
+    object-fit: cover;
+  }
+  
+  &:hover {
+    transform: scale(1.2);
+    border-color: var(--gold);
+    box-shadow: 0 0 8px rgba(200, 155, 60, 0.8);
+  }
+  
+  .item-fallback {
+    font-size: 8px;
+    font-weight: bold;
+    color: var(--gold);
+  }
+`
+
 const DamageNumber = styled(motion.div) <{ isDamage: boolean }>`
   position: absolute;
   top: 50%;
@@ -1285,6 +1334,69 @@ const AttackEffect = styled(motion.div)`
   background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 215, 0, 0.6) 50%, transparent 100%);
   pointer-events: none;
   z-index: 15;
+`
+
+const ItemPurchaseEffect = styled(motion.div)`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`
+
+const ItemIconAnimation = styled(motion.div)`
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(200, 155, 60, 0.95) 0%, rgba(184, 134, 11, 0.95) 100%);
+  border: 2px solid var(--gold);
+  box-shadow: 
+    0 0 20px rgba(200, 155, 60, 0.8),
+    0 0 40px rgba(200, 155, 60, 0.5),
+    inset 0 0 15px rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+  }
+  
+  .item-fallback {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+  }
+`
+
+const GoldSpentText = styled(motion.div)`
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: bold;
+  font-size: 14px;
+  color: #ffd700;
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(255, 215, 0, 0.8);
+  pointer-events: none;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `
 
 const LoadingOverlay = styled(motion.div)`
@@ -1671,11 +1783,13 @@ const ChessPieceRenderer: React.FC<{
   moveAnimation?: MoveAnimation | null
   isAnimating?: boolean
   damageEffects?: DamageEffect[]
+  itemPurchaseAnimations?: ItemPurchaseAnimation[]
   isRedPlayer?: boolean
   isDead?: boolean
   onSkillClick?: () => void
   boardRef: React.RefObject<HTMLDivElement>
-}> = ({ piece, canSelect, onClick, attackAnimation, moveAnimation, isAnimating = false, damageEffects = [], isRedPlayer = false, isDead = false, onSkillClick, boardRef }) => {
+  allItems?: ItemData[]
+}> = ({ piece, canSelect, onClick, attackAnimation, moveAnimation, isAnimating = false, damageEffects = [], itemPurchaseAnimations = [], isRedPlayer = false, isDead = false, onSkillClick, boardRef, allItems = [] }) => {
   const hpPercentage = (piece.stats.hp / piece.stats.maxHp) * 100
   const isNeutral = piece.ownerId === "neutral"
   const isAttacking = attackAnimation?.attackerId === piece.id
@@ -1684,6 +1798,7 @@ const ChessPieceRenderer: React.FC<{
     attackAnimation.targetPos.y === piece.position.y
   const isMoving = moveAnimation?.pieceId === piece.id
   const pieceEffects = damageEffects.filter(effect => effect.targetId === piece.id)
+  const piecePurchaseAnimations = itemPurchaseAnimations.filter(anim => anim.targetId === piece.id)
 
   // Calculate attack animation values
   const getAttackAnimation = () => {
@@ -1841,6 +1956,37 @@ const ChessPieceRenderer: React.FC<{
       </div>
       <div className="piece-name">{piece.name}</div>
 
+      {/* Item Icons (Left Side) - Only for champions */}
+      {isChampion(piece) && (piece as any).items && (piece as any).items.length > 0 && (
+        <ItemIconsContainer style={{ top: hasShield ? '26px' : '2px' }}>
+          {(piece as any).items.map((item: any, index: number) => {
+            const itemData = allItems.find((allItem: ItemData) => allItem.id === item.id)
+            return (
+              <ItemIcon key={index} title={item.name}>
+                {itemData?.icon ? (
+                  <img
+                    src={itemData.icon}
+                    alt={item.name}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                      const parent = e.currentTarget.parentElement
+                      if (parent) {
+                        const fallback = document.createElement('div')
+                        fallback.className = 'item-fallback'
+                        fallback.textContent = item.name.substring(0, 2).toUpperCase()
+                        parent.appendChild(fallback)
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="item-fallback">{item.name.substring(0, 2).toUpperCase()}</div>
+                )}
+              </ItemIcon>
+            )
+          })}
+        </ItemIconsContainer>
+      )}
+
       {/* Shield Icon Indicator */}
       {hasShield && <ShieldIcon />}
 
@@ -1937,6 +2083,55 @@ const ChessPieceRenderer: React.FC<{
           </DamageNumber>
         ))}
       </AnimatePresence>
+
+      {/* Item Purchase Animations */}
+      <AnimatePresence>
+        {piecePurchaseAnimations.map((purchaseAnim) => {
+          const itemData = allItems.find(item => item.id === purchaseAnim.itemId)
+          return (
+            <ItemPurchaseEffect key={purchaseAnim.id}>
+              <ItemIconAnimation
+                initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                animate={{
+                  scale: [0, 1.5, 1.2, 0],
+                  rotate: [-180, 0, 0, 180],
+                  opacity: [0, 1, 1, 0]
+                }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                {purchaseAnim.itemIcon ? (
+                  <img
+                    src={purchaseAnim.itemIcon}
+                    alt={itemData?.name || 'Item'}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                ) : (
+                  <div className="item-fallback">
+                    {itemData?.name?.substring(0, 2).toUpperCase() || '?'}
+                  </div>
+                )}
+              </ItemIconAnimation>
+              {itemData && (
+                <GoldSpentText
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{
+                    opacity: [0, 1, 1, 0],
+                    y: [10, -10, -20, -30]
+                  }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                >
+                  <img src="/icons/dollar.png" alt="Gold" width={12} height={12} />
+                  -{itemData.cost}
+                </GoldSpentText>
+              )}
+            </ItemPurchaseEffect>
+          )
+        })}
+      </AnimatePresence>
     </ChessPieceComponent>
   )
 }
@@ -2013,6 +2208,7 @@ const GamePage: React.FC = () => {
   const [attackAnimation, setAttackAnimation] = useState<AttackAnimation | null>(null)
   const [moveAnimation, setMoveAnimation] = useState<MoveAnimation | null>(null)
   const [damageEffects, setDamageEffects] = useState<DamageEffect[]>([])
+  const [itemPurchaseAnimations, setItemPurchaseAnimations] = useState<ItemPurchaseAnimation[]>([])
   const [deadPieces, setDeadPieces] = useState<Set<string>>(new Set())
   const [isAnimating, setIsAnimating] = useState(false)
   const prevDeadPiecesRef = useRef<Set<string>>(new Set())
@@ -2141,6 +2337,8 @@ const GamePage: React.FC = () => {
       // Clear any lingering animation states
       setMoveAnimation(null)
       setAttackAnimation(null)
+      // Note: We don't clear damageEffects and itemPurchaseAnimations here
+      // as they manage their own cleanup with setTimeout
     }
   }, [])
 
@@ -2223,10 +2421,35 @@ const GamePage: React.FC = () => {
         break
       }
 
+      case 'buy_item': {
+        const { targetId, itemId } = animation.data
+
+        // Find item data to get icon
+        const itemData = allItems.find((item: ItemData) => item.id === itemId)
+
+        const purchaseAnimation: ItemPurchaseAnimation = {
+          id: animation.id,
+          targetId,
+          itemId,
+          itemIcon: itemData?.icon,
+        }
+
+
+        setItemPurchaseAnimations(prev => [...prev, purchaseAnimation])
+
+        // Clean up after animation
+        setTimeout(() => {
+          setItemPurchaseAnimations(prev => prev.filter(a => a.id !== animation.id))
+        }, animation.duration)
+
+        await new Promise(resolve => setTimeout(resolve, animation.duration))
+        break
+      }
+
       default:
         break
     }
-  }, [])
+  }, [allItems])
 
   // Enhanced execute action - now animations are server-driven
   const executeActionWithAnimation = useCallback(async (type: string, casterPosition: ChessPosition, targetPosition: ChessPosition) => {
@@ -2317,6 +2540,7 @@ const GamePage: React.FC = () => {
         setAttackAnimation(null)
         setMoveAnimation(null)
         setDamageEffects([])
+        setItemPurchaseAnimations([])
         setDeadPieces(new Set())
         setIsAnimating(false)
         setDetailViewPiece(null)
@@ -2401,9 +2625,11 @@ const GamePage: React.FC = () => {
                 moveAnimation={moveAnimation}
                 isAnimating={isAnimating}
                 damageEffects={damageEffects}
+                itemPurchaseAnimations={itemPurchaseAnimations}
                 isRedPlayer={isRedPlayer}
                 isDead={deadPieces.has(piece.id)}
                 boardRef={boardRef}
+                allItems={allItems}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent square click
 

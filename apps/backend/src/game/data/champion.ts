@@ -267,7 +267,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Granite Shield",
       description:
-        "Malphite gains 15 physical resistance. His attack range is increased by 1 and deals damage equal to (10+10% of AP) magic damage to his target.",
+        "If Malphite didn't get hit by damage for 2 turns, he gains a shield equal to (10+10% of AP)% of his max health. He gains 15 armor if having shield.",
       cooldown: 0,
     },
   },
@@ -290,7 +290,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Soul Furnace",
       description:
-        "When Sion kills enemies, he passively gains maximum Health.",
+        "When Sion kills enemies, he passively gains maximum Health. He deals bonus 10% of his max health + 50% of AP magic damage to his target.",
       cooldown: 0,
     },
   },

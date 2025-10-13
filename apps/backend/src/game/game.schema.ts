@@ -223,6 +223,8 @@ export class Skill {
 
 export class Shield {
   @Prop({ required: true })
+  id: string;
+  @Prop({ required: true })
   amount: number;
   @Prop({ required: true })
   duration: number;
