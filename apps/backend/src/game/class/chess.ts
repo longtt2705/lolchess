@@ -819,6 +819,16 @@ export class ChessObject {
   }
 
   move(position: Square): void {
+    // Check if this is a castling move (Poro moving 2 squares horizontally)
+    if (this.chess.name === "Poro" && !this.chess.hasMovedBefore) {
+      const deltaX = position.x - this.chess.position.x;
+      if (Math.abs(deltaX) === 2 && position.y === this.chess.position.y) {
+        // This is a castling attempt
+        this.executeCastling(position);
+        return;
+      }
+    }
+
     // Calculate effective speed with first move bonus for minions
     let effectiveSpeed = this.speed;
 
@@ -837,6 +847,105 @@ export class ChessObject {
 
     this.chess.position = position;
     this.chess.hasMovedBefore = true; // Mark as moved after successful move
+  }
+
+  /**
+   * Check if castling is valid
+   */
+  canCastle(targetPosition: Square): { valid: boolean; rookPosition?: Square; rookNewPosition?: Square } {
+    // Only Poro (king) can castle
+    if (this.chess.name !== "Poro") {
+      return { valid: false };
+    }
+
+    // King must not have moved
+    if (this.chess.hasMovedBefore) {
+      return { valid: false };
+    }
+
+    // Must be moving 2 squares horizontally on the same rank
+    const deltaX = targetPosition.x - this.chess.position.x;
+    const deltaY = targetPosition.y - this.chess.position.y;
+
+    if (deltaY !== 0 || Math.abs(deltaX) !== 2) {
+      return { valid: false };
+    }
+
+    // Determine which rook (kingside or queenside)
+    const direction = deltaX > 0 ? 1 : -1; // 1 for kingside (right), -1 for queenside (left)
+    const rookX = direction > 0 ? 7 : 0; // Rook at h-file (7) or a-file (0)
+    const rookPosition: Square = { x: rookX, y: this.chess.position.y };
+
+    // Find the rook
+    const rook = this.game.board.find(
+      (piece) =>
+        piece.position.x === rookX &&
+        piece.position.y === this.chess.position.y &&
+        piece.name === "Siege Minion" &&
+        piece.blue === this.chess.blue &&
+        piece.stats.hp > 0
+    );
+
+    if (!rook || rook.hasMovedBefore) {
+      return { valid: false };
+    }
+
+    // Check if path between king and rook is clear
+    const minX = Math.min(this.chess.position.x, rookX);
+    const maxX = Math.max(this.chess.position.x, rookX);
+
+    for (let x = minX + 1; x < maxX; x++) {
+      const blockingPiece = this.game.board.find(
+        (piece) =>
+          piece.position.x === x &&
+          piece.position.y === this.chess.position.y &&
+          piece.stats.hp > 0
+      );
+      if (blockingPiece) {
+        return { valid: false };
+      }
+    }
+
+    // Calculate rook's new position (next to the king on the other side)
+    const rookNewPosition: Square = {
+      x: this.chess.position.x + direction,
+      y: this.chess.position.y
+    };
+
+    return { valid: true, rookPosition, rookNewPosition };
+  }
+
+  /**
+   * Execute castling move
+   */
+  executeCastling(targetPosition: Square): void {
+    const castlingResult = this.canCastle(targetPosition);
+
+    if (!castlingResult.valid) {
+      throw new Error("Invalid castling move");
+    }
+
+    // Find the rook
+    const rook = this.game.board.find(
+      (piece) =>
+        piece.position.x === castlingResult.rookPosition.x &&
+        piece.position.y === castlingResult.rookPosition.y &&
+        piece.name === "Siege Minion" &&
+        piece.blue === this.chess.blue &&
+        piece.stats.hp > 0
+    );
+
+    if (!rook) {
+      throw new Error("Rook not found for castling");
+    }
+
+    // Move the king
+    this.chess.position = targetPosition;
+    this.chess.hasMovedBefore = true;
+
+    // Move the rook
+    rook.position = castlingResult.rookNewPosition;
+    rook.hasMovedBefore = true;
   }
 
   public executeAttack(chess: ChessObject, forceCritical: boolean = false, damageMultiplier: number = 1): void {

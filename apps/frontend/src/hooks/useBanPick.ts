@@ -60,6 +60,54 @@ export const useBanPick = (gameId: string) => {
   const [banPickState, setBanPickState] = useState<BanPickState | null>(null);
   const [playerSide, setPlayerSide] = useState<"blue" | "red" | null>(null);
   const [lastAction, setLastAction] = useState<BanPickAction | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch initial ban/pick state via REST API
+  useEffect(() => {
+    if (!gameId || !user) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchInitialState = async () => {
+      try {
+        console.log("🔄 Fetching initial ban/pick state for game:", gameId);
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/games/${gameId}/ban-pick-state`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch ban/pick state");
+        }
+
+        const data = await response.json();
+        console.log("📊 Initial ban/pick state loaded:", data);
+
+        if (data.game && data.banPickState) {
+          setGameData(data.game);
+          setBanPickState(data.banPickState);
+
+          // Determine player's side
+          const currentPlayer = data.game.players.find(
+            (p: any) => p.userId === user.id
+          );
+          if (currentPlayer?.side) {
+            setPlayerSide(currentPlayer.side);
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error fetching initial ban/pick state:", error);
+        toast.error("Failed to load ban/pick state");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialState();
+  }, [gameId, user]);
 
   useEffect(() => {
     if (!user || !gameId) {
@@ -256,6 +304,7 @@ export const useBanPick = (gameId: string) => {
 
   return {
     isConnected,
+    loading,
     gameData,
     banPickState,
     playerSide,

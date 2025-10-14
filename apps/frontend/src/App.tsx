@@ -62,8 +62,10 @@ function App() {
   const { isInitialized, loading } = useAuthInit()
   const location = useLocation()
 
-  // Check if current route is a game page
+  // Check if current route is a game page or ban-pick page
   const isGamePage = location.pathname.startsWith('/game/')
+  const isBanPickPage = location.pathname.startsWith('/ban-pick/')
+  const hideHeader = isGamePage || isBanPickPage
 
   // Show loading screen while initializing auth
   if (!isInitialized) {
@@ -78,9 +80,9 @@ function App() {
 
   return (
     <AppContainer>
-      {/* Hide header on game page for immersive experience */}
-      {!isGamePage && <Header />}
-      <MainContent isGamePage={isGamePage}>
+      {/* Hide header on game and ban-pick pages for immersive experience */}
+      {!hideHeader && <Header />}
+      <MainContent isGamePage={hideHeader}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />

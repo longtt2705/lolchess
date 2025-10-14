@@ -5,7 +5,7 @@ import { basicItems, combinedItems, allItems } from "./data/items";
 
 @Controller("games")
 export class GameController {
-  constructor(private readonly gameService: GameService) {}
+  constructor(private readonly gameService: GameService) { }
 
   @Get()
   findAll() {
@@ -75,6 +75,22 @@ export class GameController {
     return this.gameService.findOne(id);
   }
 
+  @Get(":gameId/ban-pick-state")
+  async getBanPickState(@Param("gameId") gameId: string) {
+    const gameResult = await this.gameService.findOneById(gameId);
+    if (gameResult && gameResult.banPickState) {
+      return {
+        game: gameResult,
+        banPickState: gameResult.banPickState,
+      };
+    }
+    return {
+      game: null,
+      banPickState: null,
+      message: "Game not found or not in ban/pick phase",
+    };
+  }
+
   @Post()
   create(@Body() createGameDto: any) {
     return this.gameService.create(createGameDto);
@@ -96,6 +112,11 @@ export class GameController {
   @Post(":gameId/reset-gameplay")
   async resetGameplay(@Param("gameId") gameId: string) {
     return this.gameService.resetGameplay(gameId);
+  }
+
+  @Post(":gameId/reset-ban-pick")
+  async resetBanPick(@Param("gameId") gameId: string) {
+    return this.gameService.resetBanPick(gameId);
   }
 
   @Post(":gameId/buy-item")

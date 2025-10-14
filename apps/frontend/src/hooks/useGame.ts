@@ -415,6 +415,63 @@ export const useGame = (gameId: string) => {
         }
       });
 
+      // Check for CASTLING (Poro with Siege Minion/Rook)
+      if (piece.name === "Poro" && !piece.hasMovedBefore) {
+        // Check kingside castling (right/east)
+        const kingsideRook = gameState.board.find(
+          (p) =>
+            p.position.x === 7 &&
+            p.position.y === piece.position.y &&
+            p.name === "Siege Minion" &&
+            p.blue === piece.blue &&
+            p.stats.hp > 0 &&
+            !p.hasMovedBefore
+        );
+
+        if (kingsideRook) {
+          // Check if path is clear between king and rook
+          const pathClear = ![5, 6].some((x) =>
+            gameState.board.find(
+              (p) =>
+                p.position.x === x &&
+                p.position.y === piece.position.y &&
+                p.stats.hp > 0
+            )
+          );
+
+          if (pathClear) {
+            moves.push({ x: piece.position.x + 2, y: piece.position.y });
+          }
+        }
+
+        // Check queenside castling (left/west)
+        const queensideRook = gameState.board.find(
+          (p) =>
+            p.position.x === 0 &&
+            p.position.y === piece.position.y &&
+            p.name === "Siege Minion" &&
+            p.blue === piece.blue &&
+            p.stats.hp > 0 &&
+            !p.hasMovedBefore
+        );
+
+        if (queensideRook) {
+          // Check if path is clear between king and rook
+          const pathClear = ![1, 2, 3].some((x) =>
+            gameState.board.find(
+              (p) =>
+                p.position.x === x &&
+                p.position.y === piece.position.y &&
+                p.stats.hp > 0
+            )
+          );
+
+          if (pathClear) {
+            moves.push({ x: piece.position.x - 2, y: piece.position.y });
+          }
+        }
+      }
+
       setValidMoves(moves);
       setValidAttacks(attacks);
     },

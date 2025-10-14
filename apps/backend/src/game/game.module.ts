@@ -17,4 +17,4 @@ import { RedisModule } from "../redis/redis.module";
   providers: [GameService, GameGateway, QueueGateway, QueueService],
   exports: [GameService, GameGateway, QueueGateway, QueueService],
 })
-export class GameModule {}
+export class GameModule { }

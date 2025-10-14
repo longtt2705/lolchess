@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Coins, Package, RotateCcw, Shield, ShoppingCart, Users, Zap } from 'lucide-react'
+import { Coins, Crown, Package, RotateCcw, Shield, ShoppingCart, Users, Zap } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
@@ -1133,6 +1133,7 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
     background: rgba(0, 0, 0, 0.3);
     border-radius: 2px;
     overflow: hidden;
+    z-index: 1;
     
     .hp-fill {
       height: 100%;
@@ -1143,15 +1144,19 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   
   .shield-bar {
     position: absolute;
-    bottom: 7px;
+    bottom: 2px;
     left: 2px;
     right: 2px;
-    height: 4px;
-    background: rgba(0, 0, 0, 0.3);
+    height: 5px;
+    background: transparent;
     border-radius: 2px;
     overflow: hidden;
+    z-index: 2;
+    pointer-events: none;
     
     .shield-fill {
+      position: absolute;
+      right: 0;
       height: 100%;
       background: linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 220, 0.9) 100%);
       transition: width 0.3s ease;
@@ -1162,37 +1167,6 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   &:hover {
     transform: ${props => props.canSelect ? 'scale(1.05)' : 'none'};
     border-color: var(--gold);
-  }
-`
-
-const ShieldIcon = styled.div`
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(200, 200, 220, 0.95) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 6;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  animation: shieldPulse 2s ease-in-out infinite;
-  
-  &::before {
-    content: '🛡️';
-    font-size: 12px;
-  }
-  
-  @keyframes shieldPulse {
-    0%, 100% {
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.5);
-    }
-    50% {
-      box-shadow: 0 0 16px rgba(255, 255, 255, 1), inset 0 0 8px rgba(255, 255, 255, 0.8);
-    }
   }
 `
 
@@ -1266,6 +1240,36 @@ const SkillIcon = styled.div<{ isActive: boolean; onCooldown: boolean, currentCo
       }
     }
   `}
+`
+
+const CrownIcon = styled.div`
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  
+  svg {
+    width: 100%;
+    height: 100%;
+    color: var(--gold);
+    animation: crownGlow 2s ease-in-out infinite;
+  }
+  
+  @keyframes crownGlow {
+    0%, 100% {
+      filter: drop-shadow(0 0 4px rgba(200, 155, 60, 0.6));
+    }
+    50% {
+      filter: drop-shadow(0 0 8px rgba(200, 155, 60, 1));
+    }
+  }
 `
 
 const ItemIconsContainer = styled.div`
@@ -1956,9 +1960,16 @@ const ChessPieceRenderer: React.FC<{
       </div>
       <div className="piece-name">{piece.name}</div>
 
+      {/* Crown Icon for Poro (King) */}
+      {piece.name === "Poro" && (
+        <CrownIcon title="King">
+          <Crown />
+        </CrownIcon>
+      )}
+
       {/* Item Icons (Left Side) - Only for champions */}
       {isChampion(piece) && (piece as any).items && (piece as any).items.length > 0 && (
-        <ItemIconsContainer style={{ top: hasShield ? '26px' : '2px' }}>
+        <ItemIconsContainer style={{ top: '2px' }}>
           {(piece as any).items.map((item: any, index: number) => {
             const itemData = allItems.find((allItem: ItemData) => allItem.id === item.id)
             return (
@@ -1986,9 +1997,6 @@ const ChessPieceRenderer: React.FC<{
           })}
         </ItemIconsContainer>
       )}
-
-      {/* Shield Icon Indicator */}
-      {hasShield && <ShieldIcon />}
 
       {/* Shield Bar (above HP bar) */}
       {piece.shields && piece.shields.length > 0 && (
@@ -2964,7 +2972,7 @@ const GamePage: React.FC = () => {
                       </span>
                       <span className="hp-numbers" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
                         {detailViewPiece.shields.reduce((sum, s) => sum + s.amount, 0)}
-                        {detailViewPiece.shields.length > 0 && (
+                        {detailViewPiece.shields.length > 0 && detailViewPiece.shields[0].duration !== Number.MAX_SAFE_INTEGER && (
                           <span style={{
                             fontSize: '10px',
                             color: 'var(--secondary-text)',
@@ -2976,7 +2984,7 @@ const GamePage: React.FC = () => {
                         )}
                       </span>
                     </div>
-                    <div className="hp-bar" style={{ marginBottom: '8px' }}>
+                    <div className="hp-bar reverse">
                       <div
                         className="hp-fill"
                         style={{

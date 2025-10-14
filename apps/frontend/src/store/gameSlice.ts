@@ -108,6 +108,23 @@ export const resetGameplay = createAsyncThunk(
   }
 );
 
+export const resetBanPick = createAsyncThunk(
+  "game/resetBanPick",
+  async (gameId: string) => {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+      `${API_URL}/games/${gameId}/reset-ban-pick`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  }
+);
+
 export const fetchActiveGame = createAsyncThunk(
   "game/fetchActiveGame",
   async (userId: string) => {
@@ -269,6 +286,21 @@ const gameSlice = createSlice({
       .addCase(resetGameplay.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to reset gameplay";
+      })
+      // Reset ban/pick
+      .addCase(resetBanPick.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetBanPick.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload.game) {
+          state.currentGame = action.payload.game;
+        }
+      })
+      .addCase(resetBanPick.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to reset ban/pick";
       })
       // Fetch active game
       .addCase(fetchActiveGame.pending, (state) => {

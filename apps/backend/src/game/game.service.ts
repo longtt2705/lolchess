@@ -7,19 +7,15 @@ import { RedisGameCacheService } from "../redis/redis-game-cache.service";
 import { ChessObject } from "./class/chess";
 
 // Ban/Pick patterns from RULE.md
+// 4 total bans (2 per player)
 const BAN_ORDER: ("blue" | "red")[] = [
-  "blue",
-  "red",
-  "blue",
-  "red",
-  "blue",
-  "red",
   "blue",
   "red",
   "blue",
   "red",
 ];
 
+// Pick order for 10 total picks (5 per player) - snake draft
 const PICK_ORDER: ("blue" | "red")[] = [
   "blue",
   "red",
@@ -98,6 +94,10 @@ export class GameService {
       game: { ...game, board: this.cleanBoard(game) },
       message: game ? "Game found" : "Game not found",
     };
+  }
+
+  async findOneById(gameId: string) {
+    return this.gameModel.findById(gameId).lean().exec();
   }
 
   async getActiveGameForUser(userId: string) {
@@ -230,8 +230,8 @@ export class GameService {
     // Advance to next turn
     banPickState.turnNumber++;
 
-    // Check if we need to switch phases (10 total ban turns)
-    if (banPickState.turnNumber > 10) {
+    // Check if we need to switch phases (4 total ban turns)
+    if (banPickState.turnNumber > 4) {
       // Switch to pick phase
       banPickState.phase = "pick";
       banPickState.currentTurn = "blue"; // Blue starts picks
@@ -246,8 +246,17 @@ export class GameService {
 
     banPickState.turnStartTime = Date.now();
 
-    await game.save();
-    return game;
+    // Save to MongoDB
+    const savedGame = await game.save();
+
+    // Convert Mongoose document to plain object
+    const gameObject = savedGame.toObject();
+
+    // Also save to Redis cache for consistency
+    // High priority (7) since this is a real-time game state update
+    await this.saveGameState(gameId, gameObject, 7);
+
+    return gameObject;
   }
 
   async processBanPickAction(
@@ -319,18 +328,12 @@ export class GameService {
       player.selectedChampions.push(championId);
     }
 
-    // Advance turn
-    const totalActions =
-      banPickState.bannedChampions.length +
-      banPickState.bluePicks.length +
-      banPickState.redPicks.length;
-
     // Advance to next turn first
     banPickState.turnNumber++;
 
     // Check if we need to switch phases
-    if (banPickState.phase === "ban" && banPickState.turnNumber > 10) {
-      // Switch to pick phase after 10 ban turns
+    if (banPickState.phase === "ban" && banPickState.turnNumber > 4) {
+      // Switch to pick phase after 4 ban turns
       banPickState.phase = "pick";
       banPickState.currentTurn = "blue"; // Blue starts picks
       banPickState.turnNumber = 1;
@@ -339,7 +342,7 @@ export class GameService {
       banPickState.phase === "pick" &&
       banPickState.bluePicks.length + banPickState.redPicks.length >= 10
     ) {
-      // Ban/Pick complete
+      // Ban/Pick complete (10 total picks: 5 per player)
       banPickState.phase = "complete";
       game.phase = "gameplay";
       game.status = "in_progress";
@@ -362,8 +365,18 @@ export class GameService {
 
     banPickState.turnStartTime = Date.now();
 
-    await game.save();
-    return game;
+    // Save to MongoDB
+    const savedGame = await game.save();
+
+    // Convert Mongoose document to plain object
+    const gameObject = savedGame.toObject();
+
+    // Also save to Redis cache for consistency
+    // High priority (7) since this is a real-time game state update
+    await this.saveGameState(gameId, gameObject, 7);
+
+    console.log("Ban/pick state after save:", gameObject.banPickState);
+    return gameObject;
   }
 
   async addPlayerToGame(gameId: string, playerId: string, username: string) {
@@ -514,7 +527,6 @@ export class GameService {
     }
 
     if (
-      game.phase !== "gameplay" ||
       !game.banPickState ||
       game.banPickState.phase !== "complete"
     ) {
@@ -815,6 +827,47 @@ export class GameService {
     return {
       game: initializedGame,
       message: "Gameplay reset successfully",
+    };
+  }
+
+  async resetBanPick(
+    gameId: string
+  ): Promise<{ game: Game; message: string }> {
+    // Get game from Redis cache first
+    const game = await this.getGameState(gameId);
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    // Reset ban/pick state to initial state
+    game.status = "ban_pick";
+    game.banPickState = {
+      phase: "ban",
+      currentTurn: "blue",
+      turnNumber: 1,
+      turnStartTime: Date.now(),
+      turnTimeLimit: 30,
+      bannedChampions: [],
+      blueBans: [],
+      redBans: [],
+      bluePicks: [],
+      redPicks: [],
+      banHistory: [],
+    };
+
+    // Clear player champion selections
+    game.players = game.players.map((player) => ({
+      ...player,
+      selectedChampions: [],
+    }));
+
+    // Save to Redis cache and queue MongoDB persistence
+    // High priority (8) for ban/pick reset
+    await this.saveGameState(gameId, game, 8);
+
+    return {
+      game,
+      message: "Ban/Pick phase reset successfully",
     };
   }
 
