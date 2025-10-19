@@ -1,7 +1,11 @@
 import { ChessObject } from "./chess";
 
 export class Garen extends ChessObject {
-  postTakenDamage(attacker: ChessObject, damage: number, damageType: "physical" | "magic" | "true"): void {
+  postTakenDamage(
+    attacker: ChessObject,
+    damage: number,
+    damageType: "physical" | "magic" | "true"
+  ): void {
     super.postTakenDamage(attacker, damage, damageType);
     if (damage > 0) {
       this.chess.skill.currentCooldown = this.skillCooldown;
@@ -10,6 +14,9 @@ export class Garen extends ChessObject {
 
   preEnterTurn(isBlueTurn: boolean): void {
     super.preEnterTurn(isBlueTurn);
+    if (isBlueTurn !== this.chess.blue) {
+      return;
+    }
     if (this.chess.skill.currentCooldown > 0) {
       return;
     }

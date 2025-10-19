@@ -259,7 +259,7 @@ export class GameLogic {
   }
 
   private static isBlueTurn(game: Game): boolean {
-    return game.currentRound % 2 === 0;
+    return game.currentRound % 2 !== 0;
   }
 
   private static startNextRound(game: Game): Game {
@@ -765,20 +765,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-          type: championData.skill.type,
-          name: championData.skill.name,
-          description: championData.skill.description,
-          cooldown: championData.skill.cooldown,
-          currentCooldown: championData.skill.currentCooldown || 0,
-          attackRange: championData.skill.attackRange ||
-            championData.stats.attackRange || {
-            range: 1,
-            diagonal: true,
-            horizontal: true,
-            vertical: true,
-          },
-          targetTypes: championData.skill.targetTypes || "none",
-        }
+            type: championData.skill.type,
+            name: championData.skill.name,
+            description: championData.skill.description,
+            cooldown: championData.skill.cooldown,
+            currentCooldown: championData.skill.currentCooldown || 0,
+            attackRange: championData.skill.attackRange ||
+              championData.stats.attackRange || {
+                range: 1,
+                diagonal: true,
+                horizontal: true,
+                vertical: true,
+              },
+            targetTypes: championData.skill.targetTypes || "none",
+          }
         : undefined,
       items: [],
       debuffs: [],
@@ -990,7 +990,7 @@ export class GameLogic {
     const player = game.players[playerIndex];
 
     // Import item system
-    const { getItemById, findCombinedItem } = require("./data/items");
+    const { getItemById } = require("./data/items");
     const itemData = getItemById(itemId);
 
     if (!itemData) {
@@ -1057,6 +1057,10 @@ export class GameLogic {
     championObject.acquireItem(newItem);
     // Check for item combining (TFT-style)
     this.checkAndCombineItems(championObject);
+    // After combining, check if champion has more than 3 items
+    if (championObject.chess.items.length > 3) {
+      throw new Error("Champion already has maximum items (3)");
+    }
 
     let maxHpAfter = championObject.maxHp;
     let hpIncrease = maxHpAfter - maxHpBefore;
@@ -1083,18 +1087,15 @@ export class GameLogic {
     if (champion.chess.items.length < 2) return;
 
     const { getItemById, findCombinedItem } = require("./data/items");
+    const championBasicItems = champion.chess.items.filter(
+      (item) => getItemById(item.id)?.isBasic
+    );
 
     // Check all pairs of items for possible combinations
-    for (let i = 0; i < champion.chess.items.length - 1; i++) {
-      for (let j = i + 1; j < champion.chess.items.length; j++) {
-        const item1 = champion.chess.items[i];
-        const item2 = champion.chess.items[j];
-
-        const item1Data = getItemById(item1.id);
-        const item2Data = getItemById(item2.id);
-
-        // Only combine basic items
-        if (!item1Data?.isBasic || !item2Data?.isBasic) continue;
+    for (let i = 0; i < championBasicItems.length - 1; i++) {
+      for (let j = i + 1; j < championBasicItems.length; j++) {
+        const item1 = championBasicItems[i];
+        const item2 = championBasicItems[j];
 
         const combinedItemData = findCombinedItem(item1.id, item2.id);
 
@@ -1108,8 +1109,10 @@ export class GameLogic {
           }
 
           // Remove the two basic items
-          champion.chess.items.splice(j, 1); // Remove second item first (higher index)
-          champion.chess.items.splice(i, 1); // Then remove first item
+          const item1Index = champion.chess.items.indexOf(item1);
+          const item2Index = champion.chess.items.indexOf(item2);
+          champion.chess.items.splice(item2Index, 1); // Remove second item first (higher index)
+          champion.chess.items.splice(item1Index, 1); // Then remove first item
 
           // Add the combined item
           const combinedItem = {

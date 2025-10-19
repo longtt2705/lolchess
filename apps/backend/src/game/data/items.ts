@@ -107,7 +107,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/InfinityEdge.png",
     effects: [
       { stat: "ad", value: 15, type: "add" },
-      { stat: "criticalChance", value: 15, type: "add" },
+      { stat: "criticalChance", value: 25, type: "add" },
       { stat: "criticalDamage", value: 50, type: "add" },
     ],
     isBasic: false,
@@ -180,7 +180,8 @@ export const combinedItems: ItemData[] = [
   {
     id: "sterak_gage",
     name: "Sterak's Gage",
-    description: "At 40% Health, gain a shield equal to 50% of the wearer's maximum Health that decays over 3 turns.",
+    description:
+      "At 40% Health, gain a shield equal to 50% of the wearer's maximum Health that decays over 3 turns.",
     cost: 0,
     icon: "/icons/SteraksGage.png",
     effects: [
@@ -250,7 +251,8 @@ export const combinedItems: ItemData[] = [
   {
     id: "titans_resolve",
     name: "Titan's Resolve",
-    description: "Each times being attacked, grant 5 damage amplification + armor + magic resistance for 3 turns. (Max 4 times)",
+    description:
+      "Each times being attacked, grant 5 damage amplification + armor + magic resistance for 3 turns. (Max 4 times)",
     cost: 0,
     icon: "/icons/TitansResolve.png",
     effects: [
@@ -300,17 +302,18 @@ export const combinedItems: ItemData[] = [
     recipe: ["recurve_bow", "sparring_gloves"],
   },
   {
-    id: 'nashors_tooth',
-    name: 'Nashor\'s Tooth',
-    description: 'After using an active skill, grant 10% damage amplification for 2 turns.',
+    id: "nashors_tooth",
+    name: "Nashor's Tooth",
+    description:
+      "After using an active skill, grant 10% damage amplification for 2 turns.",
     cost: 0,
-    icon: '/icons/NashorsTooth.png',
+    icon: "/icons/NashorsTooth.png",
     effects: [
-      { stat: 'sunder', value: 18, type: 'add' },
-      { stat: 'maxHp', value: 25, type: 'add' },
+      { stat: "sunder", value: 18, type: "add" },
+      { stat: "maxHp", value: 25, type: "add" },
     ],
     isBasic: false,
-    recipe: ['recurve_bow', 'sparring_gloves'],
+    recipe: ["recurve_bow", "sparring_gloves"],
   },
 
   // Needlessly Large Rod Combinations
@@ -331,7 +334,8 @@ export const combinedItems: ItemData[] = [
   {
     id: "archangel_staff",
     name: "Archangel's Staff",
-    description: "Each times using an active skill, grant 5 permanent Ability Power.",
+    description:
+      "Each times using an active skill, grant 5 permanent Ability Power.",
     cost: 0,
     icon: "/icons/ArchangelsStaff.png",
     effects: [
@@ -357,7 +361,8 @@ export const combinedItems: ItemData[] = [
   {
     id: "thiefs_gloves",
     name: "Thief's Gloves",
-    description: "Steal 2 points from random stats (AD/AP/Armor/Magic Resist) of the enemy for each attack.",
+    description:
+      "Steal 2 points from random stats (AD/AP/Armor/Magic Resist) of the enemy for each attack.",
     cost: 0,
     icon: "/icons/ThiefsGloves.png",
     effects: [
@@ -368,30 +373,30 @@ export const combinedItems: ItemData[] = [
     recipe: ["needlessly_rod", "negatron_cloak"],
   },
   {
-    id: 'morellonomicon',
-    name: 'Morellonomicon',
-    description: 'Deal damage will Burn and Wound enemies for 3 turns.',
+    id: "morellonomicon",
+    name: "Morellonomicon",
+    description: "Deal damage will Burn and Wound enemies for 3 turns.",
     cost: 0,
-    icon: '/icons/Morellonomicon.png',
+    icon: "/icons/Morellonomicon.png",
     effects: [
-      { stat: 'ap', value: 15, type: 'add' },
-      { stat: 'maxHp', value: 25, type: 'add' },
+      { stat: "ap", value: 15, type: "add" },
+      { stat: "maxHp", value: 25, type: "add" },
     ],
     isBasic: false,
-    recipe: ['needlessly_rod', 'negatron_cloak'],
+    recipe: ["needlessly_rod", "negatron_cloak"],
   },
   {
-    id: 'jeweled_gauntlet',
-    name: 'Jeweled Gauntlet',
-    description: 'Active skills can critically strike.',
+    id: "jeweled_gauntlet",
+    name: "Jeweled Gauntlet",
+    description: "Active skills can critically strike.",
     cost: 0,
-    icon: '/icons/JeweledGauntlet.png',
+    icon: "/icons/JeweledGauntlet.png",
     effects: [
-      { stat: 'ap', value: 15, type: 'add' },
-      { stat: 'criticalChance', value: 25, type: 'add' },
+      { stat: "ap", value: 15, type: "add" },
+      { stat: "criticalChance", value: 25, type: "add" },
     ],
     isBasic: false,
-    recipe: ['needlessly_rod', 'sparring_gloves'],
+    recipe: ["needlessly_rod", "sparring_gloves"],
     unique: true,
   },
 
@@ -399,12 +404,11 @@ export const combinedItems: ItemData[] = [
   {
     id: "bramble_vest",
     name: "Bramble Vest",
-    description: "Take 8% reduced damage from attacks. When struck by any attack, deal 5 true damage to all adjacent enemies.",
+    description:
+      "Take 8% reduced damage from attacks. When struck by any attack, deal 5 true damage to all adjacent enemies.",
     cost: 0,
     icon: "/icons/BrambleVest.png",
-    effects: [
-      { stat: "physicalResistance", value: 25, type: "add" },
-    ],
+    effects: [{ stat: "physicalResistance", value: 25, type: "add" }],
     isBasic: false,
     recipe: ["chain_vest", "chain_vest"],
     unique: true,
@@ -445,7 +449,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/SunfireCape.png",
     effects: [
       { stat: "physicalResistance", value: 25, type: "add" },
-      { stat: "magicResistance", value: 25, type: "add" },
+      { stat: "maxHp", value: 35, type: "add" },
     ],
     isBasic: false,
     recipe: ["chain_vest", "giants_belt"],
@@ -454,7 +458,8 @@ export const combinedItems: ItemData[] = [
   {
     id: "steadfast_heart",
     name: "Steadfast Heart",
-    description: "Gain 10% Durability. While above 50% Health, instead gain 18% Durability.",
+    description:
+      "Gain 10% Durability. While above 50% Health, instead gain 18% Durability.",
     cost: 0,
     icon: "/icons/SteadfastHeart.png",
     effects: [
@@ -488,17 +493,17 @@ export const combinedItems: ItemData[] = [
     unique: true,
   },
   {
-    id: 'Evenshroud',
-    name: 'Evenshroud',
-    description: 'Disables all enemies\' passive skills adjacent to the wearer.',
+    id: "evenshroud",
+    name: "Evenshroud",
+    description: "Disables all enemies' passive skills adjacent to the wearer.",
     cost: 0,
-    icon: '/icons/Evenshroud.png',
+    icon: "/icons/Evenshroud.png",
     effects: [
-      { stat: 'maxHp', value: 25, type: 'add' },
-      { stat: 'magicResistance', value: 12, type: 'add' },
+      { stat: "maxHp", value: 35, type: "add" },
+      { stat: "magicResistance", value: 12, type: "add" },
     ],
     isBasic: false,
-    recipe: ['giants_belt', 'negatron_cloak'],
+    recipe: ["giants_belt", "negatron_cloak"],
     unique: true,
   },
   {
@@ -525,7 +530,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/WarmogsArmor.png",
     effects: [
-      { stat: "maxHp", value: 50, type: "add" },
+      { stat: "maxHp", value: 60, type: "add" },
       { stat: "maxHp", value: 1.1, type: "multiply" },
     ],
     isBasic: false,
@@ -534,12 +539,13 @@ export const combinedItems: ItemData[] = [
   {
     id: "strikers_flail",
     name: "Striker's Flail",
-    description: "Critical Strike increases Damage Amplification by 10 for 2 turns.",
+    description:
+      "Critical Strike increases Damage Amplification by 10 for 2 turns.",
     cost: 0,
     icon: "/icons/StrikersFlail.png",
     effects: [
       { stat: "criticalChance", value: 25, type: "add" },
-      { stat: "maxHp", value: 25, type: "add" },
+      { stat: "maxHp", value: 35, type: "add" },
     ],
     isBasic: false,
     recipe: ["giants_belt", "sparring_gloves"],
@@ -561,7 +567,8 @@ export const combinedItems: ItemData[] = [
   {
     id: "protectors_vow",
     name: "Protector's Vow",
-    description: "Gain 15% max Health shield for 2 turns after using an active skill.",
+    description:
+      "Gain 15% max Health shield for 2 turns after using an active skill.",
     cost: 0,
     icon: "/icons/ProtectorsVow.png",
     effects: [
@@ -580,21 +587,27 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "criticalChance", value: 25, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
-      { stat: "ad", value: 15, type: "add", condition: (chess) => chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4 },
+      {
+        stat: "ad",
+        value: 15,
+        type: "add",
+        condition: (chess) =>
+          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
+      },
     ],
     isBasic: false,
-    recipe: ["tear", "giants_belt"],
+    recipe: ["tear", "sparring_gloves"],
   },
   {
     id: "adaptive_helm",
     name: "Adaptive Helm",
-    description: "Gain 15 Armor or 15 Magic Resist for 3 turns when taken damage based on the damage type.",
+    description:
+      "Gain 15 Armor or 15 Magic Resist for 3 turns when taken damage based on the damage type.",
     cost: 0,
     icon: "/icons/AdaptiveHelm.png",
     effects: [
       { stat: "cooldownReduction", value: 5, type: "add" },
       { stat: "magicResistance", value: 15, type: "add" },
-
     ],
     isBasic: false,
     recipe: ["tear", "negatron_cloak"],
@@ -606,7 +619,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/SpiritVisage.png",
     effects: [
-      { stat: "maxHp", value: 25, type: "add" },
+      { stat: "maxHp", value: 35, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
     ],
     isBasic: false,
@@ -615,16 +628,15 @@ export const combinedItems: ItemData[] = [
   {
     id: "serpents_fang",
     name: "Serpent's Fang",
-    description: "Deal damage will inflict the venom debuff on the enemy for 3 turns. If the enemy doesn't have the venom debuff, reduce all their active shields by 50%.",
+    description:
+      "Deal damage will inflict the venom debuff on the enemy for 3 turns. If the enemy doesn't have the venom debuff, reduce all their active shields by 50%.",
     cost: 0,
     icon: "/icons/SerpentsFang.png",
-    effects: [
-      { stat: "criticalChance", value: 50, type: "add" },
-    ],
+    effects: [{ stat: "criticalChance", value: 50, type: "add" }],
     isBasic: false,
     recipe: ["sparring_gloves", "sparring_gloves"],
     unique: true,
-  }
+  },
 ];
 
 // All items combined

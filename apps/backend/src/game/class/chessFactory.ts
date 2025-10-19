@@ -19,6 +19,7 @@ import { Yasuo } from "./yasuo";
 import { Tryndamere } from "./tryndamere";
 import { Viktor } from "./viktor";
 import { TwistedFate } from "./twistedfate";
+import { Tristana } from "./tristana";
 
 export class ChessFactory {
   public static createChess(chess: Chess, game: Game): ChessObject {
@@ -61,6 +62,8 @@ export class ChessFactory {
         return new Viktor(chess, game);
       case "Twisted Fate":
         return new TwistedFate(chess, game);
+      case "Tristana":
+        return new Tristana(chess, game);
       default:
         return new ChessObject(chess, game);
     }

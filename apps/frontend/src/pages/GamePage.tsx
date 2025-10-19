@@ -2729,6 +2729,19 @@ const GamePage: React.FC = () => {
   )
   const isDraw = isGameFinished && !gameState.winner
 
+  const isBasicItem = (itemId: string) => {
+    return shopItems.some(item => item.id === itemId)
+  }
+
+  const checkItemNotPurchasability = (item: ItemData, piece: ChessPiece, gold: number) => {
+    const itemLength = (piece as any).items?.length || 0
+    if (itemLength > 3) return true
+    if (itemLength === 3 && (piece as any).items.every((item: ItemData) => !isBasicItem(item.id))) return true
+    if (gold < item.cost) return true
+    if (!isMyTurn) return true
+    return false
+  }
+
   return (
     <>
       {/* Draw offer modal */}
@@ -3165,17 +3178,28 @@ const GamePage: React.FC = () => {
                                 src="/icons/wounded.webp"
                                 alt="Wounded"
                               />
-                            ) : (debuff.casterName ? (
+                            ) : debuff.id === "burned" ? (
                               <img
-                                src={`/icons/${debuff.casterName.toLowerCase().replace(/\s+/g, '')}_skill.webp`}
-                                alt={debuff.casterName}
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
-                                  if (fallback) (fallback as HTMLElement).style.display = 'block';
-                                }}
+                                src="/icons/burned.jpg"
+                                alt="Burned"
                               />
-                            ) : null)}
+                            ) : debuff.id === "venom" ? (
+                              <img
+                                src="/icons/SerpentsFang.png"
+                                alt="Venom"
+                              />
+                            )
+                              : (debuff.casterName ? (
+                                <img
+                                  src={`/icons/${debuff.casterName.toLowerCase().replace(/\s+/g, '')}_skill.webp`}
+                                  alt={debuff.casterName}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
+                                    if (fallback) (fallback as HTMLElement).style.display = 'block';
+                                  }}
+                                />
+                              ) : null)}
                             <div className="fallback-icon" style={{ display: debuff.casterName ? 'none' : 'block' }}>
                               {isAura ? '✨' : isBuff ? '⬆' : '⬇'}
                             </div>
@@ -3353,9 +3377,9 @@ const GamePage: React.FC = () => {
                           }}
                         >
                           <button
-                            className={`shop-item-icon ${(detailViewPiece as any).items?.length >= 3 || currentPlayer.gold < item.cost || !isMyTurn ? 'disabled' : ''}`}
+                            className={`shop-item-icon ${checkItemNotPurchasability(item, detailViewPiece, currentPlayer?.gold || 0) ? 'disabled' : ''}`}
                             onClick={() => handleBuyItem(item.id, detailViewPiece.id)}
-                            disabled={(detailViewPiece as any).items?.length >= 3 || currentPlayer.gold < item.cost || !isMyTurn}
+                            disabled={checkItemNotPurchasability(item, detailViewPiece, currentPlayer?.gold || 0)}
                           >
                             <img
                               src={item.icon || `/icons/${item.id}.png`}

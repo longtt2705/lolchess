@@ -9,7 +9,7 @@ import {
   Item,
   Shield,
   Skill,
-  Square
+  Square,
 } from "../game.schema";
 
 export class ChessObject {
@@ -30,7 +30,8 @@ export class ChessObject {
       chess.applyDebuff(chess, {
         id: "strikers_flail",
         name: "Strikers Flail",
-        description: "Critical Strike increases Damage Amplification by 10 for 2 turns.",
+        description:
+          "Critical Strike increases Damage Amplification by 10 for 2 turns.",
         duration: 2,
         maxDuration: 2,
         effects: [
@@ -53,7 +54,8 @@ export class ChessObject {
     }
   }
 
-  protected activeSkillDamage(chess: ChessObject,
+  protected activeSkillDamage(
+    chess: ChessObject,
     damage: number,
     damageType: "physical" | "magic" | "true",
     attacker: ChessObject,
@@ -84,19 +86,13 @@ export class ChessObject {
       if (this.chess.items.some((item) => item.id === "last_whisper")) {
         physicalResistance *= 0.7;
       }
-      damage = Math.max(
-        damage - Math.max(physicalResistance - sunder, 0),
-        1
-      );
+      damage = Math.max(damage - Math.max(physicalResistance - sunder, 0), 1);
     } else if (damageType === "magic") {
       let magicResistance = chess.magicResistance;
       if (this.chess.items.some((item) => item.id === "void_staff")) {
         magicResistance *= 0.7;
       }
-      damage = Math.max(
-        damage - Math.max(magicResistance - sunder, 0),
-        1
-      );
+      damage = Math.max(damage - Math.max(magicResistance - sunder, 0), 1);
     } else if (damageType === "true") {
       damage = Math.max(damage, 1);
     }
@@ -109,7 +105,6 @@ export class ChessObject {
       damageAmplification += 15;
     }
     let calDamage = (damage * (damageAmplification + 100)) / 100;
-
 
     const wasAlive = chess.chess.stats.hp > 0;
 
@@ -125,8 +120,7 @@ export class ChessObject {
       if (shield.amount > calDamage) {
         shield.amount -= calDamage;
         calDamage = 0;
-      }
-      else {
+      } else {
         calDamage -= shield.amount;
         shield.amount = 0;
         shields.shift();
@@ -175,7 +169,11 @@ export class ChessObject {
     return damage;
   }
 
-  protected postTakenDamage(attacker: ChessObject, damage: number, damageType: "physical" | "magic" | "true"): void {
+  protected postTakenDamage(
+    attacker: ChessObject,
+    damage: number,
+    damageType: "physical" | "magic" | "true"
+  ): void {
     if (
       this.chess.items.some((item) => item.id === "edge_of_night") &&
       this.chess.stats.hp <= 0
@@ -206,7 +204,11 @@ export class ChessObject {
         this.applyShield(this.chess.stats.maxHp * 0.5, shieldDuration);
       }
     }
-    if (attacker.chess.items.some((item) => item.id === "red_buff" || item.id === "morellonomicon")) {
+    if (
+      attacker.chess.items.some(
+        (item) => item.id === "red_buff" || item.id === "morellonomicon"
+      )
+    ) {
       this.applyDebuff(this, this.createBurnedDebuff(3));
       this.applyDebuff(this, this.createWoundedDebuff(3));
     }
@@ -264,7 +266,8 @@ export class ChessObject {
       return;
     }
     this.chess.shields.push({
-      id: id || `shield_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id:
+        id || `shield_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       amount: amount,
       duration: duration,
     } as Shield);
@@ -396,7 +399,11 @@ export class ChessObject {
       if (this.chess.items.some((item) => item.id === "sunfire_cape")) {
         const { GameLogic } = require("../game.logic");
         GameLogic.getAdjacentSquares(this.chess.position).forEach((square) => {
-          const targetChess = GameLogic.getChess(this.game, !this.chess.blue, square);
+          const targetChess = GameLogic.getChess(
+            this.game,
+            !this.chess.blue,
+            square
+          );
           if (targetChess) {
             const targetObj = new ChessObject(targetChess, this.game);
             targetObj.applyDebuff(targetObj, this.createBurnedDebuff(3));
@@ -409,11 +416,10 @@ export class ChessObject {
 
   get skillCooldown(): number {
     if (this.chess.skill) {
-      return (Math.max(
+      return Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
-      )
       );
     }
     return 0;
@@ -468,18 +474,26 @@ export class ChessObject {
       if (existingDebuff) {
         // If the debuff is already applied, check if the new debuff has a longer duration
         if (debuff.duration > existingDebuff.duration) {
-          chess.chess.debuffs.splice(chess.chess.debuffs.indexOf(existingDebuff), 1);
+          chess.chess.debuffs.splice(
+            chess.chess.debuffs.indexOf(existingDebuff),
+            1
+          );
           chess.chess.debuffs.push({ ...debuff, currentStacks: 1 });
           return true;
         }
         return false; // Can't apply unique debuff twice
       }
     }
-    if (chess.chess.debuffs.some((d) => d.id === debuff.id && d.maximumStacks > 1)) {
+    if (
+      chess.chess.debuffs.some((d) => d.id === debuff.id && d.maximumStacks > 1)
+    ) {
       const existingDebuff = chess.chess.debuffs.find(
         (d) => d.id === debuff.id
       );
-      if (existingDebuff && existingDebuff.currentStacks < existingDebuff.maximumStacks) {
+      if (
+        existingDebuff &&
+        existingDebuff.currentStacks < existingDebuff.maximumStacks
+      ) {
         existingDebuff.duration = debuff.duration;
         existingDebuff.currentStacks++;
         return true;
@@ -513,7 +527,13 @@ export class ChessObject {
 
       // Apply damage per turn
       if (debuff.damagePerTurn > 0) {
-        this.damage(chess, debuff.damagePerTurn * debuff.currentStacks, debuff.damageType, this, 0);
+        this.damage(
+          chess,
+          debuff.damagePerTurn * debuff.currentStacks,
+          debuff.damageType,
+          this,
+          0
+        );
       }
 
       // Apply heal per turn
@@ -556,6 +576,10 @@ export class ChessObject {
 
   get ap(): number {
     return this.getEffectiveStat(this.chess, "ap");
+  }
+
+  get range(): number {
+    return this.chess.stats.attackRange.range;
   }
 
   get physicalResistance(): number {
@@ -815,7 +839,9 @@ export class ChessObject {
 
   // Check if this champion's passive is disabled by Evenshroud debuff
   isPassiveDisabled(): boolean {
-    return this.chess.debuffs.some((debuff) => debuff.id === "aura_evenshroud_passive_disable");
+    return this.chess.debuffs.some(
+      (debuff) => debuff.id === "aura_evenshroud_passive_disable"
+    );
   }
 
   move(position: Square): void {
@@ -852,7 +878,11 @@ export class ChessObject {
   /**
    * Check if castling is valid
    */
-  canCastle(targetPosition: Square): { valid: boolean; rookPosition?: Square; rookNewPosition?: Square } {
+  canCastle(targetPosition: Square): {
+    valid: boolean;
+    rookPosition?: Square;
+    rookNewPosition?: Square;
+  } {
     // Only Poro (king) can castle
     if (this.chess.name !== "Poro") {
       return { valid: false };
@@ -909,7 +939,7 @@ export class ChessObject {
     // Calculate rook's new position (next to the king on the other side)
     const rookNewPosition: Square = {
       x: this.chess.position.x + direction,
-      y: this.chess.position.y
+      y: this.chess.position.y,
     };
 
     return { valid: true, rookPosition, rookNewPosition };
@@ -948,10 +978,13 @@ export class ChessObject {
     rook.hasMovedBefore = true;
   }
 
-  public executeAttack(chess: ChessObject, forceCritical: boolean = false, damageMultiplier: number = 1): void {
+  public executeAttack(
+    chess: ChessObject,
+    forceCritical: boolean = false,
+    damageMultiplier: number = 1
+  ): void {
     if (chess.chess.items.some((item) => item.id === "bramble_vest")) {
       damageMultiplier -= 0.08;
-
     }
     const damage = this.attack(chess, forceCritical, damageMultiplier);
     this.postAttack(chess, damage);
@@ -959,8 +992,14 @@ export class ChessObject {
 
   protected postAttack(chess: ChessObject, damage: number): void {
     if (this.chess.items.some((item) => item.id === "spear_of_shojin")) {
-      if (chess.chess.skill?.currentCooldown > 0) {
-        chess.chess.skill.currentCooldown -= 0.5;
+      const numberOfShojin = this.chess.items.filter(
+        (item) => item.id === "spear_of_shojin"
+      ).length;
+      if (this.chess.skill?.currentCooldown > 0) {
+        this.chess.skill.currentCooldown -= 0.5 * numberOfShojin;
+        if (this.chess.skill.currentCooldown < 0) {
+          this.chess.skill.currentCooldown = 0;
+        }
       }
     }
     if (this.chess.items.some((item) => item.id === "guinsoo_rageblade")) {
@@ -970,7 +1009,8 @@ export class ChessObject {
       chess.applyDebuff(chess, {
         id: "titans_resolve",
         name: "Titan's Resolve",
-        description: "Each times being attacked, grant 5 damage amplification + armor + magic resistance for 3 turns. (Max 4 times)",
+        description:
+          "Each times being attacked, grant 5 damage amplification + armor + magic resistance for 3 turns. (Max 4 times)",
         duration: 3,
         maxDuration: 3,
         effects: [
@@ -1004,8 +1044,15 @@ export class ChessObject {
       this.chess.stats.magicResistance += 3;
     }
     if (this.chess.items.some((item) => item.id === "thiefs_gloves")) {
-      const stats = ["ad", "ap", "physicalResistance", "magicResistance"] as const;
-      const values = stats.map((stat) => ({ stat, value: chess.chess.stats[stat] })).filter((value) => value.value > 1);
+      const stats = [
+        "ad",
+        "ap",
+        "physicalResistance",
+        "magicResistance",
+      ] as const;
+      const values = stats
+        .map((stat) => ({ stat, value: chess.chess.stats[stat] }))
+        .filter((value) => value.value > 1);
       if (values.length === 0) {
         return;
       }
@@ -1023,7 +1070,13 @@ export class ChessObject {
           square
         );
         if (targetChess) {
-          this.damage(new ChessObject(targetChess, this.game), 5, "true", this, 0);
+          this.damage(
+            new ChessObject(targetChess, this.game),
+            5,
+            "true",
+            this,
+            0
+          );
         }
       });
     }
@@ -1035,7 +1088,11 @@ export class ChessObject {
     }
   }
 
-  protected attack(chess: ChessObject, forceCritical: boolean = false, damageMultiplier: number = 1): number {
+  protected attack(
+    chess: ChessObject,
+    forceCritical: boolean = false,
+    damageMultiplier: number = 1
+  ): number {
     if (
       !this.validateAttack(chess.chess.position, this.chess.stats.attackRange)
     ) {
@@ -1115,21 +1172,32 @@ export class ChessObject {
 
   acquireItem(item: Item): void {
     this.chess.items.push(item);
-    if (item.id === 'crownguard') {
-      this.applyShield(this.chess.stats.maxHp * 0.25, Number.MAX_SAFE_INTEGER, 'crownguard_shield');
+    if (item.id === "crownguard") {
+      this.applyShield(
+        this.chess.stats.maxHp * 0.25,
+        Number.MAX_SAFE_INTEGER,
+        "crownguard_shield"
+      );
     }
-    if (item.id === 'Evenshroud') {
+    if (item.id === "evenshroud") {
       // Create aura that disables enemy passives
       const evenshroudAura = this.createAura(
-        'evenshroud_passive_disable',
-        'Evenshroud',
-        'Disables all enemies\' passive skills adjacent to the wearer.',
+        "evenshroud_passive_disable",
+        "Evenshroud",
+        "Disables all enemies' passive skills adjacent to the wearer.",
         1, // Adjacent squares only
-        [],
+        [
+          {
+            stat: "speed",
+            modifier: 0,
+            type: "add",
+            target: "enemies",
+          },
+        ],
         {
           active: true,
           requiresAlive: true,
-          duration: 'permanent',
+          duration: "permanent",
         }
       );
       if (!this.chess.auras) {
