@@ -583,7 +583,7 @@ export const useGame = (gameId: string) => {
   const isMyTurn =
     gameState && currentUser
       ? gameState.currentRound % 2 ===
-      (gameState.bluePlayer === currentUser.id ? 1 : 0)
+        (gameState.bluePlayer === currentUser.id ? 1 : 0)
       : false;
 
   // Get current player data

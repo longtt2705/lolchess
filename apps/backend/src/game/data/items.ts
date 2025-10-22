@@ -46,7 +46,7 @@ export const basicItems: ItemData[] = [
     description: "",
     cost: 50,
     icon: "/icons/NeedlesslyLargeRod.png",
-    effects: [{ stat: "ap", value: 10, type: "add" }],
+    effects: [{ stat: "ap", value: 20, type: "add" }],
     isBasic: true,
   },
   {
@@ -64,7 +64,7 @@ export const basicItems: ItemData[] = [
     description: "",
     cost: 50,
     icon: "/icons/ChainVest.png",
-    effects: [{ stat: "physicalResistance", value: 10, type: "add" }],
+    effects: [{ stat: "physicalResistance", value: 15, type: "add" }],
     isBasic: true,
   },
   {
@@ -73,7 +73,7 @@ export const basicItems: ItemData[] = [
     description: "",
     cost: 50,
     icon: "/icons/NegatronCloak.png",
-    effects: [{ stat: "magicResistance", value: 10, type: "add" }],
+    effects: [{ stat: "magicResistance", value: 15, type: "add" }],
     isBasic: true,
   },
   {
@@ -136,7 +136,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/HextechGunblade.png",
     effects: [
       { stat: "ad", value: 15, type: "add" },
-      { stat: "ap", value: 15, type: "add" },
+      { stat: "ap", value: 25, type: "add" },
     ],
     isBasic: false,
     recipe: ["bf_sword", "needlessly_rod"],
@@ -170,8 +170,8 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/EdgeofNight.png",
     effects: [
-      { stat: "ad", value: 12, type: "add" },
-      { stat: "physicalResistance", value: 12, type: "add" },
+      { stat: "ad", value: 15, type: "add" },
+      { stat: "physicalResistance", value: 20, type: "add" },
     ],
     isBasic: false,
     recipe: ["bf_sword", "chain_vest"],
@@ -185,7 +185,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/SteraksGage.png",
     effects: [
-      { stat: "ad", value: 12, type: "add" },
+      { stat: "ad", value: 15, type: "add" },
       { stat: "maxHp", value: 35, type: "add" },
     ],
     isBasic: false,
@@ -199,7 +199,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/SpearofShojin.png",
     effects: [
-      { stat: "ad", value: 12, type: "add" },
+      { stat: "ad", value: 15, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
     ],
     isBasic: false,
@@ -212,7 +212,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/Deathblade.png",
     effects: [
-      { stat: "ad", value: 25, type: "add" },
+      { stat: "ad", value: 30, type: "add" },
       { stat: "damageAmplification", value: 10, type: "add" },
     ],
     isBasic: false,
@@ -242,8 +242,8 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/GuinsoosRageblade.png",
     effects: [
-      { stat: "sunder", value: 17, type: "add" },
-      { stat: "ap", value: 12, type: "add" },
+      { stat: "sunder", value: 20, type: "add" },
+      { stat: "ap", value: 25, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "needlessly_rod"],
@@ -256,8 +256,8 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/TitansResolve.png",
     effects: [
-      { stat: "sunder", value: 18, type: "add" },
-      { stat: "physicalResistance", value: 12, type: "add" },
+      { stat: "sunder", value: 20, type: "add" },
+      { stat: "physicalResistance", value: 20, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "chain_vest"],
@@ -269,8 +269,8 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/WitsEnd.png",
     effects: [
-      { stat: "sunder", value: 18, type: "add" },
-      { stat: "magicResistance", value: 12, type: "add" },
+      { stat: "sunder", value: 20, type: "add" },
+      { stat: "magicResistance", value: 20, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "negatron_cloak"],
@@ -282,7 +282,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/VoidStaff.png",
     effects: [
-      { stat: "sunder", value: 18, type: "add" },
+      { stat: "sunder", value: 20, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
     ],
     isBasic: false,
@@ -295,7 +295,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/LastWhisper.png",
     effects: [
-      { stat: "sunder", value: 18, type: "add" },
+      { stat: "sunder", value: 20, type: "add" },
       { stat: "criticalChance", value: 25, type: "add" },
     ],
     isBasic: false,
@@ -309,8 +309,8 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/NashorsTooth.png",
     effects: [
-      { stat: "sunder", value: 18, type: "add" },
-      { stat: "maxHp", value: 25, type: "add" },
+      { stat: "sunder", value: 20, type: "add" },
+      { stat: "maxHp", value: 35, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "sparring_gloves"],
@@ -324,7 +324,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/RabadonsDeathcap.png",
     effects: [
-      { stat: "ap", value: 25, type: "add" },
+      { stat: "ap", value: 50, type: "add" },
       { stat: "damageAmplification", value: 10, type: "add" },
     ],
     isBasic: false,
@@ -339,7 +339,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/ArchangelsStaff.png",
     effects: [
-      { stat: "ap", value: 12, type: "add" },
+      { stat: "ap", value: 25, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
     ],
     isBasic: false,
@@ -352,8 +352,8 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/Crownguard.png",
     effects: [
-      { stat: "ap", value: 15, type: "add" },
-      { stat: "physicalResistance", value: 15, type: "add" },
+      { stat: "ap", value: 25, type: "add" },
+      { stat: "physicalResistance", value: 20, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "chain_vest"],
@@ -366,8 +366,8 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/ThiefsGloves.png",
     effects: [
-      { stat: "ap", value: 12, type: "add" },
-      { stat: "magicResistance", value: 12, type: "add" },
+      { stat: "ap", value: 25, type: "add" },
+      { stat: "magicResistance", value: 20, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "negatron_cloak"],
@@ -379,8 +379,8 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/Morellonomicon.png",
     effects: [
-      { stat: "ap", value: 15, type: "add" },
-      { stat: "maxHp", value: 25, type: "add" },
+      { stat: "ap", value: 25, type: "add" },
+      { stat: "maxHp", value: 35, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "negatron_cloak"],
@@ -392,7 +392,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/JeweledGauntlet.png",
     effects: [
-      { stat: "ap", value: 15, type: "add" },
+      { stat: "ap", value: 25, type: "add" },
       { stat: "criticalChance", value: 25, type: "add" },
     ],
     isBasic: false,
@@ -408,7 +408,7 @@ export const combinedItems: ItemData[] = [
       "Take 8% reduced damage from attacks. When struck by any attack, deal 5 true damage to all adjacent enemies.",
     cost: 0,
     icon: "/icons/BrambleVest.png",
-    effects: [{ stat: "physicalResistance", value: 25, type: "add" }],
+    effects: [{ stat: "physicalResistance", value: 40, type: "add" }],
     isBasic: false,
     recipe: ["chain_vest", "chain_vest"],
     unique: true,
@@ -420,8 +420,8 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/GargoyleStoneplate.png",
     effects: [
-      { stat: "physicalResistance", value: 15, type: "add" },
-      { stat: "magicResistance", value: 15, type: "add" },
+      { stat: "physicalResistance", value: 20, type: "add" },
+      { stat: "magicResistance", value: 20, type: "add" },
       {
         stat: "physicalResistance",
         value: 10,
@@ -448,7 +448,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/SunfireCape.png",
     effects: [
-      { stat: "physicalResistance", value: 25, type: "add" },
+      { stat: "physicalResistance", value: 20, type: "add" },
       { stat: "maxHp", value: 35, type: "add" },
     ],
     isBasic: false,
@@ -463,7 +463,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/SteadfastHeart.png",
     effects: [
-      { stat: "physicalResistance", value: 15, type: "add" },
+      { stat: "physicalResistance", value: 20, type: "add" },
       { stat: "criticalChance", value: 25, type: "add" },
     ],
     isBasic: false,
@@ -479,7 +479,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/DragonsClaw.png",
     effects: [
-      { stat: "magicResistance", value: 25, type: "add" },
+      { stat: "magicResistance", value: 40, type: "add" },
       {
         stat: "magicResistance",
         value: 15,
@@ -500,7 +500,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/Evenshroud.png",
     effects: [
       { stat: "maxHp", value: 35, type: "add" },
-      { stat: "magicResistance", value: 12, type: "add" },
+      { stat: "magicResistance", value: 20, type: "add" },
     ],
     isBasic: false,
     recipe: ["giants_belt", "negatron_cloak"],
@@ -514,8 +514,8 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/Quicksilver.png",
     effects: [
       { stat: "sunder", value: 10, type: "add" },
-      { stat: "magicResistance", value: 12, type: "add" },
-      { stat: "criticalChance", value: 20, type: "add" },
+      { stat: "magicResistance", value: 20, type: "add" },
+      { stat: "criticalChance", value: 25, type: "add" },
     ],
     isBasic: false,
     recipe: ["sparring_gloves", "negatron_cloak"],
@@ -530,7 +530,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/WarmogsArmor.png",
     effects: [
-      { stat: "maxHp", value: 60, type: "add" },
+      { stat: "maxHp", value: 65, type: "add" },
       { stat: "maxHp", value: 1.1, type: "multiply" },
     ],
     isBasic: false,
@@ -573,7 +573,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/ProtectorsVow.png",
     effects: [
       { stat: "cooldownReduction", value: 5, type: "add" },
-      { stat: "physicalResistance", value: 12, type: "add" },
+      { stat: "physicalResistance", value: 20, type: "add" },
     ],
     isBasic: false,
     recipe: ["tear", "chain_vest"],
@@ -607,7 +607,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/AdaptiveHelm.png",
     effects: [
       { stat: "cooldownReduction", value: 5, type: "add" },
-      { stat: "magicResistance", value: 15, type: "add" },
+      { stat: "magicResistance", value: 20, type: "add" },
     ],
     isBasic: false,
     recipe: ["tear", "negatron_cloak"],

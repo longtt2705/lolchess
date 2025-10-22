@@ -73,6 +73,41 @@ export class ChessObject {
     return this.damage(chess, updatedDamage, damageType, attacker, sunder);
   }
 
+  private damageReductionPercentage(protectionFactor: number): number {
+    if (protectionFactor <= 0) {
+      return 0;
+    }
+    return (100 * protectionFactor) / (protectionFactor + 50);
+  }
+
+  private calculateDamage(
+    damage: number,
+    damageType: "physical" | "magic" | "true",
+    sunder: number = 0
+  ): number {
+    if (damageType === "physical") {
+      let physicalResistance = this.physicalResistance;
+      if (this.chess.items.some((item) => item.id === "last_whisper")) {
+        physicalResistance *= 0.7;
+      }
+      const reducePercentage = this.damageReductionPercentage(
+        physicalResistance - sunder
+      );
+      return damage * (1 - reducePercentage);
+    } else if (damageType === "magic") {
+      let magicResistance = this.magicResistance;
+      if (this.chess.items.some((item) => item.id === "void_staff")) {
+        magicResistance *= 0.7;
+      }
+      const reducePercentage = this.damageReductionPercentage(
+        magicResistance - sunder
+      );
+      return damage * (1 - reducePercentage);
+    } else if (damageType === "true") {
+      return Math.max(damage, 1);
+    }
+  }
+
   protected damage(
     chess: ChessObject,
     damage: number,
@@ -80,23 +115,6 @@ export class ChessObject {
     attacker: ChessObject,
     sunder: number = 0
   ): number {
-    if (damageType === "physical") {
-      let physicalResistance = chess.physicalResistance;
-
-      if (this.chess.items.some((item) => item.id === "last_whisper")) {
-        physicalResistance *= 0.7;
-      }
-      damage = Math.max(damage - Math.max(physicalResistance - sunder, 0), 1);
-    } else if (damageType === "magic") {
-      let magicResistance = chess.magicResistance;
-      if (this.chess.items.some((item) => item.id === "void_staff")) {
-        magicResistance *= 0.7;
-      }
-      damage = Math.max(damage - Math.max(magicResistance - sunder, 0), 1);
-    } else if (damageType === "true") {
-      damage = Math.max(damage, 1);
-    }
-
     let damageAmplification = this.damageAmplification;
     if (
       chess.chess.stats.hp > 200 &&
@@ -105,6 +123,7 @@ export class ChessObject {
       damageAmplification += 15;
     }
     let calDamage = (damage * (damageAmplification + 100)) / 100;
+    calDamage = this.calculateDamage(calDamage, damageType, sunder);
 
     const wasAlive = chess.chess.stats.hp > 0;
 
@@ -1184,7 +1203,7 @@ export class ChessObject {
       const evenshroudAura = this.createAura(
         "evenshroud_passive_disable",
         "Evenshroud",
-        "Disables all enemies' passive skills adjacent to the wearer.",
+        "This champion's passive skills are disabled.",
         1, // Adjacent squares only
         [
           {

@@ -3141,10 +3141,13 @@ const GamePage: React.FC = () => {
                       <div className="skill-info" >
                         <div className="card-name">{detailViewPiece.skill.name}</div>
                         <div className="skill-type">{detailViewPiece.skill.type}</div>
-                        <div className={`card-cooldown ${detailViewPiece.skill.currentCooldown > 0 ? 'cooling' : 'ready'}`}>
+                        <div className={`card-cooldown ${detailViewPiece.skill.currentCooldown > 0 ? 'cooling' : detailViewPiece.skill.type === 'passive' && (detailViewPiece as any).debuffs?.some((debuff: any) => debuff.id === "aura_evenshroud_passive_disable") ? 'disabled' : 'ready'}`}>
                           {detailViewPiece.skill.currentCooldown > 0
                             ? `Cooldown: ${Math.ceil(detailViewPiece.skill.currentCooldown)} turns`
-                            : 'Ready to use'
+                            :
+                            detailViewPiece.skill.type === 'passive' && (detailViewPiece as any).debuffs?.some((debuff: any) => debuff.id === "aura_evenshroud_passive_disable") ?
+                              'Disabled' :
+                              'Ready to use'
                           }
                         </div>
                       </div>
@@ -3188,6 +3191,11 @@ const GamePage: React.FC = () => {
                                 src="/icons/SerpentsFang.png"
                                 alt="Venom"
                               />
+                            ) : debuff.id === "aura_evenshroud_passive_disable" ? (
+                              <img
+                                src="/icons/Evenshroud.png"
+                                alt="Evenshroud"
+                              />
                             )
                               : (debuff.casterName ? (
                                 <img
@@ -3221,7 +3229,7 @@ const GamePage: React.FC = () => {
                         </div>
                         {debuff.effects && debuff.effects.length > 0 && (
                           <div className="debuff-effects">
-                            {debuff.effects.map((effect: any, idx: number) => (
+                            {debuff.effects.filter((effect: any) => effect.modifier !== 0).map((effect: any, idx: number) => (
                               <div key={idx} className={`effect-tag ${effect.modifier > 0 ? 'positive' : 'negative'}`}>
                                 {effect.stat.toUpperCase()} {effect.modifier > 0 ? '+' : ''}{effect.modifier}
                               </div>

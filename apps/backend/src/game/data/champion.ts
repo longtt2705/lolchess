@@ -157,7 +157,7 @@ export const champions: ChampionData[] = [
       physicalResistance: 5,
       magicResistance: 5,
       attackRange: {
-        range: 2,
+        range: 8, // Passive range (base is 2 when disabled)
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -166,7 +166,8 @@ export const champions: ChampionData[] = [
     skill: {
       type: "passive",
       name: "Draw a Bead",
-      description: "Increases Tristana's Attack Range to 8.",
+      description:
+        "Increases Tristana's Attack Range from 2 to 8. (Cannot be disabled by Evenshroud)",
       cooldown: 0,
     },
   },
