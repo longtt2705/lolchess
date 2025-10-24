@@ -526,12 +526,8 @@ const DatabasePage: React.FC = () => {
 
     const formatAttackRange = (attackRange: any): string => {
         if (!attackRange) return 'N/A'
-        const { range, diagonal, horizontal, vertical } = attackRange
-        const directions = []
-        if (horizontal) directions.push('H')
-        if (vertical) directions.push('V')
-        if (diagonal) directions.push('D')
-        return `${range} (${directions.join('/')})`
+        const { range } = attackRange
+        return `${range}`
     }
 
     const formatEffects = (effects: any[]): string[] => {
