@@ -79,6 +79,100 @@ Always use these predefined CSS variables from `src/index.css`:
 
 **DO NOT DEVIATE FROM THESE PATTERNS** - Consistency is crucial for the user experience.
 
+## Skill Animation System
+**Location:** `apps/frontend/src/animations/`
+
+### Architecture
+- **Registry Pattern**: All skill animations are registered in `SkillAnimator.ts`
+- **Individual Files**: Each skill has its own file in `animations/skills/`
+- **Generic Fallback**: Skills without custom animations use `genericSkill.tsx`
+- **Type Safety**: All animations use `.tsx` extension (not `.ts`) since they contain JSX
+
+### Creating a New Skill Animation
+
+1. **Create skill file**: `apps/frontend/src/animations/skills/skillName.tsx`
+   ```typescript
+   import React from 'react'
+   import { AnimatePresence, motion } from 'framer-motion'
+   import {
+     SkillAnimationConfig,
+     SkillAnimationRenderer,
+     getPixelPosition
+   } from '../types'
+   
+   const SkillNameAnimation: React.FC<SkillAnimationConfig> = ({
+     casterPosition,
+     targetPosition,
+     boardRef,
+     isRedPlayer = false
+   }) => {
+     const casterPixels = getPixelPosition(casterPosition, boardRef, isRedPlayer)
+     const targetPixels = targetPosition 
+       ? getPixelPosition(targetPosition, boardRef, isRedPlayer)
+       : null
+     
+     // Your animation JSX here
+     return (
+       <>
+         {/* Animation elements */}
+       </>
+     )
+   }
+   
+   export const skillNameRenderer: SkillAnimationRenderer = {
+     render: (config) => (
+       <AnimatePresence>
+         <SkillNameAnimation {...config} />
+       </AnimatePresence>
+     ),
+     duration: 1000 // Duration in milliseconds
+   }
+   ```
+
+2. **Register in SkillAnimator.ts**:
+   ```typescript
+   import { skillNameRenderer } from './skills/skillName'
+   
+   const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
+     'Skill Name': skillNameRenderer,
+     // ... other skills
+   }
+   ```
+
+### Critical: Position Calculation
+**IMPORTANT**: The board coordinate system differs by player perspective:
+
+- **Blue Player (default)**: 
+  - X: `-1` to `8` (left to right)
+  - Y: `7` to `0` (top to bottom) - **Y is INVERTED**
+  - Grid mapping: `gridX = position.x + 1`, `gridY = 7 - position.y`
+
+- **Red Player**:
+  - X: `8` to `-1` (left to right - flipped)
+  - Y: `0` to `7` (top to bottom)
+  - Grid mapping: `gridX = 8 - position.x`, `gridY = position.y`
+
+**Always use `getPixelPosition(position, boardRef, isRedPlayer)` helper** - it handles all coordinate transformations correctly.
+
+### Reusable Components
+Use these from `types.tsx`:
+- `ProjectileAnimation` - For projectiles (hooks, missiles)
+- `AOEAnimationComponent` - For circular area effects
+- `ParticleEffectComponent` - For particle explosions
+- Styled components: `ImpactEffect`, `PulseEffect`, `AOECircle`
+
+### Example: Projectile with Chain
+See `apps/frontend/src/animations/skills/rocketGrab.tsx` for a complete example of:
+- Projectile traveling from caster to target
+- Chain extending behind projectile
+- Impact effect with particles
+- Proper angle calculation
+
+### Testing
+- Test with both blue and red player perspectives
+- Verify coordinates match piece positions on board
+- Check animation timing and smoothness
+
 ## Preferred Workflow
 1. Switch to Node v22 with `fnm use v22`
 2. Make code changes following the styling guidelines above

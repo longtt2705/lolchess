@@ -75,21 +75,22 @@ const MainContent = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 12px 20px;
   max-width: 1800px;
   margin: 0 auto;
   width: 100%;
   position: relative;
   z-index: 1;
   overflow: hidden;
+  min-height: 0;
 `
 
 const BannedChampionsSection = styled.div`
   background: linear-gradient(135deg, var(--secondary-bg) 0%, rgba(30, 35, 40, 0.9) 100%);
   border: 2px solid var(--border);
   border-radius: 12px;
-  padding: 16px 20px;
+  padding: 12px 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
@@ -107,13 +108,13 @@ const BannedChampionsSection = styled.div`
   
   h3 {
     color: var(--gold);
-    margin: 0 0 12px 0;
+    margin: 0 0 8px 0;
     text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    font-size: 16px;
+    font-size: 14px;
     text-shadow: 0 2px 8px rgba(200, 155, 60, 0.5);
     
     svg {
@@ -125,8 +126,8 @@ const BannedChampionsSection = styled.div`
 const BannedGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  max-width: 600px;
+  gap: 8px;
+  max-width: 500px;
   margin: 0 auto;
 `
 
@@ -205,15 +206,15 @@ const BannedChampionSlot = styled(motion.div) <{ banned?: boolean; skipped?: boo
 
 const PlayerSections = styled.div`
   display: grid;
-  grid-template-columns: 280px 1fr 280px;
-  gap: 16px;
+  grid-template-columns: 260px 1fr 260px;
+  gap: 12px;
   align-items: start;
   flex: 1;
   min-height: 0;
   
   @media (max-width: 1400px) {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
 `
 
@@ -281,15 +282,16 @@ const SidePanel = styled.div<{ isActive?: boolean }>`
   background: linear-gradient(135deg, var(--secondary-bg) 0%, rgba(30, 35, 40, 0.9) 100%);
   border: 2px solid var(--border);
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   height: fit-content;
+  max-height: 100%;
   
   h3 {
     color: var(--gold);
@@ -297,14 +299,14 @@ const SidePanel = styled.div<{ isActive?: boolean }>`
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 16px;
+    font-size: 14px;
     text-shadow: 0 2px 4px rgba(200, 155, 60, 0.5);
   }
   
   h4 {
     color: var(--primary-text);
-    margin: 0 0 8px 0;
-    font-size: 11px;
+    margin: 0 0 6px 0;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 1px;
     opacity: 0.8;
@@ -423,13 +425,14 @@ const ChampionGrid = styled.div`
   background: linear-gradient(135deg, var(--secondary-bg) 0%, rgba(30, 35, 40, 0.9) 100%);
   border: 2px solid var(--border);
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
   
   &::before {
     content: '';
@@ -443,9 +446,9 @@ const ChampionGrid = styled.div`
   
   h3 {
     color: var(--gold);
-    margin: 0 0 12px 0;
+    margin: 0 0 8px 0;
     text-align: center;
-    font-size: 16px;
+    font-size: 14px;
     text-shadow: 0 2px 8px rgba(200, 155, 60, 0.5);
     flex-shrink: 0;
   }
@@ -453,8 +456,8 @@ const ChampionGrid = styled.div`
 
 const ChampionList = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
   overflow-y: auto;
   padding: 4px;
   flex: 1;
@@ -628,7 +631,7 @@ const BanPickList = styled.div`
 `
 
 const BanPickSlot = styled.div<{ filled?: boolean; active?: boolean }>`
-  height: 56px;
+  height: 48px;
   width: 100%;
   background: ${props => props.filled ? 'linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%)' : 'rgba(0, 0, 0, 0.3)'};
   border: 2px solid ${props => props.active ? 'var(--gold)' : 'var(--border)'};
@@ -638,7 +641,7 @@ const BanPickSlot = styled.div<{ filled?: boolean; active?: boolean }>`
   justify-content: center;
   position: relative;
   transition: all 0.3s ease;
-  padding: 6px;
+  padding: 4px;
   overflow: hidden;
   box-shadow: ${props => props.active ? '0 0 20px rgba(200, 155, 60, 0.5)' : 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'};
   flex-shrink: 0;
@@ -666,15 +669,15 @@ const BanPickSlot = styled.div<{ filled?: boolean; active?: boolean }>`
   }
   
   .champion-icon {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 6px;
     object-fit: cover;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
   
   .empty-text {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--secondary-text);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -686,7 +689,6 @@ const TurnIndicator = styled(motion.div) <{ isMyTurn: boolean }>`
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
   background: ${props => props.isMyTurn
     ? 'linear-gradient(135deg, var(--gold) 0%, #b8860b 100%)'
     : 'linear-gradient(135deg, var(--secondary-text) 0%, #5b5b5b 100%)'};
@@ -1154,12 +1156,12 @@ const BanPickPage: React.FC = () => {
         {showTurnIndicator && (
           <TurnIndicator
             isMyTurn={isMyTurn}
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
+            initial={{ opacity: 0, scale: 0.5, x: "-50%", y: "-50%" }}
+            animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
+            exit={{ opacity: 0, scale: 0.5, x: "-50%", y: "-50%" }}
             transition={{ duration: 0.5, type: "spring" }}
           >
-            {isMyTurn ? '⚡ YOUR TURN! ⚡' : "OPPONENT'S TURN"}
+            {isMyTurn ? 'YOUR TURN!' : "OPPONENT'S TURN"}
           </TurnIndicator>
         )}
       </AnimatePresence>

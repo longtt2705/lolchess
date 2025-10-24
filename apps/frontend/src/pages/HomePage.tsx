@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { motion } from 'framer-motion'
-import { Play, Users, Trophy, Sword, AlertCircle, ArrowRight } from 'lucide-react'
+import { Play, Users, Trophy, Sword, AlertCircle, ArrowRight, BookOpen } from 'lucide-react'
 import { useAppSelector, useAppDispatch } from '../hooks/redux'
 import { fetchActiveGame } from '../store/gameSlice'
 
@@ -218,6 +218,11 @@ const HomePage: React.FC = () => {
       icon: <Trophy size={48} />,
       title: "Ranked System",
       description: "Earn your place on the leaderboard with our comprehensive ranking system. Track your progress and achievements!"
+    },
+    {
+      icon: <BookOpen size={48} />,
+      title: "Learn the Rules",
+      description: "New to LOL Chess? Check out our comprehensive rulebook to master the game mechanics and strategies!"
     }
   ]
 
@@ -261,10 +266,13 @@ const HomePage: React.FC = () => {
         {features.map((feature, index) => (
           <FeatureCard
             key={index}
+            as={feature.title === "Learn the Rules" ? Link : "div"}
+            to={feature.title === "Learn the Rules" ? "/instructions" : undefined}
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: index * 0.2 }}
             whileHover={{ scale: 1.05 }}
+            style={{ textDecoration: 'none', cursor: feature.title === "Learn the Rules" ? 'pointer' : 'default' }}
           >
             <div className="icon">{feature.icon}</div>
             <h3>{feature.title}</h3>

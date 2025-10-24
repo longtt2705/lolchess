@@ -77,7 +77,7 @@ export class ChessObject {
     if (protectionFactor <= 0) {
       return 0;
     }
-    return (100 * protectionFactor) / (protectionFactor + 50);
+    return protectionFactor / (protectionFactor + 50);
   }
 
   private calculateDamage(
@@ -85,6 +85,7 @@ export class ChessObject {
     damageType: "physical" | "magic" | "true",
     sunder: number = 0
   ): number {
+    console.log("calculateDamage", damage, damageType, sunder);
     if (damageType === "physical") {
       let physicalResistance = this.physicalResistance;
       if (this.chess.items.some((item) => item.id === "last_whisper")) {
@@ -122,9 +123,15 @@ export class ChessObject {
     ) {
       damageAmplification += 15;
     }
+    console.log(
+      "damageAmplification",
+      damage,
+      damageAmplification,
+      (damage * (damageAmplification + 100)) / 100
+    );
     let calDamage = (damage * (damageAmplification + 100)) / 100;
     calDamage = this.calculateDamage(calDamage, damageType, sunder);
-
+    console.log("calDamage", calDamage);
     const wasAlive = chess.chess.stats.hp > 0;
 
     // Check if the target has a shield
@@ -147,6 +154,7 @@ export class ChessObject {
     }
 
     const finalDamage = Math.floor(chess.preTakenDamage(this, calDamage));
+    console.log("finalDamage", finalDamage);
     chess.chess.stats.hp -= finalDamage;
     chess.postTakenDamage(this, finalDamage, damageType);
 
@@ -157,7 +165,6 @@ export class ChessObject {
       if (wasAlive) {
         this.awardGoldForKill(chess);
         chess.chess.deadAtRound = this.game.currentRound;
-        console.log("chess.chess.deadAtRound", chess.chess.deadAtRound);
 
         // Check if killed monster was neutral for special rewards
         if (
@@ -228,11 +235,11 @@ export class ChessObject {
         (item) => item.id === "red_buff" || item.id === "morellonomicon"
       )
     ) {
-      this.applyDebuff(this, this.createBurnedDebuff(3));
-      this.applyDebuff(this, this.createWoundedDebuff(3));
+      this.applyDebuff(this, this.createBurnedDebuff(3, attacker));
+      this.applyDebuff(this, this.createWoundedDebuff(3, attacker));
     }
     if (attacker.chess.items.some((item) => item.id === "serpents_fang")) {
-      this.applyDebuff(this, this.createVenomDebuff(3));
+      this.applyDebuff(this, this.createVenomDebuff(3, attacker));
     }
     if (this.chess.items.some((item) => item.id === "adaptive_helm")) {
       if (damageType === "physical") {
@@ -295,10 +302,10 @@ export class ChessObject {
   // Award gold to the player who killed an enemy chess piece
   protected awardGoldForKill(killedChess: ChessObject): void {
     // Find the player who owns the killer chess piece
-    const killerPlayer = this.game.players.find(
+    const killerPlayerIndex = this.game.players.findIndex(
       (player) => player.userId === this.chess.ownerId
     );
-    if (killerPlayer) {
+    if (killerPlayerIndex !== -1) {
       const baseGold = killedChess.chess.stats.goldValue || 30; // Default 30 gold if no goldValue set
       let totalGold = baseGold;
 
@@ -308,11 +315,11 @@ export class ChessObject {
         totalGold += bonusGold;
       }
 
-      killerPlayer.gold += totalGold;
+      this.game.players[killerPlayerIndex].gold += totalGold;
     }
   }
 
-  private createWoundedDebuff(turn: number): Debuff {
+  private createWoundedDebuff(turn: number, owner: ChessObject): Debuff {
     return {
       id: "wounded",
       name: "Wounded",
@@ -325,12 +332,12 @@ export class ChessObject {
       healPerTurn: 0,
       unique: true,
       appliedAt: Date.now(),
-      casterPlayerId: this.chess.ownerId,
-      casterName: this.chess.name,
+      casterPlayerId: owner.chess.ownerId,
+      casterName: owner.chess.name,
     } as Debuff;
   }
 
-  private createBurnedDebuff(turn: number): Debuff {
+  private createBurnedDebuff(turn: number, owner: ChessObject): Debuff {
     return {
       id: "burned",
       name: "Burned",
@@ -343,12 +350,12 @@ export class ChessObject {
       healPerTurn: 0,
       unique: true,
       appliedAt: Date.now(),
-      casterPlayerId: this.chess.ownerId,
-      casterName: this.chess.name,
+      casterPlayerId: owner.chess.ownerId,
+      casterName: owner.chess.name,
     } as Debuff;
   }
 
-  private createVenomDebuff(turn: number): Debuff {
+  private createVenomDebuff(turn: number, owner: ChessObject): Debuff {
     return {
       id: "venom",
       name: "Venom",
@@ -361,12 +368,15 @@ export class ChessObject {
       healPerTurn: 0,
       unique: true,
       appliedAt: Date.now(),
-      casterPlayerId: this.chess.ownerId,
-      casterName: this.chess.name,
+      casterPlayerId: owner.chess.ownerId,
+      casterName: owner.chess.name,
     } as Debuff;
   }
 
-  private createDamageAmplificationDebuff(turn: number): Debuff {
+  private createDamageAmplificationDebuff(
+    turn: number,
+    owner: ChessObject
+  ): Debuff {
     return {
       id: "damage_amplification",
       name: "Damage Amplification",
@@ -385,8 +395,8 @@ export class ChessObject {
       healPerTurn: 0,
       unique: true,
       appliedAt: Date.now(),
-      casterPlayerId: this.chess.ownerId,
-      casterName: this.chess.name,
+      casterPlayerId: owner.chess.ownerId,
+      casterName: owner.chess.name,
       currentStacks: 1,
       maximumStacks: 1,
     } as Debuff;
@@ -409,6 +419,9 @@ export class ChessObject {
   }
 
   public preEnterTurn(isBlueTurn: boolean): void {
+    if (this.chess.stats.hp <= 0) {
+      return;
+    }
     if (this.chess.blue === isBlueTurn) {
       this.refreshCooldown(this);
       this.processDebuffs(this);
@@ -425,8 +438,8 @@ export class ChessObject {
           );
           if (targetChess) {
             const targetObj = new ChessObject(targetChess, this.game);
-            targetObj.applyDebuff(targetObj, this.createBurnedDebuff(3));
-            targetObj.applyDebuff(targetObj, this.createWoundedDebuff(3));
+            targetObj.applyDebuff(targetObj, this.createBurnedDebuff(3, this));
+            targetObj.applyDebuff(targetObj, this.createWoundedDebuff(3, this));
           }
         });
       }
@@ -863,7 +876,7 @@ export class ChessObject {
     );
   }
 
-  move(position: Square): void {
+  move(position: Square, customSpeed?: number): void {
     // Check if this is a castling move (Poro moving 2 squares horizontally)
     if (this.chess.name === "Poro" && !this.chess.hasMovedBefore) {
       const deltaX = position.x - this.chess.position.x;
@@ -875,7 +888,7 @@ export class ChessObject {
     }
 
     // Calculate effective speed with first move bonus for minions
-    let effectiveSpeed = this.speed;
+    let effectiveSpeed = customSpeed ?? this.speed;
 
     // First move bonus: Minions get +1 speed on their first move
     if (
@@ -1119,7 +1132,11 @@ export class ChessObject {
     }
 
     // Critical strike system from RULE.md: 20% chance, 150% damage
-    this.willCrit = forceCritical || Math.random() < this.criticalChance / 100;
+    const criticalChance = this.criticalChance / 100;
+    console.log("criticalChance", criticalChance);
+    const randomChance = Math.random();
+    console.log("randomChance", randomChance);
+    this.willCrit = forceCritical || randomChance < criticalChance;
     let damage = this.ad;
 
     if (this.willCrit) {
@@ -1149,7 +1166,7 @@ export class ChessObject {
       this.chess.stats.ap += 5;
     }
     if (this.chess.items.some((item) => item.id === "nashors_tooth")) {
-      this.applyDebuff(this, this.createDamageAmplificationDebuff(2));
+      this.applyDebuff(this, this.createDamageAmplificationDebuff(2, this));
     }
     if (this.chess.items.some((item) => item.id === "protectors_vow")) {
       this.applyShield(this.chess.stats.maxHp * 0.15, 2);

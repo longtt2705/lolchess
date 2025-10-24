@@ -3,6 +3,7 @@ import { Coins, Crown, Package, RotateCcw, Shield, ShoppingCart, Users, Zap } fr
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
+import { getSkillAnimationRenderer } from '../animations/SkillAnimator'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { ChessPiece, ChessPosition, GameState, useGame } from '../hooks/useGame'
 import { resetGameplay } from '../store/gameSlice'
@@ -1761,7 +1762,7 @@ const getImageUrl = (piece: ChessPiece) => {
   if (piece.name === "Baron Nashor") {
     return "/icons/baron.webp"
   }
-  return `/icons/${piece.name.toLowerCase().replace(/\s+/g, '')}.webp`
+  return `/icons/${piece.name.toLowerCase()}.webp`
 }
 
 // Helper function to check if a piece is a champion (can buy items)
@@ -1874,8 +1875,8 @@ const ChessPieceRenderer: React.FC<{
     if (!isMoving || !moveAnimation) return {}
 
     // Calculate the visual direction for movement
-    // The piece is now rendered at the NEW position, so we need to calculate
-    // where it WAS (old position) relative to where it IS (new position)
+    // With the new dual-state system, the piece is rendered at the OLD position during animation
+    // So we need to animate it FROM old (current render position) TO new position
     let deltaX = moveAnimation.toPos.x - moveAnimation.fromPos.x
     let deltaY = moveAnimation.toPos.y - moveAnimation.fromPos.y
 
@@ -1889,14 +1890,13 @@ const ChessPieceRenderer: React.FC<{
     const { cellWidth, cellHeight } = getCellDimensions()
 
     // Convert to pixel movement based on actual cell size
-    // Since the piece is rendered at NEW position, we start at OLD position (negative offset)
-    // and animate TO the current position (0, 0)
+    // Since the piece is rendered at OLD position, we animate it forward TO the new position
     const moveX = deltaX * (cellWidth + 3) // +3 for gap
     const moveY = -deltaY * (cellHeight + 3) // Y direction inverted for CSS, +3 for gap
 
     return {
-      x: [-moveX, 0], // Start at old position, animate to new (current) position
-      y: [-moveY, 0],
+      x: [0, moveX], // Start at current (old) position, animate to new position
+      y: [0, moveY],
       transition: {
         duration: 0.5,
         iterations: 1
@@ -1927,16 +1927,17 @@ const ChessPieceRenderer: React.FC<{
     return {}
   }
 
-  // Generate unique key to force remount on move
+  // Generate unique key to force remount on move or position change
   const animationKey = isMoving && moveAnimation
     ? `${piece.id}-${moveAnimation.fromPos.x}-${moveAnimation.fromPos.y}-${moveAnimation.toPos.x}-${moveAnimation.toPos.y}`
-    : `${piece.id}-static`
+    : `${piece.id}-${piece.position.x}-${piece.position.y}` // Include position in key to force remount after state swap
 
   const hasShield = piece.shields && piece.shields.length > 0 && piece.shields.reduce((sum, s) => sum + s.amount, 0) > 0
 
   return (
     <ChessPieceComponent
       key={animationKey}
+      data-piece-id={piece.id}
       isBlue={piece.blue}
       isNeutral={isNeutral}
       canSelect={canSelect && !isAnimating && !isDead}
@@ -2168,6 +2169,10 @@ const GamePage: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>()
   const {
     gameState,
+    displayState,
+    queuedState,
+    setDisplayState,
+    setQueuedState,
     loading,
     error,
     selectedPiece,
@@ -2220,6 +2225,10 @@ const GamePage: React.FC = () => {
   const [deadPieces, setDeadPieces] = useState<Set<string>>(new Set())
   const [isAnimating, setIsAnimating] = useState(false)
   const prevDeadPiecesRef = useRef<Set<string>>(new Set())
+  const [activeSkillAnimation, setActiveSkillAnimation] = useState<{
+    id: string
+    component: JSX.Element | null
+  } | null>(null)
 
   // Track previous game state for animation
   const previousGameStateRef = useRef<GameState | null>(null)
@@ -2235,15 +2244,15 @@ const GamePage: React.FC = () => {
   // Get loading state from Redux for reset operation
   const isResetting = useAppSelector((state) => state.game.loading)
 
-  // Update detailViewPiece when gameState changes (to reflect item purchases, etc.)
+  // Update detailViewPiece when displayState changes (to reflect item purchases, etc.)
   useEffect(() => {
-    if (detailViewPiece && gameState) {
-      const updatedPiece = gameState.board.find(p => p.id === detailViewPiece.id)
+    if (detailViewPiece && displayState) {
+      const updatedPiece = displayState.board.find(p => p.id === detailViewPiece.id)
       if (updatedPiece) {
         setDetailViewPiece(updatedPiece)
       }
     }
-  }, [gameState, detailViewPiece?.id])
+  }, [displayState, detailViewPiece?.id])
 
   // Handle buying items
   const handleBuyItem = useCallback((itemId: string, championId: string) => {
@@ -2272,7 +2281,7 @@ const GamePage: React.FC = () => {
     )
 
     if (shouldAnimate && !isPlayingAnimationsRef.current) {
-      // Generate animation sequence
+      // Generate animation sequence (comparing old state to new state)
       const animations = AnimationEngine.generateAnimationSequence(
         gameState,
         previousGameStateRef.current
@@ -2281,6 +2290,12 @@ const GamePage: React.FC = () => {
       if (animations.length > 0) {
         animationQueueRef.current = animations
         playAnimationSequence(animations)
+      } else {
+        // No animations to play, but we might have a queued state
+        if (queuedState) {
+          setDisplayState(queuedState)
+          setQueuedState(null)
+        }
       }
     }
 
@@ -2296,7 +2311,7 @@ const GamePage: React.FC = () => {
     })
     setDeadPieces(newDeadPieces)
     prevDeadPiecesRef.current = newDeadPieces
-  }, [gameState])
+  }, [gameState, queuedState, setDisplayState, setQueuedState])
 
   // Play animation sequence
   const playAnimationSequence = useCallback(async (animations: AnimationAction[]) => {
@@ -2336,6 +2351,12 @@ const GamePage: React.FC = () => {
         const promises = group.map(anim => playAnimation(anim))
         await Promise.all(promises)
       }
+
+      // After all animations complete, swap to new state
+      if (queuedState) {
+        setDisplayState(queuedState)
+        setQueuedState(null)
+      }
     } catch (error) {
       console.error('Animation error:', error)
     } finally {
@@ -2348,7 +2369,7 @@ const GamePage: React.FC = () => {
       // Note: We don't clear damageEffects and itemPurchaseAnimations here
       // as they manage their own cleanup with setTimeout
     }
-  }, [])
+  }, [queuedState, setDisplayState, setQueuedState])
 
   // Play individual animation
   const playAnimation = useCallback(async (animation: AnimationAction) => {
@@ -2417,9 +2438,32 @@ const GamePage: React.FC = () => {
       }
 
       case 'skill': {
-        // For skills, we could add a special effect visual
-        // For now, just wait for the duration
+        const { casterId, casterPosition, skillName, targetPosition, targetId, pulledToPosition } = animation.data
+        const skillRenderer = getSkillAnimationRenderer(skillName)
+
+        // Determine if current player is red (for coordinate transformation)
+        const isRedPlayer = !!(gameState && currentUser && gameState.redPlayer === currentUser.id)
+
+        // Store skill animation component in state to render
+        setActiveSkillAnimation({
+          id: animation.id,
+          component: skillRenderer.render({
+            casterId,
+            casterPosition,
+            targetPosition,
+            targetId,
+            skillName,
+            boardRef,
+            isRedPlayer,
+            pulledToPosition,
+          })
+        })
+
+        // Wait for the full animation duration
         await new Promise(resolve => setTimeout(resolve, animation.duration))
+
+        // Clean up animation after it completes
+        setActiveSkillAnimation(null)
         break
       }
 
@@ -2457,7 +2501,7 @@ const GamePage: React.FC = () => {
       default:
         break
     }
-  }, [allItems])
+  }, [allItems, boardRef, currentUser, gameState])
 
   // Enhanced execute action - now animations are server-driven
   const executeActionWithAnimation = useCallback(async (type: string, casterPosition: ChessPosition, targetPosition: ChessPosition) => {
@@ -2476,11 +2520,11 @@ const GamePage: React.FC = () => {
 
   // Handle square click for actions
   const handleSquareClick = (x: number, y: number) => {
-    if (!gameState || !isMyTurn || isAnimating) return
+    if (!gameState || !displayState || !isMyTurn || isAnimating) return
     const clickedPosition = { x, y }
 
-    // Check if clicking on a piece
-    const clickedPiece = gameState.board.find(piece =>
+    // Check if clicking on a piece (use displayState for visual feedback)
+    const clickedPiece = displayState.board.find(piece =>
       piece.position.x === x && piece.position.y === y && piece.stats.hp > 0
     )
 
@@ -2552,6 +2596,7 @@ const GamePage: React.FC = () => {
         setDeadPieces(new Set())
         setIsAnimating(false)
         setDetailViewPiece(null)
+        setActiveSkillAnimation(null)
         prevDeadPiecesRef.current = new Set()
         console.log('Gameplay reset successfully')
       } else {
@@ -2611,7 +2656,7 @@ const GamePage: React.FC = () => {
         const isValidAttack = validAttacks.some(attack => attack.x === x && attack.y === y)
         const isValidSkill = validSkillTargets.some(target => target.x === x && target.y === y)
 
-        const piece = gameState?.board.find(p => (p.position.x === x && p.position.y === y) && (p.stats.hp > 0 || p.deadAtRound === gameState?.currentRound - 1))
+        const piece = displayState?.board.find(p => (p.position.x === x && p.position.y === y) && (p.stats.hp > 0 || p.deadAtRound === displayState?.currentRound - 1))
 
         let squareClass = 'square'
         if (isSelected) squareClass += ' selected'
@@ -3141,6 +3186,16 @@ const GamePage: React.FC = () => {
                       <div className="skill-info" >
                         <div className="card-name">{detailViewPiece.skill.name}</div>
                         <div className="skill-type">{detailViewPiece.skill.type}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {detailViewPiece.skill.type === 'active' && detailViewPiece.skill.attackRange?.range && <div>
+                            <img src={getStatIcon("attackRange")} alt="Range" width={14} height={14} />
+                            <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>{detailViewPiece.skill.attackRange.range}</span>
+                          </div>}
+                          <div>
+                            <img src={getStatIcon("cooldownReduction")} alt="Cooldown" width={14} height={14} />
+                            <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>{detailViewPiece.skill.cooldown}</span>
+                          </div>
+                        </div>
                         <div className={`card-cooldown ${detailViewPiece.skill.currentCooldown > 0 ? 'cooling' : detailViewPiece.skill.type === 'passive' && (detailViewPiece as any).debuffs?.some((debuff: any) => debuff.id === "aura_evenshroud_passive_disable") ? 'disabled' : 'ready'}`}>
                           {detailViewPiece.skill.currentCooldown > 0
                             ? `Cooldown: ${Math.ceil(detailViewPiece.skill.currentCooldown)} turns`
@@ -3456,7 +3511,7 @@ const GamePage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px' }}>
             <TurnIndicator isMyTurn={isMyTurn}>
               {isMyTurn ? "Your Turn" : "Opponent's Turn"}
-              <div className="round-info">Round {gameState.currentRound}</div>
+              <div className="round-info">Round {displayState?.currentRound || gameState?.currentRound}</div>
             </TurnIndicator>
 
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -3526,6 +3581,26 @@ const GamePage: React.FC = () => {
 
           <Board ref={boardRef}>
             {renderBoard()}
+
+            {/* Skill animations overlay */}
+            <AnimatePresence mode="wait">
+              {activeSkillAnimation && (
+                <div
+                  key={activeSkillAnimation.id}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: 'none',
+                    zIndex: 100
+                  }}
+                >
+                  {activeSkillAnimation.component}
+                </div>
+              )}
+            </AnimatePresence>
           </Board>
 
         </GameBoard>

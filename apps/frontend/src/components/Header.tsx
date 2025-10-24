@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
-import { LogOut, User, Home, Gamepad2 } from 'lucide-react'
+import { LogOut, User, Home, Gamepad2, BookOpen, Database } from 'lucide-react'
 import { useAppSelector, useAppDispatch } from '../hooks/redux'
 import { logout } from '../store/authSlice'
 
@@ -112,6 +112,14 @@ const Header: React.FC = () => {
         <NavLink to="/">
           <Home size={18} />
           Home
+        </NavLink>
+        <NavLink to="/instructions">
+          <BookOpen size={18} />
+          Rules
+        </NavLink>
+        <NavLink to="/database">
+          <Database size={18} />
+          Database
         </NavLink>
 
         {isAuthenticated ? (

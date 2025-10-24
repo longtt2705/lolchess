@@ -96,6 +96,7 @@ export interface ActionDetails {
   statChanges?: Record<string, { oldValue: number; newValue: number }>;
   itemId?: string;
   skillName?: string;
+  pulledToPosition?: ChessPosition; // For Rocket Grab: actual position the target was pulled to
   killedPieceIds?: string[];
   killerPlayerId?: string;
 }
@@ -134,6 +135,7 @@ export const useGame = (gameId: string) => {
   const {
     connected: wsConnected,
     gameState: wsGameState,
+    oldGameState: wsOldGameState,
     lastUpdate,
     sendAction: wsSendAction,
     initializeGameplay: wsInitializeGameplay,
@@ -148,6 +150,8 @@ export const useGame = (gameId: string) => {
   } = useWebSocket(gameId);
 
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [displayState, setDisplayState] = useState<GameState | null>(null); // What's currently displayed
+  const [queuedState, setQueuedState] = useState<GameState | null>(null); // Waiting for animations to finish
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPiece, setSelectedPiece] = useState<ChessPiece | null>(null);
@@ -162,10 +166,21 @@ export const useGame = (gameId: string) => {
   useEffect(() => {
     if (wsGameState) {
       setGameState(wsGameState);
+
+      // If there's an oldGame and lastAction, show old state first and queue new state
+      if (wsOldGameState && wsGameState.lastAction) {
+        setDisplayState(wsOldGameState);
+        setQueuedState(wsGameState);
+      } else {
+        // No animations - show new state immediately
+        setDisplayState(wsGameState);
+        setQueuedState(null);
+      }
+
       setLoading(false);
       setError(null);
     }
-  }, [wsGameState]);
+  }, [wsGameState, wsOldGameState]);
 
   // Fetch initial game state if WebSocket isn't connected
   useEffect(() => {
@@ -548,7 +563,10 @@ export const useGame = (gameId: string) => {
 
           // Handle different target types
           if (skill.targetTypes === "square") {
-            // Can target any square within range
+            // Can target empty squares within range (path must be clear)
+            if (occupiedBy) {
+              break; // Stop at any piece - path blocked
+            }
             skillTargets.push(targetPosition);
           } else if (skill.targetTypes === "enemy") {
             // Can only target enemy pieces
@@ -620,6 +638,10 @@ export const useGame = (gameId: string) => {
 
   return {
     gameState,
+    displayState,
+    queuedState,
+    setDisplayState,
+    setQueuedState,
     loading,
     error,
     selectedPiece,

@@ -132,10 +132,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (result.game) {
         // Broadcast updated game state to all players in the room
-        this.server.to(gameId).emit("game-state", {
-          game: result.game,
-          message: result.message,
-        });
+        // Include oldGame if there's a lastAction (for animations)
+        if (result.game.lastAction && result.oldGame) {
+          this.server.to(gameId).emit("game-state", {
+            game: result.game,
+            oldGame: result.oldGame,
+            message: result.message,
+          });
+        } else {
+          this.server.to(gameId).emit("game-state", {
+            game: result.game,
+            message: result.message,
+          });
+        }
 
         // If game is finished, send game over event
         if (result.game.status === "finished") {
@@ -299,10 +308,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (result.game) {
         // Broadcast updated game state to all players in the room
-        this.server.to(gameId).emit("game-state", {
-          game: result.game,
-          message: result.message,
-        });
+        // Include oldGame if there's a lastAction (for animations)
+        if (result.game.lastAction && result.oldGame) {
+          this.server.to(gameId).emit("game-state", {
+            game: result.game,
+            oldGame: result.oldGame,
+            message: result.message,
+          });
+        } else {
+          this.server.to(gameId).emit("game-state", {
+            game: result.game,
+            message: result.message,
+          });
+        }
       } else {
         // Send error back to the client who made the action
         client.emit("action-error", { message: result.message });

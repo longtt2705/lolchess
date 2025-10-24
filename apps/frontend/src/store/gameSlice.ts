@@ -24,6 +24,25 @@ interface Game {
   createdAt: string;
 }
 
+export interface ChampionData {
+  name: string;
+  stats: any;
+  skill: any;
+  aura?: any;
+}
+
+export interface ItemData {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  icon?: string;
+  effects: any[];
+  isBasic: boolean;
+  recipe?: [string, string];
+  unique?: boolean;
+}
+
 interface GameState {
   currentGame: Game | null;
   activeGame: Game | null;
@@ -32,6 +51,11 @@ interface GameState {
   error: string | null;
   connected: boolean;
   queue: QueueState;
+  champions: ChampionData[];
+  basicItems: ItemData[];
+  combinedItems: ItemData[];
+  databaseLoading: boolean;
+  databaseError: string | null;
 }
 
 const initialState: GameState = {
@@ -48,6 +72,11 @@ const initialState: GameState = {
     matchFound: false,
     opponent: null,
   },
+  champions: [],
+  basicItems: [],
+  combinedItems: [],
+  databaseLoading: false,
+  databaseError: null,
 };
 
 // Async thunks
@@ -161,6 +190,41 @@ export const buyItem = createAsyncThunk(
       }
     );
     return response.data;
+  }
+);
+
+export const fetchChampions = createAsyncThunk(
+  "game/fetchChampions",
+  async () => {
+    const response = await axios.get(`${API_URL}/games/champions`);
+    return response.data;
+  }
+);
+
+export const fetchBasicItems = createAsyncThunk(
+  "game/fetchBasicItems",
+  async () => {
+    const response = await axios.get(`${API_URL}/games/items?type=basic`);
+    return response.data;
+  }
+);
+
+export const fetchCombinedItems = createAsyncThunk(
+  "game/fetchCombinedItems",
+  async () => {
+    const response = await axios.get(`${API_URL}/games/items?type=combined`);
+    return response.data;
+  }
+);
+
+export const fetchDatabaseData = createAsyncThunk(
+  "game/fetchDatabaseData",
+  async (_, { dispatch }) => {
+    await Promise.all([
+      dispatch(fetchChampions()),
+      dispatch(fetchBasicItems()),
+      dispatch(fetchCombinedItems()),
+    ]);
   }
 );
 
@@ -330,6 +394,54 @@ const gameSlice = createSlice({
       .addCase(buyItem.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to buy item";
+      })
+      // Fetch champions
+      .addCase(fetchChampions.pending, (state) => {
+        state.databaseLoading = true;
+        state.databaseError = null;
+      })
+      .addCase(fetchChampions.fulfilled, (state, action) => {
+        state.champions = action.payload;
+      })
+      .addCase(fetchChampions.rejected, (state, action) => {
+        state.databaseError =
+          action.error.message || "Failed to fetch champions";
+      })
+      // Fetch basic items
+      .addCase(fetchBasicItems.pending, (state) => {
+        state.databaseLoading = true;
+        state.databaseError = null;
+      })
+      .addCase(fetchBasicItems.fulfilled, (state, action) => {
+        state.basicItems = action.payload.items || [];
+      })
+      .addCase(fetchBasicItems.rejected, (state, action) => {
+        state.databaseError =
+          action.error.message || "Failed to fetch basic items";
+      })
+      // Fetch combined items
+      .addCase(fetchCombinedItems.pending, (state) => {
+        state.databaseLoading = true;
+        state.databaseError = null;
+      })
+      .addCase(fetchCombinedItems.fulfilled, (state, action) => {
+        state.combinedItems = action.payload.items || [];
+      })
+      .addCase(fetchCombinedItems.rejected, (state, action) => {
+        state.databaseError =
+          action.error.message || "Failed to fetch combined items";
+      })
+      // Fetch all database data
+      .addCase(fetchDatabaseData.pending, (state) => {
+        state.databaseLoading = true;
+        state.databaseError = null;
+      })
+      .addCase(fetchDatabaseData.fulfilled, (state) => {
+        state.databaseLoading = false;
+      })
+      .addCase(fetchDatabaseData.rejected, (state, action) => {
+        state.databaseLoading = false;
+        state.databaseError = action.error.message || "Failed to load database";
       });
   },
 });

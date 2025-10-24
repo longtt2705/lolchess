@@ -14,6 +14,9 @@ export class Garen extends ChessObject {
 
   preEnterTurn(isBlueTurn: boolean): void {
     super.preEnterTurn(isBlueTurn);
+    if (this.chess.stats.hp <= 0) {
+      return;
+    }
     if (isBlueTurn !== this.chess.blue) {
       return;
     }

@@ -341,6 +341,9 @@ export class ActionDetails {
   @Prop()
   skillName?: string; // For SKILL events
 
+  @Prop({ type: Square })
+  pulledToPosition?: Square; // For Rocket Grab: actual position the target was pulled to
+
   @Prop({ type: [String], default: [] })
   killedPieceIds?: string[]; // Pieces that died as a result of this action
 

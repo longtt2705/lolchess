@@ -6,6 +6,7 @@ const WS_URL = import.meta.env.VITE_WS_URL || "http://localhost:3001";
 
 export interface GameStateUpdate {
   game: any;
+  oldGame?: any;
   message?: string;
 }
 
@@ -19,6 +20,7 @@ export const useWebSocket = (gameId: string | null) => {
   const socketRef = useRef<Socket | null>(null);
   const [connected, setConnected] = useState(false);
   const [gameState, setGameState] = useState<any>(null);
+  const [oldGameState, setOldGameState] = useState<any>(null);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [drawOfferReceived, setDrawOfferReceived] = useState(false);
   const [drawOfferSent, setDrawOfferSent] = useState(false);
@@ -59,6 +61,7 @@ export const useWebSocket = (gameId: string | null) => {
     socket.on("game-state", (data: GameStateUpdate) => {
       console.log("Game state updated:", data);
       setGameState(data.game);
+      setOldGameState(data.oldGame || null);
       setLastUpdate(data.message || "Game state updated");
     });
 
@@ -196,6 +199,7 @@ export const useWebSocket = (gameId: string | null) => {
   return {
     connected,
     gameState,
+    oldGameState,
     lastUpdate,
     sendAction,
     initializeGameplay,

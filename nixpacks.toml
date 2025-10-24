@@ -1,0 +1,35 @@
+# Nixpacks Configuration for LOL Chess Monorepo
+# Deploy via Dokploy
+
+[phases.setup]
+# Use Node.js 22 (matching your fnm use v22 requirement)
+nixPkgs = ["nodejs_22", "python3"]
+
+[phases.install]
+# Install all dependencies (workspace aware)
+cmds = [
+    "npm ci"
+]
+
+[phases.build]
+# Build both backend and frontend
+cmds = [
+    "npm run build --workspace=apps/backend",
+    "npm run build --workspace=apps/frontend"
+]
+
+[start]
+# Start the NestJS backend server
+cmd = "node apps/backend/dist/main.js"
+
+[variables]
+# Environment variables
+NODE_ENV = "production"
+PORT = "3001"
+
+# You'll need to set these in Dokploy's environment variables section:
+# - MONGODB_URI: MongoDB connection string
+# - JWT_SECRET: JWT secret for authentication
+# - REDIS_HOST: Redis host (if using Redis)
+# - REDIS_PORT: Redis port (if using Redis)
+# - FRONTEND_URL: Your frontend URL for CORS

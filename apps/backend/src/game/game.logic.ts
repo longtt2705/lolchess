@@ -180,13 +180,14 @@ export class GameLogic {
 
   public static getAdjacentSquares(square: Square): Square[] {
     return [
-      { x: square.x - 1, y: square.y - 1 },
-      { x: square.x - 1, y: square.y },
-      { x: square.x - 1, y: square.y + 1 },
-      { x: square.x, y: square.y - 1 },
-      { x: square.x + 1, y: square.y },
-      { x: square.x + 1, y: square.y + 1 },
-      { x: square.x, y: square.y + 1 },
+      { x: square.x - 1, y: square.y - 1 }, // Northwest
+      { x: square.x - 1, y: square.y }, // West
+      { x: square.x - 1, y: square.y + 1 }, // Southwest
+      { x: square.x, y: square.y - 1 }, // North
+      { x: square.x, y: square.y + 1 }, // South
+      { x: square.x + 1, y: square.y - 1 }, // Northeast (was missing!)
+      { x: square.x + 1, y: square.y }, // East
+      { x: square.x + 1, y: square.y + 1 }, // Southeast
     ];
   }
 
@@ -221,7 +222,21 @@ export class GameLogic {
     targetPosition: Square,
     actionDetails: ActionDetails
   ): Game {
-    const targetChess = this.getChess(game, !isBlue, targetPosition);
+    // First try to find an enemy piece
+    let targetChess = this.getChess(game, !isBlue, targetPosition);
+
+    // If no enemy piece found, check for neutral monsters (Drake, Baron)
+    if (!targetChess) {
+      targetChess =
+        game.board.find(
+          (chess) =>
+            chess.position.x === targetPosition.x &&
+            chess.position.y === targetPosition.y &&
+            chess.stats.hp > 0 &&
+            chess.ownerId === "neutral"
+        ) || null;
+    }
+
     if (!targetChess) {
       throw new Error("Target not found");
     }
@@ -250,10 +265,27 @@ export class GameLogic {
     if (actionDetails && casterChess.skill) {
       actionDetails.skillName = casterChess.skill.name;
       actionDetails.targetPosition = skillPosition;
+
+      // Set targetId if there's a piece at the target position
+      if (skillPosition) {
+        const targetChess =
+          this.getChess(game, true, skillPosition) ||
+          this.getChess(game, false, skillPosition);
+        if (targetChess) {
+          actionDetails.targetId = targetChess.id;
+        }
+      }
     }
 
     const chessObject = ChessFactory.createChess(casterChess, game);
     chessObject.executeSkill(skillPosition);
+
+    // After executing the skill, check if there's a pulledToPosition in the payload
+    // This is used by Blitzcrank's Rocket Grab to communicate the final pull position
+    if (actionDetails && casterChess.skill?.payload?.pulledToPosition) {
+      actionDetails.pulledToPosition =
+        casterChess.skill.payload.pulledToPosition;
+    }
 
     return game;
   }

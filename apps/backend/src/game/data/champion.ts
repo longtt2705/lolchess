@@ -157,7 +157,7 @@ export const champions: ChampionData[] = [
       physicalResistance: 5,
       magicResistance: 5,
       attackRange: {
-        range: 8, // Passive range (base is 2 when disabled)
+        range: 2, // Passive range (base is 2 when disabled)
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -167,7 +167,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Draw a Bead",
       description:
-        "Increases Tristana's Attack Range from 2 to 8. (Cannot be disabled by Evenshroud)",
+        "Increases Tristana's Attack Range from 2 to 8. Every 4th attack deals bonus (10+50% of AP) physical damage to the target and his adjacent squares.",
       cooldown: 0,
     },
   },
@@ -189,8 +189,8 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Rocket Grab",
       description:
-        "Blitzcrank launches a rocket, dealing 15 + 60% AP magic damage and pulling the target to him.",
-      cooldown: 3,
+        "Blitzcrank launches a rocket diagonally, dealing (15 + 60% AP) magic damage and pulling the target to him.",
+      cooldown: 4,
       attackRange: {
         range: 4,
         diagonal: true,
@@ -367,7 +367,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Siphoning Strike",
       description:
-        "Nasus strikes his foe, dealing (20 + 40% of AP) magic damage and increasing 15 damage of his future Siphoning Strikes if he slays his target.",
+        "Nasus strikes his foe, dealing (20 + 40% of AP + 100% of AD) magic damage and increasing 15 damage of his future Siphoning Strikes if he slays his target.",
       cooldown: 2,
       attackRange: {
         range: 1,

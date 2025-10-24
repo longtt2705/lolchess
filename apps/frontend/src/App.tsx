@@ -10,6 +10,8 @@ import GameLobbyPage from './pages/GameLobbyPage'
 import BanPickPage from './pages/BanPickPage'
 import GamePage from './pages/GamePage'
 import ProfilePage from './pages/ProfilePage'
+import InstructionsPage from './pages/InstructionsPage'
+import DatabasePage from './pages/DatabasePage'
 import { useAuthInit } from './hooks/useAuthInit'
 
 const AppContainer = styled.div`
@@ -87,6 +89,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/instructions" element={<InstructionsPage />} />
+          <Route path="/database" element={<DatabasePage />} />
           <Route path="/lobby" element={
             <ProtectedRoute>
               <GameLobbyPage />

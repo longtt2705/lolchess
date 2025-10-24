@@ -5,6 +5,7 @@ import { Chess, Game, GameDocument } from "./game.schema";
 import { GameLogic } from "./game.logic";
 import { RedisGameCacheService } from "../redis/redis-game-cache.service";
 import { ChessObject } from "./class/chess";
+import { ChessFactory } from "./class/chessFactory";
 
 // Ban/Pick patterns from RULE.md
 // 4 total bans (2 per player)
@@ -573,7 +574,7 @@ export class GameService {
   async executeAction(
     gameId: string,
     actionData: any
-  ): Promise<{ game: Game; message: string }> {
+  ): Promise<{ game: Game; oldGame?: Game; message: string }> {
     // Get game from Redis cache first
     const game = await this.getGameState(gameId);
     if (!game) {
@@ -591,6 +592,9 @@ export class GameService {
     }
 
     try {
+      // Store old game state (deep clone) before processing
+      const oldGame = JSON.parse(JSON.stringify(game));
+
       // Import GameLogic and process the action
       const { GameLogic } = await import("./game.logic");
 
@@ -613,6 +617,9 @@ export class GameService {
 
       return {
         game: { ...updatedGame, board: cleanedBoard } as any,
+        oldGame: updatedGame.lastAction
+          ? ({ ...oldGame, board: this.cleanBoard(oldGame) } as any)
+          : undefined,
         message: "Action executed successfully",
       };
     } catch (error) {
@@ -627,7 +634,13 @@ export class GameService {
   cleanBoard(updatedGame: Game): any[] {
     return updatedGame.board.map((piece) => {
       // Create ChessObject to calculate effective stats
-      const chessObject = new ChessObject(piece, updatedGame);
+      const chessObject = ChessFactory.createChess(piece, updatedGame);
+      if (chessObject.chess.name === "Yasuo") {
+        console.log(
+          "Yasuo stats:",
+          chessObject.getEffectiveStat(piece, "criticalChance")
+        );
+      }
 
       const cleanedPiece = {
         id: piece.id,
@@ -643,18 +656,12 @@ export class GameService {
         ownerId: piece.ownerId,
         stats: {
           hp: piece.stats.hp, // Current HP is not affected by modifiers
-          maxHp: chessObject.getEffectiveStat(piece, "maxHp"),
-          ad: chessObject.getEffectiveStat(piece, "ad"),
-          ap: chessObject.getEffectiveStat(piece, "ap"),
-          physicalResistance: chessObject.getEffectiveStat(
-            piece,
-            "physicalResistance"
-          ),
-          magicResistance: chessObject.getEffectiveStat(
-            piece,
-            "magicResistance"
-          ),
-          speed: chessObject.getEffectiveStat(piece, "speed"),
+          maxHp: chessObject.maxHp,
+          ad: chessObject.ad,
+          ap: chessObject.ap,
+          physicalResistance: chessObject.physicalResistance,
+          magicResistance: chessObject.magicResistance,
+          speed: chessObject.speed,
           attackRange: {
             diagonal: piece.stats.attackRange.diagonal,
             horizontal: piece.stats.attackRange.horizontal,
@@ -662,18 +669,12 @@ export class GameService {
             range: chessObject.range,
           },
           goldValue: piece.stats.goldValue, // Gold value is not affected by modifiers
-          sunder: chessObject.getEffectiveStat(piece, "sunder"),
-          criticalChance: chessObject.getEffectiveStat(piece, "criticalChance"),
-          criticalDamage: chessObject.getEffectiveStat(piece, "criticalDamage"),
-          cooldownReduction: chessObject.getEffectiveStat(
-            piece,
-            "cooldownReduction"
-          ),
-          lifesteal: chessObject.getEffectiveStat(piece, "lifesteal"),
-          damageAmplification: chessObject.getEffectiveStat(
-            piece,
-            "damageAmplification"
-          ),
+          sunder: chessObject.sunder,
+          criticalChance: chessObject.criticalChance,
+          criticalDamage: chessObject.criticalDamage,
+          cooldownReduction: chessObject.cooldownReduction,
+          lifesteal: chessObject.lifesteal,
+          damageAmplification: chessObject.damageAmplification,
         },
         // Include raw stats for comparison/debugging if needed
         rawStats: {
@@ -688,7 +689,7 @@ export class GameService {
             diagonal: piece.stats.attackRange.diagonal,
             horizontal: piece.stats.attackRange.horizontal,
             vertical: piece.stats.attackRange.vertical,
-            range: chessObject.range,
+            range: piece.stats.attackRange.range,
           },
           goldValue: piece.stats.goldValue,
           sunder: piece.stats.sunder || 0,
@@ -865,7 +866,7 @@ export class GameService {
   async buyItem(
     gameId: string,
     buyItemData: { itemId: string; championId: string }
-  ): Promise<{ game: Game; message: string }> {
+  ): Promise<{ game: Game; oldGame?: Game; message: string }> {
     const game = await this.getGameState(gameId);
     if (!game) {
       return {
@@ -882,6 +883,9 @@ export class GameService {
     }
 
     try {
+      // Store old game state (deep clone) before processing
+      const oldGame = JSON.parse(JSON.stringify(game));
+
       // Get the current user from the request (would need to be passed in properly)
       // For now, we'll determine from the championId ownership
       const champion = game.board.find(
@@ -914,6 +918,9 @@ export class GameService {
 
       return {
         game: { ...updatedGame, board: cleanedBoard } as any,
+        oldGame: updatedGame.lastAction
+          ? ({ ...oldGame, board: this.cleanBoard(oldGame) } as any)
+          : undefined,
         message: "Item purchased successfully",
       };
     } catch (error) {

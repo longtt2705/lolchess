@@ -20,7 +20,7 @@ The primary objective of League of Legends Chess is to defeat the opponent's **P
 
 ## 3. PHASE 1: BAN & PICK
 Before the game begins, players engage in a champion selection phase.
-1.  **Ban Phase:** Starting with the Blue Side, each player bans one champion, alternating until a total of 10 champions are banned (5 per player). Banned champions cannot be picked.
+1.  **Ban Phase:** Starting with the Blue Side, each player bans one champion, alternating until a total of 4 champions are banned (2 per player). Banned champions cannot be picked.
 2.  **Pick Phase:** Starting with the Blue Side, players pick champions one by one in a snake draft format (Blue-Red-Red-Blue-Blue-Red, etc.) until each player has selected 5 champions. These 5 champions will take the place of the traditional Knights, Bishops, and Queen pieces.
 
 ## 4. THE PIECES & CHARACTERISTICS
@@ -40,7 +40,7 @@ All pieces in the game have the following attributes:
 * **Objective:** You lose the game if your Poro is slain.
 * **Movement:** Can move 1 square in any of the 8 directions.
 * **Attacks:** Cannot attack.
-* **Stats:** 500 HP, 50 Physical Resistance, 50 Magic Resistance.
+* **Stats:** 100 HP, 0 Physical Resistance, 0 Magic Resistance.
 * **Gold Value:** N/A (Game ends).
 
 #### **Champion (Queen, Bishops, Knights)**
@@ -48,47 +48,46 @@ All pieces in the game have the following attributes:
 * **Attacks:** Can attack any piece within its Attack Range. Blocked by any piece in its path.
 * **Special Ability:** Each champion has a unique ability that can be activated instead of moving or attacking.
 * **Items:** Can be equipped with up to 3 items to enhance stats.
-* **Stats:** Varies by champion.
+* **Base Stats (default):** 80 HP, 50 AD, 0 AP, 10 Physical Resistance, 10 Magic Resistance, Speed 1, Attack Range 2. Stats vary by champion.
 * **Gold Value:** 50
 
 #### **Siege Minion (Rook)**
 * **Movement:** Speed of 1 (can move 1 square horizontally or vertically).
-* **Attacks:** Has infinite Attack Range horizontally and vertically. The attack stops at the first enemy piece it hits. Blocked by any piece (friendly or enemy) in its path.
-* **Stats:** 150 HP, 40 AD, 0 AP, 10 Physical Resistance, 10 Magic Resistance.
+* **Attacks:** Has Attack Range of 8 horizontally and vertically. The attack stops at the first enemy piece it hits. Blocked by any piece (friendly or enemy) in its path.
+* **Stats:** 250 HP, 40 AD, 0 AP, 10 Physical Resistance, 10 Magic Resistance.
 * **Gold Value:** 30
 
 #### **Melee Minion (Pawn)**
 * **Movement:** Can only move 1 square forward (towards the opponent's side).
 * **Attacks:** Attack Range of 1. Can attack any of the 8 squares immediately surrounding it.
 * **Promotion:** If a Melee Minion reaches the opponent's back rank (rank 8 for Blue, rank 1 for Red), it is immediately promoted to a **Super Minion**.
-* **Stats:** 50 HP, 25 AD, 0 AP, 5 Physical Resistance, 0 Magic Resistance.
+* **Stats:** 100 HP, 25 AD, 0 AP, 5 Physical Resistance, 0 Magic Resistance.
 * **Gold Value:** 10
 
 #### **Caster Minion (Pawn)**
 * **Movement:** Can only move 1 square forward (towards the opponent's side).
 * **Attacks:** Attack Range of 2. Can attack any of the 8 squares immediately surrounding it.
-* **Stats:** 30 HP, 35 AD, 0 AP, 0 Physical Resistance, 0 Magic Resistance.
+* **Stats:** 50 HP, 35 AD, 0 AP, 0 Physical Resistance, 0 Magic Resistance.
 * **Gold Value:** 15
 
 #### **Super Minion (Promoted Pawn)**
 * A stronger version of the Melee Minion with significantly increased stats.
-* **Movement & Attack:** Same as Melee Minion (moves 1 forward, attacks all 8 adjacent squares).
-* **Stats:** 300 HP, 50 AD, 0 AP, 25 Physical Resistance, 15 Magic Resistance.
+* **Movement & Attack:** Same as Melee Minion (moves 1 forward, attacks all 8 adjacent squares). Speed of 2.
+* **Stats:** 200 HP (upon promotion), 50 AD, 0 AP, 25 Physical Resistance, 15 Magic Resistance.
 * **Gold Value:** 40
 
 ## 5. GAMEPLAY & TURN STRUCTURE
 Blue Side always moves first. On your turn, you must perform **one** of the following actions with **one** of your pieces:
 * **Move:** Move a piece to a valid empty square according to its movement rules.
+* **Castle:** If the piece is a Poro and it has not moved before, it can castle with a Siege Minion. The Siege Minion must be in the same rank as the Poro and not have moved before. The Poro can move 2 squares horizontally and the Siege Minion will move to the other side of the Poro.
 * **Attack:** Use a piece to attack an opponent's piece according to its attack rules. It can only attack pieces that are in its Attack Range. And cannot attack pieces behind the blocker.
+* **Use Ability:** Champions can use their special ability instead of moving or attacking (subject to cooldown).
 * **Buy Items:** Forgo any action on the board to purchase items from the shop for a champion.
 
 ### Combat
 When a piece attacks another, damage is calculated.
 * **Critical Strike:** A critical strike deals 150% damage.
-* **Critical Strike Chance:** 20%
 * **Critical Strike Damage:** 150%
-* **Critical Strike Resistance:** 20%
-* **Critical Strike Resistance:** 20%
 
 The damage is subtracted from the defender's HP. If a piece's HP drops to 0 or below, it is slain and removed from the board. The attacking player gains Gold equal to the slain piece's Gold Value. The defending piece does not deal damage back unless a special ability is involved.
 

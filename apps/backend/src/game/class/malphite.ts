@@ -1,9 +1,11 @@
 import { ChessObject } from "./chess";
 
 export class Malphite extends ChessObject {
-
   preEnterTurn(isBlueTurn: boolean): void {
     super.preEnterTurn(isBlueTurn);
+    if (this.chess.stats.hp <= 0) {
+      return;
+    }
     if (this.chess.skill.currentCooldown > 0) {
       return;
     }
@@ -13,7 +15,11 @@ export class Malphite extends ChessObject {
     this.applyShield(this.chess.stats.maxHp * 0.1, 2, "granite_shield");
   }
 
-  protected postTakenDamage(attacker: ChessObject, damage: number, damageType: "physical" | "magic" | "true"): void {
+  protected postTakenDamage(
+    attacker: ChessObject,
+    damage: number,
+    damageType: "physical" | "magic" | "true"
+  ): void {
     super.postTakenDamage(attacker, damage, damageType);
     if (damage > 0) {
       this.chess.skill.currentCooldown = this.skillCooldown;

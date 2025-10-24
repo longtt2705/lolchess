@@ -1,4 +1,5 @@
-import { ChessPiece, ChessPosition, GameState } from "../hooks/useGame";
+import { getSkillAnimationRenderer } from "../animations/SkillAnimator";
+import { ChessPosition, GameState } from "../hooks/useGame";
 
 export interface AnimationAction {
   id: string;
@@ -35,6 +36,8 @@ export interface SkillAnimationData {
   casterPosition: ChessPosition;
   skillName: string;
   targetPosition?: ChessPosition;
+  targetId?: string;
+  pulledToPosition?: ChessPosition; // For Rocket Grab: actual position the target was pulled to
 }
 
 export interface DamageAnimationData {
@@ -137,20 +140,25 @@ export class AnimationEngine {
       const caster = gameState.board.find((p) => p.id === lastAction.casterId);
 
       if (caster) {
+        // Get skill-specific animation renderer to use its duration
+        const skillRenderer = getSkillAnimationRenderer(lastAction.skillName);
+
         animations.push({
           id: `skill_${lastAction.timestamp}`,
           type: "skill",
           timestamp: lastAction.timestamp,
           delay: currentDelay,
-          duration: 800,
+          duration: skillRenderer.duration, // Use skill-specific duration
           data: {
             casterId: lastAction.casterId,
             casterPosition: lastAction.casterPosition,
             skillName: lastAction.skillName,
             targetPosition: lastAction.targetPosition,
+            targetId: lastAction.targetId, // Add targetId for skill animations
+            pulledToPosition: lastAction.pulledToPosition, // Add pulledToPosition for Rocket Grab
           } as SkillAnimationData,
         });
-        currentDelay += 800;
+        currentDelay += skillRenderer.duration;
       }
     }
 

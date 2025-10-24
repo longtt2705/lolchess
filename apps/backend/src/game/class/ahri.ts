@@ -25,6 +25,9 @@ export class Ahri extends ChessObject {
       unique: true,
       appliedAt: Date.now(),
       casterPlayerId: casterPlayerId,
+      casterName: this.chess.name,
+      currentStacks: 0,
+      maximumStacks: 1,
     } as Debuff;
   }
 
@@ -35,10 +38,11 @@ export class Ahri extends ChessObject {
   }
 
   skill(position?: Square): void {
-    this.move(position);
+    this.move(position, this.chess.skill?.attackRange?.range);
 
     // Deal damage and apply Spirit Rush debuff to any piece at or adjacent to the target square
     GameLogic.getAdjacentSquares(position).forEach((square) => {
+      console.log({ square });
       const targetChess = GameLogic.getChess(
         this.game,
         !this.chess.blue,
@@ -52,14 +56,11 @@ export class Ahri extends ChessObject {
           10 + this.ap * 0.5,
           "magic",
           this,
-          this.sunder,
+          this.sunder
         );
 
         // Apply Spirit Rush debuff
-        this.applySpiritRush(
-          targetChessObject,
-          this.chess.ownerId
-        );
+        this.applySpiritRush(targetChessObject, this.chess.ownerId);
       }
     });
   }
