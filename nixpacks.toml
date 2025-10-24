@@ -1,5 +1,6 @@
 # Nixpacks Configuration for LOL Chess Monorepo
 # Deploy via Dokploy
+# Set APP_TYPE environment variable to "backend" or "frontend"
 
 [phases.setup]
 # Use Node.js 22 (matching your fnm use v22 requirement)
@@ -12,24 +13,44 @@ cmds = [
 ]
 
 [phases.build]
-# Build both backend and frontend
+# Build based on APP_TYPE environment variable
 cmds = [
-    "npm run build --workspace=apps/backend",
-    "npm run build --workspace=apps/frontend"
+    '''
+    if [ "$APP_TYPE" = "frontend" ]; then
+        echo "Building frontend..."
+        npm run build --workspace=apps/frontend
+    elif [ "$APP_TYPE" = "backend" ]; then
+        echo "Building backend..."
+        npm run build --workspace=apps/backend
+    else
+        echo "Building both backend and frontend..."
+        npm run build --workspace=apps/backend
+        npm run build --workspace=apps/frontend
+    fi
+    '''
 ]
 
 [start]
-# Start the NestJS backend server
-cmd = "node apps/backend/dist/main.js"
+# Start command based on APP_TYPE
+cmd = '''
+if [ "$APP_TYPE" = "frontend" ]; then
+    echo "Starting frontend with static file server..."
+    npx serve -s apps/frontend/dist -l 3000
+elif [ "$APP_TYPE" = "backend" ]; then
+    echo "Starting backend..."
+    node apps/backend/dist/main.js
+else
+    echo "Starting backend (default)..."
+    node apps/backend/dist/main.js
+fi
+'''
 
-[variables]
-# Environment variables
-NODE_ENV = "production"
-PORT = "3001"
 
 # You'll need to set these in Dokploy's environment variables section:
-# - MONGODB_URI: MongoDB connection string
-# - JWT_SECRET: JWT secret for authentication
-# - REDIS_HOST: Redis host (if using Redis)
-# - REDIS_PORT: Redis port (if using Redis)
-# - FRONTEND_URL: Your frontend URL for CORS
+# - APP_TYPE: "backend" or "frontend" (determines what to build/run)
+# - MONGODB_URI: MongoDB connection string (backend only)
+# - JWT_SECRET: JWT secret for authentication (backend only)
+# - REDIS_HOST: Redis host (backend only, optional)
+# - REDIS_PORT: Redis port (backend only, optional)
+# - FRONTEND_URL: Your frontend URL for CORS (backend only)
+# - VITE_API_URL: Backend API URL (frontend only)

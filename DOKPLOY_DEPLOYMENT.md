@@ -1,5 +1,17 @@
 # Dokploy Deployment Guide for LOL Chess
 
+## Overview
+
+This monorepo contains both backend (NestJS) and frontend (React) applications. You can deploy them separately or together using the `APP_TYPE` environment variable.
+
+## Deployment Strategies
+
+### Strategy 1: Separate Deployments (Recommended)
+Deploy backend and frontend as separate Dokploy applications for better scalability.
+
+### Strategy 2: Combined Deployment
+Deploy both in a single application (backend serves frontend static files).
+
 ## Prerequisites
 
 1. **Dokploy instance** set up and running
@@ -9,31 +21,26 @@
 
 ## Deployment Steps
 
-### 1. Create New Application in Dokploy
+### Option A: Deploy Backend Only
+
+#### 1. Create Backend Application in Dokploy
 
 1. Log in to your Dokploy dashboard
 2. Click **"Create New Application"**
-3. Select **"Git Repository"** as the source
-4. Connect your GitHub/GitLab repository
-5. Select the `main` branch
+3. Name it **"lolchess-backend"**
+4. Select **"Git Repository"** as the source
+5. Connect your GitHub/GitLab repository
+6. Select the `main` branch
 
-### 2. Configure Build Settings
+#### 2. Configure Backend Build Settings
 
-Dokploy will automatically detect the `nixpacks.toml` file and use it for building.
+The `nixpacks.toml` will automatically detect the APP_TYPE and build accordingly.
 
-**Build Configuration:**
-- **Framework**: Nixpacks (auto-detected)
-- **Root Directory**: `/` (project root)
-- **Build Command**: Handled by nixpacks.toml
-- **Start Command**: Handled by nixpacks.toml
-
-### 3. Set Environment Variables
-
-In Dokploy's Environment Variables section, add the following:
-
-#### Backend Environment Variables
-
+**Environment Variables for Backend:**
 ```bash
+# Application Type
+APP_TYPE=backend
+
 # Node Environment
 NODE_ENV=production
 PORT=3001
@@ -47,7 +54,7 @@ JWT_SECRET=your-super-secret-jwt-key-here-change-this-in-production
 # Redis (if using)
 REDIS_HOST=your-redis-host
 REDIS_PORT=6379
-REDIS_PASSWORD=your-redis-password (if required)
+REDIS_PASSWORD=your-redis-password
 
 # CORS Configuration
 FRONTEND_URL=https://your-frontend-domain.com
@@ -57,31 +64,77 @@ ALLOWED_ORIGINS=https://your-frontend-domain.com
 SESSION_SECRET=your-session-secret-key
 ```
 
-### 4. Configure Networking
+#### 3. Configure Backend Networking
+- **Container Port**: `3001`
+- **Domain**: `api.your-domain.com` or `your-domain.com/api`
+- **Enable WebSocket Support**: ✅ (required for real-time features)
 
-#### Backend Port Mapping
-- **Container Port**: `3001` (internal)
-- **External Port**: `80` or `443` (with SSL)
-- **Domain**: `api.your-domain.com`
+### Option B: Deploy Frontend Only
 
-#### WebSocket Support
-Ensure WebSocket support is enabled in Dokploy for real-time game features.
+#### 1. Create Frontend Application in Dokploy
 
-### 5. Static File Serving (Frontend)
+1. Click **"Create New Application"**
+2. Name it **"lolchess-frontend"**
+3. Use the same Git repository
+4. Select the `main` branch
 
-Since the frontend is built into `apps/frontend/dist/`, you have two options:
+#### 2. Configure Frontend Build Settings
 
-#### Option A: Serve Frontend via Backend (Recommended for simplicity)
-Add this to your NestJS `main.ts`:
+**Environment Variables for Frontend:**
+```bash
+# Application Type
+APP_TYPE=frontend
 
+# Node Environment
+NODE_ENV=production
+PORT=3000
+
+# Backend API URL (point to your backend deployment)
+VITE_API_URL=https://api.your-domain.com
+```
+
+#### 3. Configure Frontend Networking
+- **Container Port**: `3000`
+- **Domain**: `your-domain.com` or `app.your-domain.com`
+
+### Option C: Combined Deployment (Backend + Frontend)
+
+#### 1. Create Combined Application
+
+1. Create application named **"lolchess"**
+2. Connect to repository
+
+#### 2. Configure Combined Build
+
+**Environment Variables:**
+```bash
+# Leave APP_TYPE empty or omit it to build both
+# APP_TYPE=
+
+NODE_ENV=production
+PORT=3001
+
+# All backend environment variables
+MONGODB_URI=mongodb+srv://...
+JWT_SECRET=your-jwt-secret
+REDIS_HOST=your-redis-host
+REDIS_PORT=6379
+
+# Frontend configuration
+VITE_API_URL=/api
+```
+
+#### 3. Update Backend to Serve Frontend
+
+Add to `apps/backend/src/main.ts`:
 ```typescript
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as express from 'express';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
   // Enable CORS
   app.enableCors({
@@ -89,13 +142,18 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // API routes prefix
+  app.setGlobalPrefix('api');
+
   // Serve static frontend files
-  app.use(express.static(join(__dirname, '../../frontend/dist')));
+  app.useStaticAssets(join(__dirname, '../../frontend/dist'));
   
   // Fallback to index.html for SPA routing
-  app.use('*', (req, res) => {
+  app.use('*', (req, res, next) => {
     if (!req.path.startsWith('/api') && !req.path.startsWith('/socket.io')) {
       res.sendFile(join(__dirname, '../../frontend/dist/index.html'));
+    } else {
+      next();
     }
   });
 
@@ -104,12 +162,66 @@ async function bootstrap() {
 bootstrap();
 ```
 
-#### Option B: Separate Frontend Deployment
-Deploy frontend separately to:
-- **Vercel** (easiest for React apps)
-- **Netlify**
-- **Cloudflare Pages**
-- Or another Dokploy app serving static files
+## Environment Variables Reference
+
+### Backend Variables (APP_TYPE=backend)
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `APP_TYPE` | Yes | Set to "backend" | `backend` |
+| `NODE_ENV` | Yes | Environment | `production` |
+| `PORT` | Yes | Server port | `3001` |
+| `MONGODB_URI` | Yes | MongoDB connection | `mongodb+srv://...` |
+| `JWT_SECRET` | Yes | JWT secret key | `your-secret-key` |
+| `REDIS_HOST` | Optional | Redis host | `redis.example.com` |
+| `REDIS_PORT` | Optional | Redis port | `6379` |
+| `FRONTEND_URL` | Yes | Frontend URL for CORS | `https://app.example.com` |
+
+### Frontend Variables (APP_TYPE=frontend)
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `APP_TYPE` | Yes | Set to "frontend" | `frontend` |
+| `NODE_ENV` | Yes | Environment | `production` |
+| `PORT` | Yes | Server port | `3000` |
+| `VITE_API_URL` | Yes | Backend API URL | `https://api.example.com` |
+
+## Complete Deployment Example
+
+### Example 1: Separate Backend and Frontend
+
+**Backend Deployment (lolchess-backend):**
+```bash
+APP_TYPE=backend
+NODE_ENV=production
+PORT=3001
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/lolchess
+JWT_SECRET=super-secret-jwt-key-change-in-production
+REDIS_HOST=redis.example.com
+REDIS_PORT=6379
+FRONTEND_URL=https://lolchess.example.com
+```
+
+**Frontend Deployment (lolchess-frontend):**
+```bash
+APP_TYPE=frontend
+NODE_ENV=production
+PORT=3000
+VITE_API_URL=https://api.lolchess.example.com
+```
+
+### Example 2: Combined Deployment
+
+**Single Deployment (lolchess):**
+```bash
+# Omit APP_TYPE or leave empty to build both
+NODE_ENV=production
+PORT=3001
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/lolchess
+JWT_SECRET=super-secret-jwt-key
+VITE_API_URL=/api
+FRONTEND_URL=https://lolchess.example.com
+```
 
 ### 6. Database Setup
 
