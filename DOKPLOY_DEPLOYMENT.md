@@ -56,9 +56,12 @@ REDIS_HOST=your-redis-host
 REDIS_PORT=6379
 REDIS_PASSWORD=your-redis-password
 
-# CORS Configuration
-FRONTEND_URL=https://your-frontend-domain.com
-ALLOWED_ORIGINS=https://your-frontend-domain.com
+# CORS Configuration - IMPORTANT!
+# Comma-separated list of allowed origins
+ALLOWED_ORIGINS=https://lolchess.rakpong.store,https://lolchess-api.rakpong.store
+
+# Alternative: Use environment-specific variables
+FRONTEND_URL=https://lolchess.rakpong.store
 
 # Optional: Session Secret
 SESSION_SECRET=your-session-secret-key
