@@ -155,6 +155,8 @@ export class GameLogic {
     this.checkGameOver(game);
     this.spawnNeutralMonsters(game);
     this.startNextRound(game);
+    // Check if game is over again after starting the next round
+    this.checkGameOver(game);
     return game;
   }
 
@@ -295,8 +297,14 @@ export class GameLogic {
   }
 
   private static startNextRound(game: Game): Game {
-    // Award passive gold income (3 gold per turn) to the player who just completed their turn
-    // BEFORE incrementing the round
+    // Now increment the round for the next player
+    game.currentRound++;
+
+    if (game.currentRound % 10 === 0) {
+      // Award gold for every 10th round
+      game.players[0].gold += 50;
+      game.players[1].gold += 50;
+    }
     const currentPlayerId = this.isBlueTurn(game)
       ? game.bluePlayer
       : game.redPlayer;
@@ -308,9 +316,6 @@ export class GameLogic {
     if (playerIndex !== -1) {
       game.players[playerIndex].gold += 3;
     }
-
-    // Now increment the round for the next player
-    game.currentRound++;
 
     // Prepare pieces for the next turn
     game.board.forEach((chess) => {
@@ -638,6 +643,7 @@ export class GameLogic {
         criticalChance: 0,
         criticalDamage: 150,
         damageAmplification: 0,
+        hpRegen: 0,
       },
       Champion: {
         maxHp: 80,
@@ -657,6 +663,7 @@ export class GameLogic {
         criticalChance: 0,
         criticalDamage: 150,
         damageAmplification: 0,
+        hpRegen: 0,
       },
       "Siege Minion": {
         maxHp: 250,
@@ -676,6 +683,7 @@ export class GameLogic {
         criticalChance: 0,
         criticalDamage: 150,
         damageAmplification: 0,
+        hpRegen: 0,
       },
       "Melee Minion": {
         maxHp: 100,
@@ -695,6 +703,7 @@ export class GameLogic {
         criticalChance: 0,
         criticalDamage: 150,
         damageAmplification: 0,
+        hpRegen: 0,
       },
       "Caster Minion": {
         maxHp: 50,
@@ -714,6 +723,7 @@ export class GameLogic {
         criticalChance: 0,
         criticalDamage: 150,
         damageAmplification: 0,
+        hpRegen: 0,
       },
       "Super Minion": {
         maxHp: 500,
@@ -733,6 +743,7 @@ export class GameLogic {
         criticalChance: 0,
         criticalDamage: 150,
         damageAmplification: 0,
+        hpRegen: 0,
       },
     };
 

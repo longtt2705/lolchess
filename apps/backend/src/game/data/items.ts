@@ -124,6 +124,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "ad", value: 15, type: "add" },
       { stat: "sunder", value: 20, type: "add" },
+      { stat: "damageAmplification", value: 10, type: "add" },
     ],
     isBasic: false,
     recipe: ["bf_sword", "recurve_bow"],
@@ -137,8 +138,10 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "ad", value: 15, type: "add" },
       { stat: "ap", value: 25, type: "add" },
+      { stat: "damageAmplification", value: 18, type: "add" },
     ],
     isBasic: false,
+    unique: true,
     recipe: ["bf_sword", "needlessly_rod"],
   },
   {
@@ -148,7 +151,8 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/Bloodthirster.png",
     effects: [
-      { stat: "ad", value: 12, type: "add" },
+      { stat: "ad", value: 15, type: "add" },
+      { stat: "magicResistance", value: 20, type: "add" },
       { stat: "lifesteal", value: 25, type: "add" },
       {
         stat: "lifesteal",
@@ -213,7 +217,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/Deathblade.png",
     effects: [
       { stat: "ad", value: 30, type: "add" },
-      { stat: "damageAmplification", value: 10, type: "add" },
+      { stat: "damageAmplification", value: 15, type: "add" },
     ],
     isBasic: false,
     recipe: ["bf_sword", "bf_sword"],
@@ -229,7 +233,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/RedBuff.png",
     effects: [
       { stat: "sunder", value: 30, type: "add" },
-      { stat: "damageAmplification", value: 3, type: "add" },
+      { stat: "damageAmplification", value: 5, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "recurve_bow"],
@@ -325,7 +329,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/RabadonsDeathcap.png",
     effects: [
       { stat: "ap", value: 50, type: "add" },
-      { stat: "damageAmplification", value: 10, type: "add" },
+      { stat: "damageAmplification", value: 15, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "needlessly_rod"],
@@ -354,6 +358,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "ap", value: 25, type: "add" },
       { stat: "physicalResistance", value: 20, type: "add" },
+      { stat: "maxHp", value: 20, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "chain_vest"],
@@ -416,7 +421,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "gargoyle_stoneplate",
     name: "Gargoyle Stoneplate",
-    description: "Gain 10 Armor and 10 Magic Resist when HP is below 40%.",
+    description: "Gain 20 Armor and 20 Magic Resist when HP is below 40%.",
     cost: 0,
     icon: "/icons/GargoyleStoneplate.png",
     effects: [
@@ -424,14 +429,14 @@ export const combinedItems: ItemData[] = [
       { stat: "magicResistance", value: 20, type: "add" },
       {
         stat: "physicalResistance",
-        value: 10,
+        value: 20,
         type: "add",
         condition: (chess) =>
           chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
       },
       {
         stat: "magicResistance",
-        value: 10,
+        value: 20,
         type: "add",
         condition: (chess) =>
           chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
@@ -475,14 +480,14 @@ export const combinedItems: ItemData[] = [
   {
     id: "dragon_claw",
     name: "Dragon's Claw",
-    description: "+15 more magic resistance when HP is below 40%",
+    description: "+30 more magic resistance when HP is below 40%",
     cost: 0,
     icon: "/icons/DragonsClaw.png",
     effects: [
       { stat: "magicResistance", value: 40, type: "add" },
       {
         stat: "magicResistance",
-        value: 15,
+        value: 30,
         type: "add",
         condition: (chess) =>
           chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
@@ -509,7 +514,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "quicksilver",
     name: "Quicksilver",
-    description: "Resistant to all active debuffs for 3 turns",
+    description: "Resistant to all active debuffs for 5 turns",
     cost: 0,
     icon: "/icons/Quicksilver.png",
     effects: [
@@ -532,6 +537,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "maxHp", value: 65, type: "add" },
       { stat: "maxHp", value: 1.1, type: "multiply" },
+      { stat: "hpRegen", value: 1, type: "add" },
     ],
     isBasic: false,
     recipe: ["giants_belt", "giants_belt"],
@@ -546,6 +552,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "criticalChance", value: 25, type: "add" },
       { stat: "maxHp", value: 35, type: "add" },
+      { stat: "damageAmplification", value: 8, type: "add" },
     ],
     isBasic: false,
     recipe: ["giants_belt", "sparring_gloves"],
@@ -559,7 +566,10 @@ export const combinedItems: ItemData[] = [
     description: "Reduce 1 round of cooldown of skill after using it.",
     cost: 0,
     icon: "/icons/BlueBuff.png",
-    effects: [{ stat: "cooldownReduction", value: 10, type: "add" }],
+    effects: [
+      { stat: "cooldownReduction", value: 10, type: "add" },
+      { stat: "damageAmplification", value: 5, type: "add" },
+    ],
     isBasic: false,
     recipe: ["tear", "tear"],
     unique: true,
@@ -581,14 +591,23 @@ export const combinedItems: ItemData[] = [
   {
     id: "hand_of_justice",
     name: "Hand of Justice",
-    description: "Gain additional 15 damage when HP is below 40%.",
+    description: "Gain additional 15 AD and Lifesteal when HP is below 40%.",
     cost: 0,
     icon: "/icons/HandofJustice.png",
     effects: [
       { stat: "criticalChance", value: 25, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
+      { stat: "lifesteal", value: 15, type: "add" },
+      { stat: "ad", value: 10, type: "add" },
       {
         stat: "ad",
+        value: 15,
+        type: "add",
+        condition: (chess) =>
+          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
+      },
+      {
+        stat: "lifesteal",
         value: 15,
         type: "add",
         condition: (chess) =>
@@ -602,7 +621,7 @@ export const combinedItems: ItemData[] = [
     id: "adaptive_helm",
     name: "Adaptive Helm",
     description:
-      "Gain 15 Armor or 15 Magic Resist for 3 turns when taken damage based on the damage type.",
+      "Gain 20 Armor or 20 Magic Resist for 3 turns when taken damage based on the damage type.",
     cost: 0,
     icon: "/icons/AdaptiveHelm.png",
     effects: [
@@ -621,6 +640,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "maxHp", value: 35, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
+      { stat: "hpRegen", value: 3, type: "add" },
     ],
     isBasic: false,
     recipe: ["tear", "giants_belt"],
@@ -632,7 +652,11 @@ export const combinedItems: ItemData[] = [
       "Deal damage will inflict the venom debuff on the enemy for 3 turns. If the enemy doesn't have the venom debuff, reduce all their active shields by 50%.",
     cost: 0,
     icon: "/icons/SerpentsFang.png",
-    effects: [{ stat: "criticalChance", value: 50, type: "add" }],
+    effects: [
+      { stat: "criticalChance", value: 50, type: "add" },
+      { stat: "ad", value: 10, type: "add" },
+      { stat: "ap", value: 10, type: "add" },
+    ],
     isBasic: false,
     recipe: ["sparring_gloves", "sparring_gloves"],
     unique: true,

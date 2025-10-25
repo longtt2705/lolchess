@@ -147,7 +147,7 @@ const ChessDetailPanel = styled.div`
   border-radius: 12px;
   padding: 18px;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: visible;
   max-height: calc(70vh - 32px);
   box-shadow: 
     inset 0 0 20px rgba(0, 0, 0, 0.3),
@@ -262,49 +262,11 @@ const ChessDetailPanel = styled.div`
       border: 1px solid var(--border);
       position: relative;
       cursor: help;
+      transition: all 0.2s ease;
       
-      &::before {
-        content: attr(data-tooltip);
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%) translateY(-8px);
-        background: rgba(10, 14, 39, 0.98);
-        color: var(--primary-text);
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 11px;
-        white-space: nowrap;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s ease, transform 0.2s ease;
-        z-index: 1000;
-        border: 1px solid var(--gold);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      }
-      
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%) translateY(-2px);
-        border: 6px solid transparent;
-        border-top-color: var(--gold);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s ease, transform 0.2s ease;
-        z-index: 1000;
-      }
-      
-      &:hover::before,
-      &:hover::after {
-        opacity: 1;
-        transform: translateX(-50%) translateY(-4px);
-      }
-      
-      &:hover::after {
-        transform: translateX(-50%) translateY(2px);
+      &:hover {
+        border-color: var(--gold);
+        background: rgba(60, 60, 65, 0.8);
       }
       
       .stat-label {
@@ -1038,10 +1000,12 @@ const Board = styled.div`
     }
     
     &.valid-skill {
-      background: rgba(59, 130, 246, 0.3);
-      border-color: #3b82f6;
+      background: rgba(168, 85, 247, 0.35);
+      border-color: #a855f7;
       cursor: pointer;
       position: relative;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+      animation: skillPulse 1.5s ease-in-out infinite;
       
       &:after {
         content: '⚡';
@@ -1049,14 +1013,26 @@ const Board = styled.div`
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        color: #3b82f6;
-        font-size: 16px;
+        color: #a855f7;
+        font-size: 20px;
         font-weight: bold;
+        text-shadow: 0 0 8px rgba(168, 85, 247, 0.8);
+        filter: drop-shadow(0 0 4px rgba(168, 85, 247, 1));
       }
       
       &:hover {
-        background: rgba(59, 130, 246, 0.4);
-        transform: scale(1.02);
+        background: rgba(168, 85, 247, 0.5);
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
+      }
+      
+      @keyframes skillPulse {
+        0%, 100% {
+          box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(168, 85, 247, 0.9);
+        }
       }
     }
     
@@ -1653,6 +1629,32 @@ const Confetti = styled(motion.div)`
   border-radius: 50%;
 `
 
+const StatTooltip = styled(motion.div)`
+  position: fixed;
+  background: rgba(10, 14, 39, 0.98);
+  color: var(--primary-text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 10000;
+  border: 1px solid var(--gold);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  margin-top: -8px;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--gold);
+  }
+`
+
 const TurnIndicator = styled(motion.div) <{ isMyTurn: boolean }>`
   text-align: center;
   padding: 16px 40px;
@@ -2161,6 +2163,7 @@ const getStatIcon = (stat: string): string => {
     damageAmplification: '/icons/icon-da.png',
     cooldownReduction: '/icons/icon-cdr.webp',
     lifesteal: '/icons/icon-sv.png',
+    hpRegen: '/icons/icon-hp-regen.png',
   };
   return iconMap[stat] || '/icons/AD.svg';
 };
@@ -2240,6 +2243,9 @@ const GamePage: React.FC = () => {
 
   // Detail view state - separate from action selection
   const [detailViewPiece, setDetailViewPiece] = useState<ChessPiece | null>(null)
+
+  // Tooltip state for positioning
+  const [tooltipPosition, setTooltipPosition] = useState<{ top: number; left: number; content: string } | null>(null)
 
   // Get loading state from Redux for reset operation
   const isResetting = useAppSelector((state) => state.game.loading)
@@ -2787,8 +2793,47 @@ const GamePage: React.FC = () => {
     return false
   }
 
+  const damageReductionPercentage = (protectionFactor: number) => {
+    if (protectionFactor <= 0) {
+      return 0;
+    }
+    return Math.round(100 * protectionFactor / (protectionFactor + 50));
+  }
+
+  // Handle tooltip positioning
+  const handleTooltipShow = (e: React.MouseEvent<HTMLDivElement>, content: string) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setTooltipPosition({
+      top: rect.top - 10,
+      left: rect.left + rect.width / 2,
+      content
+    })
+  }
+
+  const handleTooltipHide = () => {
+    setTooltipPosition(null)
+  }
+
   return (
     <>
+      {/* Tooltip */}
+      <AnimatePresence>
+        {tooltipPosition && (
+          <StatTooltip
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              top: tooltipPosition.top,
+              left: tooltipPosition.left,
+            }}
+          >
+            {tooltipPosition.content}
+          </StatTooltip>
+        )}
+      </AnimatePresence>
+
       {/* Draw offer modal */}
       {drawOfferReceived && (
         <>
@@ -3064,7 +3109,11 @@ const GamePage: React.FC = () => {
               </div>
 
               <div className="stats-grid">
-                <div className="stat-item" data-tooltip="Attack Damage">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Attack Damage')}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/AD.svg" alt="Attack" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.ad !== detailViewPiece.stats.ad
                     ? `modified ${detailViewPiece.stats.ad > detailViewPiece.rawStats.ad ? 'buffed' : 'debuffed'}`
@@ -3073,7 +3122,11 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.ad}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Ability Power">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Ability Power')}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/AP.svg" alt="Ability" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.ap !== detailViewPiece.stats.ap
                     ? `modified ${detailViewPiece.stats.ap > detailViewPiece.rawStats.ap ? 'buffed' : 'debuffed'}`
@@ -3082,7 +3135,11 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.ap}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Physical Resistance">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, `Physical Resistance (${damageReductionPercentage(detailViewPiece.stats.physicalResistance)}%)`)}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/Armor.svg" alt="Physical Resistance" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.physicalResistance !== detailViewPiece.stats.physicalResistance
                     ? `modified ${detailViewPiece.stats.physicalResistance > detailViewPiece.rawStats.physicalResistance ? 'buffed' : 'debuffed'}`
@@ -3091,7 +3148,11 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.physicalResistance}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Magic Resistance">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, `Magic Resistance (${damageReductionPercentage(detailViewPiece.stats.magicResistance)}%)`)}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/MagicResist.svg" alt="Magic Resistance" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.magicResistance !== detailViewPiece.stats.magicResistance
                     ? `modified ${detailViewPiece.stats.magicResistance > detailViewPiece.rawStats.magicResistance ? 'buffed' : 'debuffed'}`
@@ -3100,7 +3161,11 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.magicResistance}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Movement Speed">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Movement Speed')}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/speed.png" alt="Speed" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.speed !== detailViewPiece.stats.speed
                     ? `modified ${detailViewPiece.stats.speed > detailViewPiece.rawStats.speed ? 'buffed' : 'debuffed'}`
@@ -3109,7 +3174,11 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.speed}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Attack Range">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Attack Range')}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/Range.svg" alt="Range" width={14} height={14} /></span>
                   <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.attackRange.range !== detailViewPiece.stats.attackRange.range
                     ? `modified ${detailViewPiece.stats.attackRange.range > detailViewPiece.rawStats.attackRange.range ? 'buffed' : 'debuffed'}`
@@ -3118,7 +3187,11 @@ const GamePage: React.FC = () => {
                     {detailViewPiece.stats.attackRange.range}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Sunder (Armor Penetration)">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Sunder (Armor Penetration)')}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/AS.svg" alt="Sunder" width={14} height={14} /></span>
                   <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.sunder !== (detailViewPiece as any).stats.sunder
                     ? `modified ${(detailViewPiece as any).stats.sunder > (detailViewPiece as any).rawStats.sunder ? 'buffed' : 'debuffed'}`
@@ -3127,7 +3200,11 @@ const GamePage: React.FC = () => {
                     {(detailViewPiece as any).stats.sunder || 0}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Critical Strike Chance (%)">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Critical Strike Chance (%)')}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/CritChance.svg" alt="Critical Chance" width={14} height={14} /></span>
                   <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.criticalChance !== (detailViewPiece as any).stats.criticalChance
                     ? `modified ${(detailViewPiece as any).stats.criticalChance > (detailViewPiece as any).rawStats.criticalChance ? 'buffed' : 'debuffed'}`
@@ -3136,7 +3213,11 @@ const GamePage: React.FC = () => {
                     {(detailViewPiece as any).stats.criticalChance || 0}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Critical Strike Damage (%)">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Critical Strike Damage (%)')}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/CritDamage.svg" alt="Critical Damage" width={14} height={14} /></span>
                   <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.criticalDamage !== (detailViewPiece as any).stats.criticalDamage
                     ? `modified ${(detailViewPiece as any).stats.criticalDamage > (detailViewPiece as any).rawStats.criticalDamage ? 'buffed' : 'debuffed'}`
@@ -3145,7 +3226,11 @@ const GamePage: React.FC = () => {
                     {(detailViewPiece as any).stats.criticalDamage || 150}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Damage Amplification (%)">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Damage Amplification (%)')}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/icon-da.png" alt="Damage Amplification" width={14} height={14} /></span>
                   <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.damageAmplification !== (detailViewPiece as any).stats.damageAmplification
                     ? `modified ${(detailViewPiece as any).stats.damageAmplification > (detailViewPiece as any).rawStats.damageAmplification ? 'buffed' : 'debuffed'}`
@@ -3154,7 +3239,11 @@ const GamePage: React.FC = () => {
                     {(detailViewPiece as any).stats.damageAmplification || 0}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Cooldown Reduction (%)">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Cooldown Reduction (%)')}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/icon-cdr.webp" alt="Cooldown Reduction" width={14} height={14} /></span>
                   <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.cooldownReduction !== (detailViewPiece as any).stats.cooldownReduction
                     ? `modified ${(detailViewPiece as any).stats.cooldownReduction > (detailViewPiece as any).rawStats.cooldownReduction ? 'buffed' : 'debuffed'}`
@@ -3163,13 +3252,30 @@ const GamePage: React.FC = () => {
                     {(detailViewPiece as any).stats.cooldownReduction || 0}
                   </span>
                 </div>
-                <div className="stat-item" data-tooltip="Lifesteal (%)">
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Lifesteal (%)')}
+                  onMouseLeave={handleTooltipHide}
+                >
                   <span className="stat-label"><img src="/icons/icon-sv.png" alt="Lifesteal" width={14} height={14} /></span>
                   <span className={`stat-value ${(detailViewPiece as any).rawStats && (detailViewPiece as any).rawStats.lifesteal !== (detailViewPiece as any).stats.lifesteal
                     ? `modified ${(detailViewPiece as any).stats.lifesteal > (detailViewPiece as any).rawStats.lifesteal ? 'buffed' : 'debuffed'}`
                     : ''
                     }`}>
                     {(detailViewPiece as any).stats.lifesteal || 0}
+                  </span>
+                </div>
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'HP Regeneration per Turn')}
+                  onMouseLeave={handleTooltipHide}
+                >
+                  <span className="stat-label"><img src="/icons/icon-hp-regen.png" alt="HP Regen" width={14} height={14} /></span>
+                  <span className={`stat-value ${detailViewPiece.rawStats && detailViewPiece.rawStats.hpRegen !== detailViewPiece.stats.hpRegen
+                    ? `modified ${detailViewPiece.stats.hpRegen > detailViewPiece.rawStats.hpRegen ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {detailViewPiece.stats.hpRegen || 0}
                   </span>
                 </div>
               </div>
@@ -3191,10 +3297,10 @@ const GamePage: React.FC = () => {
                             <img src={getStatIcon("attackRange")} alt="Range" width={14} height={14} />
                             <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>{detailViewPiece.skill.attackRange.range}</span>
                           </div>}
-                          <div>
+                          {detailViewPiece.skill.cooldown > 0 && <div>
                             <img src={getStatIcon("cooldownReduction")} alt="Cooldown" width={14} height={14} />
                             <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>{detailViewPiece.skill.cooldown}</span>
-                          </div>
+                          </div>}
                         </div>
                         <div className={`card-cooldown ${detailViewPiece.skill.currentCooldown > 0 ? 'cooling' : detailViewPiece.skill.type === 'passive' && (detailViewPiece as any).debuffs?.some((debuff: any) => debuff.id === "aura_evenshroud_passive_disable") ? 'disabled' : 'ready'}`}>
                           {detailViewPiece.skill.currentCooldown > 0

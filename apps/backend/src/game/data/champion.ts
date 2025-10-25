@@ -184,6 +184,7 @@ export const champions: ChampionData[] = [
       },
       magicResistance: 10,
       physicalResistance: 10,
+      hpRegen: 2,
     },
     skill: {
       type: "active",
@@ -263,13 +264,15 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      hpRegen: 1,
     },
     skill: {
       type: "passive",
       name: "Granite Shield",
       description:
         "If Malphite didn't get hit by damage for 2 turns, he gains a shield equal to (10+10% of AP)% of his max health. He gains 15 armor if having shield.",
-      cooldown: 0,
+      cooldown: 2,
+      currentCooldown: 0,
     },
   },
   {
@@ -286,6 +289,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      hpRegen: 3,
     },
     skill: {
       type: "passive",
@@ -362,6 +366,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      hpRegen: 1,
     },
     skill: {
       type: "active",
@@ -409,6 +414,7 @@ export const champions: ChampionData[] = [
       ap: 0,
       physicalResistance: 15,
       magicResistance: 10,
+      hpRegen: 2, // Rammus has passive healing
       attackRange: {
         range: 1,
         diagonal: true,
@@ -438,6 +444,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      hpRegen: 1,
     },
     skill: {
       type: "passive",
@@ -461,6 +468,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      hpRegen: 1,
     },
     skill: {
       type: "passive",

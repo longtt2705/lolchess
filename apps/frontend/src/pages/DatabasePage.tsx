@@ -496,6 +496,7 @@ const getStatIcon = (stat: string): string => {
         damageAmplification: '/icons/icon-da.png',
         cooldownReduction: '/icons/icon-cdr.webp',
         lifesteal: '/icons/icon-sv.png',
+        hpRegen: '/icons/icon-hp-regen.png', // Use HP icon for HP regen
     };
     return iconMap[stat] || '/icons/AD.svg';
 };
@@ -708,13 +709,22 @@ const DatabasePage: React.FC = () => {
                                             </StatItem>
                                         </StatsGrid>
 
-                                        <StatItem style={{ marginBottom: '16px' }}>
-                                            <div className="label">
-                                                <img src={getStatIcon('attackRange')} alt="Range" width={16} height={16} />
-                                                Attack Range
-                                            </div>
-                                            <div className="value">{formatAttackRange(champion.stats.attackRange)}</div>
-                                        </StatItem>
+                                        <StatsGrid style={{ marginBottom: '16px' }}>
+                                            <StatItem>
+                                                <div className="label">
+                                                    <img src={getStatIcon('hpRegen')} alt="HP Regen" width={16} height={16} />
+                                                    HP/Turn
+                                                </div>
+                                                <div className="value">{champion.stats.hpRegen || 0}</div>
+                                            </StatItem>
+                                            <StatItem>
+                                                <div className="label">
+                                                    <img src={getStatIcon('attackRange')} alt="Range" width={16} height={16} />
+                                                    Attack Range
+                                                </div>
+                                                <div className="value">{formatAttackRange(champion.stats.attackRange)}</div>
+                                            </StatItem>
+                                        </StatsGrid>
 
                                         <SkillSection>
                                             <div className="skill-header">

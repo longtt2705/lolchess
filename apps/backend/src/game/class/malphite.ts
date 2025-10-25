@@ -12,7 +12,11 @@ export class Malphite extends ChessObject {
     if (this.isPassiveDisabled()) {
       return;
     }
-    this.applyShield(this.chess.stats.maxHp * 0.1, 2, "granite_shield");
+    this.applyShield(
+      this.chess.stats.maxHp * 0.1,
+      Number.MAX_SAFE_INTEGER,
+      "granite_shield"
+    );
   }
 
   protected postTakenDamage(
@@ -32,7 +36,7 @@ export class Malphite extends ChessObject {
     if (this.isPassiveDisabled()) {
       return super.physicalResistance;
     }
-    if (this.chess.shields.length > 0) {
+    if (this.chess.shields?.length > 0) {
       return super.physicalResistance + 15;
     }
     return super.physicalResistance;

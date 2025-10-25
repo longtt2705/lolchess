@@ -30,6 +30,7 @@ export interface ChessPiece {
     criticalDamage?: number;
     cooldownReduction?: number;
     lifesteal?: number;
+    hpRegen: number;
     attackRange: {
       range: number;
       diagonal: boolean;
@@ -51,6 +52,7 @@ export interface ChessPiece {
     criticalDamage?: number;
     cooldownReduction?: number;
     lifesteal?: number;
+    hpRegen: number;
     attackRange: {
       range: number;
       diagonal: boolean;

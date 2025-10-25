@@ -34,6 +34,7 @@ All pieces in the game have the following attributes:
 * **Speed:** The maximum number of squares a piece can move in a single direction per turn. Default is 1.
 * **Attack Range:** The maximum number of squares away a piece can attack in a single direction.
 * **Gold Value:** The amount of Gold awarded to the opponent upon slaying this piece.
+* **HP Regen:** The amount of HP regenerated at the start of each turn. Default is 0.
 
 ### Piece Types
 #### **Poro (King)**

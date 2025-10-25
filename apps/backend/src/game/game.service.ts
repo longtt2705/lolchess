@@ -675,6 +675,7 @@ export class GameService {
           cooldownReduction: chessObject.cooldownReduction,
           lifesteal: chessObject.lifesteal,
           damageAmplification: chessObject.damageAmplification,
+          hpRegen: chessObject.getEffectiveStat(piece, "hpRegen"),
         },
         // Include raw stats for comparison/debugging if needed
         rawStats: {
@@ -698,6 +699,7 @@ export class GameService {
           cooldownReduction: piece.stats.cooldownReduction || 0,
           lifesteal: piece.stats.lifesteal || 0,
           damageAmplification: piece.stats.damageAmplification || 0,
+          hpRegen: piece.stats.hpRegen || 0,
         },
         blue: piece.blue,
         items: piece.items

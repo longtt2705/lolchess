@@ -246,10 +246,10 @@ export class ChessObject {
         this.applyDebuff(this, {
           id: "adaptive_helm_armor",
           name: "Adaptive Helm - Armor",
-          description: "Gain 15 Armor for 3 turns.",
+          description: "Gain 20 Armor for 3 turns.",
           duration: 3,
           maxDuration: 3,
-          effects: [{ stat: "physicalResistance", modifier: 15, type: "add" }],
+          effects: [{ stat: "physicalResistance", modifier: 20, type: "add" }],
           damagePerTurn: 0,
           damageType: "physical",
           healPerTurn: 0,
@@ -262,10 +262,10 @@ export class ChessObject {
         this.applyDebuff(this, {
           id: "adaptive_helm_mr",
           name: "Adaptive Helm - Magic Resist",
-          description: "Gain 15 Magic Resist for 3 turns.",
+          description: "Gain 20 Magic Resist for 3 turns.",
           duration: 3,
           maxDuration: 3,
-          effects: [{ stat: "magicResistance", modifier: 15, type: "add" }],
+          effects: [{ stat: "magicResistance", modifier: 20, type: "add" }],
           damagePerTurn: 0,
           damageType: "physical",
           healPerTurn: 0,
@@ -427,6 +427,12 @@ export class ChessObject {
       this.processDebuffs(this);
       this.processShields(this);
 
+      // Apply HP Regeneration
+      const hpRegen = this.getEffectiveStat(this.chess, "hpRegen");
+      if (hpRegen > 0) {
+        this.heal(this, hpRegen);
+      }
+
       // Apply Sunfire Cape effect
       if (this.chess.items.some((item) => item.id === "sunfire_cape")) {
         const { GameLogic } = require("../game.logic");
@@ -479,8 +485,8 @@ export class ChessObject {
         id: "quicksilver",
         name: "Quicksilver",
         description: "Resistance to all active debuffs for 3 turns.",
-        duration: 3,
-        maxDuration: 3,
+        duration: 5,
+        maxDuration: 5,
         effects: [],
         damagePerTurn: 0,
         damageType: "physical",

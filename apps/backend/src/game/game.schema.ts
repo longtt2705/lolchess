@@ -89,6 +89,9 @@ export class ChessStats {
 
   @Prop({ default: 0 })
   damageAmplification: number; // Increases all damage dealt (percentage)
+
+  @Prop({ default: 0 })
+  hpRegen: number; // HP regenerated per turn
 }
 
 export class DebuffEffect {
