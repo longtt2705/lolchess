@@ -169,7 +169,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         maxPlayers: 2,
         gameSettings: {
           roundTime: 60,
-          startingGold: 100,
+          startingGold: 0,
         },
       };
 

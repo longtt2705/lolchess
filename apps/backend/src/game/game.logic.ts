@@ -478,12 +478,10 @@ export class GameLogic {
       (p) => p.userId === game.redPlayer
     );
     if (bluePlayerIndex !== -1) {
-      game.players[bluePlayerIndex].gold =
-        game.gameSettings?.startingGold || 500;
+      game.players[bluePlayerIndex].gold = game.gameSettings?.startingGold || 0;
     }
     if (redPlayerIndex !== -1) {
-      game.players[redPlayerIndex].gold =
-        game.gameSettings?.startingGold || 500;
+      game.players[redPlayerIndex].gold = game.gameSettings?.startingGold || 0;
     }
     this.applyAuraDebuffs(game);
 

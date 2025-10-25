@@ -19,7 +19,7 @@ export class Ahri extends ChessObject {
           type: "add",
         },
       ],
-      damagePerTurn: 10 + this.ap * 0.5, // Adjust damage as needed
+      damagePerTurn: 5 + this.ap * 0.1, // Adjust damage as needed
       damageType: "magic",
       healPerTurn: 0,
       unique: true,
@@ -42,7 +42,6 @@ export class Ahri extends ChessObject {
 
     // Deal damage and apply Spirit Rush debuff to any piece at or adjacent to the target square
     GameLogic.getAdjacentSquares(position).forEach((square) => {
-      console.log({ square });
       const targetChess = GameLogic.getChess(
         this.game,
         !this.chess.blue,

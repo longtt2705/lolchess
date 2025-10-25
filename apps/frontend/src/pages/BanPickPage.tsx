@@ -208,7 +208,7 @@ const PlayerSections = styled.div`
   display: grid;
   grid-template-columns: 260px 1fr 260px;
   gap: 12px;
-  align-items: start;
+  align-items: center;
   flex: 1;
   min-height: 0;
   
@@ -328,7 +328,7 @@ const SidePanel = styled.div<{ isActive?: boolean }>`
   }
   
   &.red {
-    border-left: 5px solid #c8aa6e;
+    border-left: 5px solidrgb(240, 21, 21);
     
     &::before {
       content: '';
@@ -337,8 +337,8 @@ const SidePanel = styled.div<{ isActive?: boolean }>`
       left: 0;
       width: 5px;
       height: 100%;
-      background: linear-gradient(180deg, #c8aa6e 0%, transparent 100%);
-      box-shadow: 0 0 20px rgba(200, 170, 110, 0.5);
+      background: linear-gradient(180deg,rgb(255, 0, 0) 0%, transparent 100%);
+      box-shadow: 0 0 20px rgba(250, 0, 0, 0.5);
     }
   }
   
@@ -923,6 +923,184 @@ const BanPickPage: React.FC = () => {
   const blueBans = banPickState?.blueBans || []
   const redBans = banPickState?.redBans || []
 
+  // Create panel components
+  const blueSidePanel = (
+    <SidePanel className="blue" isActive={banPickState?.currentTurn === 'blue'}>
+      <h3>
+        <Shield size={16} />
+        Blue Side {banPickState?.currentTurn === 'blue' && <Zap size={14} />}
+      </h3>
+
+      {/* Bans */}
+      <BanIndicator>
+        <div style={{ flex: 1 }}>
+          <h4><Target size={12} />Bans ({blueBans.length}/2)</h4>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {[0, 1].map(index => (
+              <BanSlot key={`blue-ban-${index}`} filled={!!blueBans[index]}>
+                {blueBans[index] && (
+                  <img
+                    src={`/icons/${blueBans[index].toLowerCase()}.webp`}
+                    alt={blueBans[index]}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                )}
+              </BanSlot>
+            ))}
+          </div>
+        </div>
+      </BanIndicator>
+
+      {/* Picks */}
+      <div>
+        <h4>Picks ({banPickState?.bluePicks.length || 0}/5)</h4>
+        <BanPickList>
+          {[0, 1, 2, 3, 4].map(index => (
+            <BanPickSlot
+              key={`blue-pick-${index}`}
+              filled={!!(banPickState?.bluePicks[index])}
+              active={isMyTurn && playerSide === 'blue' && banPickState?.phase === 'pick' && (banPickState?.bluePicks.length === index)}
+            >
+              {banPickState?.bluePicks[index] ? (
+                <img
+                  src={`/icons/${banPickState.bluePicks[index].toLowerCase()}.webp`}
+                  alt={banPickState.bluePicks[index]}
+                  className="champion-icon"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              ) : (
+                <div className="empty-text">Pick {index + 1}</div>
+              )}
+            </BanPickSlot>
+          ))}
+        </BanPickList>
+      </div>
+
+      {/* Skip Ban Button */}
+      {banPickState?.phase === 'ban' && isMyTurn && playerSide === 'blue' && (
+        <SkipBanButton
+          onClick={handleSkipBan}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <SkipForward size={18} />
+          Skip Ban
+        </SkipBanButton>
+      )}
+    </SidePanel>
+  )
+
+  const redSidePanel = (
+    <SidePanel className="red" isActive={banPickState?.currentTurn === 'red'}>
+      <h3>
+        <Sword size={16} />
+        Red Side {banPickState?.currentTurn === 'red' && <Zap size={14} />}
+      </h3>
+
+      {/* Bans */}
+      <BanIndicator>
+        <div style={{ flex: 1 }}>
+          <h4><Target size={12} />Bans ({redBans.length}/2)</h4>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {[0, 1].map(index => (
+              <BanSlot key={`red-ban-${index}`} filled={!!redBans[index]}>
+                {redBans[index] && (
+                  <img
+                    src={`/icons/${redBans[index].toLowerCase()}.webp`}
+                    alt={redBans[index]}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                )}
+              </BanSlot>
+            ))}
+          </div>
+        </div>
+      </BanIndicator>
+
+      {/* Picks */}
+      <div>
+        <h4>Picks ({banPickState?.redPicks.length || 0}/5)</h4>
+        <BanPickList>
+          {[0, 1, 2, 3, 4].map(index => (
+            <BanPickSlot
+              key={`red-pick-${index}`}
+              filled={!!(banPickState?.redPicks[index])}
+              active={isMyTurn && playerSide === 'red' && banPickState?.phase === 'pick' && (banPickState?.redPicks.length === index)}
+            >
+              {banPickState?.redPicks[index] ? (
+                <img
+                  src={`/icons/${banPickState.redPicks[index].toLowerCase()}.webp`}
+                  alt={banPickState.redPicks[index]}
+                  className="champion-icon"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              ) : (
+                <div className="empty-text">Pick {index + 1}</div>
+              )}
+            </BanPickSlot>
+          ))}
+        </BanPickList>
+      </div>
+
+      {/* Skip Ban Button */}
+      {banPickState?.phase === 'ban' && isMyTurn && playerSide === 'red' && (
+        <SkipBanButton
+          onClick={handleSkipBan}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <SkipForward size={18} />
+          Skip Ban
+        </SkipBanButton>
+      )}
+    </SidePanel>
+  )
+
+  const championGrid = (
+    <ChampionGrid>
+      <h3>Select Champions ({champions.length} Available)</h3>
+      <ChampionList>
+        {champions.map(champion => (
+          <ChampionCard
+            key={champion.name}
+            banned={banPickState?.bannedChampions.includes(champion.name) || false}
+            picked={(banPickState?.bluePicks.includes(champion.name) || banPickState?.redPicks.includes(champion.name)) || false}
+            clickable={!!(isMyTurn && banPickState && !banPickState.bannedChampions.includes(champion.name) && !banPickState.bluePicks.includes(champion.name) && !banPickState.redPicks.includes(champion.name))}
+            onClick={() => handleChampionClick(champion.name)}
+            whileHover={isMyTurn ? { scale: 1.03 } : {}}
+            whileTap={isMyTurn ? { scale: 0.97 } : {}}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <img
+              src={`/icons/${champion.name.toLowerCase()}.webp`}
+              alt={champion.name}
+              className="champion-portrait"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+              }}
+            />
+            <div className="champion-info">
+              <div className="name">{champion.name}</div>
+              <div className="stats">
+                HP: {champion.stats.maxHp} | AD: {champion.stats.ad}
+              </div>
+            </div>
+          </ChampionCard>
+        ))}
+      </ChampionList>
+    </ChampionGrid>
+  )
+
   return (
     <BanPickContainer>
       <Header>
@@ -933,221 +1111,21 @@ const BanPickPage: React.FC = () => {
       </Header>
 
       <MainContent>
-        {/* Banned Champions Section */}
-        <BannedChampionsSection>
-          <h3>
-            <X size={18} />
-            Banned Champions (4 Total)
-          </h3>
-          <BannedGrid>
-            {[0, 1, 2, 3].map(index => {
-              const banHistoryItem = banPickState?.banHistory?.[index]
-              const isSkipped = banHistoryItem === 'SKIPPED'
-              const isBanned = !!(banHistoryItem && !isSkipped)
-
-              return (
-                <BannedChampionSlot
-                  key={`banned-${index}`}
-                  banned={isBanned}
-                  skipped={isSkipped}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  {isSkipped ? (
-                    <X size={48} style={{ color: 'var(--secondary-text)' }} />
-                  ) : isBanned ? (
-                    <img
-                      src={`/icons/${banHistoryItem.toLowerCase()}.webp`}
-                      alt={banHistoryItem}
-                      className="champion-image"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
-                    />
-                  ) : (
-                    <div className="empty-slot">Slot {index + 1}</div>
-                  )}
-                </BannedChampionSlot>
-              )
-            })}
-          </BannedGrid>
-        </BannedChampionsSection>
-
         <PlayerSections>
-          {/* Blue Side Panel */}
-          <SidePanel className="blue" isActive={banPickState?.currentTurn === 'blue'}>
-            <h3>
-              <Shield size={16} />
-              Blue Side {banPickState?.currentTurn === 'blue' && <Zap size={14} />}
-            </h3>
-
-            {/* Bans */}
-            <BanIndicator>
-              <div style={{ flex: 1 }}>
-                <h4><Target size={12} />Bans ({blueBans.length}/2)</h4>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {[0, 1].map(index => (
-                    <BanSlot key={`blue-ban-${index}`} filled={!!blueBans[index]}>
-                      {blueBans[index] && (
-                        <img
-                          src={`/icons/${blueBans[index].toLowerCase()}.webp`}
-                          alt={blueBans[index]}
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none'
-                          }}
-                        />
-                      )}
-                    </BanSlot>
-                  ))}
-                </div>
-              </div>
-            </BanIndicator>
-
-            {/* Picks */}
-            <div>
-              <h4>Picks ({banPickState?.bluePicks.length || 0}/5)</h4>
-              <BanPickList>
-                {[0, 1, 2, 3, 4].map(index => (
-                  <BanPickSlot
-                    key={`blue-pick-${index}`}
-                    filled={!!(banPickState?.bluePicks[index])}
-                    active={isMyTurn && playerSide === 'blue' && banPickState?.phase === 'pick' && (banPickState?.bluePicks.length === index)}
-                  >
-                    {banPickState?.bluePicks[index] ? (
-                      <img
-                        src={`/icons/${banPickState.bluePicks[index].toLowerCase()}.webp`}
-                        alt={banPickState.bluePicks[index]}
-                        className="champion-icon"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                      />
-                    ) : (
-                      <div className="empty-text">Pick {index + 1}</div>
-                    )}
-                  </BanPickSlot>
-                ))}
-              </BanPickList>
-            </div>
-
-            {/* Skip Ban Button */}
-            {banPickState?.phase === 'ban' && isMyTurn && playerSide === 'blue' && (
-              <SkipBanButton
-                onClick={handleSkipBan}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <SkipForward size={18} />
-                Skip Ban
-              </SkipBanButton>
-            )}
-          </SidePanel>
-
-          {/* Champion Grid */}
-          <ChampionGrid>
-            <h3>Select Champions ({champions.length} Available)</h3>
-            <ChampionList>
-              {champions.map(champion => (
-                <ChampionCard
-                  key={champion.name}
-                  banned={banPickState?.bannedChampions.includes(champion.name) || false}
-                  picked={(banPickState?.bluePicks.includes(champion.name) || banPickState?.redPicks.includes(champion.name)) || false}
-                  clickable={!!(isMyTurn && banPickState && !banPickState.bannedChampions.includes(champion.name) && !banPickState.bluePicks.includes(champion.name) && !banPickState.redPicks.includes(champion.name))}
-                  onClick={() => handleChampionClick(champion.name)}
-                  whileHover={isMyTurn ? { scale: 1.03 } : {}}
-                  whileTap={isMyTurn ? { scale: 0.97 } : {}}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <img
-                    src={`/icons/${champion.name.toLowerCase()}.webp`}
-                    alt={champion.name}
-                    className="champion-portrait"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none'
-                    }}
-                  />
-                  <div className="champion-info">
-                    <div className="name">{champion.name}</div>
-                    <div className="stats">
-                      HP: {champion.stats.maxHp} | AD: {champion.stats.ad}
-                    </div>
-                  </div>
-                </ChampionCard>
-              ))}
-            </ChampionList>
-          </ChampionGrid>
-
-          {/* Red Side Panel */}
-          <SidePanel className="red" isActive={banPickState?.currentTurn === 'red'}>
-            <h3>
-              <Sword size={16} />
-              Red Side {banPickState?.currentTurn === 'red' && <Zap size={14} />}
-            </h3>
-
-            {/* Bans */}
-            <BanIndicator>
-              <div style={{ flex: 1 }}>
-                <h4><Target size={12} />Bans ({redBans.length}/2)</h4>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {[0, 1].map(index => (
-                    <BanSlot key={`red-ban-${index}`} filled={!!redBans[index]}>
-                      {redBans[index] && (
-                        <img
-                          src={`/icons/${redBans[index].toLowerCase()}.webp`}
-                          alt={redBans[index]}
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none'
-                          }}
-                        />
-                      )}
-                    </BanSlot>
-                  ))}
-                </div>
-              </div>
-            </BanIndicator>
-
-            {/* Picks */}
-            <div>
-              <h4>Picks ({banPickState?.redPicks.length || 0}/5)</h4>
-              <BanPickList>
-                {[0, 1, 2, 3, 4].map(index => (
-                  <BanPickSlot
-                    key={`red-pick-${index}`}
-                    filled={!!(banPickState?.redPicks[index])}
-                    active={isMyTurn && playerSide === 'red' && banPickState?.phase === 'pick' && (banPickState?.redPicks.length === index)}
-                  >
-                    {banPickState?.redPicks[index] ? (
-                      <img
-                        src={`/icons/${banPickState.redPicks[index].toLowerCase()}.webp`}
-                        alt={banPickState.redPicks[index]}
-                        className="champion-icon"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                      />
-                    ) : (
-                      <div className="empty-text">Pick {index + 1}</div>
-                    )}
-                  </BanPickSlot>
-                ))}
-              </BanPickList>
-            </div>
-
-            {/* Skip Ban Button */}
-            {banPickState?.phase === 'ban' && isMyTurn && playerSide === 'red' && (
-              <SkipBanButton
-                onClick={handleSkipBan}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <SkipForward size={18} />
-                Skip Ban
-              </SkipBanButton>
-            )}
-          </SidePanel>
+          {/* Conditionally render panels - player's side always on the left */}
+          {playerSide === 'blue' ? (
+            <>
+              {blueSidePanel}
+              {championGrid}
+              {redSidePanel}
+            </>
+          ) : (
+            <>
+              {redSidePanel}
+              {championGrid}
+              {blueSidePanel}
+            </>
+          )}
         </PlayerSections>
       </MainContent>
 

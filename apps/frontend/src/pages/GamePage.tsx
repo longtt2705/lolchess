@@ -859,7 +859,7 @@ const ChessDetailPanel = styled.div`
   }
 `
 
-const GameBoard = styled.div`
+const GameBoard = styled.div<{ isTargeting?: boolean }>`
   grid-area: game-board;
   background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(20, 25, 45, 0.95) 100%);
   border: 2px solid rgba(200, 155, 60, 0.3);
@@ -872,6 +872,7 @@ const GameBoard = styled.div`
   box-shadow: 
     inset 0 0 30px rgba(0, 0, 0, 0.5),
     0 8px 32px rgba(0, 0, 0, 0.6);
+  cursor: ${props => props.isTargeting ? 'crosshair' : 'default'};
   
   &::before {
     content: '';
@@ -917,7 +918,7 @@ const GameBoard = styled.div`
   }
 `
 
-const Board = styled.div`
+const Board = styled.div<{ isTargeting?: boolean }>`
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   grid-template-rows: repeat(8, 1fr);
@@ -933,6 +934,7 @@ const Board = styled.div`
   margin: 0 auto;
   position: relative;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
+  cursor: ${props => props.isTargeting ? 'crosshair' : 'default'};
   
   .square {
     background: rgba(30, 35, 40, 0.4);
@@ -944,7 +946,7 @@ const Board = styled.div`
     color: var(--secondary-text);
     font-size: 10px;
     transition: all 0.2s ease;
-    cursor: pointer;
+    cursor: ${props => props.isTargeting ? 'crosshair' : 'pointer'};
     position: relative;
     min-height: 60px;
     
@@ -1652,6 +1654,46 @@ const StatTooltip = styled(motion.div)`
     transform: translateX(-50%);
     border: 6px solid transparent;
     border-top-color: var(--gold);
+  }
+`
+
+const SkillTargetingIndicator = styled(motion.div)`
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.95) 0%, rgba(147, 51, 234, 0.95) 100%);
+  border: 3px solid #a855f7;
+  border-radius: 12px;
+  padding: 16px 32px;
+  box-shadow: 0 8px 32px rgba(168, 85, 247, 0.5);
+  pointer-events: none;
+  
+  .indicator-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .indicator-icon {
+    font-size: 24px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  .indicator-text {
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  }
+  
+  .indicator-cancel {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 11px;
+    text-align: center;
+    margin-top: 2px;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
   }
 `
 
@@ -2415,10 +2457,13 @@ const GamePage: React.FC = () => {
         }
         setDamageEffects(prev => [...prev, damageEffect])
 
-        // Clean up after animation
+        // Clean up after the full animation duration
         setTimeout(() => {
           setDamageEffects(prev => prev.filter(e => e.id !== animation.id))
-        }, animation.duration)
+        }, animation.duration + 200) // Extra buffer to ensure animation completes
+
+        // Wait for the animation to play (but not the full duration to avoid blocking)
+        await new Promise(resolve => setTimeout(resolve, Math.min(animation.duration, 800)))
         break
       }
 
@@ -2436,10 +2481,13 @@ const GamePage: React.FC = () => {
         }
         setDamageEffects(prev => [...prev, statEffect])
 
-        // Clean up after animation
+        // Clean up after the full animation duration
         setTimeout(() => {
           setDamageEffects(prev => prev.filter(e => e.id !== animation.id))
-        }, animation.duration)
+        }, animation.duration + 200) // Extra buffer to ensure animation completes
+
+        // Wait for the animation to play (but not the full duration to avoid blocking)
+        await new Promise(resolve => setTimeout(resolve, Math.min(animation.duration, 800)))
         break
       }
 
@@ -2710,8 +2758,24 @@ const GamePage: React.FC = () => {
                 }}
                 onSkillClick={() => {
                   if (isMyTurn && piece.ownerId === currentPlayer?.userId && piece.skill?.type === 'active') {
-                    selectPiece(piece);
-                    handleSkill();
+                    // If already in skill mode for the SAME piece, cancel it
+                    if (isSkillMode && selectedPiece?.id === piece.id) {
+                      clearSelection();
+                    } else {
+                      // If in skill mode for a DIFFERENT piece, clear first
+                      if (isSkillMode) {
+                        clearSelection();
+                        // Use setTimeout to ensure state is cleared before selecting new piece
+                        setTimeout(() => {
+                          selectPiece(piece);
+                          handleSkill();
+                        }, 0);
+                      } else {
+                        // Not in skill mode, just select and activate
+                        selectPiece(piece);
+                        handleSkill();
+                      }
+                    }
                   }
                 }}
               />
@@ -3613,12 +3677,36 @@ const GamePage: React.FC = () => {
           )}
         </ChessDetailPanel>
 
-        <GameBoard>
+        <GameBoard isTargeting={isSkillMode}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px' }}>
             <TurnIndicator isMyTurn={isMyTurn}>
               {isMyTurn ? "Your Turn" : "Opponent's Turn"}
               <div className="round-info">Round {displayState?.currentRound || gameState?.currentRound}</div>
             </TurnIndicator>
+
+            {/* Skill Targeting Indicator */}
+            <AnimatePresence>
+              {isSkillMode && selectedPiece && (
+                <SkillTargetingIndicator
+                  initial={{ opacity: 0, scale: 0.8, x: 20 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="indicator-content">
+                    <div className="indicator-icon">🎯</div>
+                    <div>
+                      <div className="indicator-text">
+                        Select Target for {selectedPiece.skill?.name || 'Skill'} ({validSkillTargets.length} available)
+                      </div>
+                      <div className="indicator-cancel">
+                        Click skill icon again to cancel
+                      </div>
+                    </div>
+                  </div>
+                </SkillTargetingIndicator>
+              )}
+            </AnimatePresence>
 
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
@@ -3685,7 +3773,7 @@ const GamePage: React.FC = () => {
             </div>
           </div>
 
-          <Board ref={boardRef}>
+          <Board ref={boardRef} isTargeting={isSkillMode}>
             {renderBoard()}
 
             {/* Skill animations overlay */}

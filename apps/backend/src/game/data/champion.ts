@@ -48,7 +48,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Spirit Rush",
       description:
-        "Ahri dashes to a square, dealing 10 + 50% AP magic damage and applying a slow and damage each turn to any piece at or adjacent to that square.",
+        "Ahri dashes to a square, dealing (10 + 50% AP) magic damage and applying a slow and (5 + 10% AP) magic damage each turn to any piece at or adjacent to that square.",
       cooldown: 5,
       attackRange: {
         range: 8,
