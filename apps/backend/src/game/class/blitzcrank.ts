@@ -1,6 +1,7 @@
 import { GameLogic } from "../game.logic";
 import { Square } from "../game.schema";
 import { ChessObject } from "./chess";
+import { ChessFactory } from "./chessFactory";
 
 export class Blitzcrank extends ChessObject {
   skill(position?: Square): void {
@@ -12,7 +13,10 @@ export class Blitzcrank extends ChessObject {
     );
 
     if (targetChess) {
-      const targetChessObject = new ChessObject(targetChess, this.game);
+      const targetChessObject = ChessFactory.createChess(
+        targetChess,
+        this.game
+      );
 
       // Deal magic damage
       this.activeSkillDamage(

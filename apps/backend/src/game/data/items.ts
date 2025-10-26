@@ -124,7 +124,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "ad", value: 15, type: "add" },
       { stat: "sunder", value: 20, type: "add" },
-      { stat: "damageAmplification", value: 10, type: "add" },
+      { stat: "damageAmplification", value: 5, type: "add" },
     ],
     isBasic: false,
     recipe: ["bf_sword", "recurve_bow"],
@@ -138,7 +138,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "ad", value: 15, type: "add" },
       { stat: "ap", value: 25, type: "add" },
-      { stat: "damageAmplification", value: 18, type: "add" },
+      { stat: "damageAmplification", value: 7, type: "add" },
     ],
     isBasic: false,
     unique: true,
@@ -147,19 +147,18 @@ export const combinedItems: ItemData[] = [
   {
     id: "bloodthirster",
     name: "Bloodthirster",
-    description: "Gains additional 25% lifesteal effect when HP is below 40%",
+    description: "Gains additional 15% lifesteal effect when HP is below 40%",
     cost: 0,
     icon: "/icons/Bloodthirster.png",
     effects: [
       { stat: "ad", value: 15, type: "add" },
       { stat: "magicResistance", value: 20, type: "add" },
-      { stat: "lifesteal", value: 25, type: "add" },
+      { stat: "lifesteal", value: 15, type: "add" },
       {
         stat: "lifesteal",
-        value: 25,
+        value: 15,
         type: "add",
-        condition: (chess) =>
-          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
+        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.4,
       },
     ],
     isBasic: false,
@@ -217,7 +216,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/Deathblade.png",
     effects: [
       { stat: "ad", value: 30, type: "add" },
-      { stat: "damageAmplification", value: 15, type: "add" },
+      { stat: "damageAmplification", value: 10, type: "add" },
     ],
     isBasic: false,
     recipe: ["bf_sword", "bf_sword"],
@@ -329,7 +328,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/RabadonsDeathcap.png",
     effects: [
       { stat: "ap", value: 50, type: "add" },
-      { stat: "damageAmplification", value: 15, type: "add" },
+      { stat: "damageAmplification", value: 10, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "needlessly_rod"],
@@ -431,15 +430,13 @@ export const combinedItems: ItemData[] = [
         stat: "physicalResistance",
         value: 20,
         type: "add",
-        condition: (chess) =>
-          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
+        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.4,
       },
       {
         stat: "magicResistance",
         value: 20,
         type: "add",
-        condition: (chess) =>
-          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
+        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.4,
       },
     ],
     isBasic: false,
@@ -489,8 +486,7 @@ export const combinedItems: ItemData[] = [
         stat: "magicResistance",
         value: 30,
         type: "add",
-        condition: (chess) =>
-          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
+        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.4,
       },
     ],
     isBasic: false,
@@ -552,7 +548,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "criticalChance", value: 25, type: "add" },
       { stat: "maxHp", value: 35, type: "add" },
-      { stat: "damageAmplification", value: 8, type: "add" },
+      { stat: "damageAmplification", value: 7, type: "add" },
     ],
     isBasic: false,
     recipe: ["giants_belt", "sparring_gloves"],
@@ -591,27 +587,26 @@ export const combinedItems: ItemData[] = [
   {
     id: "hand_of_justice",
     name: "Hand of Justice",
-    description: "Gain additional 15 AD and Lifesteal when HP is below 40%.",
+    description:
+      "Gain additional 10 AD and 10% Lifesteal when HP is below 40%.",
     cost: 0,
     icon: "/icons/HandofJustice.png",
     effects: [
       { stat: "criticalChance", value: 25, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
-      { stat: "lifesteal", value: 15, type: "add" },
+      { stat: "lifesteal", value: 10, type: "add" },
       { stat: "ad", value: 10, type: "add" },
       {
         stat: "ad",
-        value: 15,
+        value: 10,
         type: "add",
-        condition: (chess) =>
-          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
+        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.4,
       },
       {
         stat: "lifesteal",
-        value: 15,
+        value: 10,
         type: "add",
-        condition: (chess) =>
-          chess.chess.stats.hp < chess.chess.stats.maxHp * 0.4,
+        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.4,
       },
     ],
     isBasic: false,

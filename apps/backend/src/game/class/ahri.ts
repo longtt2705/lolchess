@@ -1,6 +1,7 @@
 import { GameLogic } from "../game.logic";
 import { Chess, Debuff, Game, Square } from "../game.schema";
 import { ChessObject } from "./chess";
+import { ChessFactory } from "./chessFactory";
 
 export class Ahri extends ChessObject {
   // Create the Spirit Rush debuff
@@ -48,7 +49,10 @@ export class Ahri extends ChessObject {
         square
       );
       if (targetChess) {
-        const targetChessObject = new ChessObject(targetChess, this.game);
+        const targetChessObject = ChessFactory.createChess(
+          targetChess,
+          this.game
+        );
         // Deal damage
         this.activeSkillDamage(
           targetChessObject,

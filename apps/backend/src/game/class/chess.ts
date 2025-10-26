@@ -11,6 +11,7 @@ import {
   Skill,
   Square,
 } from "../game.schema";
+import { ChessFactory } from "./chessFactory";
 
 export class ChessObject {
   public chess: Chess;
@@ -207,27 +208,27 @@ export class ChessObject {
       const edgeOfNight = this.chess.items.find(
         (item) => item.id === "edge_of_night"
       );
-      if (edgeOfNight && !edgeOfNight.payload.hasUsedEdgeOfNight) {
+      if (edgeOfNight && !edgeOfNight.payload?.hasUsedEdgeOfNight) {
         edgeOfNight.payload = {
           hasUsedEdgeOfNight: true,
         };
+        this.chess.stats.hp = 1;
       }
-      this.chess.stats.hp = 1;
     }
     if (
       this.chess.items.some((item) => item.id === "sterak_gage") &&
-      this.chess.stats.hp <= this.chess.stats.maxHp * 0.4
+      this.chess.stats.hp <= this.maxHp * 0.4
     ) {
       const sterakGage = this.chess.items.find(
         (item) => item.id === "sterak_gage"
       );
-      if (sterakGage && !sterakGage.payload.hasUsedSterakGage) {
-        const shieldDuration = sterakGage.payload.shieldDuration || 3;
+      if (sterakGage && !sterakGage.payload?.hasUsedSterakGage) {
+        const shieldDuration = sterakGage.payload?.shieldDuration || 3;
         sterakGage.payload = {
           hasUsedSterakGage: true,
           shieldDuration: shieldDuration,
         };
-        this.applyShield(this.chess.stats.maxHp * 0.5, shieldDuration);
+        this.applyShield(this.maxHp * 0.5, shieldDuration);
       }
     }
     if (
@@ -285,7 +286,7 @@ export class ChessObject {
     if (id && this.chess.shields.some((shield) => shield.id === id)) {
       this.chess.shields.forEach((shield) => {
         if (shield.id === id) {
-          shield.amount = amount;
+          shield.amount = Math.floor(amount);
           shield.duration = duration;
         }
       });
@@ -294,7 +295,7 @@ export class ChessObject {
     this.chess.shields.push({
       id:
         id || `shield_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      amount: amount,
+      amount: Math.floor(amount),
       duration: duration,
     } as Shield);
   }
@@ -443,7 +444,7 @@ export class ChessObject {
             square
           );
           if (targetChess) {
-            const targetObj = new ChessObject(targetChess, this.game);
+            const targetObj = ChessFactory.createChess(targetChess, this.game);
             targetObj.applyDebuff(targetObj, this.createBurnedDebuff(3, this));
             targetObj.applyDebuff(targetObj, this.createWoundedDebuff(3, this));
           }
@@ -552,6 +553,9 @@ export class ChessObject {
   }
 
   processDebuffs(chess: ChessObject): void {
+    if (chess.chess.stats.hp <= 0) {
+      return;
+    }
     if (!chess.chess.debuffs || chess.chess.debuffs.length === 0) {
       return;
     }
@@ -589,6 +593,9 @@ export class ChessObject {
     }
   }
   processShields(chess: ChessObject): void {
+    if (chess.chess.stats.hp <= 0) {
+      return;
+    }
     if (!chess.chess.shields || chess.chess.shields.length === 0) {
       return;
     }
@@ -602,6 +609,17 @@ export class ChessObject {
         chess.chess.shields.splice(i, 1);
       }
     }
+  }
+
+  get attackRange(): AttackRange {
+    return {
+      ...this.chess.stats.attackRange,
+      range: this.range,
+    };
+  }
+
+  get hpRegen(): number {
+    return this.getEffectiveStat(this.chess, "hpRegen");
   }
 
   get speed(): number {
@@ -667,7 +685,7 @@ export class ChessObject {
       listEffect.forEach((effect) => {
         if (
           effect.condition &&
-          !effect.condition(new ChessObject(chess, this.game))
+          !effect.condition(ChessFactory.createChess(chess, this.game))
         ) {
           return;
         }
@@ -758,7 +776,10 @@ export class ChessObject {
                 effect.target
               )
             ) {
-              const targetChessObject = new ChessObject(targetChess, this.game);
+              const targetChessObject = ChessFactory.createChess(
+                targetChess,
+                this.game
+              );
               const auraDebuff = this.createAuraDebuff(
                 aura,
                 this.chess.ownerId
@@ -1099,20 +1120,24 @@ export class ChessObject {
       this.chess.stats[randomStat] += 2;
     }
 
-    if (this.chess.items.some((item) => item.id === "bramble_vest")) {
+    if (
+      chess.chess.items.some((item) => item.id === "bramble_vest") &&
+      chess.chess.stats.hp > 0
+    ) {
+      console.log("bramble_vest");
       const { GameLogic } = require("../game.logic");
-      GameLogic.getAdjacentSquares(this.chess.position).forEach((square) => {
+      GameLogic.getAdjacentSquares(chess.chess.position).forEach((square) => {
         const targetChess = GameLogic.getChess(
           this.game,
-          !this.chess.blue,
+          !chess.chess.blue,
           square
         );
         if (targetChess) {
-          this.damage(
-            new ChessObject(targetChess, this.game),
+          chess.damage(
+            ChessFactory.createChess(targetChess, this.game),
             5,
             "true",
-            this,
+            chess,
             0
           );
         }
@@ -1131,17 +1156,13 @@ export class ChessObject {
     forceCritical: boolean = false,
     damageMultiplier: number = 1
   ): number {
-    if (
-      !this.validateAttack(chess.chess.position, this.chess.stats.attackRange)
-    ) {
+    if (!this.validateAttack(chess.chess.position, this.attackRange)) {
       throw new Error("Invalid attack");
     }
 
     // Critical strike system from RULE.md: 20% chance, 150% damage
     const criticalChance = this.criticalChance / 100;
-    console.log("criticalChance", criticalChance);
     const randomChance = Math.random();
-    console.log("randomChance", randomChance);
     this.willCrit = forceCritical || randomChance < criticalChance;
     let damage = this.ad;
 
@@ -1175,7 +1196,7 @@ export class ChessObject {
       this.applyDebuff(this, this.createDamageAmplificationDebuff(2, this));
     }
     if (this.chess.items.some((item) => item.id === "protectors_vow")) {
-      this.applyShield(this.chess.stats.maxHp * 0.15, 2);
+      this.applyShield(this.maxHp * 0.15, 2);
     }
   }
 
@@ -1216,7 +1237,7 @@ export class ChessObject {
     this.chess.items.push(item);
     if (item.id === "crownguard") {
       this.applyShield(
-        this.chess.stats.maxHp * 0.25,
+        this.maxHp * 0.25,
         Number.MAX_SAFE_INTEGER,
         "crownguard_shield"
       );

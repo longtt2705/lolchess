@@ -11,8 +11,8 @@ export const champions: ChampionData[] = [
   {
     name: "Aatrox",
     stats: {
-      maxHp: 160,
-      ad: 50,
+      maxHp: 150,
+      ad: 45,
       physicalResistance: 10,
       magicResistance: 5,
       attackRange: {
@@ -27,7 +27,7 @@ export const champions: ChampionData[] = [
       name: "Deathbringer Stance",
       description:
         "Aatrox's next basic attack deals bonus 10% target's max health + 50% AP magic damage and heals him.",
-      cooldown: 3,
+      cooldown: 5,
     },
   },
   {
@@ -134,7 +134,7 @@ export const champions: ChampionData[] = [
       physicalResistance: 5,
       magicResistance: 5,
       attackRange: {
-        range: 2,
+        range: 3,
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -270,7 +270,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Granite Shield",
       description:
-        "If Malphite didn't get hit by damage for 2 turns, he gains a shield equal to (10+10% of AP)% of his max health. He gains 15 armor if having shield.",
+        "If Malphite didn't get hit by damage for 2 turns, he gains a shield equal to (10+40% of AP)% of his max health. He gains 15 armor if having shield.",
       cooldown: 2,
       currentCooldown: 0,
     },
@@ -295,7 +295,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Soul Furnace",
       description:
-        "When Sion kills enemies, he passively gains maximum Health. He deals bonus 10% of his max health + 50% of AP magic damage to his target.",
+        "When Sion kills enemies, he passively gains maximum Health. He deals bonus (10 + 25% AP) of his max health magic damage to his target.",
       cooldown: 0,
     },
   },
@@ -341,7 +341,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Astral Infusion",
       description:
-        "Soraka sacrifices a 20% of her own health to heal another friendly champion. Heals for (20 + 20% of AP).",
+        "Soraka sacrifices a 20% of her own health to heal another friendly champion. Heals for 20 + (10 + 10% of AP) of the target's max health.",
       cooldown: 3,
       attackRange: {
         range: 3,
@@ -482,12 +482,12 @@ export const champions: ChampionData[] = [
     name: "Viktor",
     stats: {
       maxHp: 110,
-      ad: 30,
+      ad: 25,
       ap: 0,
       physicalResistance: 10,
       magicResistance: 10,
       attackRange: {
-        range: 2,
+        range: 3,
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -500,7 +500,7 @@ export const champions: ChampionData[] = [
         "Viktor deals (20 + 100% of AP) magic damage to a target, and empowers his next basic attack.",
       cooldown: 3,
       attackRange: {
-        range: 2,
+        range: 3,
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -517,7 +517,7 @@ export const champions: ChampionData[] = [
       physicalResistance: 10,
       magicResistance: 10,
       attackRange: {
-        range: 2,
+        range: 3,
         diagonal: true,
         horizontal: true,
         vertical: true,

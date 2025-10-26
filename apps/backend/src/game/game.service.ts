@@ -624,8 +624,9 @@ export class GameService {
       };
     } catch (error) {
       this.logger.error(`Error executing action: ${error.message}`);
+      const cleanedBoard = this.cleanBoard(game);
       return {
-        game,
+        game: { ...game, board: cleanedBoard } as any,
         message: `Failed to execute action: ${error.message}`,
       };
     }
@@ -675,7 +676,7 @@ export class GameService {
           cooldownReduction: chessObject.cooldownReduction,
           lifesteal: chessObject.lifesteal,
           damageAmplification: chessObject.damageAmplification,
-          hpRegen: chessObject.getEffectiveStat(piece, "hpRegen"),
+          hpRegen: chessObject.hpRegen,
         },
         // Include raw stats for comparison/debugging if needed
         rawStats: {

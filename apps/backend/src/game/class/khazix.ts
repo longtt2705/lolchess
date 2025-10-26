@@ -1,6 +1,7 @@
 import { GameLogic } from "../game.logic";
 import { Square } from "../game.schema";
 import { ChessObject } from "./chess";
+import { ChessFactory } from "./chessFactory";
 
 export class KhaZix extends ChessObject {
   // Check if a target is isolated (no allied pieces adjacent)
@@ -29,7 +30,10 @@ export class KhaZix extends ChessObject {
     );
 
     if (targetChess) {
-      const targetChessObject = new ChessObject(targetChess, this.game);
+      const targetChessObject = ChessFactory.createChess(
+        targetChess,
+        this.game
+      );
 
       // Base damage
       let damage = 20 + this.ad * 0.8;
@@ -40,7 +44,13 @@ export class KhaZix extends ChessObject {
       }
 
       // Deal physical damage
-      this.activeSkillDamage(targetChessObject, damage, "physical", this, this.sunder);
+      this.activeSkillDamage(
+        targetChessObject,
+        damage,
+        "physical",
+        this,
+        this.sunder
+      );
     }
   }
 }

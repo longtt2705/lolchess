@@ -300,11 +300,6 @@ export class GameLogic {
     // Now increment the round for the next player
     game.currentRound++;
 
-    if (game.currentRound % 10 === 0) {
-      // Award gold for every 10th round
-      game.players[0].gold += 50;
-      game.players[1].gold += 50;
-    }
     const currentPlayerId = this.isBlueTurn(game)
       ? game.bluePlayer
       : game.redPlayer;
@@ -477,18 +472,18 @@ export class GameLogic {
     const redPlayerIndex = game.players.findIndex(
       (p) => p.userId === game.redPlayer
     );
+    const isDevelopment = process.env.NODE_ENV === "development";
     if (bluePlayerIndex !== -1) {
-      game.players[bluePlayerIndex].gold = game.gameSettings?.startingGold || 0;
+      game.players[bluePlayerIndex].gold = isDevelopment
+        ? 1000
+        : game.gameSettings?.startingGold || 0;
     }
     if (redPlayerIndex !== -1) {
-      game.players[redPlayerIndex].gold = game.gameSettings?.startingGold || 0;
+      game.players[redPlayerIndex].gold = isDevelopment
+        ? 1000
+        : game.gameSettings?.startingGold || 0;
     }
     this.applyAuraDebuffs(game);
-
-    console.log(
-      "game.board",
-      game.board.filter((chess) => chess.skill)
-    );
 
     return game;
   }
@@ -792,6 +787,7 @@ export class GameLogic {
         physicalResistance: championData.stats.physicalResistance || 10,
         magicResistance: championData.stats.magicResistance || 10,
         speed: championData.stats.speed || 2,
+        hpRegen: championData.stats.hpRegen || 0,
         attackRange: championData.stats.attackRange || {
           range: 2,
           diagonal: true,
@@ -1093,7 +1089,7 @@ export class GameLogic {
       unique: itemData.unique || false,
     };
 
-    const championObject = new ChessObject(champion, game);
+    const championObject = ChessFactory.createChess(champion, game);
     let maxHpBefore = championObject.maxHp;
     championObject.acquireItem(newItem);
     // Check for item combining (TFT-style)

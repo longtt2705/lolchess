@@ -1,6 +1,7 @@
 import { GameLogic } from "../game.logic";
 import { Chess, Aura, AuraEffect, Debuff, Square } from "../game.schema";
 import { ChessObject } from "./chess";
+import { ChessFactory } from "./chessFactory";
 
 export class Janna extends ChessObject {
   constructor(chess: Chess, game: any) {
@@ -46,7 +47,10 @@ export class Janna extends ChessObject {
         square
       );
       if (targetChess) {
-        const targetChessObject = new ChessObject(targetChess, this.game);
+        const targetChessObject = ChessFactory.createChess(
+          targetChess,
+          this.game
+        );
         // Only apply if the target doesn't already have the speed boost
         const hasSpeedBoost = targetChess.debuffs.some(
           (d) => d.id === "speed_boost"

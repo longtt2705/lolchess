@@ -1,6 +1,7 @@
 import { GameLogic } from "../game.logic";
 import { Square, Debuff } from "../game.schema";
 import { ChessObject } from "./chess";
+import { ChessFactory } from "./chessFactory";
 
 export class Viktor extends ChessObject {
   // Create empowered attack debuff
@@ -38,11 +39,20 @@ export class Viktor extends ChessObject {
     );
 
     if (targetChess) {
-      const targetChessObject = new ChessObject(targetChess, this.game);
+      const targetChessObject = ChessFactory.createChess(
+        targetChess,
+        this.game
+      );
 
       // Deal magic damage
       const damage = 20 + this.ap * 1;
-      this.activeSkillDamage(targetChessObject, damage, "magic", this, this.sunder);
+      this.activeSkillDamage(
+        targetChessObject,
+        damage,
+        "magic",
+        this,
+        this.sunder
+      );
 
       // Empower next basic attack
       const empowermentDebuff = this.createEmpoweredAttackDebuff();

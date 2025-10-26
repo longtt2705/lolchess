@@ -13,7 +13,7 @@ export class Malphite extends ChessObject {
       return;
     }
     this.applyShield(
-      this.chess.stats.maxHp * 0.1,
+      this.chess.stats.maxHp * (0.1 + this.ap * 0.4),
       Number.MAX_SAFE_INTEGER,
       "granite_shield"
     );

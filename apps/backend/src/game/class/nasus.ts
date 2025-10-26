@@ -1,6 +1,7 @@
 import { GameLogic } from "../game.logic";
 import { Square } from "../game.schema";
 import { ChessObject } from "./chess";
+import { ChessFactory } from "./chessFactory";
 
 export class Nasus extends ChessObject {
   skill(position?: Square): void {
@@ -14,7 +15,10 @@ export class Nasus extends ChessObject {
     const bonusDamage = this.chess.skill.payload?.bonusDamage || 0;
 
     if (targetChess) {
-      const targetChessObject = new ChessObject(targetChess, this.game);
+      const targetChessObject = ChessFactory.createChess(
+        targetChess,
+        this.game
+      );
 
       // Deal enhanced damage
       const damage = this.ad + 20 + this.ap * 0.4 + bonusDamage;
@@ -28,7 +32,10 @@ export class Nasus extends ChessObject {
 
       // If target dies, increase future Siphoning Strike damage
       if (targetChess.stats.hp <= 0) {
-        this.chess.skill.payload.bonusDamage = bonusDamage + 15;
+        if (!this.chess.skill.payload) {
+          this.chess.skill.payload = { bonusDamage: 0 };
+        }
+        this.chess.skill.payload.bonusDamage += 15;
       }
     }
   }
