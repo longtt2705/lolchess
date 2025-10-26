@@ -26,7 +26,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Deathbringer Stance",
       description:
-        "Aatrox's next basic attack deals bonus 10% target's max health + 50% AP magic damage and heals him.",
+        "Aatrox's next basic attack deals bonus 10% target's max health + 50% AP magic damage and heals him (10 + 25% of AP) HP.",
       cooldown: 5,
     },
   },
@@ -63,9 +63,9 @@ export const champions: ChampionData[] = [
     name: "Garen",
     stats: {
       maxHp: 180,
-      ad: 50,
+      ad: 40,
       ap: 0,
-      physicalResistance: 15,
+      physicalResistance: 30,
       magicResistance: 15,
       attackRange: {
         range: 1,
@@ -73,6 +73,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      hpRegen: 3,
     },
     skill: {
       type: "passive",
@@ -87,8 +88,8 @@ export const champions: ChampionData[] = [
     name: "Janna",
     stats: {
       maxHp: 120,
-      ad: 30,
-      ap: 0,
+      ad: 10,
+      ap: 30,
       physicalResistance: 5,
       magicResistance: 5,
       speed: 2,
@@ -104,7 +105,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Tailwind",
       description:
-        "Janna's allies gain +1 if adjacent to her. You can activate this skill to +2 + 20% of AP Move Speed of nearby allies for 2 turns.",
+        "Janna's allies gain +1 if adjacent to her. You can activate this skill to increase 2 Move Speed and give a shield of (20 + 100% AP) to nearby allies for 2 turns.",
       cooldown: 5,
       targetTypes: "none",
       attackRange: {
@@ -175,7 +176,8 @@ export const champions: ChampionData[] = [
     name: "Blitzcrank",
     stats: {
       maxHp: 160,
-      ad: 30,
+      ad: 15,
+      ap: 30,
       attackRange: {
         range: 1,
         diagonal: true,
@@ -190,7 +192,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Rocket Grab",
       description:
-        "Blitzcrank launches a rocket diagonally, dealing (15 + 60% AP) magic damage and pulling the target to him.",
+        "Blitzcrank launches a rocket diagonally, dealing (15 + 80% AP) magic damage and pulling the target to him.",
       cooldown: 4,
       attackRange: {
         range: 4,
@@ -204,8 +206,10 @@ export const champions: ChampionData[] = [
   {
     name: "Kha'Zix",
     stats: {
-      maxHp: 130,
-      ad: 40,
+      maxHp: 120,
+      ad: 35,
+      ap: 10,
+      criticalChance: 20,
       attackRange: {
         range: 1,
         diagonal: true,
@@ -241,6 +245,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      speed: 2,
     },
     skill: {
       type: "passive",
@@ -255,7 +260,7 @@ export const champions: ChampionData[] = [
     stats: {
       maxHp: 150,
       ad: 35,
-      ap: 0,
+      ap: 30,
       physicalResistance: 30,
       magicResistance: 10,
       attackRange: {
@@ -264,7 +269,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
-      hpRegen: 1,
+      hpRegen: 2,
     },
     skill: {
       type: "passive",
@@ -279,10 +284,10 @@ export const champions: ChampionData[] = [
     name: "Sion",
     stats: {
       maxHp: 180,
-      ad: 30,
-      ap: 0,
-      physicalResistance: 10,
-      magicResistance: 5,
+      ad: 25,
+      ap: 30,
+      physicalResistance: 15,
+      magicResistance: 10,
       attackRange: {
         range: 1,
         diagonal: true,
@@ -304,7 +309,7 @@ export const champions: ChampionData[] = [
     stats: {
       maxHp: 44,
       ad: 44,
-      ap: 0,
+      ap: 4,
       physicalResistance: 4,
       magicResistance: 4,
       attackRange: {
@@ -313,12 +318,17 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      hpRegen: 4,
+      criticalChance: 4,
+      sunder: 4,
+      lifesteal: 4,
+      speed: 4
     },
     skill: {
       type: "passive",
       name: "Whisper",
       description:
-        "Every 4th attack deals critical damage and deals bonus (10+50% of AP) physical damage. When critical, Jhin gains +1 Move Speed for 2 turns.",
+        "Every 4th attack deals critical damage and deals bonus (4+44% of AP + 44% of bonus AD) physical damage. When critical, Jhin gains +1 Move Speed for 2 turns.",
       cooldown: 0,
     },
   },
@@ -326,8 +336,8 @@ export const champions: ChampionData[] = [
     name: "Soraka",
     stats: {
       maxHp: 100,
-      ad: 30,
-      ap: 0,
+      ad: 10,
+      ap: 20,
       physicalResistance: 5,
       magicResistance: 5,
       attackRange: {
@@ -336,6 +346,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      hpRegen: 5,
     },
     skill: {
       type: "active",
@@ -357,7 +368,7 @@ export const champions: ChampionData[] = [
     stats: {
       maxHp: 140,
       ad: 35,
-      ap: 0,
+      ap: 10,
       physicalResistance: 10,
       magicResistance: 10,
       attackRange: {
@@ -366,13 +377,14 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
-      hpRegen: 1,
+      hpRegen: 2,
+      lifesteal: 10,
     },
     skill: {
       type: "active",
       name: "Siphoning Strike",
       description:
-        "Nasus strikes his foe, dealing (20 + 40% of AP + 100% of AD) magic damage and increasing 15 damage of his future Siphoning Strikes if he slays his target.",
+        "Nasus strikes his foe, dealing (20 + 40% of AP + 100% of AD) magic damage and increasing 15 damage of his future Siphoning Strikes if he slays his target. Apply the attack's effect.",
       cooldown: 2,
       attackRange: {
         range: 1,
@@ -386,10 +398,10 @@ export const champions: ChampionData[] = [
   {
     name: "Teemo",
     stats: {
-      maxHp: 100,
-      ad: 30,
-      ap: 0,
-      physicalResistance: 5,
+      maxHp: 80,
+      ad: 5,
+      ap: 30,
+      physicalResistance: 10,
       magicResistance: 5,
       attackRange: {
         range: 2,
@@ -397,23 +409,24 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      speed: 3
     },
     skill: {
       type: "passive",
       name: "Toxic Shot",
       description:
-        "Teemo's basic attacks apply a debuff to the target, dealing more (5 + 40% of AP) magic damage and applying (10 + 10% of AP) magic damage each turn for 2 turns.",
+        "Teemo's basic attacks apply a debuff to the target, dealing more (5 + 60% of AP) magic damage and applying (5 + 25% of AP) magic damage each turn for 2 turns.",
       cooldown: 0,
     },
   },
   {
     name: "Rammus",
     stats: {
-      maxHp: 130,
-      ad: 35,
-      ap: 0,
-      physicalResistance: 15,
-      magicResistance: 10,
+      maxHp: 140,
+      ad: 15,
+      ap: 20,
+      physicalResistance: 35,
+      magicResistance: 20,
       hpRegen: 2, // Rammus has passive healing
       attackRange: {
         range: 1,
@@ -433,10 +446,11 @@ export const champions: ChampionData[] = [
   {
     name: "Yasuo",
     stats: {
-      maxHp: 130,
+      maxHp: 135,
       ad: 45,
-      ap: 0,
-      physicalResistance: 10,
+      ap: 10,
+      sunder: 5,
+      physicalResistance: 20,
       magicResistance: 10,
       attackRange: {
         range: 1,
@@ -444,13 +458,15 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
-      hpRegen: 1,
+      hpRegen: 2,
+      criticalDamage: 125,
+      criticalChance: 0
     },
     skill: {
       type: "passive",
       name: "Way of the Wanderer",
       description:
-        "Yasuo's Critical Strike Chance is doubled. After a Critical Strike, Yasuo gains (+3 + 10% of AP) Sunder.",
+        "Yasuo's Critical Strike Chance is doubled. After a Critical Strike, Yasuo gains (2 + 10% of AP) Sunder. The 50% redundant critical chance is converted to AD.",
       cooldown: 0,
     },
   },
@@ -460,6 +476,7 @@ export const champions: ChampionData[] = [
       maxHp: 130,
       ad: 45,
       ap: 0,
+      criticalChance: 25,
       physicalResistance: 10,
       magicResistance: 10,
       attackRange: {
@@ -468,7 +485,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
-      hpRegen: 1,
+      hpRegen: 2,
     },
     skill: {
       type: "passive",
@@ -482,8 +499,9 @@ export const champions: ChampionData[] = [
     name: "Viktor",
     stats: {
       maxHp: 110,
-      ad: 25,
-      ap: 0,
+      ad: 10,
+      ap: 30,
+      criticalChance: 30,
       physicalResistance: 10,
       magicResistance: 10,
       attackRange: {
@@ -512,8 +530,9 @@ export const champions: ChampionData[] = [
     name: "Twisted Fate",
     stats: {
       maxHp: 110,
-      ad: 30,
-      ap: 0,
+      ad: 25,
+      ap: 20,
+      criticalChance: 15,
       physicalResistance: 10,
       magicResistance: 10,
       attackRange: {

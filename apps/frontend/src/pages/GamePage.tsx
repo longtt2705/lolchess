@@ -370,6 +370,7 @@ const ChessDetailPanel = styled.div`
         gap: 16px;
 
         .skill-icon {
+          position: relative;
           width: 64px;
           height: 64px;
           border-radius: 8px;
@@ -1219,6 +1220,23 @@ const SkillIcon = styled.div<{ isActive: boolean; onCooldown: boolean, currentCo
       }
     }
   `}
+`
+
+const SkillStateBadge = styled.div`
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: linear-gradient(135deg, rgba(200, 155, 60, 0.95) 0%, rgba(180, 135, 40, 0.95) 100%);
+  color: var(--primary-bg);
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  cursor: help;
+  z-index: 10;
 `
 
 const CrownIcon = styled.div`
@@ -2208,6 +2226,46 @@ const getStatIcon = (stat: string): string => {
     hpRegen: '/icons/icon-hp-regen.png',
   };
   return iconMap[stat] || '/icons/AD.svg';
+};
+
+// Helper function to get skill state display for champions with payload-based mechanics
+const getSkillStateDisplay = (championName: string, skillPayload: any) => {
+  if (!skillPayload) return null;
+
+  switch (championName) {
+    case 'Jhin':
+      const jhinCount = skillPayload.attackCount || 0;
+      const jhinProgress = jhinCount % 4;
+      return {
+        badge: `${jhinProgress}/4`,
+        tooltip: `Attack Counter: ${jhinProgress}/4 attacks${jhinProgress === 3 ? ' (Next attack is CRITICAL!)' : ''}`
+      };
+
+    case 'Nasus':
+      const bonusDamage = skillPayload.bonusDamage || 0;
+      return {
+        badge: `+${bonusDamage}`,
+        tooltip: `Siphoning Strike Bonus: +${bonusDamage} damage from kills`
+      };
+
+    case 'Tristana':
+      const tristanaCount = skillPayload.attackCount || 0;
+      const tristanaProgress = tristanaCount % 4;
+      return {
+        badge: `${tristanaProgress}/4`,
+        tooltip: `Explosive Charge: ${tristanaProgress}/4 attacks${tristanaProgress === 3 ? ' (Next attack explodes!)' : ''}`
+      };
+
+    case 'Tryndamere':
+      const hasUsedRage = skillPayload.hasUsedUndyingRage || false;
+      return {
+        badge: hasUsedRage ? '✗' : '✓',
+        tooltip: `Undying Rage: ${hasUsedRage ? 'Already used this game' : 'Available (will survive at 1 HP)'}`
+      };
+
+    default:
+      return null;
+  }
 };
 
 const GamePage: React.FC = () => {
@@ -3352,7 +3410,23 @@ const GamePage: React.FC = () => {
                 {detailViewPiece.skill ? (
                   <div className="skill-card">
                     <div className="skill-card-header">
-                      <img src={`/icons/${detailViewPiece.name.toLowerCase()}_skill.webp`} alt={detailViewPiece.name} className="skill-icon" />
+                      <div style={{ position: 'relative' }}>
+                        <img src={`/icons/${detailViewPiece.name.toLowerCase()}_skill.webp`} alt={detailViewPiece.name} className="skill-icon" />
+                        {(() => {
+                          const stateDisplay = getSkillStateDisplay(
+                            detailViewPiece.name,
+                            (detailViewPiece.skill as any)?.payload
+                          );
+                          return stateDisplay ? (
+                            <SkillStateBadge
+                              onMouseEnter={(e) => handleTooltipShow(e, stateDisplay.tooltip)}
+                              onMouseLeave={handleTooltipHide}
+                            >
+                              {stateDisplay.badge}
+                            </SkillStateBadge>
+                          ) : null;
+                        })()}
+                      </div>
                       <div className="skill-info" >
                         <div className="card-name">{detailViewPiece.skill.name}</div>
                         <div className="skill-type">{detailViewPiece.skill.type}</div>

@@ -132,7 +132,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "hextech_gunblade",
     name: "Hextech Gunblade",
-    description: "Heal 15% of damage dealt from all sources.",
+    description: "Heal 15% of damage dealt from active skills.",
     cost: 0,
     icon: "/icons/HextechGunblade.png",
     effects: [
@@ -398,6 +398,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "ap", value: 25, type: "add" },
       { stat: "criticalChance", value: 35, type: "add" },
+      { stat: "criticalDamage", value: 50, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "sparring_gloves"],
@@ -588,7 +589,7 @@ export const combinedItems: ItemData[] = [
     id: "hand_of_justice",
     name: "Hand of Justice",
     description:
-      "Gain additional 10 AD and 10 AP and 10% lifesteal when HP is below 40%.",
+      "Gain additional 10 AD and 10 AP and 10% lifesteal when HP is below 40%. Heal 15% of damage dealt from active skills.",
     cost: 0,
     icon: "/icons/HandofJustice.png",
     effects: [

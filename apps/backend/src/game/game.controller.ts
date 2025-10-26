@@ -14,7 +14,17 @@ export class GameController {
 
   @Get("champions")
   getChampions() {
-    return champions;
+    return champions.map((champion) => ({
+      ...champion,
+      stats: {
+        ...champion.stats,
+        speed: champion.stats.speed ?? 2,
+        criticalChance: champion.stats.criticalChance ?? 15,
+        criticalDamage: champion.stats.criticalDamage ?? 150,
+        sunder: champion.stats.sunder ?? 0,
+        hpRegen: champion.stats.hpRegen ?? 1,
+      },
+    }));
   }
 
   @Get("items")

@@ -71,7 +71,11 @@ export class ChessObject {
         this.postCritDamage(chess, updatedDamage);
       }
     }
-    return this.damage(chess, updatedDamage, damageType, attacker, sunder);
+    const damageDealt = this.damage(chess, updatedDamage, damageType, attacker, sunder);
+    if (this.chess.items.some((item) => item.id === "hextech_gunblade" || item.id === "hand_of_justice")) {
+      this.heal(chess, damageDealt * 0.15);
+    }
+    return damageDealt;
   }
 
   private static damageReductionPercentage(protectionFactor: number): number {
@@ -271,7 +275,7 @@ export class ChessObject {
     }
   }
 
-  protected applyShield(amount: number, duration: number, id?: string): void {
+  public applyShield(amount: number, duration: number, id?: string): void {
     if (!this.chess.shields) {
       this.chess.shields = [];
     }
@@ -454,7 +458,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -674,7 +678,10 @@ export class ChessObject {
   getEffectiveStat(chess: Chess, stat: string): number {
     let statValue = chess.stats[stat] || 0;
 
-    // Apply item bonuses
+    // Collect all modifiers from items and debuffs
+    const modifiers: Array<{ value: number; type: string }> = [];
+
+    // Collect item bonuses
     chess.items.forEach((item) => {
       const itemData = getItemById(item.id);
       const listEffect =
@@ -686,25 +693,34 @@ export class ChessObject {
         ) {
           return;
         }
-        statValue = this.applyStatModifier(
-          statValue,
-          effect.value,
-          effect.type
-        );
+        modifiers.push({ value: effect.value, type: effect.type });
       });
     });
 
-    // Apply debuff effects (auras now apply debuffs instead of direct modification)
+    // Collect debuff effects (auras now apply debuffs instead of direct modification)
     chess.debuffs.forEach((debuff) => {
       debuff.effects.forEach((effect) => {
         if (effect.stat === stat) {
-          statValue = this.applyStatModifier(
-            statValue,
-            effect.modifier,
-            effect.type
-          );
+          modifiers.push({ value: effect.modifier, type: effect.type });
         }
       });
+    });
+
+    // Sort modifiers: "add" first, then "multiply", then "set"
+    const sortOrder = { add: 0, multiply: 1, set: 2 };
+    modifiers.sort((a, b) => {
+      const orderA = sortOrder[a.type] ?? 999;
+      const orderB = sortOrder[b.type] ?? 999;
+      return orderA - orderB;
+    });
+
+    // Apply modifiers in sorted order
+    modifiers.forEach((modifier) => {
+      statValue = this.applyStatModifier(
+        statValue,
+        modifier.value,
+        modifier.type
+      );
     });
 
     return Math.floor(Math.max(0, statValue)); // Stats can't be negative

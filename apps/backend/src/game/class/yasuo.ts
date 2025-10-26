@@ -9,6 +9,17 @@ export class Yasuo extends ChessObject {
     return super.criticalChance * 2;
   }
 
+  get ad(): number {
+    // Check if passive is disabled by Evenshroud
+    if (this.isPassiveDisabled()) {
+      return super.ad;
+    }
+    if (this.criticalChance > 100) {
+      return super.ad + Math.floor((this.criticalChance - 100) * 0.5);
+    }
+    return super.ad;
+  }
+
   protected postCritDamage(chess: ChessObject, damage: number): void {
     super.postCritDamage(chess, damage);
     // Check if passive is disabled by Evenshroud

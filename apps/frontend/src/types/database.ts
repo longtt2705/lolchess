@@ -8,6 +8,7 @@ export interface AttackRange {
 }
 
 export interface ChampionStats {
+  hp?: number;
   maxHp?: number;
   ad?: number;
   ap?: number;
@@ -15,6 +16,14 @@ export interface ChampionStats {
   magicResistance?: number;
   speed?: number;
   attackRange?: AttackRange;
+  goldValue?: number;
+  sunder?: number;
+  criticalChance?: number;
+  criticalDamage?: number;
+  cooldownReduction?: number;
+  lifesteal?: number;
+  damageAmplification?: number;
+  hpRegen?: number;
 }
 
 export interface ChampionSkill {

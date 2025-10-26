@@ -12,13 +12,13 @@ export class Janna extends ChessObject {
     return {
       id: "speed_boost",
       name: "Speed Boost",
-      description: "Increases speed by 2 + 20% of AP",
+      description: "Increases speed by 2",
       duration: 2,
       maxDuration: 2,
       effects: [
         {
           stat: "speed",
-          modifier: 2 + Math.floor(this.ap * 0.2),
+          modifier: 2,
           type: "add",
         },
       ],
@@ -58,6 +58,8 @@ export class Janna extends ChessObject {
         if (!hasSpeedBoost) {
           this.applySpeedBoost(targetChessObject);
         }
+
+        targetChessObject.applyShield(20 + this.ap * 1, 2, `janna_shield_${targetChessObject.chess.id}`);
       }
     });
   }

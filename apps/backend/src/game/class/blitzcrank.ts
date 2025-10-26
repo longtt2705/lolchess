@@ -21,7 +21,7 @@ export class Blitzcrank extends ChessObject {
       // Deal magic damage
       this.activeSkillDamage(
         targetChessObject,
-        15 + this.ap * 0.6,
+        15 + this.ap * 0.8,
         "magic",
         this,
         this.sunder

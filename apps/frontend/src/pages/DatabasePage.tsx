@@ -496,7 +496,8 @@ const getStatIcon = (stat: string): string => {
         damageAmplification: '/icons/icon-da.png',
         cooldownReduction: '/icons/icon-cdr.webp',
         lifesteal: '/icons/icon-sv.png',
-        hpRegen: '/icons/icon-hp-regen.png', // Use HP icon for HP regen
+        hpRegen: '/icons/icon-hp-regen.png',
+        goldValue: '/icons/gold.png',
     };
     return iconMap[stat] || '/icons/AD.svg';
 };
@@ -664,6 +665,7 @@ const DatabasePage: React.FC = () => {
                                             <h3>{champion.name}</h3>
                                         </ChampionHeader>
 
+                                        {/* Primary Stats */}
                                         <StatsGrid>
                                             <StatItem>
                                                 <div className="label">
@@ -693,6 +695,10 @@ const DatabasePage: React.FC = () => {
                                                 </div>
                                                 <div className="value">{champion.stats.speed || 1}</div>
                                             </StatItem>
+                                        </StatsGrid>
+
+                                        {/* Defensive Stats */}
+                                        <StatsGrid style={{ marginBottom: '16px' }}>
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('physicalResistance')} alt="Physical Res" width={16} height={16} />
@@ -707,9 +713,6 @@ const DatabasePage: React.FC = () => {
                                                 </div>
                                                 <div className="value">{champion.stats.magicResistance || 0}</div>
                                             </StatItem>
-                                        </StatsGrid>
-
-                                        <StatsGrid style={{ marginBottom: '16px' }}>
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('hpRegen')} alt="HP Regen" width={16} height={16} />
@@ -723,6 +726,38 @@ const DatabasePage: React.FC = () => {
                                                     Attack Range
                                                 </div>
                                                 <div className="value">{formatAttackRange(champion.stats.attackRange)}</div>
+                                            </StatItem>
+                                        </StatsGrid>
+
+                                        {/* Advanced Stats */}
+                                        <StatsGrid style={{ marginBottom: '16px' }}>
+                                            <StatItem>
+                                                <div className="label">
+                                                    <img src={getStatIcon('criticalChance')} alt="Crit Chance" width={16} height={16} />
+                                                    Crit Chance
+                                                </div>
+                                                <div className="value">{champion.stats.criticalChance || 0}%</div>
+                                            </StatItem>
+                                            <StatItem>
+                                                <div className="label">
+                                                    <img src={getStatIcon('criticalDamage')} alt="Crit Damage" width={16} height={16} />
+                                                    Crit Damage
+                                                </div>
+                                                <div className="value">{champion.stats.criticalDamage || 150}%</div>
+                                            </StatItem>
+                                            <StatItem>
+                                                <div className="label">
+                                                    <img src={getStatIcon('sunder')} alt="Sunder" width={16} height={16} />
+                                                    Sunder
+                                                </div>
+                                                <div className="value">{champion.stats.sunder || 0}</div>
+                                            </StatItem>
+                                            <StatItem>
+                                                <div className="label">
+                                                    <img src={getStatIcon('lifesteal')} alt="Lifesteal" width={16} height={16} />
+                                                    Lifesteal
+                                                </div>
+                                                <div className="value">{champion.stats.lifesteal || 0}%</div>
                                             </StatItem>
                                         </StatsGrid>
 
