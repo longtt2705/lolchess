@@ -426,6 +426,11 @@ export class ChessObject {
         this.heal(this, hpRegen);
       }
 
+      if (this.chess.items.some((item) => item.id === "spirit_visage")) {
+        const missingHp = this.maxHp - this.chess.stats.hp;
+        this.heal(this, missingHp * 0.05);
+      }
+
       // Apply Sunfire Cape effect
       if (this.chess.items.some((item) => item.id === "sunfire_cape")) {
         const { GameLogic } = require("../game.logic");
