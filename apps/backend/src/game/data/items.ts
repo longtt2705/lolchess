@@ -397,7 +397,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/JeweledGauntlet.png",
     effects: [
       { stat: "ap", value: 25, type: "add" },
-      { stat: "criticalChance", value: 25, type: "add" },
+      { stat: "criticalChance", value: 35, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "sparring_gloves"],
@@ -409,7 +409,7 @@ export const combinedItems: ItemData[] = [
     id: "bramble_vest",
     name: "Bramble Vest",
     description:
-      "Take 8% reduced damage from attacks. When struck by any attack, deal 5 true damage to all adjacent enemies.",
+      "Take 8% reduced damage from attacks. When struck by any attack, deal 8 + 10% of Physical Resistance magic damage to all adjacent enemies.",
     cost: 0,
     icon: "/icons/BrambleVest.png",
     effects: [{ stat: "physicalResistance", value: 40, type: "add" }],
@@ -527,13 +527,13 @@ export const combinedItems: ItemData[] = [
   {
     id: "warmog_armor",
     name: "Warmog's Armor",
-    description: "Grants 10% Maximum Health",
+    description: "Grants 20% Maximum Health",
     cost: 0,
     icon: "/icons/WarmogsArmor.png",
     effects: [
-      { stat: "maxHp", value: 65, type: "add" },
-      { stat: "maxHp", value: 1.1, type: "multiply" },
-      { stat: "hpRegen", value: 1, type: "add" },
+      { stat: "maxHp", value: 80, type: "add" },
+      { stat: "maxHp", value: 1.2, type: "multiply" },
+      { stat: "hpRegen", value: 2, type: "add" },
     ],
     isBasic: false,
     recipe: ["giants_belt", "giants_belt"],
@@ -588,7 +588,7 @@ export const combinedItems: ItemData[] = [
     id: "hand_of_justice",
     name: "Hand of Justice",
     description:
-      "Gain additional 10 AD and 10% Lifesteal when HP is below 40%.",
+      "Gain additional 10 AD and 10 AP and 10% lifesteal when HP is below 40%.",
     cost: 0,
     icon: "/icons/HandofJustice.png",
     effects: [
@@ -596,8 +596,15 @@ export const combinedItems: ItemData[] = [
       { stat: "cooldownReduction", value: 5, type: "add" },
       { stat: "lifesteal", value: 10, type: "add" },
       { stat: "ad", value: 10, type: "add" },
+      { stat: "ap", value: 10, type: "add" },
       {
         stat: "ad",
+        value: 10,
+        type: "add",
+        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.4,
+      },
+      {
+        stat: "ap",
         value: 10,
         type: "add",
         condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.4,
@@ -629,13 +636,14 @@ export const combinedItems: ItemData[] = [
   {
     id: "spirit_visage",
     name: "Spirit Visage",
-    description: "Grants 30% health heal from all sources.",
+    description:
+      "Grants 30% health heal from all sources. Restore 5% of missing Health each turn.",
     cost: 0,
     icon: "/icons/SpiritVisage.png",
     effects: [
       { stat: "maxHp", value: 35, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
-      { stat: "hpRegen", value: 3, type: "add" },
+      { stat: "hpRegen", value: 5, type: "add" },
     ],
     isBasic: false,
     recipe: ["tear", "giants_belt"],

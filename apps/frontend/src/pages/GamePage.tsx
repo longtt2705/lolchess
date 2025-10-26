@@ -3421,6 +3421,21 @@ const GamePage: React.FC = () => {
                                 src="/icons/Evenshroud.png"
                                 alt="Evenshroud"
                               />
+                            ) : debuff.id === "titans_resolve" ? (
+                              <img
+                                src="/icons/TitansResolve.png"
+                                alt="Titans Resolve"
+                              />
+                            ) : debuff.id === "adaptive_helm_armor" ? (
+                              <img
+                                src="/icons/AdaptiveHelm.png"
+                                alt="Adaptive Helm"
+                              />
+                            ) : debuff.id === "adaptive_helm_mr" ? (
+                              <img
+                                src="/icons/AdaptiveHelm.png"
+                                alt="Adaptive Helm"
+                              />
                             )
                               : (debuff.casterName ? (
                                 <img

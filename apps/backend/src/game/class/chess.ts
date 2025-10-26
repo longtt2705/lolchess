@@ -74,7 +74,7 @@ export class ChessObject {
     return this.damage(chess, updatedDamage, damageType, attacker, sunder);
   }
 
-  private damageReductionPercentage(protectionFactor: number): number {
+  private static damageReductionPercentage(protectionFactor: number): number {
     if (protectionFactor <= 0) {
       return 0;
     }
@@ -82,26 +82,26 @@ export class ChessObject {
   }
 
   private calculateDamage(
+    target: ChessObject,
     damage: number,
     damageType: "physical" | "magic" | "true",
     sunder: number = 0
   ): number {
-    console.log("calculateDamage", damage, damageType, sunder);
     if (damageType === "physical") {
-      let physicalResistance = this.physicalResistance;
+      let physicalResistance = target.physicalResistance;
       if (this.chess.items.some((item) => item.id === "last_whisper")) {
         physicalResistance *= 0.7;
       }
-      const reducePercentage = this.damageReductionPercentage(
+      const reducePercentage = ChessObject.damageReductionPercentage(
         physicalResistance - sunder
       );
       return damage * (1 - reducePercentage);
     } else if (damageType === "magic") {
-      let magicResistance = this.magicResistance;
+      let magicResistance = target.magicResistance;
       if (this.chess.items.some((item) => item.id === "void_staff")) {
         magicResistance *= 0.7;
       }
-      const reducePercentage = this.damageReductionPercentage(
+      const reducePercentage = ChessObject.damageReductionPercentage(
         magicResistance - sunder
       );
       return damage * (1 - reducePercentage);
@@ -124,15 +124,8 @@ export class ChessObject {
     ) {
       damageAmplification += 15;
     }
-    console.log(
-      "damageAmplification",
-      damage,
-      damageAmplification,
-      (damage * (damageAmplification + 100)) / 100
-    );
     let calDamage = (damage * (damageAmplification + 100)) / 100;
-    calDamage = this.calculateDamage(calDamage, damageType, sunder);
-    console.log("calDamage", calDamage);
+    calDamage = this.calculateDamage(chess, calDamage, damageType, sunder);
     const wasAlive = chess.chess.stats.hp > 0;
 
     // Check if the target has a shield
@@ -155,7 +148,6 @@ export class ChessObject {
     }
 
     const finalDamage = Math.floor(chess.preTakenDamage(this, calDamage));
-    console.log("finalDamage", finalDamage);
     chess.chess.stats.hp -= finalDamage;
     chess.postTakenDamage(this, finalDamage, damageType);
 
@@ -1135,10 +1127,10 @@ export class ChessObject {
         if (targetChess) {
           chess.damage(
             ChessFactory.createChess(targetChess, this.game),
-            5,
-            "true",
+            8 + chess.physicalResistance * 0.1,
+            "magic",
             chess,
-            0
+            this.sunder
           );
         }
       });
