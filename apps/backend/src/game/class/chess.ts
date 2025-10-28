@@ -71,8 +71,19 @@ export class ChessObject {
         this.postCritDamage(chess, updatedDamage);
       }
     }
-    const damageDealt = this.damage(chess, updatedDamage, damageType, attacker, sunder);
-    if (this.chess.items.some((item) => item.id === "hextech_gunblade" || item.id === "hand_of_justice")) {
+    const damageDealt = this.damage(
+      chess,
+      updatedDamage,
+      damageType,
+      attacker,
+      sunder
+    );
+    if (
+      this.chess.items.some(
+        (item) =>
+          item.id === "hextech_gunblade" || item.id === "hand_of_justice"
+      )
+    ) {
       this.heal(chess, damageDealt * 0.15);
     }
     return damageDealt;
@@ -458,7 +469,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -1137,7 +1148,6 @@ export class ChessObject {
       chess.chess.items.some((item) => item.id === "bramble_vest") &&
       chess.chess.stats.hp > 0
     ) {
-      console.log("bramble_vest");
       const { GameLogic } = require("../game.logic");
       GameLogic.getAdjacentSquares(chess.chess.position).forEach((square) => {
         const targetChess = GameLogic.getChess(

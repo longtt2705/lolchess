@@ -2,6 +2,7 @@ import { SkillAnimationRenderer } from "./types";
 import { genericSkillRenderer } from "./skills/genericSkill";
 import { rocketGrabRenderer } from "./skills/rocketGrab";
 import { spiritRushRenderer } from "./skills/spiritRush";
+import { cardThrowRenderer } from "./skills/cardThrow";
 
 /**
  * Registry mapping skill names to their animation renderers
@@ -13,6 +14,9 @@ const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
 
   // Ahri
   "Spirit Rush": spiritRushRenderer,
+
+  // Twisted Fate
+  "Wild Cards": cardThrowRenderer,
 
   // Add more skills here as they're implemented
   // 'Skill Name': skillRenderer,

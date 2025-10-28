@@ -45,7 +45,7 @@ export class Viktor extends ChessObject {
       );
 
       // Deal magic damage
-      const damage = 20 + this.ap * 1;
+      const damage = 20 + this.ap * 0.8;
       this.activeSkillDamage(
         targetChessObject,
         damage,

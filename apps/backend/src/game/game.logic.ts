@@ -282,11 +282,23 @@ export class GameLogic {
     const chessObject = ChessFactory.createChess(casterChess, game);
     chessObject.executeSkill(skillPosition);
 
-    // After executing the skill, check if there's a pulledToPosition in the payload
-    // This is used by Blitzcrank's Rocket Grab to communicate the final pull position
-    if (actionDetails && casterChess.skill?.payload?.pulledToPosition) {
-      actionDetails.pulledToPosition =
-        casterChess.skill.payload.pulledToPosition;
+    // After executing the skill, check for skill-specific payload data
+    if (actionDetails && casterChess.skill?.payload) {
+      // Blitzcrank's Rocket Grab: pulledToPosition
+      if (casterChess.skill.payload.pulledToPosition) {
+        actionDetails.pulledToPosition =
+          casterChess.skill.payload.pulledToPosition;
+      }
+
+      // Twisted Fate's Pick a Card: cardTargets
+      if (casterChess.skill.payload.cardTargets) {
+        (actionDetails as any).cardTargets =
+          casterChess.skill.payload.cardTargets;
+      }
+      if (casterChess.skill.payload.totalCardCount) {
+        (actionDetails as any).totalCardCount =
+          casterChess.skill.payload.totalCardCount;
+      }
     }
 
     return game;
@@ -802,20 +814,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-          type: championData.skill.type,
-          name: championData.skill.name,
-          description: championData.skill.description,
-          cooldown: championData.skill.cooldown,
-          currentCooldown: championData.skill.currentCooldown || 0,
-          attackRange: championData.skill.attackRange ||
-            championData.stats.attackRange || {
-            range: 1,
-            diagonal: true,
-            horizontal: true,
-            vertical: true,
-          },
-          targetTypes: championData.skill.targetTypes || "none",
-        }
+            type: championData.skill.type,
+            name: championData.skill.name,
+            description: championData.skill.description,
+            cooldown: championData.skill.cooldown,
+            currentCooldown: championData.skill.currentCooldown || 0,
+            attackRange: championData.skill.attackRange ||
+              championData.stats.attackRange || {
+                range: 1,
+                diagonal: true,
+                horizontal: true,
+                vertical: true,
+              },
+            targetTypes: championData.skill.targetTypes || "none",
+          }
         : undefined,
       items: [],
       debuffs: [],

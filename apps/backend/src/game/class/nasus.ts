@@ -30,6 +30,8 @@ export class Nasus extends ChessObject {
         this.sunder
       );
 
+      this.postAttack(targetChessObject, damage);
+
       // If target dies, increase future Siphoning Strike damage
       if (targetChess.stats.hp <= 0) {
         if (!this.chess.skill.payload) {

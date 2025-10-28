@@ -79,7 +79,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Perseverance",
       description:
-        "If Garen has not recently been struck by damage or enemy abilities, he regenerates 10% of his total health each turn.",
+        "If Garen has not recently been struck by damage, he regenerates 10% of his total health each turn. Each turn, Garen gains 1 Armor (Max 30)",
       cooldown: 4,
       currentCooldown: 0,
     },
@@ -322,7 +322,7 @@ export const champions: ChampionData[] = [
       criticalChance: 4,
       sunder: 4,
       lifesteal: 4,
-      speed: 4
+      speed: 4,
     },
     skill: {
       type: "passive",
@@ -385,7 +385,7 @@ export const champions: ChampionData[] = [
       name: "Siphoning Strike",
       description:
         "Nasus strikes his foe, dealing (20 + 40% of AP + 100% of AD) magic damage and increasing 15 damage of his future Siphoning Strikes if he slays his target. Apply the attack's effect.",
-      cooldown: 2,
+      cooldown: 3,
       attackRange: {
         range: 1,
         diagonal: true,
@@ -409,7 +409,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
-      speed: 3
+      speed: 3,
     },
     skill: {
       type: "passive",
@@ -460,7 +460,7 @@ export const champions: ChampionData[] = [
       },
       hpRegen: 2,
       criticalDamage: 125,
-      criticalChance: 0
+      criticalChance: 0,
     },
     skill: {
       type: "passive",
@@ -515,7 +515,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Siphon Power",
       description:
-        "Viktor deals (20 + 100% of AP) magic damage to a target, and empowers his next basic attack.",
+        "Viktor deals (20 + 80% of AP) magic damage to a target, and empowers his next basic attack, dealing bonus (15 + 50% of AP) magic damage.",
       cooldown: 3,
       attackRange: {
         range: 3,
@@ -543,11 +543,18 @@ export const champions: ChampionData[] = [
       },
     },
     skill: {
-      type: "passive",
-      name: "Stacked Deck",
+      type: "active",
+      name: "Wild Cards",
       description:
-        "Twisted Fate deals bonus (5+80% of AP) magic damage. He earns more 10 gold for each enemy killed.",
-      cooldown: 0,
+        "Throws (1+40% of AP) cards to a target and his adjacent enemies, each card deals (1 + 5% AP + 10% AD) magic damage to the target and his adjacent enemies.",
+      cooldown: 5,
+      attackRange: {
+        range: 3,
+        diagonal: true,
+        horizontal: true,
+        vertical: true,
+      },
+      targetTypes: "enemy",
     },
   },
 ];

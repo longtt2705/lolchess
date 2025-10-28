@@ -2407,17 +2407,23 @@ const GamePage: React.FC = () => {
 
     // Update previous game state
     previousGameStateRef.current = gameState
+  }, [gameState, queuedState, setDisplayState, setQueuedState])
 
-    // Update dead pieces set
+  // Update dead pieces based on displayState (not gameState)
+  // This ensures pieces are marked as dead only when displayed, not during animations
+  useEffect(() => {
+    if (!displayState) return
+
     const newDeadPieces = new Set<string>()
-    gameState.board.forEach(piece => {
+    displayState.board.forEach(piece => {
       if (piece.stats.hp <= 0) {
         newDeadPieces.add(piece.id)
       }
     })
+    console.log({ newDeadPieces })
     setDeadPieces(newDeadPieces)
     prevDeadPiecesRef.current = newDeadPieces
-  }, [gameState, queuedState, setDisplayState, setQueuedState])
+  }, [displayState])
 
   // Play animation sequence
   const playAnimationSequence = useCallback(async (animations: AnimationAction[]) => {
@@ -2550,7 +2556,7 @@ const GamePage: React.FC = () => {
       }
 
       case 'skill': {
-        const { casterId, casterPosition, skillName, targetPosition, targetId, pulledToPosition } = animation.data
+        const { casterId, casterPosition, skillName, targetPosition, targetId, pulledToPosition, cardTargets, totalCardCount } = animation.data
         const skillRenderer = getSkillAnimationRenderer(skillName)
 
         // Determine if current player is red (for coordinate transformation)
@@ -2568,6 +2574,8 @@ const GamePage: React.FC = () => {
             boardRef,
             isRedPlayer,
             pulledToPosition,
+            cardTargets,
+            totalCardCount,
           })
         })
 

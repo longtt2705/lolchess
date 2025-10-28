@@ -12,6 +12,12 @@ export interface SkillAnimationConfig {
   boardRef?: React.RefObject<HTMLDivElement>
   isRedPlayer?: boolean
   pulledToPosition?: ChessPosition // For Rocket Grab: the actual position the target was pulled to
+  cardTargets?: Array<{
+    targetId: string;
+    targetPosition: ChessPosition;
+    cardCount: number
+  }> // For Twisted Fate: all targets hit by cards
+  totalCardCount?: number // For Twisted Fate: total number of cards thrown
 }
 
 export interface SkillAnimationRenderer {

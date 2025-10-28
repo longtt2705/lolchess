@@ -734,14 +734,14 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('criticalChance')} alt="Crit Chance" width={16} height={16} />
-                                                    Crit Chance
+                                                    Crit CH
                                                 </div>
                                                 <div className="value">{champion.stats.criticalChance || 0}%</div>
                                             </StatItem>
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('criticalDamage')} alt="Crit Damage" width={16} height={16} />
-                                                    Crit Damage
+                                                    Crit DMG
                                                 </div>
                                                 <div className="value">{champion.stats.criticalDamage || 150}%</div>
                                             </StatItem>

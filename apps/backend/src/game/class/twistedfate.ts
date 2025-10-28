@@ -1,24 +1,73 @@
+import { GameLogic } from "../game.logic";
+import { Square } from "../game.schema";
 import { ChessObject } from "./chess";
+import { ChessFactory } from "./chessFactory";
 
 export class TwistedFate extends ChessObject {
-  attack(chess: ChessObject): number {
-    const baseDamage = super.attack(chess);
+  skill(position?: Square): void {
+    const cardCount = 1 + Math.floor(this.ap * 0.4);
+    const targetChess = GameLogic.getChess(
+      this.game,
+      !this.chess.blue,
+      position
+    );
 
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return baseDamage;
+    const targets: ChessObject[] = [
+      ChessFactory.createChess(targetChess, this.game),
+    ];
+    GameLogic.getAdjacentSquares(position).forEach((square) => {
+      const targetChess = GameLogic.getChess(
+        this.game,
+        !this.chess.blue,
+        square
+      );
+      if (targetChess) {
+        const targetChessObject = ChessFactory.createChess(
+          targetChess,
+          this.game
+        );
+        targets.push(targetChessObject);
+      }
+    });
+
+    // Track targets for animation
+    const cardTargetsMap = new Map<
+      string,
+      { targetId: string; targetPosition: Square; cardCount: number }
+    >();
+
+    for (let i = 0; i < cardCount; i++) {
+      const target = targets[i % targets.length];
+      this.activeSkillDamage(
+        target,
+        1 + this.ap * 0.05 + this.ad * 0.1,
+        "magic",
+        this,
+        this.sunder
+      );
+
+      // Track which target received this card
+      const targetId = target.chess.id;
+      if (cardTargetsMap.has(targetId)) {
+        cardTargetsMap.get(targetId)!.cardCount++;
+      } else {
+        cardTargetsMap.set(targetId, {
+          targetId: targetId,
+          targetPosition: { ...target.chess.position },
+          cardCount: 1,
+        });
+      }
     }
 
-    // Stacked Deck: deal bonus damage
-    const bonusDamage = 5 + Math.floor(this.ap * 0.8);
-
-    if (bonusDamage > 0) {
-      this.damage(chess, bonusDamage, "magic", this, this.sunder);
+    // Store card target data in skill payload for animation
+    if (this.chess.skill) {
+      if (!this.chess.skill.payload) {
+        this.chess.skill.payload = {};
+      }
+      this.chess.skill.payload.cardTargets = Array.from(
+        cardTargetsMap.values()
+      );
+      this.chess.skill.payload.totalCardCount = cardCount;
     }
-
-    // Note: Gold bonus for Twisted Fate is now handled automatically
-    // in the awardGoldForKill method in the base ChessObject class
-    // Twisted Fate gets +10 bonus gold per kill as defined in his passive
-    return baseDamage;
   }
 }

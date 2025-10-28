@@ -38,6 +38,12 @@ export interface SkillAnimationData {
   targetPosition?: ChessPosition;
   targetId?: string;
   pulledToPosition?: ChessPosition; // For Rocket Grab: actual position the target was pulled to
+  cardTargets?: Array<{
+    targetId: string;
+    targetPosition: ChessPosition;
+    cardCount: number;
+  }>; // For Twisted Fate: all targets hit by cards
+  totalCardCount?: number; // For Twisted Fate: total number of cards thrown
 }
 
 export interface DamageAnimationData {
@@ -156,6 +162,8 @@ export class AnimationEngine {
             targetPosition: lastAction.targetPosition,
             targetId: lastAction.targetId, // Add targetId for skill animations
             pulledToPosition: lastAction.pulledToPosition, // Add pulledToPosition for Rocket Grab
+            cardTargets: (lastAction as any).cardTargets, // Add cardTargets for Twisted Fate
+            totalCardCount: (lastAction as any).totalCardCount, // Add totalCardCount for Twisted Fate
           } as SkillAnimationData,
         });
         currentDelay += skillRenderer.duration;
