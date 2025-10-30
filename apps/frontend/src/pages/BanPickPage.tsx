@@ -2,8 +2,25 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sword, Shield, X, SkipForward, Zap, Target, RotateCcw } from 'lucide-react'
+import { Sword, Shield, X, SkipForward, Zap, Target, RotateCcw, Check, Shuffle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useAppSelector, useAppDispatch } from '../hooks/redux'
 import { useBanPick } from '../hooks/useBanPick'
 import { useChampions, ChampionData } from '../hooks/useChampions'
@@ -765,6 +782,278 @@ const DevToolsPanel = styled.div`
   }
 `
 
+const ReorderContainer = styled.div`
+  background: linear-gradient(135deg, var(--secondary-bg) 0%, rgba(30, 35, 40, 0.9) 100%);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%);
+  }
+  
+  h3 {
+    color: var(--gold);
+    margin: 0 0 16px 0;
+    text-align: center;
+    font-size: 18px;
+    text-shadow: 0 2px 8px rgba(200, 155, 60, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+`
+
+const ReorderInstructions = styled.div`
+  text-align: center;
+  color: var(--secondary-text);
+  font-size: 14px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+`
+
+const ChampionOrderList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+`
+
+const SortableChampionCard = styled(motion.div)<{ isDragging?: boolean; isReady?: boolean }>`
+  background: linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: ${props => props.isReady ? 'default' : 'grab'};
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  
+  ${props => props.isDragging && `
+    opacity: 0.5;
+    cursor: grabbing;
+    transform: scale(1.05);
+    z-index: 1000;
+  `}
+  
+  ${props => !props.isReady && `
+    &:hover {
+      border-color: var(--gold);
+      transform: translateX(4px);
+      box-shadow: 0 6px 20px rgba(200, 155, 60, 0.4);
+    }
+  `}
+  
+  .position-number {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--primary-bg);
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(200, 155, 60, 0.4);
+  }
+  
+  .champion-portrait {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+  }
+  
+  .champion-details {
+    flex: 1;
+    
+    .name {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--primary-text);
+      margin-bottom: 4px;
+    }
+    
+    .hint {
+      font-size: 12px;
+      color: var(--secondary-text);
+    }
+  }
+  
+  .drag-handle {
+    color: var(--secondary-text);
+    opacity: ${props => props.isReady ? '0.3' : '0.6'};
+    transition: opacity 0.3s ease;
+    
+    ${props => !props.isReady && `
+      &:hover {
+        opacity: 1;
+      }
+    `}
+  }
+`
+
+const ReadySection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 2px solid var(--border);
+`
+
+const ReadyButton = styled(motion.button)<{ isReady?: boolean }>`
+  background: ${props => props.isReady
+    ? 'linear-gradient(135deg, var(--gold) 0%, #b8860b 100%)'
+    : 'linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%)'};
+  border: 2px solid ${props => props.isReady ? 'var(--gold)' : 'var(--border)'};
+  color: ${props => props.isReady ? 'var(--primary-bg)' : 'var(--primary-text)'};
+  padding: 12px 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: ${props => props.isReady
+    ? '0 6px 20px rgba(200, 155, 60, 0.4)'
+    : '0 4px 12px rgba(0, 0, 0, 0.2)'};
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${props => props.isReady
+    ? '0 8px 24px rgba(200, 155, 60, 0.6)'
+    : '0 6px 20px rgba(200, 155, 60, 0.3)'};
+    border-color: var(--gold);
+  }
+  
+  &:active {
+    transform: translateY(0px);
+  }
+`
+
+const ReadyStatusIndicator = styled.div<{ isReady?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: ${props => props.isReady
+    ? 'rgba(34, 197, 94, 0.2)'
+    : 'rgba(160, 155, 140, 0.2)'};
+  border: 2px solid ${props => props.isReady ? '#22c55e' : 'var(--secondary-text)'};
+  border-radius: 8px;
+  font-size: 12px;
+  color: ${props => props.isReady ? '#22c55e' : 'var(--secondary-text)'};
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  
+  svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  }
+`
+
+const BothReadyMessage = styled(motion.div)`
+  background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+  border: 3px solid #ffd700;
+  border-radius: 12px;
+  padding: 16px 24px;
+  text-align: center;
+  color: var(--primary-bg);
+  font-size: 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 8px 24px rgba(200, 155, 60, 0.6);
+  
+  animation: pulseGlow 1.5s ease-in-out infinite;
+  
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 8px 24px rgba(200, 155, 60, 0.6); }
+    50% { box-shadow: 0 8px 32px rgba(200, 155, 60, 1); }
+  }
+`
+
+interface SortableItemProps {
+  id: string
+  index: number
+  championName: string
+  isReady: boolean
+}
+
+const SortableItem: React.FC<SortableItemProps> = ({ id, index, championName, isReady }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled: isReady })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <SortableChampionCard
+      ref={setNodeRef}
+      style={style}
+      isDragging={isDragging}
+      isReady={isReady}
+      {...(isReady ? {} : { ...attributes, ...listeners })}
+    >
+      <div className="position-number">{index + 1}</div>
+      <img
+        src={`/icons/${championName.toLowerCase()}.webp`}
+        alt={championName}
+        className="champion-portrait"
+        onError={(e) => {
+          e.currentTarget.style.display = 'none'
+        }}
+      />
+      <div className="champion-details">
+        <div className="name">{championName}</div>
+        <div className="hint">
+          {index === 0 && "Back Row - Tank"}
+          {index === 1 && "Back Row - Support"}
+          {index === 2 && "Front Row - DPS"}
+          {index === 3 && "Front Row - Carry"}
+          {index === 4 && "Front Row - Flex"}
+        </div>
+      </div>
+      {!isReady && (
+        <div className="drag-handle">
+          <Shuffle size={24} />
+        </div>
+      )}
+    </SortableChampionCard>
+  )
+}
+
 const BanPickPage: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>()
   const navigate = useNavigate()
@@ -790,11 +1079,17 @@ const BanPickPage: React.FC = () => {
     banChampion,
     pickChampion,
     skipBan,
+    reorderChampions,
+    setReady,
   } = useBanPick(gameId || '')
+
+  // Local state for champion order during reorder phase
+  const [localChampionOrder, setLocalChampionOrder] = useState<string[]>([])
 
   const currentPhase = banPickState?.phase === 'ban' ? 'Ban Phase' :
     banPickState?.phase === 'pick' ? 'Pick Phase' :
-      'Loading...'
+      banPickState?.phase === 'reorder' ? 'Reorder Phase' :
+        'Loading...'
 
   useEffect(() => {
     if (!gameId || !user) {
@@ -839,6 +1134,57 @@ const BanPickPage: React.FC = () => {
   const handleSkipBan = () => {
     if (!banPickState || banPickState.phase !== 'ban' || !isMyTurn) return
     skipBan()
+  }
+
+  // Initialize local champion order when entering reorder phase
+  useEffect(() => {
+    if (banPickState?.phase === 'reorder' && playerSide) {
+      const currentOrder = playerSide === 'blue'
+        ? banPickState.blueChampionOrder
+        : banPickState.redChampionOrder
+      
+      if (currentOrder && currentOrder.length > 0) {
+        setLocalChampionOrder(currentOrder)
+      }
+    }
+  }, [banPickState?.phase, banPickState?.blueChampionOrder, banPickState?.redChampionOrder, playerSide])
+
+  // Handle drag and drop reordering
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (!over || active.id === over.id) {
+      return
+    }
+
+    setLocalChampionOrder((items) => {
+      const oldIndex = items.indexOf(active.id as string)
+      const newIndex = items.indexOf(over.id as string)
+
+      const newOrder = arrayMove(items, oldIndex, newIndex)
+      
+      // Send the new order to the server
+      reorderChampions(newOrder)
+      
+      return newOrder
+    })
+  }
+
+  const handleReadyToggle = () => {
+    if (!banPickState || banPickState.phase !== 'reorder') return
+
+    const isCurrentlyReady = playerSide === 'blue' 
+      ? banPickState.blueReady 
+      : banPickState.redReady
+
+    setReady(!isCurrentlyReady)
   }
 
   // Reset ban/pick (dev tools)
@@ -1064,6 +1410,92 @@ const BanPickPage: React.FC = () => {
     </SidePanel>
   )
 
+  // Reorder phase UI
+  const reorderUI = (
+    <ReorderContainer>
+      <h3>
+        <Shuffle size={20} />
+        Arrange Your Champion Lineup
+      </h3>
+      <ReorderInstructions>
+        Drag and drop to reorder your champions. The order determines their starting positions on the board.
+      </ReorderInstructions>
+
+      {localChampionOrder.length > 0 ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={localChampionOrder}
+            strategy={verticalListSortingStrategy}
+          >
+            <ChampionOrderList>
+              {localChampionOrder.map((championName, index) => (
+                <SortableItem
+                  key={championName}
+                  id={championName}
+                  index={index}
+                  championName={championName}
+                  isReady={playerSide === 'blue' ? !!banPickState?.blueReady : !!banPickState?.redReady}
+                />
+              ))}
+            </ChampionOrderList>
+          </SortableContext>
+        </DndContext>
+      ) : (
+        <div style={{ textAlign: 'center', color: 'var(--secondary-text)', padding: '20px' }}>
+          Loading your champions...
+        </div>
+      )}
+
+      <ReadySection>
+        {/* Show both players' ready status */}
+        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+          <ReadyStatusIndicator isReady={banPickState?.blueReady}>
+            {banPickState?.blueReady ? <Check size={16} /> : <X size={16} />}
+            Blue {playerSide === 'blue' && '(You)'}
+          </ReadyStatusIndicator>
+          <ReadyStatusIndicator isReady={banPickState?.redReady}>
+            {banPickState?.redReady ? <Check size={16} /> : <X size={16} />}
+            Red {playerSide === 'red' && '(You)'}
+          </ReadyStatusIndicator>
+        </div>
+
+        {/* Show "Both Ready" message or Ready button */}
+        {banPickState?.blueReady && banPickState?.redReady ? (
+          <BothReadyMessage
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            🎮 Both Players Ready! Starting Game...
+          </BothReadyMessage>
+        ) : (
+          <ReadyButton
+            isReady={playerSide === 'blue' ? banPickState?.blueReady : banPickState?.redReady}
+            onClick={handleReadyToggle}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {(playerSide === 'blue' ? banPickState?.blueReady : banPickState?.redReady) ? (
+              <>
+                <X size={18} />
+                Unready (Make Changes)
+              </>
+            ) : (
+              <>
+                <Check size={18} />
+                Ready to Start
+              </>
+            )}
+          </ReadyButton>
+        )}
+      </ReadySection>
+    </ReorderContainer>
+  )
+
   const championGrid = (
     <ChampionGrid>
       <h3>Select Champions ({champions.length} Available)</h3>
@@ -1111,22 +1543,38 @@ const BanPickPage: React.FC = () => {
       </Header>
 
       <MainContent>
-        <PlayerSections>
-          {/* Conditionally render panels - player's side always on the left */}
-          {playerSide === 'blue' ? (
-            <>
-              {blueSidePanel}
-              {championGrid}
-              {redSidePanel}
-            </>
-          ) : (
-            <>
-              {redSidePanel}
-              {championGrid}
-              {blueSidePanel}
-            </>
-          )}
-        </PlayerSections>
+        {banPickState?.phase === 'reorder' ? (
+          // Reorder phase - show reorder UI instead of pick UI
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            padding: '40px',
+            maxWidth: '800px',
+            margin: '0 auto',
+            width: '100%'
+          }}>
+            {reorderUI}
+          </div>
+        ) : (
+          // Ban/Pick phases - show normal UI
+          <PlayerSections>
+            {/* Conditionally render panels - player's side always on the left */}
+            {playerSide === 'blue' ? (
+              <>
+                {blueSidePanel}
+                {championGrid}
+                {redSidePanel}
+              </>
+            ) : (
+              <>
+                {redSidePanel}
+                {championGrid}
+                {blueSidePanel}
+              </>
+            )}
+          </PlayerSections>
+        )}
       </MainContent>
 
       {/* Turn Indicator */}

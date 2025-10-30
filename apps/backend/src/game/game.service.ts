@@ -32,7 +32,7 @@ export class GameService {
   constructor(
     @InjectModel(Game.name) private gameModel: Model<GameDocument>,
     private readonly redisCache: RedisGameCacheService
-  ) {}
+  ) { }
 
   /**
    * Get game state - tries Redis cache first, falls back to MongoDB
@@ -184,6 +184,10 @@ export class GameService {
       banHistory: [], // Track each ban turn
       bluePicks: [],
       redPicks: [],
+      blueChampionOrder: [],
+      redChampionOrder: [],
+      blueReady: false,
+      redReady: false,
       turnStartTime: Date.now(),
       turnTimeLimit: 30, // 30 seconds per turn
     };
@@ -338,10 +342,17 @@ export class GameService {
       banPickState.phase === "pick" &&
       banPickState.bluePicks.length + banPickState.redPicks.length >= 10
     ) {
-      // Ban/Pick complete (10 total picks: 5 per player)
-      banPickState.phase = "complete";
-      game.phase = "gameplay";
-      game.status = "in_progress";
+      // Picks complete - transition to reorder phase
+      console.log(`[SERVICE] 🔄 Transitioning to REORDER phase! Total picks: ${banPickState.bluePicks.length + banPickState.redPicks.length}`);
+      banPickState.phase = "reorder";
+      banPickState.blueChampionOrder = [...banPickState.bluePicks];
+      banPickState.redChampionOrder = [...banPickState.redPicks];
+      banPickState.blueReady = false;
+      banPickState.redReady = false;
+      console.log(`[SERVICE] Phase is now: ${banPickState.phase}`);
+      console.log(`[SERVICE] Blue order:`, banPickState.blueChampionOrder);
+      console.log(`[SERVICE] Red order:`, banPickState.redChampionOrder);
+      // Keep game.phase as "pick_phase" and status as "ban_pick"
     } else {
       // Continue in current phase
       if (banPickState.phase === "ban") {
@@ -372,7 +383,139 @@ export class GameService {
     await this.saveGameState(gameId, gameObject, 7);
 
     console.log("Ban/pick state after save:", gameObject.banPickState);
+    console.log(`[SERVICE] ⚠️ FINAL phase after save: ${gameObject.banPickState?.phase}`);
     return gameObject;
+  }
+
+  async processReorderAction(
+    gameId: string,
+    playerId: string,
+    newOrder: string[]
+  ) {
+    // Get Mongoose document (not cached object) so we can save
+    const game = await this.gameModel.findById(gameId).exec();
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    const banPickState = game.banPickState;
+    if (!banPickState) {
+      throw new Error("Ban/pick state not found");
+    }
+
+    if (banPickState.phase !== "reorder") {
+      throw new Error("Cannot reorder champions - not in reorder phase");
+    }
+
+    // Find player's side
+    const player = game.players.find((p) => p.userId === playerId);
+    if (!player || !player.side) {
+      throw new Error("Player not found or side not assigned");
+    }
+
+    // Validate the new order contains the same champions as the original picks
+    const originalPicks = player.side === "blue" ? banPickState.bluePicks : banPickState.redPicks;
+
+    if (newOrder.length !== originalPicks.length) {
+      throw new Error(`Invalid champion order - expected ${originalPicks.length} champions`);
+    }
+
+    // Check that all champions in newOrder are in originalPicks
+    const sortedOriginal = [...originalPicks].sort();
+    const sortedNew = [...newOrder].sort();
+    if (JSON.stringify(sortedOriginal) !== JSON.stringify(sortedNew)) {
+      throw new Error("Invalid champion order - champions don't match original picks");
+    }
+
+    // Update the champion order
+    if (player.side === "blue") {
+      banPickState.blueChampionOrder = newOrder;
+    } else {
+      banPickState.redChampionOrder = newOrder;
+    }
+
+    // Save to MongoDB
+    const savedGame = await game.save();
+
+    // Convert Mongoose document to plain object
+    const gameObject = savedGame.toObject();
+
+    // Save to Redis cache
+    await this.saveGameState(gameId, gameObject, 7);
+
+    console.log(`Player ${playerId} (${player.side}) reordered champions:`, newOrder);
+    return gameObject;
+  }
+
+  async setPlayerReady(
+    gameId: string,
+    playerId: string,
+    ready: boolean
+  ): Promise<{ game: Game; shouldStartGame: boolean }> {
+    // Get Mongoose document (not cached object) so we can save
+    const game = await this.gameModel.findById(gameId).exec();
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    const banPickState = game.banPickState;
+    if (!banPickState) {
+      throw new Error("Ban/pick state not found");
+    }
+
+    if (banPickState.phase !== "reorder") {
+      throw new Error("Cannot set ready - not in reorder phase");
+    }
+
+    // Find player's side
+    const player = game.players.find((p) => p.userId === playerId);
+    if (!player || !player.side) {
+      throw new Error("Player not found or side not assigned");
+    }
+
+    // Update ready status
+    if (player.side === "blue") {
+      banPickState.blueReady = ready;
+    } else {
+      banPickState.redReady = ready;
+    }
+
+    let shouldStartGame = false;
+
+    // Check if both players are ready
+    if (banPickState.blueReady && banPickState.redReady) {
+      // Transition to complete phase
+      banPickState.phase = "complete";
+      game.phase = "gameplay";
+      game.status = "in_progress";
+
+      // Update player.selectedChampions from the final champion orders
+      const bluePlayer = game.players.find((p) => p.side === "blue");
+      const redPlayer = game.players.find((p) => p.side === "red");
+
+      if (bluePlayer) {
+        bluePlayer.selectedChampions = banPickState.blueChampionOrder;
+      }
+      if (redPlayer) {
+        redPlayer.selectedChampions = banPickState.redChampionOrder;
+      }
+
+      shouldStartGame = true;
+    }
+
+    // Save to MongoDB
+    const savedGame = await game.save();
+
+    // Convert Mongoose document to plain object
+    const gameObject = savedGame.toObject();
+
+    // Save to Redis cache
+    await this.saveGameState(gameId, gameObject, 8);
+
+    console.log(`Player ${playerId} (${player.side}) ready status:`, ready);
+    console.log(`Both ready: ${banPickState.blueReady && banPickState.redReady}`);
+
+    return { game: gameObject, shouldStartGame };
   }
 
   async addPlayerToGame(gameId: string, playerId: string, username: string) {
@@ -705,85 +848,85 @@ export class GameService {
         blue: piece.blue,
         items: piece.items
           ? piece.items.map((item) => ({
-              id: item.id,
-              name: item.name,
-              description: item.description,
-              payload: item.payload,
-              unique: item.unique,
-            }))
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            payload: item.payload,
+            unique: item.unique,
+          }))
           : [],
         debuffs: piece.debuffs
           ? piece.debuffs.map((debuff) => ({
-              id: debuff.id,
-              name: debuff.name,
-              description: debuff.description,
-              duration: debuff.duration,
-              maxDuration: debuff.maxDuration,
-              effects: debuff.effects
-                ? debuff.effects.map((effect) => ({
-                    stat: effect.stat,
-                    modifier: effect.modifier,
-                    type: effect.type,
-                  }))
-                : [],
-              damagePerTurn: debuff.damagePerTurn || 0,
-              damageType: debuff.damageType || "0",
-              healPerTurn: debuff.healPerTurn || 0,
-              unique: debuff.unique || false,
-              appliedAt: debuff.appliedAt,
-              casterPlayerId: debuff.casterPlayerId,
-              casterName: debuff.casterName,
-            }))
+            id: debuff.id,
+            name: debuff.name,
+            description: debuff.description,
+            duration: debuff.duration,
+            maxDuration: debuff.maxDuration,
+            effects: debuff.effects
+              ? debuff.effects.map((effect) => ({
+                stat: effect.stat,
+                modifier: effect.modifier,
+                type: effect.type,
+              }))
+              : [],
+            damagePerTurn: debuff.damagePerTurn || 0,
+            damageType: debuff.damageType || "0",
+            healPerTurn: debuff.healPerTurn || 0,
+            unique: debuff.unique || false,
+            appliedAt: debuff.appliedAt,
+            casterPlayerId: debuff.casterPlayerId,
+            casterName: debuff.casterName,
+          }))
           : [],
         auras: piece.auras
           ? piece.auras.map((aura) => ({
-              id: aura.id,
-              name: aura.name,
-              description: aura.description,
-              range: aura.range,
-              effects: aura.effects
-                ? aura.effects.map((effect) => ({
-                    stat: effect.stat,
-                    modifier: effect.modifier,
-                    type: effect.type,
-                    target: effect.target,
-                  }))
-                : [],
-              active: aura.active,
-              requiresAlive: aura.requiresAlive,
-              duration: aura.duration,
-            }))
+            id: aura.id,
+            name: aura.name,
+            description: aura.description,
+            range: aura.range,
+            effects: aura.effects
+              ? aura.effects.map((effect) => ({
+                stat: effect.stat,
+                modifier: effect.modifier,
+                type: effect.type,
+                target: effect.target,
+              }))
+              : [],
+            active: aura.active,
+            requiresAlive: aura.requiresAlive,
+            duration: aura.duration,
+          }))
           : [],
         shields: piece.shields
           ? piece.shields.map((shield) => ({
-              id: shield.id,
-              amount: shield.amount,
-              duration: shield.duration,
-            }))
+            id: shield.id,
+            amount: shield.amount,
+            duration: shield.duration,
+          }))
           : [],
         skill: piece.skill
           ? {
-              name: piece.skill.name,
-              description: piece.skill.description,
-              cooldown: piece.skill.cooldown,
-              attackRange: piece.skill.attackRange
-                ? {
-                    diagonal: piece.skill.attackRange.diagonal,
-                    horizontal: piece.skill.attackRange.horizontal,
-                    vertical: piece.skill.attackRange.vertical,
-                    range: piece.skill.attackRange.range,
-                  }
-                : {
-                    diagonal: false,
-                    horizontal: false,
-                    vertical: false,
-                    range: 1,
-                  },
-              targetTypes: piece.skill.targetTypes,
-              currentCooldown: piece.skill.currentCooldown,
-              type: piece.skill.type,
-              payload: piece.skill.payload,
-            }
+            name: piece.skill.name,
+            description: piece.skill.description,
+            cooldown: piece.skill.cooldown,
+            attackRange: piece.skill.attackRange
+              ? {
+                diagonal: piece.skill.attackRange.diagonal,
+                horizontal: piece.skill.attackRange.horizontal,
+                vertical: piece.skill.attackRange.vertical,
+                range: piece.skill.attackRange.range,
+              }
+              : {
+                diagonal: false,
+                horizontal: false,
+                vertical: false,
+                range: 1,
+              },
+            targetTypes: piece.skill.targetTypes,
+            currentCooldown: piece.skill.currentCooldown,
+            type: piece.skill.type,
+            payload: piece.skill.payload,
+          }
           : undefined,
         deadAtRound: piece.deadAtRound,
       };
@@ -847,6 +990,10 @@ export class GameService {
       redBans: [],
       bluePicks: [],
       redPicks: [],
+      blueChampionOrder: [],
+      redChampionOrder: [],
+      blueReady: false,
+      redReady: false,
       banHistory: [],
     };
 
