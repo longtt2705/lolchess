@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Coins, Crown, Package, RotateCcw, Shield, ShoppingCart, Users, Zap } from 'lucide-react'
+import { AlertCircle, Coins, Crown, Package, RotateCcw, Shield, ShoppingCart, Users, Zap } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
@@ -2920,6 +2920,9 @@ const GamePage: React.FC = () => {
     if (itemLength === 3 && (piece as any).items.every((item: ItemData) => !isBasicItem(item.id))) return true
     if (gold < item.cost) return true
     if (!isMyTurn) return true
+    // Check turn state flags
+    if (gameState?.hasBoughtItemThisTurn) return true
+    if (gameState?.hasPerformedActionThisTurn) return true
     return false
   }
 
@@ -3682,6 +3685,51 @@ const GamePage: React.FC = () => {
                   <div className="shop-hint">
                     Buy basic items. When 2 basic items combine, they create a powerful item!
                   </div>
+                  {/* Turn state indicator */}
+                  {isMyTurn && (
+                    <div style={{
+                      padding: '8px 12px',
+                      marginBottom: '12px',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: gameState?.hasBoughtItemThisTurn
+                        ? 'rgba(200, 155, 60, 0.15)'
+                        : gameState?.hasPerformedActionThisTurn
+                          ? 'rgba(200, 100, 100, 0.15)'
+                          : 'rgba(91, 192, 222, 0.15)',
+                      border: `1px solid ${gameState?.hasBoughtItemThisTurn
+                          ? 'var(--gold)'
+                          : gameState?.hasPerformedActionThisTurn
+                            ? '#c86464'
+                            : 'var(--hover)'
+                        }`,
+                      color: gameState?.hasBoughtItemThisTurn
+                        ? 'var(--gold)'
+                        : gameState?.hasPerformedActionThisTurn
+                          ? '#ff9999'
+                          : 'var(--hover)'
+                    }}>
+                      {gameState?.hasBoughtItemThisTurn ? (
+                        <>
+                          <ShoppingCart size={14} />
+                          <span>Item purchased (1/1) - Perform your action</span>
+                        </>
+                      ) : gameState?.hasPerformedActionThisTurn ? (
+                        <>
+                          <AlertCircle size={14} />
+                          <span>Cannot buy after performing an action</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart size={14} />
+                          <span>Can buy 1 item before your action</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                   {itemsLoading ? (
                     <div style={{ textAlign: 'center', padding: '20px', color: 'var(--secondary-text)' }}>
                       Loading items...

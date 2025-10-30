@@ -119,6 +119,8 @@ export interface GameState {
   }>;
   winner?: string;
   lastAction?: ActionDetails;
+  hasBoughtItemThisTurn: boolean;
+  hasPerformedActionThisTurn: boolean;
 }
 
 export interface GameAction {

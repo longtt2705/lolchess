@@ -5,7 +5,8 @@ export class Tristana extends ChessObject {
     if (this.isPassiveDisabled()) {
       return super.range;
     }
-    return super.range + 6;
+
+    return Math.min(super.range + Math.floor(this.game.currentRound / 5), 8);
   }
 
   attack(chess: ChessObject): number {

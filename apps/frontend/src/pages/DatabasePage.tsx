@@ -220,6 +220,20 @@ const StatItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  cursor: help;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: var(--gold);
+    background: rgba(200, 155, 60, 0.1);
+    
+    .tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+  }
   
   .label {
     color: var(--secondary-text);
@@ -239,6 +253,39 @@ const StatItem = styled.div`
     color: var(--primary-text);
     font-weight: bold;
     font-size: 1rem;
+  }
+  
+  .tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px);
+    background: var(--primary-bg);
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    color: var(--primary-text);
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    max-width: 250px;
+    white-space: normal;
+    text-align: center;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--gold);
+    }
   }
 `
 
@@ -502,6 +549,28 @@ const getStatIcon = (stat: string): string => {
     return iconMap[stat] || '/icons/AD.svg';
 };
 
+// Helper function to get stat tooltips
+const getStatTooltip = (stat: string): string => {
+    const tooltipMap: { [key: string]: string } = {
+        ad: 'Attack Damage - Damage dealt by basic attacks, reduced by Physical Resistance',
+        ap: 'Ability Power - Primarily used to scale champion special abilities',
+        maxHp: 'Health Points - Amount of damage a piece can sustain before being slain',
+        physicalResistance: 'Physical Resistance (Armor) - Reduces incoming damage from AD attacks',
+        magicResistance: 'Magic Resistance - Reduces incoming damage from AP attacks',
+        speed: 'Speed - Maximum number of squares a piece can move in a single direction per turn',
+        attackRange: 'Attack Range - Maximum number of squares away a piece can attack',
+        sunder: 'Sunder (Armor Penetration) - Reduces target\'s Physical Resistance when calculating damage',
+        criticalChance: 'Critical Chance - Percentage chance for basic attacks to deal critical damage',
+        criticalDamage: 'Critical Damage - Damage multiplier for critical strikes (default 150%)',
+        damageAmplification: 'Damage Amplification - Percentage increase to all damage dealt',
+        cooldownReduction: 'Cooldown Reduction - Reduces ability cooldown by this many turns',
+        lifesteal: 'Lifesteal - Percentage of AD damage dealt converted to HP healing',
+        hpRegen: 'HP Regeneration - HP regenerated at the start of each turn',
+        goldValue: 'Gold Value - Gold awarded to opponent upon slaying this piece',
+    };
+    return tooltipMap[stat] || '';
+};
+
 const DatabasePage: React.FC = () => {
     const dispatch = useAppDispatch()
     const { champions, basicItems, combinedItems, databaseLoading, databaseError } = useAppSelector(state => state.game)
@@ -673,6 +742,7 @@ const DatabasePage: React.FC = () => {
                                                     HP
                                                 </div>
                                                 <div className="value">{champion.stats.maxHp || 'N/A'}</div>
+                                                <div className="tooltip">{getStatTooltip('maxHp')}</div>
                                             </StatItem>
                                             <StatItem>
                                                 <div className="label">
@@ -680,6 +750,7 @@ const DatabasePage: React.FC = () => {
                                                     AD
                                                 </div>
                                                 <div className="value">{champion.stats.ad || 'N/A'}</div>
+                                                <div className="tooltip">{getStatTooltip('ad')}</div>
                                             </StatItem>
                                             <StatItem>
                                                 <div className="label">
@@ -687,6 +758,7 @@ const DatabasePage: React.FC = () => {
                                                     AP
                                                 </div>
                                                 <div className="value">{champion.stats.ap || 0}</div>
+                                                <div className="tooltip">{getStatTooltip('ap')}</div>
                                             </StatItem>
                                             <StatItem>
                                                 <div className="label">
@@ -694,6 +766,7 @@ const DatabasePage: React.FC = () => {
                                                     Speed
                                                 </div>
                                                 <div className="value">{champion.stats.speed || 1}</div>
+                                                <div className="tooltip">{getStatTooltip('speed')}</div>
                                             </StatItem>
                                         </StatsGrid>
 
@@ -705,6 +778,7 @@ const DatabasePage: React.FC = () => {
                                                     Armor
                                                 </div>
                                                 <div className="value">{champion.stats.physicalResistance || 0}</div>
+                                                <div className="tooltip">{getStatTooltip('physicalResistance')}</div>
                                             </StatItem>
                                             <StatItem>
                                                 <div className="label">
@@ -712,6 +786,7 @@ const DatabasePage: React.FC = () => {
                                                     AP Res
                                                 </div>
                                                 <div className="value">{champion.stats.magicResistance || 0}</div>
+                                                <div className="tooltip">{getStatTooltip('magicResistance')}</div>
                                             </StatItem>
                                             <StatItem>
                                                 <div className="label">
@@ -719,6 +794,7 @@ const DatabasePage: React.FC = () => {
                                                     HP/Turn
                                                 </div>
                                                 <div className="value">{champion.stats.hpRegen || 0}</div>
+                                                <div className="tooltip">{getStatTooltip('hpRegen')}</div>
                                             </StatItem>
                                             <StatItem>
                                                 <div className="label">
@@ -726,6 +802,7 @@ const DatabasePage: React.FC = () => {
                                                     Attack Range
                                                 </div>
                                                 <div className="value">{formatAttackRange(champion.stats.attackRange)}</div>
+                                                <div className="tooltip">{getStatTooltip('attackRange')}</div>
                                             </StatItem>
                                         </StatsGrid>
 
@@ -737,6 +814,7 @@ const DatabasePage: React.FC = () => {
                                                     Crit CH
                                                 </div>
                                                 <div className="value">{champion.stats.criticalChance || 0}%</div>
+                                                <div className="tooltip">{getStatTooltip('criticalChance')}</div>
                                             </StatItem>
                                             <StatItem>
                                                 <div className="label">
@@ -744,6 +822,7 @@ const DatabasePage: React.FC = () => {
                                                     Crit DMG
                                                 </div>
                                                 <div className="value">{champion.stats.criticalDamage || 150}%</div>
+                                                <div className="tooltip">{getStatTooltip('criticalDamage')}</div>
                                             </StatItem>
                                             <StatItem>
                                                 <div className="label">
@@ -751,6 +830,7 @@ const DatabasePage: React.FC = () => {
                                                     Sunder
                                                 </div>
                                                 <div className="value">{champion.stats.sunder || 0}</div>
+                                                <div className="tooltip">{getStatTooltip('sunder')}</div>
                                             </StatItem>
                                             <StatItem>
                                                 <div className="label">
@@ -758,6 +838,7 @@ const DatabasePage: React.FC = () => {
                                                     Lifesteal
                                                 </div>
                                                 <div className="value">{champion.stats.lifesteal || 0}%</div>
+                                                <div className="tooltip">{getStatTooltip('lifesteal')}</div>
                                             </StatItem>
                                         </StatsGrid>
 

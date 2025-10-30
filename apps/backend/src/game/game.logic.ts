@@ -68,6 +68,8 @@ export class GameLogic {
           event.targetPosition,
           actionDetails
         );
+        // Mark that a board action has been performed
+        game.hasPerformedActionThisTurn = true;
         break;
       case GameEvent.ATTACK_CHESS: {
         this.processAttackChess(
@@ -77,6 +79,8 @@ export class GameLogic {
           event.targetPosition,
           actionDetails
         );
+        // Mark that a board action has been performed
+        game.hasPerformedActionThisTurn = true;
         break;
       }
       case GameEvent.SKILL: {
@@ -86,6 +90,8 @@ export class GameLogic {
           event.targetPosition,
           actionDetails
         );
+        // Mark that a board action has been performed
+        game.hasPerformedActionThisTurn = true;
         break;
       }
       case GameEvent.BUY_ITEM: {
@@ -146,7 +152,11 @@ export class GameLogic {
 
     this.applyAuraDebuffs(game);
 
-    this.postProcessGame(game);
+    // Only post-process (end turn) for non-buy-item actions
+    // Buy item does not end the turn
+    if (event.event !== GameEvent.BUY_ITEM) {
+      this.postProcessGame(game);
+    }
     return game;
   }
 
@@ -316,6 +326,10 @@ export class GameLogic {
       ? game.bluePlayer
       : game.redPlayer;
 
+    // Reset turn action flags for the new turn
+    game.hasBoughtItemThisTurn = false;
+    game.hasPerformedActionThisTurn = false;
+
     // Find the player by index to ensure proper mutation
     const playerIndex = game.players.findIndex(
       (p) => p.userId === currentPlayerId
@@ -442,12 +456,16 @@ export class GameLogic {
   private static promoteMinion(minion: Chess): void {
     // Transform Melee Minion into Super Minion with enhanced stats
     minion.name = "Super Minion";
-    minion.stats.maxHp = 200;
-    minion.stats.hp = 200; // Full health on promotion
-    minion.stats.ad = 50;
-    minion.stats.physicalResistance = 25;
-    minion.stats.magicResistance = 15;
-    minion.stats.goldValue = 40;
+    minion.stats.maxHp = 300;
+    minion.stats.hp = 300; // Full health on promotion
+    minion.stats.ad = 100;
+    minion.stats.ap = 100;
+    minion.stats.physicalResistance = 50;
+    minion.stats.magicResistance = 50;
+    minion.stats.goldValue = 50;
+    minion.stats.speed = 5;
+    minion.cannotMoveBackward = false;
+    minion.canOnlyMoveVertically = false;
 
     console.log(
       `${minion.blue ? "Blue" : "Red"} Melee Minion promoted to Super Minion at ${minion.position.x},${minion.position.y}!`
@@ -476,6 +494,8 @@ export class GameLogic {
     game.status = "in_progress";
     game.currentRound = 1;
     game.phase = "gameplay";
+    game.hasBoughtItemThisTurn = false;
+    game.hasPerformedActionThisTurn = false;
 
     // Initialize player gold (starting gold from game settings)
     const bluePlayerIndex = game.players.findIndex(
@@ -634,8 +654,8 @@ export class GameLogic {
         maxHp: 100,
         ad: 0,
         ap: 0,
-        physicalResistance: 0,
-        magicResistance: 0,
+        physicalResistance: 50,
+        magicResistance: 50,
         speed: 1,
         attackRange: {
           range: 0,
@@ -671,19 +691,19 @@ export class GameLogic {
         hpRegen: 0,
       },
       "Siege Minion": {
-        maxHp: 250,
+        maxHp: 200,
         ad: 40,
         ap: 0,
         physicalResistance: 10,
         magicResistance: 10,
-        speed: 1,
+        speed: 4,
         attackRange: {
           range: 8,
           diagonal: false,
           horizontal: true,
           vertical: true,
         },
-        goldValue: 30,
+        goldValue: 40,
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
@@ -703,7 +723,7 @@ export class GameLogic {
           horizontal: true,
           vertical: true,
         },
-        goldValue: 10,
+        goldValue: 20,
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
@@ -723,7 +743,7 @@ export class GameLogic {
           horizontal: true,
           vertical: true,
         },
-        goldValue: 15,
+        goldValue: 25,
         sunder: 0,
         criticalChance: 0,
         criticalDamage: 150,
@@ -904,8 +924,8 @@ export class GameLogic {
       ownerId: "neutral",
       blue: false, // Neutral
       stats: {
-        hp: 1000,
-        maxHp: 1000,
+        hp: 250,
+        maxHp: 250,
         ad: 0,
         ap: 0,
         physicalResistance: 20,
@@ -968,8 +988,8 @@ export class GameLogic {
       ownerId: "neutral",
       blue: false, // Neutral
       stats: {
-        hp: 2500,
-        maxHp: 2500,
+        hp: 500,
+        maxHp: 500,
         ad: 0,
         ap: 0,
         physicalResistance: 50,
@@ -1028,6 +1048,15 @@ export class GameLogic {
     championId?: string,
     actionDetails?: ActionDetails
   ): Game {
+    // Validate purchase timing
+    if (game.hasBoughtItemThisTurn) {
+      throw new Error("Already bought an item this turn");
+    }
+
+    if (game.hasPerformedActionThisTurn) {
+      throw new Error("Cannot buy items after performing a board action");
+    }
+
     if (actionDetails) {
       actionDetails.itemId = itemId;
       actionDetails.targetId = championId;
@@ -1117,6 +1146,10 @@ export class GameLogic {
 
     // Deduct gold
     game.players[playerIndex].gold -= itemData.cost;
+
+    // Mark that an item was bought this turn
+    game.hasBoughtItemThisTurn = true;
+
     return game;
   }
 
@@ -1193,37 +1226,52 @@ export class GameLogic {
     if (playerIndex === -1) return;
 
     if (monsterName === "Drake") {
-      // Award Drake Soul Buff: All pieces gain +10 AD
-      game.players[playerIndex].gold += 10;
+      // Award Drake Soul Buff: +50 Gold, All pieces gain +20 AD
+      game.players[playerIndex].gold += 50;
       this.applyDrakeSoulBuff(game, killerPlayerId);
     } else if (monsterName === "Baron Nashor") {
-      // Award Hand of Baron Buff: All Minions and Siege Minions gain +20 AD and +20 Physical Resistance
-      game.players[playerIndex].gold += 50;
+      // Award Hand of Baron Buff: +250 Gold, buffs for minions and champions
+      game.players[playerIndex].gold += 250;
       this.applyHandOfBaronBuff(game, killerPlayerId);
     }
   }
 
   private static applyDrakeSoulBuff(game: Game, playerId: string): void {
+    // Drake Soul Buff: All pieces gain +20 AD
     const playerPieces = game.board.filter(
       (chess) => chess.ownerId === playerId
     );
     playerPieces.forEach((chess) => {
-      chess.stats.ad += 10;
+      chess.stats.ad += 20;
     });
   }
 
   private static applyHandOfBaronBuff(game: Game, playerId: string): void {
-    const playerMinions = game.board.filter(
-      (chess) =>
-        chess.ownerId === playerId &&
-        (chess.name === "Melee Minion" ||
-          chess.name === "Caster Minion" ||
-          chess.name === "Siege Minion" ||
-          chess.name === "Super Minion")
+    // Hand of Baron Buff:
+    // - Minions and Siege Minions: +40 AD and +40 Physical Resistance
+    // - Champions: +20 AP, +20 AD, +20 Physical Resistance, +20 Magic Resistance
+    const playerPieces = game.board.filter(
+      (chess) => chess.ownerId === playerId
     );
-    playerMinions.forEach((chess) => {
-      chess.stats.ad += 20;
-      chess.stats.physicalResistance += 20;
+
+    playerPieces.forEach((chess) => {
+      const isMinion =
+        chess.name === "Melee Minion" ||
+        chess.name === "Caster Minion" ||
+        chess.name === "Siege Minion" ||
+        chess.name === "Super Minion";
+
+      const isChampion = !isMinion && chess.name !== "Poro";
+
+      if (isMinion) {
+        chess.stats.ad += 40;
+        chess.stats.physicalResistance += 40;
+      } else if (isChampion) {
+        chess.stats.ap += 20;
+        chess.stats.ad += 20;
+        chess.stats.physicalResistance += 20;
+        chess.stats.magicResistance += 20;
+      }
     });
   }
 

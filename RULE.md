@@ -26,6 +26,7 @@ Before the game begins, players engage in a champion selection phase.
 ## 4. THE PIECES & CHARACTERISTICS
 All pieces in the game have the following attributes:
 
+### Core Stats
 * **HP (Health Points):** The amount of damage a piece can sustain before being slain.
 * **AD (Attack Damage):** Damage dealt by basic attacks, reduced by Physical Resistance.
 * **AP (Ability Power):** Primarily used to scale the power of a Champion's special ability.
@@ -36,12 +37,20 @@ All pieces in the game have the following attributes:
 * **Gold Value:** The amount of Gold awarded to the opponent upon slaying this piece.
 * **HP Regen:** The amount of HP regenerated at the start of each turn. Default is 0.
 
+### Advanced Stats
+* **Sunder:** Flat armor penetration. Reduces the target's Physical Resistance by this amount when calculating damage (cannot reduce below 0).
+* **Critical Chance:** Percentage chance (0-100%) for basic attacks to deal critical damage.
+* **Critical Damage:** The damage multiplier for critical strikes. Default is 150% (dealing 1.5× damage).
+* **Lifesteal:** Percentage of AD damage dealt that is converted to HP healing for the attacker.
+* **Cooldown Reduction:** Reduces the cooldown of champion abilities. Each point reduces cooldown by 1 turn.
+* **Damage Amplification:** Percentage increase to all damage dealt (both physical and magical). Multiplicative with other damage increases.
+
 ### Piece Types
 #### **Poro (King)**
 * **Objective:** You lose the game if your Poro is slain.
 * **Movement:** Can move 1 square in any of the 8 directions.
 * **Attacks:** Cannot attack.
-* **Stats:** 100 HP, 0 Physical Resistance, 0 Magic Resistance.
+* **Stats:** 100 HP, 50 Physical Resistance, 50 Magic Resistance.
 * **Gold Value:** N/A (Game ends).
 
 #### **Champion (Queen, Bishops, Knights)**
@@ -53,29 +62,29 @@ All pieces in the game have the following attributes:
 * **Gold Value:** 50
 
 #### **Siege Minion (Rook)**
-* **Movement:** Speed of 1 (can move 1 square horizontally or vertically).
+* **Movement:** Speed of 4 (can move 4 squares horizontally or vertically).
 * **Attacks:** Has Attack Range of 8 horizontally and vertically. The attack stops at the first enemy piece it hits. Blocked by any piece (friendly or enemy) in its path.
-* **Stats:** 250 HP, 40 AD, 0 AP, 10 Physical Resistance, 10 Magic Resistance.
-* **Gold Value:** 30
+* **Stats:** 150 HP, 40 AD, 0 AP, 10 Physical Resistance, 10 Magic Resistance.
+* **Gold Value:** 40
 
 #### **Melee Minion (Pawn)**
-* **Movement:** Can only move 1 square forward (towards the opponent's side).
+* **Movement:** Can only move 1 square forward (towards the opponent's side). Speed of 1.
 * **Attacks:** Attack Range of 1. Can attack any of the 8 squares immediately surrounding it.
 * **Promotion:** If a Melee Minion reaches the opponent's back rank (rank 8 for Blue, rank 1 for Red), it is immediately promoted to a **Super Minion**.
 * **Stats:** 100 HP, 25 AD, 0 AP, 5 Physical Resistance, 0 Magic Resistance.
-* **Gold Value:** 10
+* **Gold Value:** 20
 
 #### **Caster Minion (Pawn)**
-* **Movement:** Can only move 1 square forward (towards the opponent's side).
+* **Movement:** Can only move 1 square forward (towards the opponent's side). Speed of 1.
 * **Attacks:** Attack Range of 2. Can attack any of the 8 squares immediately surrounding it.
 * **Stats:** 50 HP, 35 AD, 0 AP, 0 Physical Resistance, 0 Magic Resistance.
-* **Gold Value:** 15
+* **Gold Value:** 25
 
 #### **Super Minion (Promoted Pawn)**
 * A stronger version of the Melee Minion with significantly increased stats.
-* **Movement & Attack:** Same as Melee Minion (moves 1 forward, attacks all 8 adjacent squares). Speed of 2.
-* **Stats:** 200 HP (upon promotion), 50 AD, 0 AP, 25 Physical Resistance, 15 Magic Resistance.
-* **Gold Value:** 40
+* **Movement & Attack:** Same as Melee Minion (moves 5, attacks all 8 adjacent squares). Speed of 5.
+* **Stats:** 300 HP (upon promotion), 100 AD, 100 AP, 50 Physical Resistance, 50 Magic Resistance.
+* **Gold Value:** 50
 
 ## 5. GAMEPLAY & TURN STRUCTURE
 Blue Side always moves first. On your turn, you must perform **one** of the following actions with **one** of your pieces:
@@ -83,30 +92,46 @@ Blue Side always moves first. On your turn, you must perform **one** of the foll
 * **Castle:** If the piece is a Poro and it has not moved before, it can castle with a Siege Minion. The Siege Minion must be in the same rank as the Poro and not have moved before. The Poro can move 2 squares horizontally and the Siege Minion will move to the other side of the Poro.
 * **Attack:** Use a piece to attack an opponent's piece according to its attack rules. It can only attack pieces that are in its Attack Range. And cannot attack pieces behind the blocker.
 * **Use Ability:** Champions can use their special ability instead of moving or attacking (subject to cooldown).
-* **Buy Items:** Forgo any action on the board to purchase items from the shop for a champion.
+* **Buy Items:** At the start of your turn, you may purchase ONE item from the shop for a champion before performing your board action. After buying an item or performing any board action, you cannot buy more items until your next turn.
 
 ### Combat
 When a piece attacks another, damage is calculated.
-* **Critical Strike:** A critical strike deals 150% damage.
-* **Critical Strike Damage:** 150%
+* **Critical Strike:** A critical strike deals 150% damage (or the attacker's Critical Damage percentage if modified).
+* **Damage Calculation:** 
+  1. Base damage is determined (AD for basic attacks, varies for abilities)
+  2. Critical strike is rolled if applicable
+  3. Damage Amplification is applied if any
+  4. Resistance is applied (Physical Resistance for AD damage, Magic Resistance for AP damage), reduced by Sunder if applicable
+  5. Final damage is subtracted from defender's HP
+* **Lifesteal:** If the attacker has lifesteal, they heal for a percentage of the AD damage dealt (after resistances).
 
 The damage is subtracted from the defender's HP. If a piece's HP drops to 0 or below, it is slain and removed from the board. The attacking player gains Gold equal to the slain piece's Gold Value. The defending piece does not deal damage back unless a special ability is involved.
 
+### Status Effects (Debuffs)
+Status effects can be applied by champion abilities and items. Multiple instances of the same debuff do not stack unless specified.
+
+* **Burn:** Deals magic damage at the start of the affected piece's owner's turn. Duration and damage vary by source.
+* **Wound:** Reduces healing received by a percentage. Affects HP regeneration and lifesteal.
+* **Slow:** Reduces the affected piece's Speed by a fixed amount or percentage. Cannot reduce Speed below 1.
+* **Venom:** Reduce the shield of the affected piece by 50%.
+* **Stun:** The affected piece cannot move, attack, or use abilities for the duration.
+* **Root:** The affected piece cannot move but can still attack and use abilities.
+
 ## 6. NEUTRAL MONSTERS: BARON & DRAKE
 * **Spawning:**
-    * **Drake:** Spawns at square `i4` at the end of Red's 5th turn. (HP: 1000)
-    * **Baron Nashor:** Spawns at square `z5` at the end of Red's 10th turn. (HP: 2500)
+    * **Drake:** Spawns at square `i4` at the end of Red's 5th turn. (HP: 250)
+    * **Baron Nashor:** Spawns at square `z5` at the end of Red's 10th turn. (HP: 500)
 * **Behavior:** These are neutral pieces. They do not move or attack on their own. They can be attacked by any piece from either side that has them in range.
 * **Rewards:** The player who lands the killing blow on a neutral monster receives Gold and a powerful team-wide buff.
-    * **Drake Kill:** +10 Gold. **Drake Soul Buff:** All your pieces gain +10 AD.
-    * **Baron Kill:** +50 Gold. **Hand of Baron Buff:** All your Minions and Siege Minions gain +20 AD and +20 Physical Resistance.
+    * **Drake Kill:** +50 Gold. **Drake Soul Buff:** All your pieces gain +20 AD.
+    * **Baron Kill:** +250 Gold. **Hand of Baron Buff:** All your Minions and Siege Minions gain +40 AD and +40 Physical Resistance. All your Champions gain +20 AP, +20 AD, +20 Physical Resistance, +20 Magic Resistance.
 * **Respawning:** If slain, monsters will respawn 10 turns after they were killed.
 
 ## 7. GOLD & ITEM SHOP
 * **Earning Gold:**
     * Slaying an enemy piece.
     * Slaying a neutral monster.
-    * **Passive Income:** Each player gains 3 Gold at the start of their turn.
+    * **Passive Income:** Each player gains 5 Gold at the start of their turn.
 * **The Shop:**
     * On your turn, you may choose to open the shop instead of performing a board action.
     * You can spend your accumulated Gold to buy items. Items provide stat bonuses.

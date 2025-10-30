@@ -485,6 +485,12 @@ export class Game {
 
   @Prop({ type: ActionDetails })
   lastAction?: ActionDetails;
+
+  @Prop({ default: false })
+  hasBoughtItemThisTurn: boolean;
+
+  @Prop({ default: false })
+  hasPerformedActionThisTurn: boolean;
 }
 
 export const SquareSchema = SchemaFactory.createForClass(Square);

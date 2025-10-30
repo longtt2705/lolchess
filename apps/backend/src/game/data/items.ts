@@ -313,7 +313,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/NashorsTooth.png",
     effects: [
       { stat: "sunder", value: 20, type: "add" },
-      { stat: "maxHp", value: 35, type: "add" },
+      { stat: "ap", value: 25, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "sparring_gloves"],
@@ -387,7 +387,7 @@ export const combinedItems: ItemData[] = [
       { stat: "maxHp", value: 35, type: "add" },
     ],
     isBasic: false,
-    recipe: ["needlessly_rod", "negatron_cloak"],
+    recipe: ["needlessly_rod", "giants_belt"],
   },
   {
     id: "jeweled_gauntlet",

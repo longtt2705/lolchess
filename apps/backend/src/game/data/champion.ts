@@ -11,7 +11,7 @@ export const champions: ChampionData[] = [
   {
     name: "Aatrox",
     stats: {
-      maxHp: 150,
+      maxHp: 110,
       ad: 45,
       physicalResistance: 10,
       magicResistance: 5,
@@ -33,7 +33,7 @@ export const champions: ChampionData[] = [
   {
     name: "Ahri",
     stats: {
-      maxHp: 130,
+      maxHp: 90,
       ad: 35,
       attackRange: {
         range: 2,
@@ -62,7 +62,7 @@ export const champions: ChampionData[] = [
   {
     name: "Garen",
     stats: {
-      maxHp: 180,
+      maxHp: 125,
       ad: 40,
       ap: 0,
       physicalResistance: 30,
@@ -87,7 +87,7 @@ export const champions: ChampionData[] = [
   {
     name: "Janna",
     stats: {
-      maxHp: 120,
+      maxHp: 60,
       ad: 10,
       ap: 30,
       physicalResistance: 5,
@@ -129,7 +129,7 @@ export const champions: ChampionData[] = [
   {
     name: "Ashe",
     stats: {
-      maxHp: 100,
+      maxHp: 80,
       ad: 35,
       ap: 0,
       physicalResistance: 5,
@@ -152,7 +152,7 @@ export const champions: ChampionData[] = [
   {
     name: "Tristana",
     stats: {
-      maxHp: 90,
+      maxHp: 60,
       ad: 30,
       ap: 0,
       physicalResistance: 5,
@@ -168,14 +168,14 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Draw a Bead",
       description:
-        "Increases Tristana's Attack Range from 2 to 8. Every 4th attack deals bonus (10+50% of AP) physical damage to the target and his adjacent squares.",
+        "Tristana's Attack Range gains 1 every 5 rounds (max 8). Every 4th attack deals bonus (10+50% of AP) physical damage to the target and his adjacent squares.",
       cooldown: 0,
     },
   },
   {
     name: "Blitzcrank",
     stats: {
-      maxHp: 160,
+      maxHp: 115,
       ad: 15,
       ap: 30,
       attackRange: {
@@ -206,7 +206,7 @@ export const champions: ChampionData[] = [
   {
     name: "Kha'Zix",
     stats: {
-      maxHp: 120,
+      maxHp: 90,
       ad: 35,
       ap: 10,
       criticalChance: 20,
@@ -237,7 +237,7 @@ export const champions: ChampionData[] = [
   {
     name: "Zed",
     stats: {
-      maxHp: 130,
+      maxHp: 100,
       ad: 40,
       attackRange: {
         range: 1,
@@ -283,7 +283,7 @@ export const champions: ChampionData[] = [
   {
     name: "Sion",
     stats: {
-      maxHp: 180,
+      maxHp: 150,
       ad: 25,
       ap: 30,
       physicalResistance: 15,
@@ -322,7 +322,7 @@ export const champions: ChampionData[] = [
       criticalChance: 4,
       sunder: 4,
       lifesteal: 4,
-      speed: 4,
+      speed: 2,
     },
     skill: {
       type: "passive",
@@ -335,7 +335,7 @@ export const champions: ChampionData[] = [
   {
     name: "Soraka",
     stats: {
-      maxHp: 100,
+      maxHp: 80,
       ad: 10,
       ap: 20,
       physicalResistance: 5,
@@ -366,7 +366,7 @@ export const champions: ChampionData[] = [
   {
     name: "Nasus",
     stats: {
-      maxHp: 140,
+      maxHp: 115,
       ad: 35,
       ap: 10,
       physicalResistance: 10,
@@ -422,7 +422,7 @@ export const champions: ChampionData[] = [
   {
     name: "Rammus",
     stats: {
-      maxHp: 140,
+      maxHp: 120,
       ad: 15,
       ap: 20,
       physicalResistance: 35,
@@ -446,7 +446,7 @@ export const champions: ChampionData[] = [
   {
     name: "Yasuo",
     stats: {
-      maxHp: 135,
+      maxHp: 95,
       ad: 45,
       ap: 10,
       sunder: 5,
@@ -473,7 +473,7 @@ export const champions: ChampionData[] = [
   {
     name: "Tryndamere",
     stats: {
-      maxHp: 130,
+      maxHp: 100,
       ad: 45,
       ap: 0,
       criticalChance: 25,
@@ -498,7 +498,7 @@ export const champions: ChampionData[] = [
   {
     name: "Viktor",
     stats: {
-      maxHp: 110,
+      maxHp: 75,
       ad: 10,
       ap: 30,
       criticalChance: 30,
@@ -529,7 +529,7 @@ export const champions: ChampionData[] = [
   {
     name: "Twisted Fate",
     stats: {
-      maxHp: 110,
+      maxHp: 65,
       ad: 25,
       ap: 20,
       criticalChance: 15,

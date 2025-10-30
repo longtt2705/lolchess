@@ -307,11 +307,11 @@ const InstructionsPage: React.FC = () => {
             name: 'Siege Minion (Rook)',
             icon: '🗼',
             stats: {
-                'HP': '250',
+                'HP': '150',
                 'AD': '40',
-                'Speed': '1',
+                'Speed': '4',
                 'Attack Range': '8 (horizontal/vertical)',
-                'Gold Value': '30'
+                'Gold Value': '40'
             },
             description: 'Strong defensive unit with long-range attacks along horizontal and vertical lines.'
         },
@@ -324,7 +324,7 @@ const InstructionsPage: React.FC = () => {
                 'AD': '25',
                 'Movement': '1 forward',
                 'Attack Range': '1',
-                'Gold Value': '10'
+                'Gold Value': '20'
             },
             description: 'Basic unit that promotes to Super Minion upon reaching enemy back rank.'
         },
@@ -337,7 +337,7 @@ const InstructionsPage: React.FC = () => {
                 'AD': '35',
                 'Movement': '1 forward',
                 'Attack Range': '2',
-                'Gold Value': '15'
+                'Gold Value': '25'
             },
             description: 'Ranged unit with lower health but higher damage and attack range than Melee Minions.'
         },
@@ -346,12 +346,13 @@ const InstructionsPage: React.FC = () => {
             name: 'Super Minion (Promoted Pawn)',
             icon: '🛡️',
             stats: {
-                'HP': '200',
-                'AD': '50',
-                'Speed': '2',
-                'Physical Res': '25',
-                'Magic Res': '15',
-                'Gold Value': '40'
+                'HP': '300',
+                'AD': '100',
+                'AP': '100',
+                'Speed': '5',
+                'Physical Res': '50',
+                'Magic Res': '50',
+                'Gold Value': '50'
             },
             description: 'Enhanced version of Melee Minion with significantly improved stats.'
         }
@@ -538,6 +539,29 @@ const InstructionsPage: React.FC = () => {
                                     Magic Resistance, Speed, Attack Range, and Gold Value.
                                 </HighlightBox>
 
+                                <h3>Core Stats</h3>
+                                <ul>
+                                    <li><strong>HP (Health Points):</strong> The amount of damage a piece can sustain before being slain.</li>
+                                    <li><strong>AD (Attack Damage):</strong> Damage dealt by basic attacks, reduced by Physical Resistance.</li>
+                                    <li><strong>AP (Ability Power):</strong> Primarily used to scale the power of champion special abilities.</li>
+                                    <li><strong>Physical Resistance:</strong> Reduces incoming damage from AD attacks.</li>
+                                    <li><strong>Magic Resistance:</strong> Reduces incoming damage from AP attacks.</li>
+                                    <li><strong>Speed:</strong> Maximum number of squares a piece can move in a single direction per turn. Default is 1.</li>
+                                    <li><strong>Attack Range:</strong> Maximum number of squares away a piece can attack in a single direction.</li>
+                                    <li><strong>Gold Value:</strong> Gold awarded to opponent upon slaying this piece.</li>
+                                    <li><strong>HP Regen:</strong> HP regenerated at the start of each turn. Default is 0.</li>
+                                </ul>
+
+                                <h3>Advanced Stats</h3>
+                                <ul>
+                                    <li><strong>Sunder:</strong> Flat armor penetration. Reduces the target's Physical Resistance by this amount when calculating damage (cannot reduce below 0).</li>
+                                    <li><strong>Critical Chance:</strong> Percentage chance (0-100%) for basic attacks to deal critical damage.</li>
+                                    <li><strong>Critical Damage:</strong> The damage multiplier for critical strikes. Default is 150% (dealing 1.5× damage).</li>
+                                    <li><strong>Lifesteal:</strong> Percentage of AD damage dealt that is converted to HP healing for the attacker.</li>
+                                    <li><strong>Cooldown Reduction:</strong> Reduces the cooldown of champion abilities. Each point reduces cooldown by 1 turn.</li>
+                                    <li><strong>Damage Amplification:</strong> Percentage increase to all damage dealt (both physical and magical). Multiplicative with other damage increases.</li>
+                                </ul>
+
                                 <h3>Piece Types</h3>
                                 <p>Click on each piece type to view detailed stats and characteristics:</p>
 
@@ -654,31 +678,54 @@ const InstructionsPage: React.FC = () => {
 
                                 <h4>5. Buy Items</h4>
                                 <p>
-                                    Forgo board actions to purchase items from the shop and equip them to champions.
+                                    At the start of your turn, you may purchase ONE item from the shop for a champion
+                                    before performing your board action. After buying an item or performing any board action,
+                                    you cannot buy more items until your next turn.
                                 </p>
 
                                 <h3>Combat System</h3>
 
                                 <h4>Damage Calculation</h4>
-                                <p>When a piece attacks another:</p>
-                                <ul>
-                                    <li><strong>AD attacks:</strong> Reduced by Physical Resistance</li>
-                                    <li><strong>AP attacks:</strong> Reduced by Magic Resistance</li>
-                                    <li>Damage is subtracted from the defender's HP</li>
-                                    <li>Defender does not counter-attack (unless ability-based)</li>
-                                </ul>
+                                <p>When a piece attacks another, damage is calculated in the following order:</p>
+                                <ol>
+                                    <li><strong>Base Damage:</strong> Determined (AD for basic attacks, varies for abilities)</li>
+                                    <li><strong>Critical Strike:</strong> Rolled if applicable based on Critical Chance</li>
+                                    <li><strong>Damage Amplification:</strong> Applied if any (multiplicative)</li>
+                                    <li><strong>Resistance:</strong> Physical Resistance for AD damage, Magic Resistance for AP damage (reduced by Sunder if applicable)</li>
+                                    <li><strong>Final Damage:</strong> Subtracted from defender's HP</li>
+                                </ol>
+
+                                <HighlightBox variant="info">
+                                    <p><strong>AD attacks:</strong> Reduced by Physical Resistance</p>
+                                    <p><strong>AP attacks:</strong> Reduced by Magic Resistance</p>
+                                    <p><strong>Sunder:</strong> Reduces Physical Resistance before damage calculation</p>
+                                    <p><strong>Lifesteal:</strong> Heals for a percentage of AD damage dealt (after resistances)</p>
+                                </HighlightBox>
 
                                 <h4>Critical Strikes</h4>
                                 <HighlightBox variant="warning">
-                                    <p><strong>Critical Strike Chance:</strong> Can occur on attacks</p>
-                                    <p><strong>Critical Damage:</strong> Deals 150% damage</p>
+                                    <p><strong>Critical Strike Chance:</strong> Percentage chance to land a critical hit</p>
+                                    <p><strong>Critical Damage:</strong> Deals 150% damage by default (modifiable)</p>
                                 </HighlightBox>
 
                                 <h4>Slaying Pieces</h4>
                                 <p>
                                     When a piece's HP drops to 0 or below, it is slain and removed from the board.
                                     The attacking player gains <strong>Gold</strong> equal to the slain piece's Gold Value.
+                                    Defender does not counter-attack (unless ability-based).
                                 </p>
+
+                                <h3>Status Effects (Debuffs)</h3>
+                                <p>Status effects can be applied by champion abilities and items. Multiple instances of the same debuff do not stack unless specified.</p>
+
+                                <ul>
+                                    <li><strong>Burn:</strong> Deals magic damage at the start of the affected piece's owner's turn. Duration and damage vary by source.</li>
+                                    <li><strong>Wound:</strong> Reduces healing received by a percentage. Affects HP regeneration and lifesteal.</li>
+                                    <li><strong>Slow:</strong> Reduces the affected piece's Speed by a fixed amount or percentage. Cannot reduce Speed below 1.</li>
+                                    <li><strong>Venom:</strong> Reduces the shield of the affected piece by 50%.</li>
+                                    <li><strong>Stun:</strong> The affected piece cannot move, attack, or use abilities for the duration.</li>
+                                    <li><strong>Root:</strong> The affected piece cannot move but can still attack and use abilities.</li>
+                                </ul>
 
                                 <h3>Line of Sight & Blocking</h3>
                                 <p>
@@ -711,45 +758,52 @@ const InstructionsPage: React.FC = () => {
                                 <h3>Drake</h3>
                                 <HighlightBox variant="success">
                                     <p><strong>Spawns:</strong> Square i4 at the end of Red's 5th turn</p>
-                                    <p><strong>HP:</strong> 1000</p>
+                                    <p><strong>HP:</strong> 250</p>
                                 </HighlightBox>
 
                                 <h4>Drake Kill Rewards</h4>
                                 <StatsGrid>
                                     <StatCard>
                                         <div className="label">Gold Reward</div>
-                                        <div className="value">+10</div>
+                                        <div className="value">+50</div>
                                     </StatCard>
                                     <StatCard>
                                         <div className="label">Drake Soul Buff</div>
-                                        <div className="value">+10 AD</div>
+                                        <div className="value">+20 AD</div>
                                     </StatCard>
                                 </StatsGrid>
                                 <p>
-                                    <strong>Drake Soul Buff:</strong> All your pieces gain +10 Attack Damage permanently.
+                                    <strong>Drake Soul Buff:</strong> All your pieces gain +20 Attack Damage permanently.
                                 </p>
 
                                 <h3>Baron Nashor</h3>
                                 <HighlightBox variant="success">
                                     <p><strong>Spawns:</strong> Square z5 at the end of Red's 10th turn</p>
-                                    <p><strong>HP:</strong> 2500</p>
+                                    <p><strong>HP:</strong> 500</p>
                                 </HighlightBox>
 
                                 <h4>Baron Kill Rewards</h4>
                                 <StatsGrid>
                                     <StatCard>
                                         <div className="label">Gold Reward</div>
-                                        <div className="value">+50</div>
+                                        <div className="value">+250</div>
                                     </StatCard>
                                     <StatCard>
-                                        <div className="label">Hand of Baron</div>
-                                        <div className="value">+20 AD / +20 Armor</div>
+                                        <div className="label">Minions Buff</div>
+                                        <div className="value">+40 AD / +40 Armor</div>
+                                    </StatCard>
+                                    <StatCard>
+                                        <div className="label">Champions Buff</div>
+                                        <div className="value">+20 Stats</div>
                                     </StatCard>
                                 </StatsGrid>
                                 <p>
-                                    <strong>Hand of Baron Buff:</strong> All your Minions and Siege Minions gain
-                                    +20 Attack Damage and +20 Physical Resistance permanently.
+                                    <strong>Hand of Baron Buff:</strong>
                                 </p>
+                                <ul>
+                                    <li><strong>Minions & Siege Minions:</strong> +40 AD and +40 Physical Resistance</li>
+                                    <li><strong>Champions:</strong> +20 AP, +20 AD, +20 Physical Resistance, +20 Magic Resistance</li>
+                                </ul>
 
                                 <h3>Monster Mechanics</h3>
                                 <ul>
@@ -786,7 +840,7 @@ const InstructionsPage: React.FC = () => {
                                 <StatsGrid>
                                     <StatCard>
                                         <div className="label">Passive Income</div>
-                                        <div className="value">+3 per turn</div>
+                                        <div className="value">+5 per turn</div>
                                     </StatCard>
                                     <StatCard>
                                         <div className="label">Slay Enemy Pieces</div>
@@ -794,17 +848,17 @@ const InstructionsPage: React.FC = () => {
                                     </StatCard>
                                     <StatCard>
                                         <div className="label">Drake Kill</div>
-                                        <div className="value">+10</div>
+                                        <div className="value">+50</div>
                                     </StatCard>
                                     <StatCard>
                                         <div className="label">Baron Kill</div>
-                                        <div className="value">+50</div>
+                                        <div className="value">+250</div>
                                     </StatCard>
                                 </StatsGrid>
 
                                 <h4>Passive Income</h4>
                                 <p>
-                                    Each player gains <strong>3 Gold at the start of their turn</strong>. This ensures
+                                    Each player gains <strong>5 Gold at the start of their turn</strong>. This ensures
                                     steady economy growth throughout the game.
                                 </p>
 
@@ -812,10 +866,10 @@ const InstructionsPage: React.FC = () => {
                                 <p>Gold values for enemy pieces:</p>
                                 <ul>
                                     <li><strong>Champion:</strong> 50 Gold</li>
-                                    <li><strong>Super Minion:</strong> 40 Gold</li>
-                                    <li><strong>Siege Minion:</strong> 30 Gold</li>
-                                    <li><strong>Caster Minion:</strong> 15 Gold</li>
-                                    <li><strong>Melee Minion:</strong> 10 Gold</li>
+                                    <li><strong>Super Minion:</strong> 50 Gold</li>
+                                    <li><strong>Siege Minion:</strong> 40 Gold</li>
+                                    <li><strong>Caster Minion:</strong> 25 Gold</li>
+                                    <li><strong>Melee Minion:</strong> 20 Gold</li>
                                 </ul>
 
                                 <h3>The Item Shop</h3>
