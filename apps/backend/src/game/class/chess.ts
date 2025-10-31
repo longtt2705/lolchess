@@ -1085,6 +1085,10 @@ export class ChessObject {
         }
       }
     }
+
+    if (this.chess.items.some((item) => item.id === "nashors_tooth")) {
+      this.damage(chess, 10 + this.ap * 0.2, "magic", this, this.sunder);
+    }
     if (this.chess.items.some((item) => item.id === "guinsoo_rageblade")) {
       this.chess.stats.sunder += 2;
     }

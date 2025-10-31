@@ -308,7 +308,7 @@ export const combinedItems: ItemData[] = [
     id: "nashors_tooth",
     name: "Nashor's Tooth",
     description:
-      "After using an active skill, grant 10% damage amplification for 2 turns.",
+      "After using an active skill, grant 10% damage amplification for 2 turns. Each attack deals 10 + 20% of AP magic damage to the target.",
     cost: 0,
     icon: "/icons/NashorsTooth.png",
     effects: [
