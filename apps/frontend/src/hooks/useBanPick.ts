@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "./redux";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 interface BanPickState {
-  phase: "ban" | "pick" | "complete";
+  phase: "ban" | "pick" | "reorder" | "complete";
   currentTurn: "blue" | "red";
   turnNumber: number;
 
@@ -21,15 +21,22 @@ interface BanPickState {
   bluePicks: string[]; // Champion IDs (max 5)
   redPicks: string[]; // Champion IDs (max 5)
 
+  // Reorder phase data
+  blueChampionOrder?: string[]; // Final champion order after reordering
+  redChampionOrder?: string[]; // Final champion order after reordering
+  blueReady?: boolean; // Blue player confirmed their order
+  redReady?: boolean; // Red player confirmed their order
+
   // Timing
   turnStartTime: number;
   turnTimeLimit: number; // seconds
 }
 
 interface BanPickAction {
-  type: "ban" | "pick" | "skip_ban";
+  type: "ban" | "pick" | "skip_ban" | "reorder" | "setReady";
   championId?: string;
   playerId: string;
+  ready?: boolean;
   timestamp: number;
 }
 
@@ -167,12 +174,19 @@ export const useBanPick = (gameId: string) => {
           // Show appropriate toast based on action type
           if (data.lastAction.type === "skip_ban") {
             toast.success("Ban skipped");
-          } else {
-            const actionText =
-              data.lastAction.type === "ban" ? "banned" : "picked";
-            toast.success(
-              `Champion ${actionText}: ${data.lastAction.championId}`
-            );
+          } else if (data.lastAction.type === "ban") {
+            toast.success(`Champion banned: ${data.lastAction.championId}`);
+          } else if (data.lastAction.type === "pick") {
+            toast.success(`Champion picked: ${data.lastAction.championId}`);
+          } else if (data.lastAction.type === "reorder") {
+            // Don't show toast for reorder actions (too frequent while dragging)
+            console.log("🔄 Champion order updated");
+          } else if (data.lastAction.type === "setReady") {
+            // Only show toast if it's not the current user
+            if (data.lastAction.playerId !== user.id) {
+              const readyText = data.lastAction.ready ? "is ready!" : "changed their order";
+              toast(`Opponent ${readyText}`, { icon: "👤" });
+            }
           }
         }
 
@@ -299,6 +313,44 @@ export const useBanPick = (gameId: string) => {
     socketRef.current.emit("getBanPickState", { gameId });
   };
 
+  const reorderChampions = (newOrder: string[]) => {
+    if (!socketRef.current || !user || !gameId) {
+      toast.error("Not connected to ban/pick server");
+      return;
+    }
+
+    if (!banPickState || banPickState.phase !== "reorder") {
+      toast.error("Not in reorder phase");
+      return;
+    }
+
+    console.log("🔄 Reordering champions:", newOrder);
+    socketRef.current.emit("reorderChampions", {
+      gameId,
+      playerId: user.id,
+      newOrder,
+    });
+  };
+
+  const setReady = (ready: boolean) => {
+    if (!socketRef.current || !user || !gameId) {
+      toast.error("Not connected to ban/pick server");
+      return;
+    }
+
+    if (!banPickState || banPickState.phase !== "reorder") {
+      toast.error("Not in reorder phase");
+      return;
+    }
+
+    console.log(`${ready ? "✅" : "❌"} Setting ready status:`, ready);
+    socketRef.current.emit("setReady", {
+      gameId,
+      playerId: user.id,
+      ready,
+    });
+  };
+
   const isMyTurn = banPickState?.currentTurn === playerSide;
   const currentAction = banPickState?.phase === "ban" ? "ban" : "pick";
 
@@ -315,5 +367,7 @@ export const useBanPick = (gameId: string) => {
     pickChampion,
     skipBan,
     getBanPickState,
+    reorderChampions,
+    setReady,
   };
 };

@@ -356,7 +356,7 @@ export class ActionDetails {
 
 @Schema()
 export class BanPickState {
-  @Prop({ required: true, enum: ["ban", "pick", "complete"] })
+  @Prop({ required: true, enum: ["ban", "pick", "reorder", "complete"] })
   phase: string;
 
   @Prop({ required: true, enum: ["blue", "red"] })
@@ -382,6 +382,18 @@ export class BanPickState {
 
   @Prop({ type: [String], default: [] })
   redPicks: string[];
+
+  @Prop({ type: [String], default: [] })
+  blueChampionOrder: string[]; // Final champion order after reordering
+
+  @Prop({ type: [String], default: [] })
+  redChampionOrder: string[]; // Final champion order after reordering
+
+  @Prop({ default: false })
+  blueReady: boolean; // Blue player confirmed their order
+
+  @Prop({ default: false })
+  redReady: boolean; // Red player confirmed their order
 
   @Prop({ required: true })
   turnStartTime: number;

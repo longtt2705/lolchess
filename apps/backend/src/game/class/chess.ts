@@ -469,7 +469,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -1055,6 +1055,7 @@ export class ChessObject {
     // Move the king
     this.chess.position = targetPosition;
     this.chess.hasMovedBefore = true;
+    this.applyShield(this.maxHp * 0.25, Number.MAX_SAFE_INTEGER, "castling_shield");
 
     // Move the rook
     rook.position = castlingResult.rookNewPosition;

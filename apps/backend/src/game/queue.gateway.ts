@@ -27,7 +27,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly gameService: GameService,
     private readonly queueService: QueueService
-  ) {}
+  ) { }
 
   handleConnection(client: Socket) {
     console.log(`Queue Gateway - Client connected: ${client.id}`);
@@ -303,14 +303,8 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
           },
         });
 
-        // Check if ban-pick is complete
-        if (result.banPickState?.phase === "complete") {
-          await this.gameService.initializeGameplay(gameId);
-          this.server.to(gameId).emit("banPickComplete", {
-            game: result,
-            message: "Ban/pick phase complete! Starting game...",
-          });
-        }
+        // Note: Game start is now handled in setReady when both players are ready
+        // after the reorder phase, not during ban phase
       }
     } catch (error) {
       console.error("Error processing ban:", error);
@@ -338,6 +332,9 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
 
       if (result) {
+        console.log(`[PICK] After processing pick, phase is: ${result.banPickState?.phase}`);
+        console.log(`[PICK] Blue picks: ${result.banPickState?.bluePicks.length}, Red picks: ${result.banPickState?.redPicks.length}`);
+
         // Broadcast updated state to all players in the room
         this.server.to(gameId).emit("banPickStateUpdate", {
           game: result,
@@ -350,13 +347,10 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
           },
         });
 
-        // Check if ban-pick is complete
-        if (result.banPickState?.phase === "complete") {
-          await this.gameService.initializeGameplay(gameId);
-          this.server.to(gameId).emit("banPickComplete", {
-            game: result,
-            message: "Ban/pick phase complete! Starting game...",
-          });
+        // Note: Game start is now handled in setReady when both players are ready
+        // after the reorder phase, not immediately after picks complete
+        if (result.banPickState?.phase === "reorder") {
+          console.log(`[PICK] ✅ Entered REORDER phase! Waiting for both players to be ready.`);
         }
       }
     } catch (error) {
@@ -418,6 +412,88 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     } catch (error) {
       console.error("Error getting ban-pick state:", error);
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("reorderChampions")
+  async handleReorderChampions(
+    @MessageBody()
+    data: { gameId: string; playerId: string; newOrder: string[] },
+    @ConnectedSocket() client: Socket
+  ) {
+    try {
+      const { gameId, playerId, newOrder } = data;
+
+      console.log(`Player ${playerId} reordering champions in game ${gameId}:`, newOrder);
+
+      // Process the reorder action
+      const result = await this.gameService.processReorderAction(
+        gameId,
+        playerId,
+        newOrder
+      );
+
+      if (result) {
+        // Broadcast updated state to all players in the room
+        this.server.to(gameId).emit("banPickStateUpdate", {
+          game: result,
+          banPickState: result.banPickState,
+          lastAction: {
+            type: "reorder",
+            playerId,
+            timestamp: Date.now(),
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error processing champion reorder:", error);
+      client.emit("error", { message: error.message });
+    }
+  }
+
+  @SubscribeMessage("setReady")
+  async handleSetReady(
+    @MessageBody()
+    data: { gameId: string; playerId: string; ready: boolean },
+    @ConnectedSocket() client: Socket
+  ) {
+    try {
+      const { gameId, playerId, ready } = data;
+
+      console.log(`Player ${playerId} setting ready status to ${ready} in game ${gameId}`);
+
+      // Process the ready action
+      const result = await this.gameService.setPlayerReady(
+        gameId,
+        playerId,
+        ready
+      );
+
+      if (result.game) {
+        // Broadcast updated state to all players in the room
+        this.server.to(gameId).emit("banPickStateUpdate", {
+          game: result.game,
+          banPickState: result.game.banPickState,
+          lastAction: {
+            type: "setReady",
+            playerId,
+            ready,
+            timestamp: Date.now(),
+          },
+        });
+
+        // If both players are ready, initialize gameplay and emit banPickComplete
+        if (result.shouldStartGame) {
+          await this.gameService.initializeGameplay(gameId);
+          this.server.to(gameId).emit("banPickComplete", {
+            game: result.game,
+            message: "Both players ready! Starting game...",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error setting ready status:", error);
       client.emit("error", { message: error.message });
     }
   }
