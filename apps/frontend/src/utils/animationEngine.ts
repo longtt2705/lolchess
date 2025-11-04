@@ -149,24 +149,33 @@ export class AnimationEngine {
         // Get skill-specific animation renderer to use its duration
         const skillRenderer = getSkillAnimationRenderer(lastAction.skillName);
 
+        // Prepare the skill animation config data
+        const skillAnimationData = {
+          casterId: lastAction.casterId,
+          casterPosition: lastAction.casterPosition,
+          skillName: lastAction.skillName,
+          targetPosition: lastAction.targetPosition,
+          targetId: lastAction.targetId, // Add targetId for skill animations
+          pulledToPosition: lastAction.pulledToPosition, // Add pulledToPosition for Rocket Grab
+          cardTargets: (lastAction as any).cardTargets, // Add cardTargets for Twisted Fate
+          totalCardCount: (lastAction as any).totalCardCount, // Add totalCardCount for Twisted Fate
+        } as SkillAnimationData;
+
+        // Calculate duration - support both static and dynamic duration
+        const calculatedDuration =
+          typeof skillRenderer.duration === "function"
+            ? skillRenderer.duration(skillAnimationData)
+            : skillRenderer.duration;
+
         animations.push({
           id: `skill_${lastAction.timestamp}`,
           type: "skill",
           timestamp: lastAction.timestamp,
           delay: currentDelay,
-          duration: skillRenderer.duration, // Use skill-specific duration
-          data: {
-            casterId: lastAction.casterId,
-            casterPosition: lastAction.casterPosition,
-            skillName: lastAction.skillName,
-            targetPosition: lastAction.targetPosition,
-            targetId: lastAction.targetId, // Add targetId for skill animations
-            pulledToPosition: lastAction.pulledToPosition, // Add pulledToPosition for Rocket Grab
-            cardTargets: (lastAction as any).cardTargets, // Add cardTargets for Twisted Fate
-            totalCardCount: (lastAction as any).totalCardCount, // Add totalCardCount for Twisted Fate
-          } as SkillAnimationData,
+          duration: calculatedDuration, // Use calculated duration
+          data: skillAnimationData,
         });
-        currentDelay += skillRenderer.duration;
+        currentDelay += calculatedDuration;
       }
     }
 

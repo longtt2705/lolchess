@@ -72,7 +72,7 @@ export interface ChessPiece {
       horizontal: boolean;
       vertical: boolean;
     };
-    targetTypes?: "square" | "ally" | "enemy" | "none";
+    targetTypes?: "square" | "squareInRange" | "ally" | "enemy" | "none";
   };
   shields?: Array<{
     amount: number;
@@ -572,6 +572,12 @@ export const useGame = (gameId: string) => {
               break; // Stop at any piece - path blocked
             }
             skillTargets.push(targetPosition);
+          } else if (skill.targetTypes === "squareInRange") {
+            // Can target empty squares within range (ignoring obstacles)
+            if (!occupiedBy) {
+              skillTargets.push(targetPosition);
+            }
+            // Don't break - continue checking full range even if square is occupied
           } else if (skill.targetTypes === "enemy") {
             // Can only target enemy pieces
             if (occupiedBy && occupiedBy.ownerId !== piece.ownerId) {

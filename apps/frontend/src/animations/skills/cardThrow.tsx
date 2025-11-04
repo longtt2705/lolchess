@@ -10,7 +10,7 @@ import {
 } from '../types'
 
 // Adjustable timing constant
-const CARD_STAGGER_DELAY = 150 // milliseconds between each card launch
+const CARD_STAGGER_DELAY = 40 // milliseconds between each card launch
 
 // Card color cycle: red, blue, yellow
 const CARD_COLORS = ['#DC143C', '#4169E1', '#FFD700']
@@ -230,9 +230,13 @@ export const cardThrowRenderer: SkillAnimationRenderer = {
             </AnimatePresence>
         )
     },
+    // Dynamic duration based on the actual number of cards thrown
     // Total duration: (cardCount * stagger) + flight time + buffer
-    // We'll use a reasonable max estimate: 10 cards * 150ms + 500ms flight + 100ms buffer = 2100ms
-    // But in practice it's dynamic based on totalCardCount
-    duration: 2100
+    duration: (config: SkillAnimationConfig) => {
+        const cardCount = config.totalCardCount || 1
+        const flightTime = 100 // Card flight time in ms
+        const buffer = 0 // Extra buffer time in ms
+        return cardCount * CARD_STAGGER_DELAY + flightTime + buffer
+    }
 }
 

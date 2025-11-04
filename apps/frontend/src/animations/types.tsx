@@ -22,7 +22,7 @@ export interface SkillAnimationConfig {
 
 export interface SkillAnimationRenderer {
   render: (config: SkillAnimationConfig) => JSX.Element | null
-  duration: number // milliseconds
+  duration: number | ((config: SkillAnimationConfig) => number) // milliseconds - can be static or calculated dynamically
 }
 
 // Helper to calculate pixel position from chess position

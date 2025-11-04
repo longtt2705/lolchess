@@ -87,7 +87,7 @@ export const champions: ChampionData[] = [
   {
     name: "Janna",
     stats: {
-      maxHp: 60,
+      maxHp: 70,
       ad: 10,
       ap: 30,
       physicalResistance: 5,
@@ -152,7 +152,7 @@ export const champions: ChampionData[] = [
   {
     name: "Tristana",
     stats: {
-      maxHp: 60,
+      maxHp: 75,
       ad: 30,
       ap: 0,
       physicalResistance: 5,
@@ -322,7 +322,7 @@ export const champions: ChampionData[] = [
       criticalChance: 4,
       sunder: 4,
       lifesteal: 4,
-      speed: 2,
+      speed: 4,
     },
     skill: {
       type: "passive",
@@ -529,7 +529,7 @@ export const champions: ChampionData[] = [
   {
     name: "Twisted Fate",
     stats: {
-      maxHp: 65,
+      maxHp: 75,
       ad: 25,
       ap: 20,
       criticalChance: 15,
@@ -546,8 +546,8 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Wild Cards",
       description:
-        "Throws (1+40% of AP) cards to a target and his adjacent enemies, each card deals (1 + 5% AP + 10% AD) magic damage to the target and his adjacent enemies.",
-      cooldown: 5,
+        "Throws (1+25% of AP) cards to a target and his adjacent enemies, each card deals (1 + 5% AP + 5% AD) magic damage to the target and his adjacent enemies.",
+      cooldown: 0,
       attackRange: {
         range: 3,
         diagonal: true,
@@ -555,6 +555,37 @@ export const champions: ChampionData[] = [
         vertical: true,
       },
       targetTypes: "enemy",
+    },
+  },
+  {
+    name: "Ezreal",
+    stats: {
+      maxHp: 80,
+      ad: 30,
+      ap: 30,
+      criticalChance: 10,
+      physicalResistance: 10,
+      magicResistance: 10,
+      attackRange: {
+        range: 2,
+        diagonal: true,
+        horizontal: true,
+        vertical: true,
+      },
+    },
+    skill: {
+      type: "active",
+      name: "Arcane Shift",
+      description:
+        "Ezreal teleports to a square in range, dealing (10 + 40% AP + 10% AD) magic damage to the lowest health adjacent enemy and increasing his sunder by (5 + 10% of AP) for 3 turns.",
+      cooldown: 5,
+      attackRange: {
+        range: 2,
+        diagonal: true,
+        horizontal: true,
+        vertical: true,
+      },
+      targetTypes: "squareInRange",
     },
   },
 ];

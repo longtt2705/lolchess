@@ -5,7 +5,7 @@ import { ChessFactory } from "./chessFactory";
 
 export class TwistedFate extends ChessObject {
   skill(position?: Square): void {
-    const cardCount = 1 + Math.floor(this.ap * 0.4);
+    const cardCount = 1 + Math.floor(this.ap * 0.25);
     const targetChess = GameLogic.getChess(
       this.game,
       !this.chess.blue,
@@ -40,7 +40,7 @@ export class TwistedFate extends ChessObject {
       const target = targets[i % targets.length];
       this.activeSkillDamage(
         target,
-        1 + this.ap * 0.05 + this.ad * 0.1,
+        1 + this.ap * 0.05 + this.ad * 0.05,
         "magic",
         this,
         this.sunder

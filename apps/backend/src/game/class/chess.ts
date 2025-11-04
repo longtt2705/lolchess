@@ -1258,7 +1258,75 @@ export class ChessObject {
     if (skill.targetTypes === "square") {
       return this.validateMove(position, skill.attackRange.range);
     }
+    if (skill.targetTypes === "squareInRange") {
+      return this.validateSquareInRange(position, skill.attackRange);
+    }
     return this.validateAttack(position, skill.attackRange);
+  }
+
+  validateSquareInRange(position: Square, attackRange: AttackRange): boolean {
+    // Check if attackRange is defined
+    if (!attackRange) {
+      return false;
+    }
+
+    // Can't target the same position
+    if (
+      this.chess.position.x === position.x &&
+      this.chess.position.y === position.y
+    ) {
+      return false;
+    }
+
+    // Check if target is within board bounds
+    if (position.x < -1 || position.x > 8 || position.y < 0 || position.y > 7) {
+      return false;
+    }
+
+    // Check if target square is empty
+    const occupiedBy = this.game.board.find(
+      (piece) =>
+        piece.position.x === position.x &&
+        piece.position.y === position.y &&
+        piece.stats.hp > 0
+    );
+    if (occupiedBy) {
+      return false; // Square must be empty
+    }
+
+    // Calculate deltas
+    const deltaX = Math.abs(position.x - this.chess.position.x);
+    const deltaY = Math.abs(position.y - this.chess.position.y);
+
+    // Check if target exceeds range limit
+    const maxDistance = Math.max(deltaX, deltaY);
+    if (attackRange.range && maxDistance > attackRange.range) {
+      return false;
+    }
+
+    // Determine direction
+    const isHorizontal = deltaY === 0 && deltaX > 0;
+    const isVertical = deltaX === 0 && deltaY > 0;
+    const isDiagonal = deltaX === deltaY && deltaX > 0;
+
+    // Must be in exactly one valid direction
+    if (!isHorizontal && !isVertical && !isDiagonal) {
+      return false; // Invalid movement pattern
+    }
+
+    // Check if the skill can target in the determined direction
+    if (isHorizontal && !attackRange.horizontal) {
+      return false;
+    }
+    if (isVertical && !attackRange.vertical) {
+      return false;
+    }
+    if (isDiagonal && !attackRange.diagonal) {
+      return false;
+    }
+
+    // No line-of-sight check - can target any empty square in range
+    return true;
   }
 
   acquireItem(item: Item): void {

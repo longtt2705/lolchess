@@ -2,6 +2,9 @@ import { GameLogic } from "../game.logic";
 import { ChessObject } from "./chess";
 
 export class Poro extends ChessObject {
+  get speed(): number {
+    return 1;
+  }
   /**
    * Count adjacent ally minions (Melee Minion or Caster Minion only)
    */
@@ -28,7 +31,7 @@ export class Poro extends ChessObject {
    */
   get ad(): number {
     const baseAd = super.ad;
-    
+
     // Check if passive is disabled by Evenshroud
     if (this.isPassiveDisabled()) {
       return baseAd;
@@ -44,7 +47,7 @@ export class Poro extends ChessObject {
    */
   get physicalResistance(): number {
     const basePhysicalResistance = super.physicalResistance;
-    
+
     // Check if passive is disabled by Evenshroud
     if (this.isPassiveDisabled()) {
       return basePhysicalResistance;
@@ -60,7 +63,7 @@ export class Poro extends ChessObject {
    */
   get magicResistance(): number {
     const baseMagicResistance = super.magicResistance;
-    
+
     // Check if passive is disabled by Evenshroud
     if (this.isPassiveDisabled()) {
       return baseMagicResistance;

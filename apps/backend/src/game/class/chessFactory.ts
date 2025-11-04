@@ -20,6 +20,7 @@ import { Tryndamere } from "./tryndamere";
 import { Viktor } from "./viktor";
 import { TwistedFate } from "./twistedfate";
 import { Tristana } from "./tristana";
+import { Ezreal } from "./ezreal";
 import { Poro } from "./poro";
 import { MeleeMinion } from "./meleeminion";
 import { CasterMinion } from "./casterminion";
@@ -67,6 +68,8 @@ export class ChessFactory {
         return new TwistedFate(chess, game);
       case "Tristana":
         return new Tristana(chess, game);
+      case "Ezreal":
+        return new Ezreal(chess, game);
       case "Poro":
         return new Poro(chess, game);
       case "Melee Minion":

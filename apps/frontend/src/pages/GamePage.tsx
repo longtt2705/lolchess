@@ -3296,7 +3296,7 @@ const GamePage: React.FC = () => {
                 </div>
                 <div
                   className="stat-item"
-                  onMouseEnter={(e) => handleTooltipShow(e, 'Movement Speed')}
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Movement Speed' + (detailViewPiece.name === 'Poro' ? ' (Poro speed is always 1)' : ''))}
                   onMouseLeave={handleTooltipHide}
                 >
                   <span className="stat-label"><img src="/icons/speed.png" alt="Speed" width={14} height={14} /></span>
@@ -3701,10 +3701,10 @@ const GamePage: React.FC = () => {
                           ? 'rgba(200, 100, 100, 0.15)'
                           : 'rgba(91, 192, 222, 0.15)',
                       border: `1px solid ${gameState?.hasBoughtItemThisTurn
-                          ? 'var(--gold)'
-                          : gameState?.hasPerformedActionThisTurn
-                            ? '#c86464'
-                            : 'var(--hover)'
+                        ? 'var(--gold)'
+                        : gameState?.hasPerformedActionThisTurn
+                          ? '#c86464'
+                          : 'var(--hover)'
                         }`,
                       color: gameState?.hasBoughtItemThisTurn
                         ? 'var(--gold)'
@@ -3826,7 +3826,7 @@ const GamePage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px' }}>
             <TurnIndicator isMyTurn={isMyTurn}>
               {isMyTurn ? "Your Turn" : "Opponent's Turn"}
-              <div className="round-info">Round {displayState?.currentRound || gameState?.currentRound}</div>
+              <div className="round-info">Round {Math.floor((displayState?.currentRound || gameState?.currentRound || 0) / 2) + 1}</div>
             </TurnIndicator>
 
             {/* Skill Targeting Indicator */}

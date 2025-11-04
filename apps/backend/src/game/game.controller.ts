@@ -121,6 +121,12 @@ export class GameController {
 
   @Post(":gameId/reset-gameplay")
   async resetGameplay(@Param("gameId") gameId: string) {
+    const isDevelopment = process.env.NODE_ENV === "development";
+    if (!isDevelopment) {
+      return {
+        message: "This action is only available in development mode",
+      };
+    }
     return this.gameService.resetGameplay(gameId);
   }
 
