@@ -4,6 +4,7 @@ import { rocketGrabRenderer } from "./skills/rocketGrab";
 import { spiritRushRenderer } from "./skills/spiritRush";
 import { cardThrowRenderer } from "./skills/cardThrow";
 import { arcaneShiftRenderer } from "./skills/arcaneShift";
+import { tasteTheirFearRenderer } from "./skills/tasteTheirFear";
 
 /**
  * Registry mapping skill names to their animation renderers
@@ -21,6 +22,9 @@ const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
 
   // Ezreal
   "Arcane Shift": arcaneShiftRenderer,
+
+  // Kha'Zix
+  "Taste Their Fear": tasteTheirFearRenderer,
 
   // Add more skills here as they're implemented
   // 'Skill Name': skillRenderer,

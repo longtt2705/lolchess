@@ -24,7 +24,8 @@ export class Soraka extends ChessObject {
 
       // Heal the target for more than sacrificed
       const healAmount =
-        20 + Math.floor(targetChessObject.maxHp * (0.1 + this.ap * 0.1));
+        20 +
+        Math.floor(targetChessObject.maxHp * (0.1 + (this.ap * 0.1) / 100));
       this.heal(targetChessObject, healAmount);
     }
   }

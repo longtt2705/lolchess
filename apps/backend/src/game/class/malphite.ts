@@ -25,9 +25,7 @@ export class Malphite extends ChessObject {
     damageType: "physical" | "magic" | "true"
   ): void {
     super.postTakenDamage(attacker, damage, damageType);
-    if (damage > 0) {
-      this.chess.skill.currentCooldown = this.skillCooldown;
-    }
+    this.chess.skill.currentCooldown = this.skillCooldown;
   }
 
   // Override physical resistance calculation to include the +15 bonus

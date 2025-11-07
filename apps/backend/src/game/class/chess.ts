@@ -172,6 +172,7 @@ export class ChessObject {
       // Award gold to the killer if the target was alive before this damage
       if (wasAlive) {
         this.awardGoldForKill(chess);
+        this.refundItemValues(chess); // Refund 50% of item values to the owner
         chess.chess.deadAtRound = this.game.currentRound;
 
         // Check if killed monster was neutral for special rewards
@@ -327,6 +328,31 @@ export class ChessObject {
     }
   }
 
+  // Return 50% of item values to the owner when the champion dies
+  protected refundItemValues(deadChess: ChessObject): void {
+    // Find the player who owns the dead chess piece
+    const ownerPlayerIndex = this.game.players.findIndex(
+      (player) => player.userId === deadChess.chess.ownerId
+    );
+
+    if (ownerPlayerIndex !== -1) {
+      // Calculate total item value
+      let totalItemValue = 0;
+      deadChess.chess.items.forEach((item) => {
+        const itemData = getItemById(item.id);
+        if (itemData) {
+          totalItemValue += itemData.cost;
+        }
+      });
+
+      // Refund 50% of total item value
+      const refundAmount = Math.floor(totalItemValue * 0.5);
+      if (refundAmount > 0) {
+        this.game.players[ownerPlayerIndex].gold += refundAmount;
+      }
+    }
+  }
+
   private createWoundedDebuff(turn: number, owner: ChessObject): Debuff {
     return {
       id: "wounded",
@@ -469,7 +495,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -1055,7 +1081,11 @@ export class ChessObject {
     // Move the king
     this.chess.position = targetPosition;
     this.chess.hasMovedBefore = true;
-    this.applyShield(this.maxHp * 0.25, Number.MAX_SAFE_INTEGER, "castling_shield");
+    this.applyShield(
+      this.maxHp * 0.25,
+      Number.MAX_SAFE_INTEGER,
+      "castling_shield"
+    );
 
     // Move the rook
     rook.position = castlingResult.rookNewPosition;

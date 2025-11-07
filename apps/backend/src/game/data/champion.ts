@@ -79,7 +79,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Perseverance",
       description:
-        "If Garen has not recently been struck by damage, he regenerates 10% of his total health each turn. Each turn, Garen gains 1 Armor (Max 30)",
+        "If Garen has not recently been struck by damage, he regenerates 10% of his total health each turn. Each turn, Garen gains 1 Armor (Max 30).",
       cooldown: 4,
       currentCooldown: 0,
     },
@@ -536,7 +536,7 @@ export const champions: ChampionData[] = [
       physicalResistance: 10,
       magicResistance: 10,
       attackRange: {
-        range: 3,
+        range: 2,
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -546,7 +546,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Wild Cards",
       description:
-        "Throws (1+25% of AP) cards to a target and his adjacent enemies, each card deals (1 + 5% AP + 5% AD) magic damage to the target and his adjacent enemies.",
+        "Throws (5 + 25% of AP) cards to a target and his adjacent enemies, each card deals (1 + 5% AP + 5% AD) magic damage to the target and his adjacent enemies.",
       cooldown: 0,
       attackRange: {
         range: 3,

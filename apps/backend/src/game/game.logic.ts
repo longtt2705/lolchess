@@ -322,6 +322,11 @@ export class GameLogic {
     // Now increment the round for the next player
     game.currentRound++;
 
+    if (game.currentRound % 20 === 0) {
+      game.players[0].gold += 50;
+      game.players[1].gold += 50;
+    }
+
     const currentPlayerId = this.isBlueTurn(game)
       ? game.bluePlayer
       : game.redPlayer;
@@ -335,7 +340,7 @@ export class GameLogic {
       (p) => p.userId === currentPlayerId
     );
     if (playerIndex !== -1) {
-      game.players[playerIndex].gold += 3;
+      game.players[playerIndex].gold += 5;
     }
 
     // Prepare pieces for the next turn

@@ -3073,7 +3073,7 @@ const GamePage: React.FC = () => {
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
                 {isDraw
-                  ? 'The battle ends in a stalemate!'
+                  ? 'The battle ends in a draw!'
                   : isVictory
                     ? 'You have conquered the battlefield!'
                     : 'Your Poro has fallen...'}
@@ -3086,7 +3086,7 @@ const GamePage: React.FC = () => {
               >
                 <StatItem>
                   <span className="stat-label">Round</span>
-                  <span className="stat-value">{gameState.currentRound}</span>
+                  <span className="stat-value">{Math.floor((gameState.currentRound || 0) / 2) + 1}</span>
                 </StatItem>
                 <StatItem>
                   <span className="stat-label">Your Gold</span>
