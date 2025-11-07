@@ -8,6 +8,13 @@ export class Garen extends ChessObject {
   ): void {
     super.postTakenDamage(attacker, damage, damageType);
     if (damage > 0) {
+      if (this.chess.skill.currentCooldown === 0) {
+        this.applyShield(
+          (this.chess.stats.maxHp * (10 + this.ap * 0.4)) / 100,
+          2,
+          "perseverance_shield"
+        );
+      }
       this.chess.skill.currentCooldown = this.skillCooldown;
     }
   }
@@ -38,11 +45,5 @@ export class Garen extends ChessObject {
       return;
     }
     this.heal(this, this.maxHp * 0.1);
-    if (!this.chess.skill.payload) {
-      this.chess.skill.payload = { physicalResistance: 0 };
-    }
-    if (this.chess.skill.payload?.physicalResistance < 30) {
-      this.chess.skill.payload.physicalResistance += 1;
-    }
   }
 }

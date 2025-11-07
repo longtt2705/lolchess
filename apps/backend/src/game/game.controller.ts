@@ -5,7 +5,7 @@ import { basicItems, combinedItems, allItems } from "./data/items";
 
 @Controller("games")
 export class GameController {
-  constructor(private readonly gameService: GameService) { }
+  constructor(private readonly gameService: GameService) {}
 
   @Get()
   findAll() {
@@ -14,17 +14,19 @@ export class GameController {
 
   @Get("champions")
   getChampions() {
-    return champions.map((champion) => ({
-      ...champion,
-      stats: {
-        ...champion.stats,
-        speed: champion.stats.speed ?? 2,
-        criticalChance: champion.stats.criticalChance ?? 15,
-        criticalDamage: champion.stats.criticalDamage ?? 150,
-        sunder: champion.stats.sunder ?? 0,
-        hpRegen: champion.stats.hpRegen ?? 1,
-      },
-    }));
+    return champions
+      .map((champion) => ({
+        ...champion,
+        stats: {
+          ...champion.stats,
+          speed: champion.stats.speed ?? 2,
+          criticalChance: champion.stats.criticalChance ?? 15,
+          criticalDamage: champion.stats.criticalDamage ?? 150,
+          sunder: champion.stats.sunder ?? 0,
+          hpRegen: champion.stats.hpRegen ?? 1,
+        },
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   @Get("items")

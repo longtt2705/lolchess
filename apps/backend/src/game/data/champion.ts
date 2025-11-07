@@ -13,6 +13,7 @@ export const champions: ChampionData[] = [
     stats: {
       maxHp: 110,
       ad: 45,
+      ap: 10,
       physicalResistance: 10,
       magicResistance: 5,
       attackRange: {
@@ -21,12 +22,13 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
+      lifesteal: 10,
     },
     skill: {
       type: "passive",
       name: "Deathbringer Stance",
       description:
-        "Aatrox's next basic attack deals bonus 10% target's max health + 50% AP magic damage and heals him (10 + 25% of AP) HP.",
+        "Aatrox's next basic attack deals bonus (10 + 10% of AP)% target's max health magic damage and heals him (10 + 25% of AP) HP.",
       cooldown: 5,
     },
   },
@@ -34,7 +36,8 @@ export const champions: ChampionData[] = [
     name: "Ahri",
     stats: {
       maxHp: 90,
-      ad: 35,
+      ad: 15,
+      ap: 30,
       attackRange: {
         range: 2,
         diagonal: true,
@@ -48,8 +51,8 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Spirit Rush",
       description:
-        "Ahri dashes to a square, dealing (10 + 50% AP) magic damage and applying a slow and (5 + 10% AP) magic damage each turn to any piece at or adjacent to that square.",
-      cooldown: 5,
+        "Ahri dashes to a square, dealing (15 + 25% AP) magic damage and applying a slow and (5 + 10% AP) magic damage each turn to any piece at or adjacent to that square.",
+      cooldown: 6,
       attackRange: {
         range: 8,
         diagonal: true,
@@ -63,8 +66,8 @@ export const champions: ChampionData[] = [
     name: "Garen",
     stats: {
       maxHp: 125,
-      ad: 40,
-      ap: 0,
+      ad: 30,
+      ap: 20,
       physicalResistance: 30,
       magicResistance: 15,
       attackRange: {
@@ -74,13 +77,14 @@ export const champions: ChampionData[] = [
         vertical: true,
       },
       hpRegen: 3,
+      sunder: 10,
     },
     skill: {
       type: "passive",
       name: "Perseverance",
       description:
-        "If Garen has not recently been struck by damage, he regenerates 10% of his total health each turn. Each turn, Garen gains 1 Armor (Max 30).",
-      cooldown: 4,
+        "If Garen has not recently been struck by damage, he regenerates 10% of his total health each turn. If he is taken damage, he gains a shield equal to (10 + 40% of AP)% of his max health for 2 turns.",
+      cooldown: 6,
       currentCooldown: 0,
     },
   },

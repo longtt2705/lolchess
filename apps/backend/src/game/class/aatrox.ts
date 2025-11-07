@@ -14,7 +14,7 @@ export class Aatrox extends ChessObject {
     }
 
     // Max 10% of target's max health, plus 50% of the AP
-    const bonusDamage = Math.floor(chess.maxHp * 0.1) + 0.5 * this.ap;
+    const bonusDamage = Math.floor(chess.maxHp * (0.1 + (this.ap * 0.1) / 100));
     const healAmount = 10 + this.ap * 0.25;
     this.damage(chess, bonusDamage, "magic", this, this.sunder);
     this.heal(this, healAmount);
