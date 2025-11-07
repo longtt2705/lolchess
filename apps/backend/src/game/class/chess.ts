@@ -1419,6 +1419,22 @@ export class ChessObject {
     const deltaX = Math.abs(position.x - this.chess.position.x);
     const deltaY = Math.abs(position.y - this.chess.position.y);
 
+    // Check for knight move (only available for pieces in slots 1 and 6 on first move)
+    const isKnightSlot =
+      this.chess.startingPosition &&
+      (this.chess.startingPosition.y === 0 ||
+        this.chess.startingPosition.y === 7) &&
+      (this.chess.startingPosition.x === 1 ||
+        this.chess.startingPosition.x === 6);
+    const isKnightMove =
+      (deltaX === 2 && deltaY === 1) || (deltaX === 1 && deltaY === 2);
+
+    if (!this.chess.hasMovedBefore && isKnightSlot && isKnightMove) {
+      // Knight moves are valid - they can jump over pieces
+      // No need to check path or speed restrictions for knight moves
+      return true;
+    }
+
     // Check vertical-only movement restriction
     if (this.chess.canOnlyMoveVertically) {
       // Vertical-only pieces can only move in Y direction (forward/backward)

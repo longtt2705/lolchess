@@ -14,6 +14,7 @@ export interface ChessPiece {
   id: string;
   name: string;
   position: ChessPosition;
+  startingPosition?: ChessPosition;
   ownerId: string;
   blue: boolean;
   stats: {
@@ -489,6 +490,49 @@ export const useGame = (gameId: string) => {
             moves.push({ x: piece.position.x - 2, y: piece.position.y });
           }
         }
+      }
+
+      // Check for KNIGHT MOVE (Champions in slots 1 and 6 on first move)
+      const isKnightSlot =
+        piece.startingPosition &&
+        (piece.startingPosition.y === 0 || piece.startingPosition.y === 7) &&
+        (piece.startingPosition.x === 1 || piece.startingPosition.x === 6);
+
+      if (!piece.hasMovedBefore && isKnightSlot) {
+        // Knight moves: L-shaped pattern (2+1 or 1+2)
+        const knightMoves = [
+          { dx: 2, dy: 1 }, // 2 right, 1 up
+          { dx: 2, dy: -1 }, // 2 right, 1 down
+          { dx: -2, dy: 1 }, // 2 left, 1 up
+          { dx: -2, dy: -1 }, // 2 left, 1 down
+          { dx: 1, dy: 2 }, // 1 right, 2 up
+          { dx: 1, dy: -2 }, // 1 right, 2 down
+          { dx: -1, dy: 2 }, // 1 left, 2 up
+          { dx: -1, dy: -2 }, // 1 left, 2 down
+        ];
+
+        knightMoves.forEach(({ dx, dy }) => {
+          const newX = piece.position.x + dx;
+          const newY = piece.position.y + dy;
+
+          // Check board bounds
+          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) return;
+
+          const targetPosition = { x: newX, y: newY };
+          const occupiedBy = gameState.board.find(
+            (p) =>
+              p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+          );
+
+          if (!occupiedBy) {
+            // Empty square - can move here (knight can jump over pieces)
+            moves.push(targetPosition);
+          } else if (occupiedBy.ownerId !== piece.ownerId) {
+            // Enemy piece - can attack with knight move
+            attacks.push(targetPosition);
+          }
+          // If occupied by friendly piece, can't move there
+        });
       }
 
       setValidMoves(moves);

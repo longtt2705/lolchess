@@ -32,7 +32,7 @@ export class GameService {
   constructor(
     @InjectModel(Game.name) private gameModel: Model<GameDocument>,
     private readonly redisCache: RedisGameCacheService
-  ) { }
+  ) {}
 
   /**
    * Get game state - tries Redis cache first, falls back to MongoDB
@@ -343,7 +343,9 @@ export class GameService {
       banPickState.bluePicks.length + banPickState.redPicks.length >= 10
     ) {
       // Picks complete - transition to reorder phase
-      console.log(`[SERVICE] 🔄 Transitioning to REORDER phase! Total picks: ${banPickState.bluePicks.length + banPickState.redPicks.length}`);
+      console.log(
+        `[SERVICE] 🔄 Transitioning to REORDER phase! Total picks: ${banPickState.bluePicks.length + banPickState.redPicks.length}`
+      );
       banPickState.phase = "reorder";
       banPickState.blueChampionOrder = [...banPickState.bluePicks];
       banPickState.redChampionOrder = [...banPickState.redPicks];
@@ -383,7 +385,9 @@ export class GameService {
     await this.saveGameState(gameId, gameObject, 7);
 
     console.log("Ban/pick state after save:", gameObject.banPickState);
-    console.log(`[SERVICE] ⚠️ FINAL phase after save: ${gameObject.banPickState?.phase}`);
+    console.log(
+      `[SERVICE] ⚠️ FINAL phase after save: ${gameObject.banPickState?.phase}`
+    );
     return gameObject;
   }
 
@@ -414,17 +418,22 @@ export class GameService {
     }
 
     // Validate the new order contains the same champions as the original picks
-    const originalPicks = player.side === "blue" ? banPickState.bluePicks : banPickState.redPicks;
+    const originalPicks =
+      player.side === "blue" ? banPickState.bluePicks : banPickState.redPicks;
 
     if (newOrder.length !== originalPicks.length) {
-      throw new Error(`Invalid champion order - expected ${originalPicks.length} champions`);
+      throw new Error(
+        `Invalid champion order - expected ${originalPicks.length} champions`
+      );
     }
 
     // Check that all champions in newOrder are in originalPicks
     const sortedOriginal = [...originalPicks].sort();
     const sortedNew = [...newOrder].sort();
     if (JSON.stringify(sortedOriginal) !== JSON.stringify(sortedNew)) {
-      throw new Error("Invalid champion order - champions don't match original picks");
+      throw new Error(
+        "Invalid champion order - champions don't match original picks"
+      );
     }
 
     // Update the champion order
@@ -443,7 +452,10 @@ export class GameService {
     // Save to Redis cache
     await this.saveGameState(gameId, gameObject, 7);
 
-    console.log(`Player ${playerId} (${player.side}) reordered champions:`, newOrder);
+    console.log(
+      `Player ${playerId} (${player.side}) reordered champions:`,
+      newOrder
+    );
     return gameObject;
   }
 
@@ -513,7 +525,9 @@ export class GameService {
     await this.saveGameState(gameId, gameObject, 8);
 
     console.log(`Player ${playerId} (${player.side}) ready status:`, ready);
-    console.log(`Both ready: ${banPickState.blueReady && banPickState.redReady}`);
+    console.log(
+      `Both ready: ${banPickState.blueReady && banPickState.redReady}`
+    );
 
     return { game: gameObject, shouldStartGame };
   }
@@ -779,12 +793,6 @@ export class GameService {
     return updatedGame.board.map((piece) => {
       // Create ChessObject to calculate effective stats
       const chessObject = ChessFactory.createChess(piece, updatedGame);
-      if (chessObject.chess.name === "Yasuo") {
-        console.log(
-          "Yasuo stats:",
-          chessObject.getEffectiveStat(piece, "criticalChance")
-        );
-      }
 
       const cleanedPiece = {
         id: piece.id,
@@ -793,6 +801,12 @@ export class GameService {
           x: piece.position.x,
           y: piece.position.y,
         },
+        startingPosition: piece.startingPosition
+          ? {
+              x: piece.startingPosition.x,
+              y: piece.startingPosition.y,
+            }
+          : undefined,
         cannotMoveBackward: piece.cannotMoveBackward,
         canOnlyMoveVertically: piece.canOnlyMoveVertically || false,
         hasMovedBefore: piece.hasMovedBefore || false,
@@ -848,85 +862,85 @@ export class GameService {
         blue: piece.blue,
         items: piece.items
           ? piece.items.map((item) => ({
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            payload: item.payload,
-            unique: item.unique,
-          }))
+              id: item.id,
+              name: item.name,
+              description: item.description,
+              payload: item.payload,
+              unique: item.unique,
+            }))
           : [],
         debuffs: piece.debuffs
           ? piece.debuffs.map((debuff) => ({
-            id: debuff.id,
-            name: debuff.name,
-            description: debuff.description,
-            duration: debuff.duration,
-            maxDuration: debuff.maxDuration,
-            effects: debuff.effects
-              ? debuff.effects.map((effect) => ({
-                stat: effect.stat,
-                modifier: effect.modifier,
-                type: effect.type,
-              }))
-              : [],
-            damagePerTurn: debuff.damagePerTurn || 0,
-            damageType: debuff.damageType || "0",
-            healPerTurn: debuff.healPerTurn || 0,
-            unique: debuff.unique || false,
-            appliedAt: debuff.appliedAt,
-            casterPlayerId: debuff.casterPlayerId,
-            casterName: debuff.casterName,
-          }))
+              id: debuff.id,
+              name: debuff.name,
+              description: debuff.description,
+              duration: debuff.duration,
+              maxDuration: debuff.maxDuration,
+              effects: debuff.effects
+                ? debuff.effects.map((effect) => ({
+                    stat: effect.stat,
+                    modifier: effect.modifier,
+                    type: effect.type,
+                  }))
+                : [],
+              damagePerTurn: debuff.damagePerTurn || 0,
+              damageType: debuff.damageType || "0",
+              healPerTurn: debuff.healPerTurn || 0,
+              unique: debuff.unique || false,
+              appliedAt: debuff.appliedAt,
+              casterPlayerId: debuff.casterPlayerId,
+              casterName: debuff.casterName,
+            }))
           : [],
         auras: piece.auras
           ? piece.auras.map((aura) => ({
-            id: aura.id,
-            name: aura.name,
-            description: aura.description,
-            range: aura.range,
-            effects: aura.effects
-              ? aura.effects.map((effect) => ({
-                stat: effect.stat,
-                modifier: effect.modifier,
-                type: effect.type,
-                target: effect.target,
-              }))
-              : [],
-            active: aura.active,
-            requiresAlive: aura.requiresAlive,
-            duration: aura.duration,
-          }))
+              id: aura.id,
+              name: aura.name,
+              description: aura.description,
+              range: aura.range,
+              effects: aura.effects
+                ? aura.effects.map((effect) => ({
+                    stat: effect.stat,
+                    modifier: effect.modifier,
+                    type: effect.type,
+                    target: effect.target,
+                  }))
+                : [],
+              active: aura.active,
+              requiresAlive: aura.requiresAlive,
+              duration: aura.duration,
+            }))
           : [],
         shields: piece.shields
           ? piece.shields.map((shield) => ({
-            id: shield.id,
-            amount: shield.amount,
-            duration: shield.duration,
-          }))
+              id: shield.id,
+              amount: shield.amount,
+              duration: shield.duration,
+            }))
           : [],
         skill: piece.skill
           ? {
-            name: piece.skill.name,
-            description: piece.skill.description,
-            cooldown: piece.skill.cooldown,
-            attackRange: piece.skill.attackRange
-              ? {
-                diagonal: piece.skill.attackRange.diagonal,
-                horizontal: piece.skill.attackRange.horizontal,
-                vertical: piece.skill.attackRange.vertical,
-                range: piece.skill.attackRange.range,
-              }
-              : {
-                diagonal: false,
-                horizontal: false,
-                vertical: false,
-                range: 1,
-              },
-            targetTypes: piece.skill.targetTypes,
-            currentCooldown: piece.skill.currentCooldown,
-            type: piece.skill.type,
-            payload: piece.skill.payload,
-          }
+              name: piece.skill.name,
+              description: piece.skill.description,
+              cooldown: piece.skill.cooldown,
+              attackRange: piece.skill.attackRange
+                ? {
+                    diagonal: piece.skill.attackRange.diagonal,
+                    horizontal: piece.skill.attackRange.horizontal,
+                    vertical: piece.skill.attackRange.vertical,
+                    range: piece.skill.attackRange.range,
+                  }
+                : {
+                    diagonal: false,
+                    horizontal: false,
+                    vertical: false,
+                    range: 1,
+                  },
+              targetTypes: piece.skill.targetTypes,
+              currentCooldown: piece.skill.currentCooldown,
+              type: piece.skill.type,
+              payload: piece.skill.payload,
+            }
           : undefined,
         deadAtRound: piece.deadAtRound,
       };

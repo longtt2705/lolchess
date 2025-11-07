@@ -471,10 +471,6 @@ export class GameLogic {
     minion.stats.speed = 5;
     minion.cannotMoveBackward = false;
     minion.canOnlyMoveVertically = false;
-
-    console.log(
-      `${minion.blue ? "Blue" : "Red"} Melee Minion promoted to Super Minion at ${minion.position.x},${minion.position.y}!`
-    );
   }
 
   // Initialize game board with starting positions according to RULE.md
@@ -553,7 +549,6 @@ export class GameLogic {
         bluePlayerId,
         true
       );
-      console.log("sfsf", champion.skill);
       game.board.push(champion);
     });
 
@@ -632,6 +627,7 @@ export class GameLogic {
       id: pieceId,
       name: type,
       position,
+      startingPosition: { x: position.x, y: position.y },
       cannotMoveBackward: type === "Melee Minion" || type === "Caster Minion",
       canOnlyMoveVertically:
         type === "Melee Minion" || type === "Caster Minion",
@@ -792,17 +788,9 @@ export class GameLogic {
     );
 
     if (!championData) {
-      console.log(
-        `WARNING: Champion data not found for ${championName}, using fallback`
-      );
       // Fallback to default champion
       return this.createPiece("Champion", position, ownerId, isBlue);
     }
-
-    console.log(
-      `Creating champion ${championName} with skill data:`,
-      championData.skill
-    );
 
     const pieceId = `${championName.toLowerCase().replace(/\s+/g, "_")}_${position.x}_${position.y}_${Date.now()}`;
 
@@ -810,6 +798,7 @@ export class GameLogic {
       id: pieceId,
       name: championName,
       position,
+      startingPosition: { x: position.x, y: position.y },
       cannotMoveBackward: false,
       canOnlyMoveVertically: false,
       hasMovedBefore: false,

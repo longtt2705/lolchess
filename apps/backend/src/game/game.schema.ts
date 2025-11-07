@@ -244,6 +244,9 @@ export class Chess {
   @Prop({ type: Square, required: true })
   position: Square;
 
+  @Prop({ type: Square })
+  startingPosition?: Square;
+
   @Prop({ default: false })
   cannotMoveBackward: boolean;
 
