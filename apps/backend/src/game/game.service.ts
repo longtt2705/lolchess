@@ -984,6 +984,58 @@ export class GameService {
     };
   }
 
+  async restoreHp(gameId: string): Promise<{ game: Game; message: string }> {
+    const game = await this.getGameState(gameId);
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    // Restore all pieces to full HP
+    game.board = game.board.map((piece) => ({
+      ...piece,
+      stats: {
+        ...piece.stats,
+        hp: piece.stats.maxHp,
+      },
+    }));
+
+    // Save to Redis cache and queue MongoDB persistence
+    await this.saveGameState(gameId, game, 8);
+
+    return {
+      game,
+      message: "All chess pieces restored to full HP",
+    };
+  }
+
+  async restoreCooldown(
+    gameId: string
+  ): Promise<{ game: Game; message: string }> {
+    const game = await this.getGameState(gameId);
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    // Reset all skill cooldowns to 0
+    game.board = game.board.map((piece) => ({
+      ...piece,
+      skill: piece.skill
+        ? {
+            ...piece.skill,
+            currentCooldown: 0,
+          }
+        : piece.skill,
+    }));
+
+    // Save to Redis cache and queue MongoDB persistence
+    await this.saveGameState(gameId, game, 8);
+
+    return {
+      game,
+      message: "All skill cooldowns reset to 0",
+    };
+  }
+
   async resetBanPick(gameId: string): Promise<{ game: Game; message: string }> {
     // Get game from Redis cache first
     const game = await this.getGameState(gameId);

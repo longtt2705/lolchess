@@ -12,6 +12,7 @@ import {
   Square,
 } from "../game.schema";
 import { ChessFactory } from "./chessFactory";
+import { GameLogic } from "../game.logic";
 
 export class ChessObject {
   public chess: Chess;
@@ -1104,7 +1105,7 @@ export class ChessObject {
     this.postAttack(chess, damage);
   }
 
-  protected postAttack(chess: ChessObject, damage: number): void {
+  public postAttack(chess: ChessObject, damage: number): void {
     if (this.chess.items.some((item) => item.id === "spear_of_shojin")) {
       const numberOfShojin = this.chess.items.filter(
         (item) => item.id === "spear_of_shojin"
@@ -1291,7 +1292,37 @@ export class ChessObject {
     if (skill.targetTypes === "squareInRange") {
       return this.validateSquareInRange(position, skill.attackRange);
     }
+    if (skill.targetTypes === "allyMinion") {
+      return this.validateAllyMinion(position, skill.attackRange);
+    }
     return this.validateAttack(position, skill.attackRange);
+  }
+
+  validateAllyMinion(position: Square, attackRange: AttackRange): boolean {
+    // First validate the range and direction
+    if (!this.validateAttack(position, attackRange)) {
+      return false;
+    }
+
+    // Check if there's an ally at the target position
+    const targetChess = GameLogic.getChess(
+      this.game,
+      this.chess.blue,
+      position
+    );
+    if (!targetChess) {
+      return false; // No ally at position
+    }
+
+    // Check if the target is a Melee Minion or Caster Minion
+    if (
+      targetChess.name !== "Melee Minion" &&
+      targetChess.name !== "Caster Minion"
+    ) {
+      return false; // Not a minion
+    }
+
+    return true;
   }
 
   validateSquareInRange(position: Square, attackRange: AttackRange): boolean {

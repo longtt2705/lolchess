@@ -230,7 +230,7 @@ export const champions: ChampionData[] = [
         "Deals 20 + 80% AD + 50% AP physical damage to the target. Damage increased on Isolated targets.",
       cooldown: 4,
       attackRange: {
-        range: 2,
+        range: 1,
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -590,6 +590,36 @@ export const champions: ChampionData[] = [
         vertical: true,
       },
       targetTypes: "squareInRange",
+    },
+  },
+  {
+    name: "Azir",
+    stats: {
+      maxHp: 80,
+      ad: 5,
+      ap: 35,
+      physicalResistance: 5,
+      magicResistance: 5,
+      attackRange: {
+        range: 2,
+        diagonal: true,
+        horizontal: true,
+        vertical: true,
+      },
+    },
+    skill: {
+      type: "active",
+      name: "Arise",
+      description:
+        "Azir can promote a Minion to a Sand Soldier. Sand Soldiers deal additional (5 + 40% of AP) magic damage to their target. If Azir is dead, the Sand Soldier will die with him.",
+      cooldown: 10,
+      attackRange: {
+        range: 2,
+        diagonal: true,
+        horizontal: true,
+        vertical: true,
+      },
+      targetTypes: "allyMinion",
     },
   },
 ];

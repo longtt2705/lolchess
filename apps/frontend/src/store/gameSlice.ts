@@ -137,6 +137,40 @@ export const resetGameplay = createAsyncThunk(
   }
 );
 
+export const restoreHp = createAsyncThunk(
+  "game/restoreHp",
+  async (gameId: string) => {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+      `${API_URL}/games/${gameId}/restore-hp`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  }
+);
+
+export const restoreCooldown = createAsyncThunk(
+  "game/restoreCooldown",
+  async (gameId: string) => {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+      `${API_URL}/games/${gameId}/restore-cooldown`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  }
+);
+
 export const resetBanPick = createAsyncThunk(
   "game/resetBanPick",
   async (gameId: string) => {
@@ -350,6 +384,36 @@ const gameSlice = createSlice({
       .addCase(resetGameplay.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to reset gameplay";
+      })
+      // Restore HP
+      .addCase(restoreHp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(restoreHp.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload.game) {
+          state.currentGame = action.payload.game;
+        }
+      })
+      .addCase(restoreHp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to restore HP";
+      })
+      // Restore Cooldown
+      .addCase(restoreCooldown.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(restoreCooldown.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload.game) {
+          state.currentGame = action.payload.game;
+        }
+      })
+      .addCase(restoreCooldown.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to restore cooldowns";
       })
       // Reset ban/pick
       .addCase(resetBanPick.pending, (state) => {

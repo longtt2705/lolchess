@@ -6,7 +6,7 @@ import styled from 'styled-components'
 import { getSkillAnimationRenderer } from '../animations/SkillAnimator'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { ChessPiece, ChessPosition, GameState, useGame } from '../hooks/useGame'
-import { resetGameplay } from '../store/gameSlice'
+import { resetGameplay, restoreHp, restoreCooldown } from '../store/gameSlice'
 import { fetchAllItems, fetchBasicItems, ItemData } from '../store/itemsSlice'
 import { AnimationAction, AnimationEngine } from '../utils/animationEngine'
 
@@ -2728,6 +2728,40 @@ const GamePage: React.FC = () => {
     }
   }, [gameId, isResetting, dispatch])
 
+  // Restore HP (dev tools)
+  const handleRestoreHp = useCallback(async () => {
+    if (!gameId || isResetting) return
+
+    try {
+      const result = await dispatch(restoreHp(gameId))
+      
+      if (restoreHp.fulfilled.match(result)) {
+        console.log('HP restored successfully')
+      } else {
+        console.error('Failed to restore HP:', result.error?.message)
+      }
+    } catch (error) {
+      console.error('Error restoring HP:', error)
+    }
+  }, [gameId, isResetting, dispatch])
+
+  // Restore Cooldown (dev tools)
+  const handleRestoreCooldown = useCallback(async () => {
+    if (!gameId || isResetting) return
+
+    try {
+      const result = await dispatch(restoreCooldown(gameId))
+      
+      if (restoreCooldown.fulfilled.match(result)) {
+        console.log('Cooldowns restored successfully')
+      } else {
+        console.error('Failed to restore cooldowns:', result.error?.message)
+      }
+    } catch (error) {
+      console.error('Error restoring cooldowns:', error)
+    }
+  }, [gameId, isResetting, dispatch])
+
   // Render board squares
   const renderBoard = (): JSX.Element[] => {
     const squares: JSX.Element[] = []
@@ -3955,6 +3989,26 @@ const GamePage: React.FC = () => {
             >
               <RotateCcw size={14} />
               {isResetting ? 'Resetting...' : 'Reset Game'}
+            </button>
+            <button
+              className="dev-button"
+              onClick={handleRestoreHp}
+              disabled={isResetting || !gameState}
+              title="Restore all chess pieces to full HP"
+              style={{ marginTop: '8px' }}
+            >
+              <Shield size={14} />
+              {isResetting ? 'Restoring...' : 'Restore HP'}
+            </button>
+            <button
+              className="dev-button"
+              onClick={handleRestoreCooldown}
+              disabled={isResetting || !gameState}
+              title="Reset all skill cooldowns to 0"
+              style={{ marginTop: '8px' }}
+            >
+              <Zap size={14} />
+              {isResetting ? 'Restoring...' : 'Restore Cooldowns'}
             </button>
           </DevToolsPanel>
         )}

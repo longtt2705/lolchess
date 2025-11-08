@@ -215,7 +215,13 @@ export class Skill {
   @Prop({ type: AttackRange, required: true })
   attackRange: AttackRange;
   @Prop({ required: true })
-  targetTypes: "square" | "squareInRange" | "ally" | "enemy" | "none";
+  targetTypes:
+    | "square"
+    | "squareInRange"
+    | "ally"
+    | "allyMinion"
+    | "enemy"
+    | "none";
   @Prop({ required: true })
   currentCooldown: number;
   @Prop({ required: true })

@@ -5,6 +5,7 @@ import { Ahri } from "./ahri";
 import { Janna } from "./janna";
 import { Garen } from "./garen";
 import { Ashe } from "./ashe";
+import { Azir } from "./azir";
 import { Blitzcrank } from "./blitzcrank";
 import { KhaZix } from "./khazix";
 import { Zed } from "./zed";
@@ -24,6 +25,7 @@ import { Ezreal } from "./ezreal";
 import { Poro } from "./poro";
 import { MeleeMinion } from "./meleeminion";
 import { CasterMinion } from "./casterminion";
+import { SandSoldier } from "./sandsoldier";
 
 export class ChessFactory {
   public static createChess(chess: Chess, game: Game): ChessObject {
@@ -38,6 +40,8 @@ export class ChessFactory {
         return new Garen(chess, game);
       case "Ashe":
         return new Ashe(chess, game);
+      case "Azir":
+        return new Azir(chess, game);
       case "Blitzcrank":
         return new Blitzcrank(chess, game);
       case "Kha'Zix":
@@ -76,6 +80,8 @@ export class ChessFactory {
         return new MeleeMinion(chess, game);
       case "Caster Minion":
         return new CasterMinion(chess, game);
+      case "Sand Soldier":
+        return new SandSoldier(chess, game);
       default:
         return new ChessObject(chess, game);
     }

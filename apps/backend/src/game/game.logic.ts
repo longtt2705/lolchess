@@ -771,6 +771,26 @@ export class GameLogic {
         damageAmplification: 0,
         hpRegen: 0,
       },
+      "Sand Soldier": {
+        maxHp: 100,
+        ad: 10,
+        ap: 0,
+        physicalResistance: 25,
+        magicResistance: 25,
+        speed: 1,
+        attackRange: {
+          range: 2,
+          diagonal: true,
+          horizontal: true,
+          vertical: true,
+        },
+        goldValue: 35,
+        sunder: 0,
+        criticalChance: 0,
+        criticalDamage: 150,
+        damageAmplification: 0,
+        hpRegen: 0,
+      },
     };
 
     return stats[type] || stats["Champion"];

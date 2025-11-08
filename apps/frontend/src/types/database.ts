@@ -32,7 +32,7 @@ export interface ChampionSkill {
   description?: string;
   cooldown?: number;
   attackRange?: AttackRange;
-  targetTypes?: string;
+  targetTypes?: "square" | "squareInRange" | "ally" | "allyMinion" | "enemy" | "none";
 }
 
 export interface AuraEffect {

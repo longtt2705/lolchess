@@ -132,6 +132,28 @@ export class GameController {
     return this.gameService.resetGameplay(gameId);
   }
 
+  @Post(":gameId/restore-hp")
+  async restoreHp(@Param("gameId") gameId: string) {
+    const isDevelopment = process.env.NODE_ENV === "development";
+    if (!isDevelopment) {
+      return {
+        message: "This action is only available in development mode",
+      };
+    }
+    return this.gameService.restoreHp(gameId);
+  }
+
+  @Post(":gameId/restore-cooldown")
+  async restoreCooldown(@Param("gameId") gameId: string) {
+    const isDevelopment = process.env.NODE_ENV === "development";
+    if (!isDevelopment) {
+      return {
+        message: "This action is only available in development mode",
+      };
+    }
+    return this.gameService.restoreCooldown(gameId);
+  }
+
   @Post(":gameId/reset-ban-pick")
   async resetBanPick(@Param("gameId") gameId: string) {
     return this.gameService.resetBanPick(gameId);

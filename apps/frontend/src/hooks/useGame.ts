@@ -73,7 +73,13 @@ export interface ChessPiece {
       horizontal: boolean;
       vertical: boolean;
     };
-    targetTypes?: "square" | "squareInRange" | "ally" | "enemy" | "none";
+    targetTypes?:
+      | "square"
+      | "squareInRange"
+      | "ally"
+      | "allyMinion"
+      | "enemy"
+      | "none";
   };
   shields?: Array<{
     amount: number;
@@ -637,6 +643,19 @@ export const useGame = (gameId: string) => {
               break; // Stop at first ally
             } else if (occupiedBy) {
               break; // Stop at enemy
+            }
+          } else if (skill.targetTypes === "allyMinion") {
+            // Can only target ally minions (Melee Minion or Caster Minion)
+            if (
+              occupiedBy &&
+              occupiedBy.ownerId === piece.ownerId &&
+              (occupiedBy.name === "Melee Minion" ||
+                occupiedBy.name === "Caster Minion")
+            ) {
+              skillTargets.push(targetPosition);
+              break; // Stop at first ally minion
+            } else if (occupiedBy) {
+              break; // Stop at any piece
             }
           }
         }

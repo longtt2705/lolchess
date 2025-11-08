@@ -21,15 +21,16 @@ const LeapingIcon = styled(motion.div)`
 
 const ClawSlash = styled(motion.div)`
   position: absolute;
-  width: 60px;
-  height: 6px;
-  background: linear-gradient(90deg, transparent 0%, rgba(147, 51, 234, 0.9) 20%, rgba(147, 51, 234, 0.9) 80%, transparent 100%);
+  width: 80px;
+  height: 10px;
+  background: linear-gradient(90deg, transparent 0%, rgba(147, 51, 234, 1) 20%, rgba(147, 51, 234, 1) 80%, transparent 100%);
   pointer-events: none;
-  z-index: 99;
-  border-radius: 3px;
+  z-index: 150;
+  border-radius: 5px;
   box-shadow: 
-    0 0 10px rgba(147, 51, 234, 0.8),
-    0 0 20px rgba(147, 51, 234, 0.4);
+    0 0 15px rgba(147, 51, 234, 1),
+    0 0 30px rgba(147, 51, 234, 0.6),
+    inset 0 0 10px rgba(255, 255, 255, 0.5);
   transform-origin: center center;
 `
 
@@ -71,8 +72,8 @@ const TasteTheirFearAnimation: React.FC<SkillAnimationConfig> = ({
     const deltaY = targetPixels.y - casterPixels.y
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
-    // Define claw slash angles for dynamic effect
-    const slashAngles = [45, -45, 0, 90]
+    // Define claw slash angles for X pattern
+    const slashAngles = [45, -45]
 
     return (
         <>
@@ -89,14 +90,14 @@ const TasteTheirFearAnimation: React.FC<SkillAnimationConfig> = ({
 
             {/* Leaping Kha'Zix icon - travels from caster to target with arc */}
             <LeapingIcon
-                initial={{ 
-                    x: casterPixels.x - 16, 
-                    y: casterPixels.y - 16, 
+                initial={{
+                    x: casterPixels.x - 16,
+                    y: casterPixels.y - 16,
                     scale: 0.8,
                     rotate: 0
                 }}
-                animate={{ 
-                    x: targetPixels.x - 16, 
+                animate={{
+                    x: targetPixels.x - 16,
                     y: targetPixels.y - 16,
                     scale: [0.8, 1.3, 1.1],
                     rotate: [0, 180, 360]
@@ -120,7 +121,7 @@ const TasteTheirFearAnimation: React.FC<SkillAnimationConfig> = ({
                     setTimeout(() => {
                         setShowSlashes(false)
                         setShowParticles(false)
-                    }, 500)
+                    }, 800)
                 }}
             >
                 🦗
@@ -131,18 +132,18 @@ const TasteTheirFearAnimation: React.FC<SkillAnimationConfig> = ({
                 <ClawSlash
                     key={i}
                     style={{
-                        left: targetPixels.x - 30,
-                        top: targetPixels.y - 3,
+                        left: targetPixels.x - 40,
+                        top: targetPixels.y - 5,
                         rotate: angle
                     }}
                     initial={{ scaleX: 0, opacity: 0 }}
-                    animate={{ 
-                        scaleX: [0, 1.5, 1],
-                        opacity: [0, 1, 0.8, 0]
+                    animate={{
+                        scaleX: [0, 1.8, 1.5],
+                        opacity: [0, 1, 1, 0.6, 0]
                     }}
                     transition={{
-                        duration: 0.4,
-                        delay: i * 0.05, // Stagger the slashes slightly
+                        duration: 0.7,
+                        delay: i * 0.08, // Stagger the slashes slightly
                         ease: 'easeOut'
                     }}
                 />
@@ -214,6 +215,6 @@ export const tasteTheirFearRenderer: SkillAnimationRenderer = {
             </AnimatePresence>
         )
     },
-    duration: 1000 // 400ms leap + 500ms slashes/impact + 100ms buffer
+    duration: 1300 // 400ms leap + 700ms slashes/impact + 200ms buffer
 }
 
