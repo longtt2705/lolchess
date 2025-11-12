@@ -26,6 +26,7 @@ import { Poro } from "./poro";
 import { MeleeMinion } from "./meleeminion";
 import { CasterMinion } from "./casterminion";
 import { SandSoldier } from "./sandsoldier";
+import { DrMundo } from "./drmundo";
 
 export class ChessFactory {
   public static createChess(chess: Chess, game: Game): ChessObject {
@@ -82,6 +83,8 @@ export class ChessFactory {
         return new CasterMinion(chess, game);
       case "Sand Soldier":
         return new SandSoldier(chess, game);
+      case "Dr.Mundo":
+        return new DrMundo(chess, game);
       default:
         return new ChessObject(chess, game);
     }

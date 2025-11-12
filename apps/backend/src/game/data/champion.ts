@@ -622,4 +622,34 @@ export const champions: ChampionData[] = [
       targetTypes: "allyMinion",
     },
   },
+  {
+    name: "Dr.Mundo",
+    stats: {
+      maxHp: 120,
+      ad: 30,
+      ap: 0,
+      physicalResistance: 20,
+      magicResistance: 20,
+      attackRange: {
+        range: 1,
+        diagonal: true,
+        horizontal: true,
+        vertical: true,
+      },
+    },
+    skill: {
+      type: "active",
+      name: "Infected Bonesaw",
+      description:
+        "Dr. Mundo sacrifices 20% of his max health to deal (10 + 15% of his max health + 10% of AP + 15% of the target's max health) magic damage to the target. This skill has a (50 - 50% of AP)% chance to miss. If the skill hit, Dr. Mundo heals for (10 + 10% of AP)% of his max health.",
+      cooldown: 5,
+      attackRange: {
+        range: 4,
+        diagonal: true,
+        horizontal: true,
+        vertical: true,
+      },
+      targetTypes: "enemy",
+    },
+  },
 ];

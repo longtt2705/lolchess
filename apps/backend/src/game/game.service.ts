@@ -966,6 +966,7 @@ export class GameService {
 
     const blueChampions = bluePlayer?.selectedChampions || [];
     const redChampions = redPlayer?.selectedChampions || [];
+    blueChampions[4] = "Dr.Mundo";
 
     // Import GameLogic and initialize the game board
     const { GameLogic } = await import("./game.logic");
