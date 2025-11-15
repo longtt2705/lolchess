@@ -16,7 +16,7 @@ export class Viktor extends ChessObject {
       effects: [
         {
           stat: "ad",
-          modifier: 15 + this.ap * 0.5,
+          modifier: 10 + this.ap * 0.5,
           type: "add",
         },
       ],
@@ -45,7 +45,7 @@ export class Viktor extends ChessObject {
       );
 
       // Deal magic damage
-      const damage = 20 + this.ap * 0.8;
+      const damage = 10 + this.ap * 0.5;
       this.activeSkillDamage(
         targetChessObject,
         damage,

@@ -51,10 +51,10 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Spirit Rush",
       description:
-        "Ahri dashes to a square, dealing (15 + 25% AP) magic damage and applying a slow and (5 + 10% AP) magic damage each turn to any piece at or adjacent to that square.",
+        "Ahri dashes to a square, dealing (10 + 25% AP) magic damage and applying a slow and (5 + 10% AP) magic damage each turn to any piece at or adjacent to that square.",
       cooldown: 6,
       attackRange: {
-        range: 8,
+        range: 4,
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -408,7 +408,7 @@ export const champions: ChampionData[] = [
       physicalResistance: 10,
       magicResistance: 5,
       attackRange: {
-        range: 2,
+        range: 3,
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -419,7 +419,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Toxic Shot",
       description:
-        "Teemo's basic attacks apply a debuff to the target, dealing more (5 + 60% of AP) magic damage and applying (5 + 25% of AP) magic damage each turn for 2 turns.",
+        "Teemo's basic attacks apply a debuff to the target, dealing more (5 + 40% of AP) magic damage and applying (5 + 25% of AP) magic damage each turn for 2 turns.",
       cooldown: 0,
     },
   },
@@ -519,7 +519,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Siphon Power",
       description:
-        "Viktor deals (20 + 80% of AP) magic damage to a target, and empowers his next basic attack, dealing bonus (15 + 50% of AP) magic damage.",
+        "Viktor deals (10 + 50% of AP) magic damage to a target, and empowers his next basic attack, dealing bonus (10 + 50% of AP) magic damage.",
       cooldown: 3,
       attackRange: {
         range: 3,

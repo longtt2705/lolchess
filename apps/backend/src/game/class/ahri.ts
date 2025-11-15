@@ -56,7 +56,7 @@ export class Ahri extends ChessObject {
         // Deal damage
         this.activeSkillDamage(
           targetChessObject,
-          15 + this.ap * 0.25,
+          10 + this.ap * 0.25,
           "magic",
           this,
           this.sunder
