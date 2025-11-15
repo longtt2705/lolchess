@@ -326,7 +326,7 @@ export const champions: ChampionData[] = [
       criticalChance: 4,
       sunder: 4,
       lifesteal: 4,
-      speed: 4,
+      speed: 2,
     },
     skill: {
       type: "passive",
