@@ -350,7 +350,7 @@ export const champions: ChampionData[] = [
         horizontal: true,
         vertical: true,
       },
-      hpRegen: 5,
+      hpRegen: 2,
     },
     skill: {
       type: "active",
@@ -550,7 +550,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Wild Cards",
       description:
-        "Throws (5 + 20% of AP) cards to a target and his adjacent enemies, each card deals (1 + 5% AP + 5% AD) magic damage to the target and his adjacent enemies.",
+        "Throws (3 + 20% of AP) cards to a target and his adjacent enemies, each card deals (1 + 5% AP + 5% AD) magic damage to the target and his adjacent enemies.",
       cooldown: 5,
       attackRange: {
         range: 3,
