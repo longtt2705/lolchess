@@ -280,7 +280,7 @@ export const champions: ChampionData[] = [
       name: "Granite Shield",
       description:
         "If Malphite didn't get hit by damage for 2 turns, he gains a shield equal to (10+40% of AP)% of his max health. He gains 15 armor if having shield.",
-      cooldown: 2,
+      cooldown: 4,
       currentCooldown: 0,
     },
   },
