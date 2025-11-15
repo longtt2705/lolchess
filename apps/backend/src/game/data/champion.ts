@@ -551,7 +551,7 @@ export const champions: ChampionData[] = [
       name: "Wild Cards",
       description:
         "Throws (5 + 25% of AP) cards to a target and his adjacent enemies, each card deals (1 + 5% AP + 5% AD) magic damage to the target and his adjacent enemies.",
-      cooldown: 0,
+      cooldown: 5,
       attackRange: {
         range: 3,
         diagonal: true,
