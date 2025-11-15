@@ -19,16 +19,6 @@ export class Garen extends ChessObject {
     }
   }
 
-  get physicalResistance(): number {
-    if (this.isPassiveDisabled()) {
-      return super.physicalResistance;
-    }
-    return (
-      super.physicalResistance + this.chess.skill.payload?.physicalResistance ||
-      0
-    );
-  }
-
   preEnterTurn(isBlueTurn: boolean): void {
     super.preEnterTurn(isBlueTurn);
     if (this.chess.stats.hp <= 0) {
