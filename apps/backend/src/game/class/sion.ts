@@ -10,7 +10,7 @@ export class Sion extends ChessObject {
     }
 
     const bonusDamage = Math.floor(
-      this.chess.stats.maxHp * (0.1 + this.ap * 0.25)
+      this.chess.stats.maxHp * (0.1 + (this.ap * 0.25) / 100)
     );
     if (bonusDamage > 0) {
       this.damage(chess, bonusDamage, "magic", this, this.sunder);
