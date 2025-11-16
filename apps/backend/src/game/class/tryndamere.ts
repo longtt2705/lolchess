@@ -1,44 +1,52 @@
+import { Debuff } from "../game.schema";
 import { ChessObject } from "./chess";
 
 export class Tryndamere extends ChessObject {
+  private createUndyingRageDebuff(): Debuff {
+    return {
+      id: "undying_rage",
+      name: "Undying Rage",
+      description: "Survive with 1 HP for 2 turns.",
+      duration: 2,
+      maxDuration: 2,
+      effects: [
+        {
+          stat: "hp",
+          modifier: 0,
+          type: "add",
+        },
+      ],
+      damagePerTurn: 0,
+    } as Debuff;
+  }
+
   protected postTakenDamage(attacker: ChessObject, damage: number, damageType: "physical" | "magic" | "true"): void {
     super.postTakenDamage(attacker, damage, damageType);
+    if (this.chess.debuffs.some((debuff) => debuff.id === "undying_rage")) {
+      if (this.chess.stats.hp <= 0) {
+        this.chess.stats.hp = 1;
+      }
+      return;
+    }
 
     // Check if passive is disabled by Evenshroud
     if (this.isPassiveDisabled()) {
       return;
     }
 
-    // Initialize skill payload if needed
-    if (!this.chess.skill?.payload) {
-      this.chess.skill.payload = { hasUsedUndyingRage: false };
-    }
-
-    // Undying Rage: survive with 1 HP the first time he would die
-    if (
-      this.chess.stats.hp <= 0 &&
-      !this.chess.skill.payload.hasUsedUndyingRage
-    ) {
+    // Undying Rage: survive with 1 HP for 2 turns the first time he would die
+    if (this.chess.stats.hp <= 0 && this.chess.skill.currentCooldown <= 0) {
       this.chess.stats.hp = 1;
-      this.chess.skill.payload.hasUsedUndyingRage = true;
+      this.applyDebuff(this, this.createUndyingRageDebuff());
+
+      this.chess.skill.currentCooldown = this.skillCooldown;
     }
   }
 
-  attack(chess: ChessObject): number {
-    const baseDamage = super.attack(chess);
-
-    // Check if passive is disabled by Evenshroud
+  get ad(): number {
     if (this.isPassiveDisabled()) {
-      return baseDamage;
+      return super.ad;
     }
-
-    // Deal bonus damage based on missing health
-    const missingHp = this.maxHp - this.chess.stats.hp;
-    const bonusDamage = Math.floor(missingHp / (Math.max(10 - this.ap * 0.05, 1)));
-
-    if (bonusDamage > 0) {
-      this.damage(chess, bonusDamage, "physical", this, this.sunder);
-    }
-    return baseDamage;
+    return super.ad + Math.floor((this.maxHp - this.chess.stats.hp) / 3) * (1 + this.ap * 0.05);
   }
 }

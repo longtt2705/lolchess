@@ -2268,6 +2268,52 @@ const getSkillStateDisplay = (championName: string, skillPayload: any) => {
   }
 };
 
+// Helper function to render debuff icons
+const getDebuffIcon = (debuff: any) => {
+  const debuffIconMap: Record<string, { src: string; alt: string }> = {
+    wounded: { src: '/icons/wounded.webp', alt: 'Wounded' },
+    burned: { src: '/icons/burned.jpg', alt: 'Burned' },
+    venom: { src: '/icons/SerpentsFang.png', alt: 'Venom' },
+    aura_evenshroud_passive_disable: { src: '/icons/Evenshroud.png', alt: 'Evenshroud' },
+    titans_resolve: { src: '/icons/TitansResolve.png', alt: 'Titans Resolve' },
+    adaptive_helm_armor: { src: '/icons/AdaptiveHelm.png', alt: 'Adaptive Helm' },
+    adaptive_helm_mr: { src: '/icons/AdaptiveHelm.png', alt: 'Adaptive Helm' },
+    undying_rage: { src: '/icons/tryndamere_skill.webp', alt: 'Undying Rage' },
+  };
+
+  const iconConfig = debuffIconMap[debuff.id];
+
+  if (iconConfig) {
+    return (
+      <img
+        src={iconConfig.src}
+        alt={iconConfig.alt}
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+          const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
+          if (fallback) (fallback as HTMLElement).style.display = 'block';
+        }}
+      />
+    );
+  }
+
+  if (debuff.casterName) {
+    return (
+      <img
+        src={`/icons/${debuff.casterName.toLowerCase().replace(/\s+/g, '')}_skill.webp`}
+        alt={debuff.casterName}
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+          const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
+          if (fallback) (fallback as HTMLElement).style.display = 'block';
+        }}
+      />
+    );
+  }
+
+  return null;
+};
+
 const GamePage: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>()
   const {
@@ -2734,7 +2780,7 @@ const GamePage: React.FC = () => {
 
     try {
       const result = await dispatch(restoreHp(gameId))
-      
+
       if (restoreHp.fulfilled.match(result)) {
         console.log('HP restored successfully')
       } else {
@@ -2751,7 +2797,7 @@ const GamePage: React.FC = () => {
 
     try {
       const result = await dispatch(restoreCooldown(gameId))
-      
+
       if (restoreCooldown.fulfilled.match(result)) {
         console.log('Cooldowns restored successfully')
       } else {
@@ -3520,53 +3566,7 @@ const GamePage: React.FC = () => {
                       <div key={index} className={`debuff-card ${debuffClass}`}>
                         <div className="debuff-card-header">
                           <div className="debuff-icon">
-                            {debuff.id === "wounded" ? (
-                              <img
-                                src="/icons/wounded.webp"
-                                alt="Wounded"
-                              />
-                            ) : debuff.id === "burned" ? (
-                              <img
-                                src="/icons/burned.jpg"
-                                alt="Burned"
-                              />
-                            ) : debuff.id === "venom" ? (
-                              <img
-                                src="/icons/SerpentsFang.png"
-                                alt="Venom"
-                              />
-                            ) : debuff.id === "aura_evenshroud_passive_disable" ? (
-                              <img
-                                src="/icons/Evenshroud.png"
-                                alt="Evenshroud"
-                              />
-                            ) : debuff.id === "titans_resolve" ? (
-                              <img
-                                src="/icons/TitansResolve.png"
-                                alt="Titans Resolve"
-                              />
-                            ) : debuff.id === "adaptive_helm_armor" ? (
-                              <img
-                                src="/icons/AdaptiveHelm.png"
-                                alt="Adaptive Helm"
-                              />
-                            ) : debuff.id === "adaptive_helm_mr" ? (
-                              <img
-                                src="/icons/AdaptiveHelm.png"
-                                alt="Adaptive Helm"
-                              />
-                            )
-                              : (debuff.casterName ? (
-                                <img
-                                  src={`/icons/${debuff.casterName.toLowerCase().replace(/\s+/g, '')}_skill.webp`}
-                                  alt={debuff.casterName}
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                    const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
-                                    if (fallback) (fallback as HTMLElement).style.display = 'block';
-                                  }}
-                                />
-                              ) : null)}
+                            {getDebuffIcon(debuff)}
                             <div className="fallback-icon" style={{ display: debuff.casterName ? 'none' : 'block' }}>
                               {isAura ? '✨' : isBuff ? '⬆' : '⬇'}
                             </div>

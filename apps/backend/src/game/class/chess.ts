@@ -79,14 +79,7 @@ export class ChessObject {
       attacker,
       sunder
     );
-    if (
-      this.chess.items.some(
-        (item) =>
-          item.id === "hextech_gunblade" || item.id === "hand_of_justice"
-      )
-    ) {
-      this.heal(chess, damageDealt * 0.15);
-    }
+
     return damageDealt;
   }
 
@@ -94,7 +87,7 @@ export class ChessObject {
     if (protectionFactor <= 0) {
       return 0;
     }
-    return protectionFactor / (protectionFactor + 50);
+    return protectionFactor / (protectionFactor + 30);
   }
 
   private calculateDamage(
@@ -190,6 +183,15 @@ export class ChessObject {
           );
         }
       }
+    }
+
+    if (
+      this.chess.items.some(
+        (item) =>
+          item.id === "hextech_gunblade" || item.id === "hand_of_justice"
+      )
+    ) {
+      this.heal(this, damage * 0.15);
     }
 
     return damage; // Return the actual damage dealt
@@ -496,7 +498,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -674,6 +676,9 @@ export class ChessObject {
   }
 
   get range(): number {
+    if (this.chess.items.some((item) => item.id === "rapid_firecannon")) {
+      return this.chess.stats.attackRange.range + 1;
+    }
     return this.chess.stats.attackRange.range;
   }
 
@@ -1111,7 +1116,7 @@ export class ChessObject {
         (item) => item.id === "spear_of_shojin"
       ).length;
       if (this.chess.skill?.currentCooldown > 0) {
-        this.chess.skill.currentCooldown -= 0.5 * numberOfShojin;
+        this.chess.skill.currentCooldown -= numberOfShojin;
         if (this.chess.skill.currentCooldown < 0) {
           this.chess.skill.currentCooldown = 0;
         }
@@ -1394,7 +1399,7 @@ export class ChessObject {
     this.chess.items.push(item);
     if (item.id === "crownguard") {
       this.applyShield(
-        this.maxHp * 0.25,
+        this.maxHp * 0.3,
         Number.MAX_SAFE_INTEGER,
         "crownguard_shield"
       );

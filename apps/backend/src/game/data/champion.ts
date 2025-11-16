@@ -28,14 +28,14 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Deathbringer Stance",
       description:
-        "Aatrox's next basic attack deals bonus (10 + 10% of AP)% target's max health magic damage and heals him (10 + 25% of AP) HP.",
-      cooldown: 5,
+        "Aatrox's next basic attack deals bonus (15 + 10% of AP)% target's max health magic damage and heals him (10 + 25% of AP) of his max HP.",
+      cooldown: 4,
     },
   },
   {
     name: "Ahri",
     stats: {
-      maxHp: 90,
+      maxHp: 70,
       ad: 15,
       ap: 30,
       attackRange: {
@@ -52,7 +52,7 @@ export const champions: ChampionData[] = [
       name: "Spirit Rush",
       description:
         "Ahri dashes to a square, dealing (10 + 25% AP) magic damage and applying a slow and (5 + 10% AP) magic damage each turn to any piece at or adjacent to that square.",
-      cooldown: 6,
+      cooldown: 8,
       attackRange: {
         range: 4,
         diagonal: true,
@@ -134,7 +134,7 @@ export const champions: ChampionData[] = [
     name: "Ashe",
     stats: {
       maxHp: 80,
-      ad: 35,
+      ad: 25,
       ap: 0,
       physicalResistance: 5,
       magicResistance: 5,
@@ -157,7 +157,7 @@ export const champions: ChampionData[] = [
     name: "Tristana",
     stats: {
       maxHp: 75,
-      ad: 30,
+      ad: 20,
       ap: 0,
       physicalResistance: 5,
       magicResistance: 5,
@@ -210,8 +210,8 @@ export const champions: ChampionData[] = [
   {
     name: "Kha'Zix",
     stats: {
-      maxHp: 90,
-      ad: 35,
+      maxHp: 80,
+      ad: 55,
       ap: 10,
       criticalChance: 20,
       attackRange: {
@@ -241,8 +241,8 @@ export const champions: ChampionData[] = [
   {
     name: "Zed",
     stats: {
-      maxHp: 100,
-      ad: 40,
+      maxHp: 85,
+      ad: 50,
       attackRange: {
         range: 1,
         diagonal: true,
@@ -479,7 +479,7 @@ export const champions: ChampionData[] = [
     stats: {
       maxHp: 100,
       ad: 45,
-      ap: 0,
+      ap: 10,
       criticalChance: 25,
       physicalResistance: 10,
       magicResistance: 10,
@@ -495,8 +495,8 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Undying Rage",
       description:
-        "The first time Tryndamere is slain, he will survive with 1 HP. His attack deals bonus 1 physical damage for each (10 - 5% of AP) HP he lost.",
-      cooldown: 0,
+        "When Tryndamere is killed, he will survive with 1 HP for 2 turns. He gains (1 + 5% of AP) bonus AD for each 3 HP he lost.",
+      cooldown: 15,
     },
   },
   {

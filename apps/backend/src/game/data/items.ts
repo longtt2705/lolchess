@@ -132,7 +132,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "hextech_gunblade",
     name: "Hextech Gunblade",
-    description: "Heal 15% of damage dealt from active skills.",
+    description: "Heal 15% of damage dealt from all sources.",
     cost: 0,
     icon: "/icons/HextechGunblade.png",
     effects: [
@@ -198,7 +198,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "spear_of_shojin",
     name: "Spear of Shojin",
-    description: "Reduce 0.5 rounds of cooldown of skill for each attack.",
+    description: "Reduce 1 round of cooldown of skill for each attack.",
     cost: 0,
     icon: "/icons/SpearofShojin.png",
     effects: [
@@ -225,14 +225,15 @@ export const combinedItems: ItemData[] = [
 
   // Recurve Bow Combinations
   {
-    id: "red_buff",
-    name: "Red Buff",
-    description: "Deal damage will Burn and Wound enemies for 3 turns.",
+    id: "rapid_firecannon",
+    name: "Rapid Firecannon",
+    description: "Gain additional 1 attack range.",
     cost: 0,
-    icon: "/icons/RedBuff.png",
+    icon: "/icons/RapidFirecannon.png",
     effects: [
       { stat: "sunder", value: 30, type: "add" },
       { stat: "damageAmplification", value: 5, type: "add" },
+      { stat: "attackRange", value: 1, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "recurve_bow"],
@@ -316,7 +317,7 @@ export const combinedItems: ItemData[] = [
       { stat: "ap", value: 25, type: "add" },
     ],
     isBasic: false,
-    recipe: ["recurve_bow", "sparring_gloves"],
+    recipe: ["recurve_bow", "giants_belt"],
   },
 
   // Needlessly Large Rod Combinations
@@ -351,7 +352,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "crownguard",
     name: "Crownguard",
-    description: "Immidiate gain a 25% max Health Shield.",
+    description: "Immidiate gain a 30% of max Health Shield.",
     cost: 0,
     icon: "/icons/Crownguard.png",
     effects: [
@@ -478,7 +479,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "dragon_claw",
     name: "Dragon's Claw",
-    description: "+30 more magic resistance when HP is below 40%",
+    description: "+30 more magic resistance when HP is below 40%.",
     cost: 0,
     icon: "/icons/DragonsClaw.png",
     effects: [
@@ -589,13 +590,12 @@ export const combinedItems: ItemData[] = [
     id: "hand_of_justice",
     name: "Hand of Justice",
     description:
-      "Gain additional 10 AD and 10 AP and 10% lifesteal when HP is below 40%. Heal 15% of damage dealt from active skills.",
+      "Gain additional 10 AD and 10 AP when HP is below 40%. Heal 15% of damage dealt from all sources.",
     cost: 0,
     icon: "/icons/HandofJustice.png",
     effects: [
       { stat: "criticalChance", value: 25, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
-      { stat: "lifesteal", value: 10, type: "add" },
       { stat: "ad", value: 10, type: "add" },
       { stat: "ap", value: 10, type: "add" },
       {

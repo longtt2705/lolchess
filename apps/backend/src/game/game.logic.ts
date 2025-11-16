@@ -200,7 +200,7 @@ export class GameLogic {
       { x: square.x + 1, y: square.y - 1 }, // Northeast (was missing!)
       { x: square.x + 1, y: square.y }, // East
       { x: square.x + 1, y: square.y + 1 }, // Southeast
-    ];
+    ].filter((square) => (square.x >= 0 && square.x <= 7 && square.y >= 0 && square.y <= 7) || (square.x === -1 && square.y === 4) || (square.x === 8 && square.y === 3));
   }
 
   private static processMoveChess(
@@ -848,20 +848,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-            type: championData.skill.type,
-            name: championData.skill.name,
-            description: championData.skill.description,
-            cooldown: championData.skill.cooldown,
-            currentCooldown: championData.skill.currentCooldown || 0,
-            attackRange: championData.skill.attackRange ||
-              championData.stats.attackRange || {
-                range: 1,
-                diagonal: true,
-                horizontal: true,
-                vertical: true,
-              },
-            targetTypes: championData.skill.targetTypes || "none",
-          }
+          type: championData.skill.type,
+          name: championData.skill.name,
+          description: championData.skill.description,
+          cooldown: championData.skill.cooldown,
+          currentCooldown: championData.skill.currentCooldown || 0,
+          attackRange: championData.skill.attackRange ||
+            championData.stats.attackRange || {
+            range: 1,
+            diagonal: true,
+            horizontal: true,
+            vertical: true,
+          },
+          targetTypes: championData.skill.targetTypes || "none",
+        }
         : undefined,
       items: [],
       debuffs: [],
