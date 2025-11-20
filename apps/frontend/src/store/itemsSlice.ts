@@ -18,6 +18,16 @@ export interface ItemData {
   isBasic: boolean;
   recipe?: [string, string];
   unique?: boolean;
+  cooldown?: number;
+}
+
+export interface Item {
+  id: string;
+  name: string;
+  description: string;
+  unique: boolean;
+  cooldown: number;
+  currentCooldown: number;
 }
 
 interface ItemsState {

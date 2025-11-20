@@ -18,6 +18,7 @@ export interface ItemData {
   isBasic: boolean;
   recipe?: [string, string]; // Two basic items that combine into this
   unique?: boolean;
+  cooldown?: number; // Cooldown in turns for items with active effects
 }
 
 // Basic Items (Components)
@@ -194,6 +195,7 @@ export const combinedItems: ItemData[] = [
     isBasic: false,
     recipe: ["bf_sword", "giants_belt"],
     unique: true,
+    cooldown: 10,
   },
   {
     id: "spear_of_shojin",
@@ -512,7 +514,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "quicksilver",
     name: "Quicksilver",
-    description: "Resistant to all active debuffs for 5 turns",
+    description: "Resistance to all active debuffs for 2 turns",
     cost: 0,
     icon: "/icons/Quicksilver.png",
     effects: [
@@ -523,6 +525,7 @@ export const combinedItems: ItemData[] = [
     isBasic: false,
     recipe: ["sparring_gloves", "negatron_cloak"],
     unique: true,
+    cooldown: 10,
   },
 
   // Giant's Belt Combinations

@@ -233,13 +233,9 @@ export class ChessObject {
       const sterakGage = this.chess.items.find(
         (item) => item.id === "sterak_gage"
       );
-      if (sterakGage && !sterakGage.payload?.hasUsedSterakGage) {
-        const shieldDuration = sterakGage.payload?.shieldDuration || 3;
-        sterakGage.payload = {
-          hasUsedSterakGage: true,
-          shieldDuration: shieldDuration,
-        };
-        this.applyShield(this.maxHp * 0.5, shieldDuration);
+      if (sterakGage && sterakGage.currentCooldown <= 0) {
+        this.applyShield(this.maxHp * 0.5, 3);
+        sterakGage.currentCooldown = this.getItemCooldown(sterakGage);
       }
     }
     if (
@@ -505,14 +501,35 @@ export class ChessObject {
     return 0;
   }
 
+  getItemCooldown(item: any): number {
+    if (item.cooldown) {
+      return Math.max(
+        item.cooldown -
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        0
+      );
+    }
+    return 0;
+  }
+
   refreshCooldown(chess: ChessObject): void {
-    if (!chess.chess.skill) {
-      return;
+    // Refresh skill cooldown
+    if (chess.chess.skill) {
+      chess.chess.skill.currentCooldown -= 1;
+      if (chess.chess.skill.currentCooldown < 0) {
+        chess.chess.skill.currentCooldown = 0;
+      }
     }
-    chess.chess.skill.currentCooldown -= 1;
-    if (chess.chess.skill.currentCooldown < 0) {
-      chess.chess.skill.currentCooldown = 0;
-    }
+
+    // Refresh item cooldowns
+    chess.chess.items.forEach((item) => {
+      if (item.currentCooldown > 0) {
+        item.currentCooldown -= 1;
+        if (item.currentCooldown < 0) {
+          item.currentCooldown = 0;
+        }
+      }
+    });
   }
 
   // Debuff Management
@@ -521,14 +538,13 @@ export class ChessObject {
     const quicksilver = chess.chess.items.find(
       (item) => item.id === "quicksilver"
     );
-    if (quicksilver && !quicksilver.payload.hasUsedQuicksilver) {
-      quicksilver.payload.hasUsedQuicksilver = true;
+    if (quicksilver && quicksilver.currentCooldown <= 0) {
       chess.chess.debuffs.push({
         id: "quicksilver",
         name: "Quicksilver",
-        description: "Resistance to all active debuffs for 3 turns.",
-        duration: 5,
-        maxDuration: 5,
+        description: "Resistance to all active debuffs for 2 turns.",
+        duration: 2,
+        maxDuration: 2,
         effects: [],
         damagePerTurn: 0,
         damageType: "physical",
@@ -540,6 +556,7 @@ export class ChessObject {
         currentStacks: 1,
         maximumStacks: 1,
       });
+      quicksilver.currentCooldown = this.getItemCooldown(quicksilver);
       return true;
     }
 

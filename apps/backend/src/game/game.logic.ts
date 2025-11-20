@@ -1142,6 +1142,8 @@ export class GameLogic {
       description: itemData.description,
       stats: this.convertItemEffectsToStats(itemData.effects),
       unique: itemData.unique || false,
+      cooldown: itemData.cooldown || 0,
+      currentCooldown: 0,
     };
 
     const championObject = ChessFactory.createChess(champion, game);
@@ -1217,6 +1219,8 @@ export class GameLogic {
             description: combinedItemData.description,
             stats: this.convertItemEffectsToStats(combinedItemData.effects),
             unique: combinedItemData.unique || false,
+            cooldown: combinedItemData.cooldown || 0,
+            currentCooldown: 0,
           };
 
           champion.acquireItem(combinedItem);

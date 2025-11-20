@@ -1279,7 +1279,7 @@ const ItemIconsContainer = styled.div`
   z-index: 5;
 `
 
-const ItemIcon = styled.div`
+const ItemIcon = styled.div<{ $onCooldown?: boolean }>`
   width: 16px;
   height: 16px;
   border-radius: 3px;
@@ -1290,6 +1290,13 @@ const ItemIcon = styled.div`
   justify-content: center;
   box-shadow: 0 0 4px rgba(200, 155, 60, 0.4);
   transition: all 0.2s ease;
+  position: relative;
+  
+  ${props => props.$onCooldown && `
+    filter: grayscale(0.8);
+    opacity: 0.6;
+    border-color: rgba(128, 128, 128, 0.6);
+  `}
   
   img {
     width: 100%;
@@ -2035,8 +2042,13 @@ const ChessPieceRenderer: React.FC<{
         <ItemIconsContainer style={{ top: '2px' }}>
           {(piece as any).items.map((item: any, index: number) => {
             const itemData = allItems.find((allItem: ItemData) => allItem.id === item.id)
+            const isOnCooldown = item.currentCooldown > 0
             return (
-              <ItemIcon key={index} title={item.name}>
+              <ItemIcon
+                key={index}
+                title={`${item.name}${isOnCooldown ? ` (CD: ${Math.ceil(item.currentCooldown)})` : ''}`}
+                $onCooldown={isOnCooldown}
+              >
                 {itemData?.icon ? (
                   <img
                     src={itemData.icon}
@@ -3657,6 +3669,16 @@ const GamePage: React.FC = () => {
                             )}
                             <div style={{ flex: 1 }}>
                               <div className="card-name" style={{ marginBottom: '8px' }}>{item.name}</div>
+
+                              {/* Cooldown Display */}
+                              {item.cooldown > 0 && (
+                                <div className={`card-cooldown ${item.currentCooldown > 0 ? 'cooling' : 'ready'}`} style={{ marginBottom: '8px' }}>
+                                  {item.currentCooldown > 0
+                                    ? `Cooldown: ${Math.ceil(item.currentCooldown)} turns`
+                                    : 'Ready to use'
+                                  }
+                                </div>
+                              )}
 
                               {/* Stat Effects */}
                               {itemData?.effects && itemData.effects.length > 0 && (

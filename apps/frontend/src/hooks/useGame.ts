@@ -85,6 +85,14 @@ export interface ChessPiece {
     amount: number;
     duration: number;
   }>;
+  items?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    unique: boolean;
+    cooldown: number;
+    currentCooldown: number;
+  }>;
   cannotMoveBackward: boolean;
   canOnlyMoveVertically: boolean;
   hasMovedBefore: boolean;

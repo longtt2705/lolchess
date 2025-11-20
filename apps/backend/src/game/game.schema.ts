@@ -203,6 +203,10 @@ export class Item {
   payload?: any;
   @Prop({ required: true })
   unique: boolean;
+  @Prop({ required: true, default: 0 })
+  cooldown: number;
+  @Prop({ required: true, default: 0 })
+  currentCooldown: number;
 }
 
 export class Skill {
