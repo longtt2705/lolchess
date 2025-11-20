@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, Search, Database as DatabaseIcon } from 'lucide-react'
+import { AttackRangeIndicator } from '../components/AttackRangeIndicator'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { fetchDatabaseData } from '../store/gameSlice'
 import type { ChampionData, ItemData } from '../store/gameSlice'
@@ -739,7 +740,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('maxHp')} alt="HP" width={16} height={16} />
-                                                    HP
                                                 </div>
                                                 <div className="value">{champion.stats.maxHp || 'N/A'}</div>
                                                 <div className="tooltip">{getStatTooltip('maxHp')}</div>
@@ -747,7 +747,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('ad')} alt="AD" width={16} height={16} />
-                                                    AD
                                                 </div>
                                                 <div className="value">{champion.stats.ad || 'N/A'}</div>
                                                 <div className="tooltip">{getStatTooltip('ad')}</div>
@@ -755,7 +754,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('ap')} alt="AP" width={16} height={16} />
-                                                    AP
                                                 </div>
                                                 <div className="value">{champion.stats.ap || 0}</div>
                                                 <div className="tooltip">{getStatTooltip('ap')}</div>
@@ -763,7 +761,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('speed')} alt="Speed" width={16} height={16} />
-                                                    Speed
                                                 </div>
                                                 <div className="value">{champion.stats.speed || 1}</div>
                                                 <div className="tooltip">{getStatTooltip('speed')}</div>
@@ -775,7 +772,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('physicalResistance')} alt="Physical Res" width={16} height={16} />
-                                                    Armor
                                                 </div>
                                                 <div className="value">{champion.stats.physicalResistance || 0}</div>
                                                 <div className="tooltip">{getStatTooltip('physicalResistance')}</div>
@@ -783,7 +779,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('magicResistance')} alt="Magic Res" width={16} height={16} />
-                                                    AP Res
                                                 </div>
                                                 <div className="value">{champion.stats.magicResistance || 0}</div>
                                                 <div className="tooltip">{getStatTooltip('magicResistance')}</div>
@@ -791,7 +786,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('hpRegen')} alt="HP Regen" width={16} height={16} />
-                                                    HP/Turn
                                                 </div>
                                                 <div className="value">{champion.stats.hpRegen || 0}</div>
                                                 <div className="tooltip">{getStatTooltip('hpRegen')}</div>
@@ -799,9 +793,16 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('attackRange')} alt="Range" width={16} height={16} />
-                                                    Attack Range
                                                 </div>
-                                                <div className="value">{formatAttackRange(champion.stats.attackRange)}</div>
+                                                <div className="value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    {formatAttackRange(champion.stats.attackRange)}
+                                                    {champion.stats.attackRange && (
+                                                        <AttackRangeIndicator
+                                                            attackRange={champion.stats.attackRange}
+                                                            size={36}
+                                                        />
+                                                    )}
+                                                </div>
                                                 <div className="tooltip">{getStatTooltip('attackRange')}</div>
                                             </StatItem>
                                         </StatsGrid>
@@ -811,7 +812,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('criticalChance')} alt="Crit Chance" width={16} height={16} />
-                                                    Crit CH
                                                 </div>
                                                 <div className="value">{champion.stats.criticalChance || 0}%</div>
                                                 <div className="tooltip">{getStatTooltip('criticalChance')}</div>
@@ -819,7 +819,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('criticalDamage')} alt="Crit Damage" width={16} height={16} />
-                                                    Crit DMG
                                                 </div>
                                                 <div className="value">{champion.stats.criticalDamage || 150}%</div>
                                                 <div className="tooltip">{getStatTooltip('criticalDamage')}</div>
@@ -827,7 +826,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('sunder')} alt="Sunder" width={16} height={16} />
-                                                    Sunder
                                                 </div>
                                                 <div className="value">{champion.stats.sunder || 0}</div>
                                                 <div className="tooltip">{getStatTooltip('sunder')}</div>
@@ -835,7 +833,6 @@ const DatabasePage: React.FC = () => {
                                             <StatItem>
                                                 <div className="label">
                                                     <img src={getStatIcon('lifesteal')} alt="Lifesteal" width={16} height={16} />
-                                                    Lifesteal
                                                 </div>
                                                 <div className="value">{champion.stats.lifesteal || 0}%</div>
                                                 <div className="tooltip">{getStatTooltip('lifesteal')}</div>
@@ -876,6 +873,12 @@ const DatabasePage: React.FC = () => {
                                                                 <img src={getStatIcon('attackRange')} alt="Range" width={14} height={14} />
                                                                 <span style={{ color: 'var(--gold)' }}>{champion.skill.attackRange.range}</span>
                                                             </div>
+                                                        )}
+                                                        {champion.skill.attackRange && (
+                                                            <AttackRangeIndicator
+                                                                attackRange={champion.skill.attackRange}
+                                                                size={32}
+                                                            />
                                                         )}
                                                     </div>
                                                 </div>

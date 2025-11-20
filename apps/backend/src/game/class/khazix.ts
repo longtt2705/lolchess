@@ -40,7 +40,7 @@ export class KhaZix extends ChessObject {
 
       // Check if target is isolated for bonus damage
       if (this.isTargetIsolated(targetChess.position, targetChess.blue)) {
-        damage *= 1.5; // 50% bonus damage to isolated targets
+        damage *= 2; // 100% bonus damage to isolated targets
       }
 
       // Deal physical damage

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { getSkillAnimationRenderer } from '../animations/SkillAnimator'
+import { AttackRangeIndicator } from '../components/AttackRangeIndicator'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { ChessPiece, ChessPosition, GameState, useGame } from '../hooks/useGame'
 import { resetGameplay, restoreHp, restoreCooldown } from '../store/gameSlice'
@@ -3411,6 +3412,10 @@ const GamePage: React.FC = () => {
                     }`}>
                     {detailViewPiece.stats.attackRange.range}
                   </span>
+                  <AttackRangeIndicator 
+                    attackRange={detailViewPiece.stats.attackRange} 
+                    size={40}
+                  />
                 </div>
                 <div
                   className="stat-item"
@@ -3533,11 +3538,17 @@ const GamePage: React.FC = () => {
                       <div className="skill-info" >
                         <div className="card-name">{detailViewPiece.skill.name}</div>
                         <div className="skill-type">{detailViewPiece.skill.type}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {detailViewPiece.skill.type === 'active' && detailViewPiece.skill.attackRange?.range && <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {detailViewPiece.skill.type === 'active' && detailViewPiece.skill.attackRange?.range && <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <img src={getStatIcon("attackRange")} alt="Range" width={14} height={14} />
                             <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>{detailViewPiece.skill.attackRange.range}</span>
                           </div>}
+                          {detailViewPiece.skill.type === 'active' && detailViewPiece.skill.attackRange && (
+                            <AttackRangeIndicator 
+                              attackRange={detailViewPiece.skill.attackRange} 
+                              size={32}
+                            />
+                          )}
                           {detailViewPiece.skill.cooldown > 0 && <div>
                             <img src={getStatIcon("cooldownReduction")} alt="Cooldown" width={14} height={14} />
                             <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>{detailViewPiece.skill.cooldown}</span>

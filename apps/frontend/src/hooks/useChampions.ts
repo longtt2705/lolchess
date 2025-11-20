@@ -15,6 +15,7 @@ export interface ChampionData {
       diagonal: boolean;
       horizontal: boolean;
       vertical: boolean;
+      lShape?: boolean;
     };
   };
   skill: {
@@ -29,6 +30,7 @@ export interface ChampionData {
       diagonal: boolean;
       horizontal: boolean;
       vertical: boolean;
+      lShape?: boolean;
     };
   };
   aura?: {
