@@ -42,6 +42,9 @@ export class AttackRange {
 
   @Prop({ required: true })
   range: number;
+
+  @Prop({ default: false })
+  lShape: boolean;
 }
 
 export class ChessStats {
@@ -150,6 +153,9 @@ export class Debuff {
 
   @Prop()
   casterName?: string; // champion name of the caster (for icon display)
+
+  @Prop({ type: Object, default: {} })
+  payload?: any; // flexible payload for custom debuff data
 }
 
 export class AuraEffect {

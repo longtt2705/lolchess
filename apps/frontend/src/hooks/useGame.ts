@@ -37,6 +37,7 @@ export interface ChessPiece {
       diagonal: boolean;
       horizontal: boolean;
       vertical: boolean;
+      lShape?: boolean;
     };
   };
   rawStats?: {
@@ -59,6 +60,7 @@ export interface ChessPiece {
       diagonal: boolean;
       horizontal: boolean;
       vertical: boolean;
+      lShape?: boolean;
     };
   };
   skill?: {
@@ -72,6 +74,7 @@ export interface ChessPiece {
       diagonal: boolean;
       horizontal: boolean;
       vertical: boolean;
+      lShape?: boolean;
     };
     targetTypes?:
       | "square"
@@ -440,6 +443,41 @@ export const useGame = (gameId: string) => {
           // Empty square - continue checking further along this direction
         }
       });
+
+      // Calculate L-SHAPE ATTACKS (knight-like movement)
+      if (attackRange && attackRange.lShape) {
+        // All 8 possible L-shape moves: 2 squares in one direction, 1 perpendicular
+        const lShapeOffsets = [
+          { dx: 2, dy: 1 },   // Right 2, Up 1
+          { dx: 2, dy: -1 },  // Right 2, Down 1
+          { dx: -2, dy: 1 },  // Left 2, Up 1
+          { dx: -2, dy: -1 }, // Left 2, Down 1
+          { dx: 1, dy: 2 },   // Right 1, Up 2
+          { dx: 1, dy: -2 },  // Right 1, Down 2
+          { dx: -1, dy: 2 },  // Left 1, Up 2
+          { dx: -1, dy: -2 }, // Left 1, Down 2
+        ];
+
+        lShapeOffsets.forEach(({ dx, dy }) => {
+          const newX = piece.position.x + dx;
+          const newY = piece.position.y + dy;
+
+          // Check board bounds
+          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) return;
+
+          const targetPosition = { x: newX, y: newY };
+          const occupiedBy = gameState.board.find(
+            (p) =>
+              p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+          );
+
+          // L-shape can only attack enemy pieces (not empty squares)
+          if (occupiedBy && occupiedBy.ownerId !== piece.ownerId) {
+            attacks.push(targetPosition);
+          }
+        });
+      }
+
 
       // Check for CASTLING (Poro with Siege Minion/Rook)
       if (piece.name === "Poro" && !piece.hasMovedBefore) {

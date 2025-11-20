@@ -6,6 +6,7 @@ import { cardThrowRenderer } from "./skills/cardThrow";
 import { arcaneShiftRenderer } from "./skills/arcaneShift";
 import { tasteTheirFearRenderer } from "./skills/tasteTheirFear";
 import { infectedBonesawRenderer } from "./skills/infectedBonesaw";
+import { deathMarkRenderer } from "./skills/deathMark";
 
 /**
  * Registry mapping skill names to their animation renderers
@@ -29,6 +30,9 @@ const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
 
   // Dr. Mundo
   "Infected Bonesaw": infectedBonesawRenderer,
+
+  // Zed
+  "Death Mark": deathMarkRenderer,
 
   // Add more skills here as they're implemented
   // 'Skill Name': skillRenderer,

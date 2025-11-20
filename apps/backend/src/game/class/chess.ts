@@ -498,7 +498,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -1364,6 +1364,14 @@ export class ChessObject {
     const deltaX = Math.abs(position.x - this.chess.position.x);
     const deltaY = Math.abs(position.y - this.chess.position.y);
 
+    // Check for L-shape pattern (knight-like movement)
+    const isLShape =
+      (deltaX === 2 && deltaY === 1) || (deltaX === 1 && deltaY === 2);
+    if (isLShape && attackRange.lShape) {
+      // L-shape targeting ignores range limits and directional restrictions
+      return true;
+    }
+
     // Check if target exceeds range limit
     const maxDistance = Math.max(deltaX, deltaY);
     if (attackRange.range && maxDistance > attackRange.range) {
@@ -1555,6 +1563,14 @@ export class ChessObject {
     // Calculate attack deltas
     const deltaX = Math.abs(position.x - this.chess.position.x);
     const deltaY = Math.abs(position.y - this.chess.position.y);
+
+    // Check for L-shape pattern (knight-like movement)
+    const isLShape =
+      (deltaX === 2 && deltaY === 1) || (deltaX === 1 && deltaY === 2);
+    if (isLShape && attackRange.lShape) {
+      // L-shape attacks ignore range limits and can jump over pieces
+      return true;
+    }
 
     // Check if attack exceeds range limit
     const maxDistance = Math.max(deltaX, deltaY);
