@@ -244,7 +244,9 @@ describe('ChessObject - Shield Calculation', () => {
                     name: 'Serpent\'s Fang',
                     description: 'Reduces enemy shields by 50%',
                     unique: true,
-                    payload: {}
+                    payload: {},
+                    cooldown: 0,
+                    currentCooldown: 0,
                 },
             ];
 
@@ -271,7 +273,9 @@ describe('ChessObject - Shield Calculation', () => {
                     name: 'Serpent\'s Fang',
                     description: 'Reduces enemy shields by 50%',
                     unique: true,
-                    payload: {}
+                    payload: {},
+                    cooldown: 0,
+                    currentCooldown: 0,
                 },
             ];
 
@@ -298,7 +302,9 @@ describe('ChessObject - Shield Calculation', () => {
                     name: 'Serpent\'s Fang',
                     description: 'Reduces enemy shields by 50%',
                     unique: true,
-                    payload: {}
+                    payload: {},
+                    cooldown: 0,
+                    currentCooldown: 0,
                 },
             ];
 
@@ -409,7 +415,9 @@ describe('ChessObject - Shield Calculation', () => {
                     name: 'Serpent\'s Fang',
                     description: 'Reduces enemy shields by 50%',
                     unique: true,
-                    payload: {}
+                    payload: {},
+                    cooldown: 0,
+                    currentCooldown: 0,
                 },
             ];
 
