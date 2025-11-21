@@ -77,12 +77,12 @@ export interface ChessPiece {
       lShape?: boolean;
     };
     targetTypes?:
-      | "square"
-      | "squareInRange"
-      | "ally"
-      | "allyMinion"
-      | "enemy"
-      | "none";
+    | "square"
+    | "squareInRange"
+    | "ally"
+    | "allyMinion"
+    | "enemy"
+    | "none";
   };
   shields?: Array<{
     amount: number;
@@ -119,6 +119,7 @@ export interface ActionDetails {
   pulledToPosition?: ChessPosition; // For Rocket Grab: actual position the target was pulled to
   killedPieceIds?: string[];
   killerPlayerId?: string;
+  selfDamage?: Record<string, number>; // Track self-damage for animation (pieceId -> damage amount)
 }
 
 export interface GameState {
@@ -486,6 +487,25 @@ export const useGame = (gameId: string) => {
         });
       }
 
+      // Check for ZED'S DEATH MARK - can attack marked targets from anywhere
+      if (piece.name === "Zed") {
+        // Find all enemy pieces with Death Mark from this Zed
+        gameState.board.forEach((target) => {
+          // Skip if not an enemy or dead
+          if (target.ownerId === piece.ownerId || target.stats.hp <= 0) return;
+
+          // Check if target has Death Mark debuff from this Zed
+          const deathMarkId = `death_mark_${piece.id}_${target.id}`;
+          const hasDeathMark = (target as any).debuffs?.some(
+            (debuff: any) => debuff.id === deathMarkId
+          );
+
+          if (hasDeathMark) {
+            // Add marked target as valid attack regardless of range
+            attacks.push({ x: target.position.x, y: target.position.y });
+          }
+        });
+      }
 
       // Check for CASTLING (Poro with Siege Minion/Rook)
       if (piece.name === "Poro" && !piece.hasMovedBefore) {
@@ -625,35 +645,26 @@ export const useGame = (gameId: string) => {
         vertical: true,
       };
 
-      // Define 8 directions
-      const directions = [
-        { dx: 0, dy: 1 }, // North
-        { dx: 0, dy: -1 }, // South
-        { dx: 1, dy: 0 }, // East
-        { dx: -1, dy: 0 }, // West
-        { dx: 1, dy: 1 }, // Northeast
-        { dx: 1, dy: -1 }, // Southeast
-        { dx: -1, dy: 1 }, // Northwest
-        { dx: -1, dy: -1 }, // Southwest
-      ];
+      // Handle L-shape movement (like knight in chess)
+      if (skillRange.lShape) {
+        // L-shape offsets: 2 squares in one direction + 1 square perpendicular
+        const lShapeOffsets = [
+          { dx: 2, dy: 1 },
+          { dx: 2, dy: -1 },
+          { dx: -2, dy: 1 },
+          { dx: -2, dy: -1 },
+          { dx: 1, dy: 2 },
+          { dx: 1, dy: -2 },
+          { dx: -1, dy: 2 },
+          { dx: -1, dy: -2 },
+        ];
 
-      // Calculate valid skill targets based on skill range and target type
-      directions.forEach(({ dx, dy }) => {
-        // Check if this direction is allowed
-        const isHorizontal = dy === 0;
-        const isVertical = dx === 0;
-        const isDiagonal = Math.abs(dx) === Math.abs(dy);
-
-        if (isHorizontal && !skillRange.horizontal) return;
-        if (isVertical && !skillRange.vertical) return;
-        if (isDiagonal && !skillRange.diagonal) return;
-
-        for (let step = 1; step <= skillRange.range; step++) {
-          const newX = piece.position.x + dx * step;
-          const newY = piece.position.y + dy * step;
+        lShapeOffsets.forEach(({ dx, dy }) => {
+          const newX = piece.position.x + dx;
+          const newY = piece.position.y + dy;
 
           // Check board bounds
-          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) break;
+          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) return;
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = gameState.board.find(
@@ -661,37 +672,29 @@ export const useGame = (gameId: string) => {
               p.position.x === newX && p.position.y === newY && p.stats.hp > 0
           );
 
-          // Handle different target types
+          // Handle different target types for L-shape
           if (skill.targetTypes === "square") {
-            // Can target empty squares within range (path must be clear)
-            if (occupiedBy) {
-              break; // Stop at any piece - path blocked
-            }
-            skillTargets.push(targetPosition);
-          } else if (skill.targetTypes === "squareInRange") {
-            // Can target empty squares within range (ignoring obstacles)
+            // Can target empty squares
             if (!occupiedBy) {
               skillTargets.push(targetPosition);
             }
-            // Don't break - continue checking full range even if square is occupied
+          } else if (skill.targetTypes === "squareInRange") {
+            // Can target empty squares within range
+            if (!occupiedBy) {
+              skillTargets.push(targetPosition);
+            }
           } else if (skill.targetTypes === "enemy") {
             // Can only target enemy pieces
             if (occupiedBy && occupiedBy.ownerId !== piece.ownerId) {
               skillTargets.push(targetPosition);
-              break; // Stop at first enemy
-            } else if (occupiedBy) {
-              break; // Stop at ally
             }
           } else if (skill.targetTypes === "ally") {
             // Can only target ally pieces
             if (occupiedBy && occupiedBy.ownerId === piece.ownerId) {
               skillTargets.push(targetPosition);
-              break; // Stop at first ally
-            } else if (occupiedBy) {
-              break; // Stop at enemy
             }
           } else if (skill.targetTypes === "allyMinion") {
-            // Can only target ally minions (Melee Minion or Caster Minion)
+            // Can only target ally minions
             if (
               occupiedBy &&
               occupiedBy.ownerId === piece.ownerId &&
@@ -699,13 +702,93 @@ export const useGame = (gameId: string) => {
                 occupiedBy.name === "Caster Minion")
             ) {
               skillTargets.push(targetPosition);
-              break; // Stop at first ally minion
-            } else if (occupiedBy) {
-              break; // Stop at any piece
             }
           }
-        }
-      });
+        });
+      } else {
+        // Standard directional movement (not L-shape)
+        // Define 8 directions
+        const directions = [
+          { dx: 0, dy: 1 }, // North
+          { dx: 0, dy: -1 }, // South
+          { dx: 1, dy: 0 }, // East
+          { dx: -1, dy: 0 }, // West
+          { dx: 1, dy: 1 }, // Northeast
+          { dx: 1, dy: -1 }, // Southeast
+          { dx: -1, dy: 1 }, // Northwest
+          { dx: -1, dy: -1 }, // Southwest
+        ];
+
+        // Calculate valid skill targets based on skill range and target type
+        directions.forEach(({ dx, dy }) => {
+          // Check if this direction is allowed
+          const isHorizontal = dy === 0;
+          const isVertical = dx === 0;
+          const isDiagonal = Math.abs(dx) === Math.abs(dy);
+
+          if (isHorizontal && !skillRange.horizontal) return;
+          if (isVertical && !skillRange.vertical) return;
+          if (isDiagonal && !skillRange.diagonal) return;
+
+          for (let step = 1; step <= skillRange.range; step++) {
+            const newX = piece.position.x + dx * step;
+            const newY = piece.position.y + dy * step;
+
+            // Check board bounds
+            if (newX < -1 || newX > 8 || newY < 0 || newY > 7) break;
+
+            const targetPosition = { x: newX, y: newY };
+            const occupiedBy = gameState.board.find(
+              (p) =>
+                p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+            );
+
+            // Handle different target types
+            if (skill.targetTypes === "square") {
+              // Can target empty squares within range (path must be clear)
+              if (occupiedBy) {
+                break; // Stop at any piece - path blocked
+              }
+              skillTargets.push(targetPosition);
+            } else if (skill.targetTypes === "squareInRange") {
+              // Can target empty squares within range (ignoring obstacles)
+              if (!occupiedBy) {
+                skillTargets.push(targetPosition);
+              }
+              // Don't break - continue checking full range even if square is occupied
+            } else if (skill.targetTypes === "enemy") {
+              // Can only target enemy pieces
+              if (occupiedBy && occupiedBy.ownerId !== piece.ownerId) {
+                skillTargets.push(targetPosition);
+                break; // Stop at first enemy
+              } else if (occupiedBy) {
+                break; // Stop at ally
+              }
+            } else if (skill.targetTypes === "ally") {
+              // Can only target ally pieces
+              if (occupiedBy && occupiedBy.ownerId === piece.ownerId) {
+                skillTargets.push(targetPosition);
+                break; // Stop at first ally
+              } else if (occupiedBy) {
+                break; // Stop at enemy
+              }
+            } else if (skill.targetTypes === "allyMinion") {
+              // Can only target ally minions (Melee Minion or Caster Minion)
+              if (
+                occupiedBy &&
+                occupiedBy.ownerId === piece.ownerId &&
+                (occupiedBy.name === "Melee Minion" ||
+                  occupiedBy.name === "Caster Minion")
+              ) {
+                skillTargets.push(targetPosition);
+                break; // Stop at first ally minion
+              } else if (occupiedBy) {
+                break; // Stop at any piece
+              }
+            }
+          }
+        });
+      }
 
       setValidSkillTargets(skillTargets);
       setIsSkillMode(true);
@@ -720,7 +803,7 @@ export const useGame = (gameId: string) => {
   const isMyTurn =
     gameState && currentUser
       ? gameState.currentRound % 2 ===
-        (gameState.bluePlayer === currentUser.id ? 1 : 0)
+      (gameState.bluePlayer === currentUser.id ? 1 : 0)
       : false;
 
   // Get current player data

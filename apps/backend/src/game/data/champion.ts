@@ -29,7 +29,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Deathbringer Stance",
       description:
-        "Aatrox's next basic attack deals bonus (15 + 10% of AP)% target's max health magic damage and heals him (10 + 25% of AP) of his max HP.",
+        "Aatrox's next basic attack range increases by 1 and deals bonus (15 + 10% of AP)% target's max health magic damage and heals him (10 + 25% of AP) of his max HP.",
       cooldown: 4,
     },
   },
@@ -48,6 +48,7 @@ export const champions: ChampionData[] = [
       },
       magicResistance: 5,
       physicalResistance: 5,
+      speed: 1
     },
     skill: {
       type: "active",
@@ -144,6 +145,7 @@ export const champions: ChampionData[] = [
       ap: 0,
       physicalResistance: 5,
       magicResistance: 5,
+      criticalChance: 25,
       attackRange: {
         range: 3,
         diagonal: true,
@@ -151,12 +153,13 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
+      speed: 1
     },
     skill: {
       type: "passive",
       name: "Frost Shot",
       description:
-        "Ashe's attacks slow their target, causing her to deal increased (20+10% of AP) physical damage to these targets.",
+        "Ashe's attacks slow their target by 1 Move Speed. Her attacks cannot be critical, but she gains (10+10% of AP) physical damage for each 25 percent of critical chance she has.",
       cooldown: 0,
     },
   },
@@ -175,6 +178,7 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
+      speed: 1
     },
     skill: {
       type: "passive",
@@ -531,7 +535,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Undying Rage",
       description:
-        "When Tryndamere is killed, he will survive with 1 HP for 2 turns. He gains (1 + 5% of AP) bonus AD for each 3 HP he lost.",
+        "When Tryndamere is killed, he will survive with 1 HP for 2 turns. He gains (1 + 5% of AP) bonus AD for each 5 HP he lost.",
       cooldown: 15,
     },
   },
@@ -551,6 +555,7 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
+      speed: 1
     },
     skill: {
       type: "active",
@@ -584,6 +589,7 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
+      speed: 1
     },
     skill: {
       type: "active",
@@ -617,6 +623,7 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
+      speed: 1
     },
     skill: {
       type: "active",
@@ -686,7 +693,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Infected Bonesaw",
       description:
-        "Dr. Mundo sacrifices 20% of his max health to deal (10 + 15% of his max health + 10% of AP + 15% of the target's max health) magic damage to the target. This skill has a (50 - 50% of AP)% chance to miss. If the skill hit, Dr. Mundo heals for (10 + 10% of AP)% of his max health.",
+        "Dr. Mundo sacrifices 15% of his max health to deal (10 + 15% of his max health + 10% of AP + 15% of the target's max health) magic damage to the target. This skill has a (50 - 50% of AP)% chance to miss. If the skill hit, Dr. Mundo heals for (15 + 10% of AP)% of his max health.",
       cooldown: 5,
       attackRange: {
         range: 4,

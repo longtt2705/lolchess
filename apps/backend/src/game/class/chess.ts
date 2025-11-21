@@ -145,13 +145,16 @@ export class ChessObject {
       });
     }
     while (shields.length > 0 && calDamage > 0) {
-      const shield = shields[0] || { amount: 0, duration: 0 };
+      const shield = shields[0] || { id: "none", amount: 0, duration: 0 };
       if (shield.amount > calDamage) {
         shield.amount -= calDamage;
         calDamage = 0;
       } else {
         calDamage -= shield.amount;
         shield.amount = 0;
+        if (shield.id === "crownguard") {
+          this.chess.stats.ap += 10;
+        }
         shields.shift();
       }
     }
@@ -494,7 +497,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -542,7 +545,7 @@ export class ChessObject {
       chess.chess.debuffs.push({
         id: "quicksilver",
         name: "Quicksilver",
-        description: "Resistance to all active debuffs for 2 turns.",
+        description: "Resistance to all active debuffs from opponent for 2 turns.",
         duration: 2,
         maxDuration: 2,
         effects: [],
@@ -560,7 +563,7 @@ export class ChessObject {
       return true;
     }
 
-    if (chess.chess.debuffs.some((d) => d.id === "quicksilver")) {
+    if (chess.chess.debuffs.some((d) => d.id === "quicksilver") && debuff.casterPlayerId !== this.chess.ownerId) {
       return false;
     }
     // Check if debuff is unique and already exists

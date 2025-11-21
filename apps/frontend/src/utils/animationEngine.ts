@@ -179,7 +179,35 @@ export class AnimationEngine {
       }
     }
 
-    // 4. Handle stat changes (with floating text)
+    // 4. Handle self-damage (e.g., Dr. Mundo's sacrifice)
+    // This needs to be shown BEFORE stat changes so it doesn't get hidden by heals
+    if (lastAction.selfDamage) {
+      Object.entries(lastAction.selfDamage).forEach(([pieceId, damage]) => {
+        const piece = gameState.board.find((p) => p.id === pieceId);
+        if (piece && damage > 0) {
+          animations.push({
+            id: `self_damage_${pieceId}_${lastAction.timestamp}`,
+            type: "damage",
+            timestamp: lastAction.timestamp,
+            delay: currentDelay,
+            duration: 1200,
+            data: {
+              pieceId,
+              position: piece.position,
+              damage: Math.round(damage),
+              isDamage: true,
+            } as DamageAnimationData,
+          });
+        }
+      });
+
+      // Add slight delay after self-damage
+      if (Object.keys(lastAction.selfDamage).length > 0) {
+        currentDelay += 300;
+      }
+    }
+
+    // 5. Handle stat changes (with floating text)
     if (lastAction.statChanges) {
       Object.entries(lastAction.statChanges).forEach(([key, change]) => {
         const [pieceId, stat] = key.split(".");
@@ -189,7 +217,10 @@ export class AnimationEngine {
           // Only show HP changes as damage/heal, other stats as stat changes
           if (stat === "hp") {
             const hpDiff = change.newValue - change.oldValue;
-            if (hpDiff !== 0) {
+            // Only show NET stat changes if not already covered by selfDamage
+            // Skip showing if the piece had selfDamage and the change is negative (already shown)
+            const hasSelfDamage = lastAction.selfDamage && lastAction.selfDamage[pieceId];
+            if (hpDiff !== 0 && !(hasSelfDamage && hpDiff < 0)) {
               animations.push({
                 id: `damage_${pieceId}_${lastAction.timestamp}`,
                 type: "damage",
@@ -230,7 +261,7 @@ export class AnimationEngine {
       }
     }
 
-    // 5. Handle death animations
+    // 6. Handle death animations
     if (lastAction.killedPieceIds && lastAction.killedPieceIds.length > 0) {
       lastAction.killedPieceIds.forEach((pieceId) => {
         // Try to get the piece's last known position from previousGameState

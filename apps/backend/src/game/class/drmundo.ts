@@ -22,8 +22,17 @@ export class DrMundo extends ChessObject {
     );
 
     // STEP 1: Sacrifice 20% of max health (ALWAYS happens, regardless of hit/miss)
-    const sacrificeAmount = Math.floor(this.maxHp * 0.2);
+    const sacrificeAmount = Math.floor(this.maxHp * 0.15);
     this.chess.stats.hp = Math.max(1, this.chess.stats.hp - sacrificeAmount);
+
+    // Track the sacrifice amount for animation purposes
+    if (!this.game.lastAction) {
+      this.game.lastAction = {} as any;
+    }
+    if (!this.game.lastAction.selfDamage) {
+      this.game.lastAction.selfDamage = {};
+    }
+    this.game.lastAction.selfDamage[this.chess.id] = sacrificeAmount;
 
     // STEP 2: Calculate miss chance: (50 - 50% of AP)%
     // At 0 AP: 50% miss chance
@@ -36,7 +45,7 @@ export class DrMundo extends ChessObject {
 
     if (skillHits) {
       // STEP 4: Skill HIT - deal damage and heal
-      
+
       // Calculate damage: (10 + 15% his maxHp + 10% AP + 15% target's maxHp)
       const damage =
         10 +
@@ -54,7 +63,7 @@ export class DrMundo extends ChessObject {
       );
 
       // Heal for (10 + 10% of AP)% of max health
-      const healPercent = 10 + this.ap * 0.1;
+      const healPercent = 15 + this.ap * 0.1;
       const healAmount = Math.floor(this.maxHp * (healPercent / 100));
       this.heal(this, healAmount);
     }

@@ -21,4 +21,16 @@ export class Aatrox extends ChessObject {
     this.chess.skill.currentCooldown = this.skillCooldown;
     return baseDamage;
   }
+
+  get range(): number {
+    if (this.isPassiveDisabled()) {
+      return super.range;
+    }
+
+    if (this.chess.skill.currentCooldown > 0) {
+      return super.range;
+    }
+
+    return super.range + 1;
+  }
 }

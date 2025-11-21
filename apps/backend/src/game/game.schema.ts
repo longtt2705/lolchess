@@ -371,6 +371,9 @@ export class ActionDetails {
 
   @Prop()
   killerPlayerId?: string; // Player who gets credit for kills (for gold)
+
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  selfDamage?: Record<string, number>; // Track self-damage for champions like Dr. Mundo (pieceId -> damage amount)
 }
 
 @Schema()

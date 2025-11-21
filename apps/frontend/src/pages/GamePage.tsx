@@ -1280,7 +1280,7 @@ const ItemIconsContainer = styled.div`
   z-index: 5;
 `
 
-const ItemIcon = styled.div<{ $onCooldown?: boolean }>`
+const ItemIcon = styled.div<{ $onCooldown?: boolean; $currentCooldown?: number }>`
   width: 16px;
   height: 16px;
   border-radius: 3px;
@@ -1316,6 +1316,20 @@ const ItemIcon = styled.div<{ $onCooldown?: boolean }>`
     font-size: 8px;
     font-weight: bold;
     color: var(--gold);
+  }
+  
+  /* Cooldown overlay */
+  &::after {
+    content: ${props => props.$onCooldown && props.$currentCooldown ? `'${Math.ceil(props.$currentCooldown)}'` : '""'};
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 8px;
+    font-weight: bold;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 1);
+    pointer-events: none;
   }
 `
 
@@ -2049,6 +2063,7 @@ const ChessPieceRenderer: React.FC<{
                 key={index}
                 title={`${item.name}${isOnCooldown ? ` (CD: ${Math.ceil(item.currentCooldown)})` : ''}`}
                 $onCooldown={isOnCooldown}
+                $currentCooldown={item.currentCooldown}
               >
                 {itemData?.icon ? (
                   <img
@@ -3412,9 +3427,9 @@ const GamePage: React.FC = () => {
                     }`}>
                     {detailViewPiece.stats.attackRange.range}
                   </span>
-                  <AttackRangeIndicator 
-                    attackRange={detailViewPiece.stats.attackRange} 
-                    size={40}
+                  <AttackRangeIndicator
+                    attackRange={detailViewPiece.stats.attackRange}
+                    size={20}
                   />
                 </div>
                 <div
@@ -3544,9 +3559,9 @@ const GamePage: React.FC = () => {
                             <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>{detailViewPiece.skill.attackRange.range}</span>
                           </div>}
                           {detailViewPiece.skill.type === 'active' && detailViewPiece.skill.attackRange && (
-                            <AttackRangeIndicator 
-                              attackRange={detailViewPiece.skill.attackRange} 
-                              size={32}
+                            <AttackRangeIndicator
+                              attackRange={detailViewPiece.skill.attackRange}
+                              size={16}
                             />
                           )}
                           {detailViewPiece.skill.cooldown > 0 && <div>
@@ -3680,9 +3695,12 @@ const GamePage: React.FC = () => {
                             )}
                             <div style={{ flex: 1 }}>
                               <div className="card-name" style={{ marginBottom: '8px' }}>{item.name}</div>
-
+                              {itemData?.cooldown && itemData.cooldown > 0 && <div>
+                                <img src={getStatIcon("cooldownReduction")} alt="Cooldown" width={14} height={14} />
+                                <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>{itemData.cooldown}</span>
+                              </div>}
                               {/* Cooldown Display */}
-                              {item.cooldown > 0 && (
+                              {itemData?.cooldown && itemData.cooldown > 0 && (
                                 <div className={`card-cooldown ${item.currentCooldown > 0 ? 'cooling' : 'ready'}`} style={{ marginBottom: '8px' }}>
                                   {item.currentCooldown > 0
                                     ? `Cooldown: ${Math.ceil(item.currentCooldown)} turns`

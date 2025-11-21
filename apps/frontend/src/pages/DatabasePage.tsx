@@ -799,7 +799,7 @@ const DatabasePage: React.FC = () => {
                                                     {champion.stats.attackRange && (
                                                         <AttackRangeIndicator
                                                             attackRange={champion.stats.attackRange}
-                                                            size={36}
+                                                            size={18}
                                                         />
                                                     )}
                                                 </div>
@@ -877,7 +877,7 @@ const DatabasePage: React.FC = () => {
                                                         {champion.skill.attackRange && (
                                                             <AttackRangeIndicator
                                                                 attackRange={champion.skill.attackRange}
-                                                                size={32}
+                                                                size={18}
                                                             />
                                                         )}
                                                     </div>

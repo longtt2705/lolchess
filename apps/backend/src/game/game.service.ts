@@ -32,7 +32,7 @@ export class GameService {
   constructor(
     @InjectModel(Game.name) private gameModel: Model<GameDocument>,
     private readonly redisCache: RedisGameCacheService
-  ) {}
+  ) { }
 
   /**
    * Get game state - tries Redis cache first, falls back to MongoDB
@@ -803,9 +803,9 @@ export class GameService {
         },
         startingPosition: piece.startingPosition
           ? {
-              x: piece.startingPosition.x,
-              y: piece.startingPosition.y,
-            }
+            x: piece.startingPosition.x,
+            y: piece.startingPosition.y,
+          }
           : undefined,
         cannotMoveBackward: piece.cannotMoveBackward,
         canOnlyMoveVertically: piece.canOnlyMoveVertically || false,
@@ -825,6 +825,7 @@ export class GameService {
             horizontal: piece.stats.attackRange.horizontal,
             vertical: piece.stats.attackRange.vertical,
             range: chessObject.range,
+            lShape: piece.stats.attackRange.lShape,
           },
           goldValue: piece.stats.goldValue, // Gold value is not affected by modifiers
           sunder: chessObject.sunder,
@@ -849,6 +850,7 @@ export class GameService {
             horizontal: piece.stats.attackRange.horizontal,
             vertical: piece.stats.attackRange.vertical,
             range: piece.stats.attackRange.range,
+            lShape: piece.stats.attackRange.lShape,
           },
           goldValue: piece.stats.goldValue,
           sunder: piece.stats.sunder || 0,
@@ -862,85 +864,90 @@ export class GameService {
         blue: piece.blue,
         items: piece.items
           ? piece.items.map((item) => ({
-              id: item.id,
-              name: item.name,
-              description: item.description,
-              payload: item.payload,
-              unique: item.unique,
-            }))
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            payload: item.payload,
+            unique: item.unique,
+            cooldown: item.cooldown,
+            currentCooldown: item.currentCooldown,
+          }))
           : [],
         debuffs: piece.debuffs
           ? piece.debuffs.map((debuff) => ({
-              id: debuff.id,
-              name: debuff.name,
-              description: debuff.description,
-              duration: debuff.duration,
-              maxDuration: debuff.maxDuration,
-              effects: debuff.effects
-                ? debuff.effects.map((effect) => ({
-                    stat: effect.stat,
-                    modifier: effect.modifier,
-                    type: effect.type,
-                  }))
-                : [],
-              damagePerTurn: debuff.damagePerTurn || 0,
-              damageType: debuff.damageType || "0",
-              healPerTurn: debuff.healPerTurn || 0,
-              unique: debuff.unique || false,
-              appliedAt: debuff.appliedAt,
-              casterPlayerId: debuff.casterPlayerId,
-              casterName: debuff.casterName,
-            }))
+            id: debuff.id,
+            name: debuff.name,
+            description: debuff.description,
+            duration: debuff.duration,
+            maxDuration: debuff.maxDuration,
+            effects: debuff.effects
+              ? debuff.effects.map((effect) => ({
+                stat: effect.stat,
+                modifier: effect.modifier,
+                type: effect.type,
+              }))
+              : [],
+            damagePerTurn: debuff.damagePerTurn || 0,
+            damageType: debuff.damageType || "0",
+            healPerTurn: debuff.healPerTurn || 0,
+            unique: debuff.unique || false,
+            appliedAt: debuff.appliedAt,
+            casterPlayerId: debuff.casterPlayerId,
+            casterName: debuff.casterName,
+            payload: debuff.payload || {},
+          }))
           : [],
         auras: piece.auras
           ? piece.auras.map((aura) => ({
-              id: aura.id,
-              name: aura.name,
-              description: aura.description,
-              range: aura.range,
-              effects: aura.effects
-                ? aura.effects.map((effect) => ({
-                    stat: effect.stat,
-                    modifier: effect.modifier,
-                    type: effect.type,
-                    target: effect.target,
-                  }))
-                : [],
-              active: aura.active,
-              requiresAlive: aura.requiresAlive,
-              duration: aura.duration,
-            }))
+            id: aura.id,
+            name: aura.name,
+            description: aura.description,
+            range: aura.range,
+            effects: aura.effects
+              ? aura.effects.map((effect) => ({
+                stat: effect.stat,
+                modifier: effect.modifier,
+                type: effect.type,
+                target: effect.target,
+              }))
+              : [],
+            active: aura.active,
+            requiresAlive: aura.requiresAlive,
+            duration: aura.duration,
+          }))
           : [],
         shields: piece.shields
           ? piece.shields.map((shield) => ({
-              id: shield.id,
-              amount: shield.amount,
-              duration: shield.duration,
-            }))
+            id: shield.id,
+            amount: shield.amount,
+            duration: shield.duration,
+          }))
           : [],
         skill: piece.skill
           ? {
-              name: piece.skill.name,
-              description: piece.skill.description,
-              cooldown: piece.skill.cooldown,
-              attackRange: piece.skill.attackRange
-                ? {
-                    diagonal: piece.skill.attackRange.diagonal,
-                    horizontal: piece.skill.attackRange.horizontal,
-                    vertical: piece.skill.attackRange.vertical,
-                    range: piece.skill.attackRange.range,
-                  }
-                : {
-                    diagonal: false,
-                    horizontal: false,
-                    vertical: false,
-                    range: 1,
-                  },
-              targetTypes: piece.skill.targetTypes,
-              currentCooldown: piece.skill.currentCooldown,
-              type: piece.skill.type,
-              payload: piece.skill.payload,
-            }
+            name: piece.skill.name,
+            description: piece.skill.description,
+            cooldown: piece.skill.cooldown,
+            attackRange: piece.skill.attackRange
+              ? {
+                diagonal: piece.skill.attackRange.diagonal,
+                horizontal: piece.skill.attackRange.horizontal,
+                vertical: piece.skill.attackRange.vertical,
+                range: piece.skill.attackRange.range,
+                lShape: piece.skill.attackRange.lShape,
+              }
+              : {
+                diagonal: false,
+                horizontal: false,
+                vertical: false,
+                range: 1,
+                lShape: false,
+              },
+            targetTypes: piece.skill.targetTypes,
+            currentCooldown: piece.skill.currentCooldown,
+            type: piece.skill.type,
+            payload: piece.skill.payload,
+          }
           : undefined,
         deadAtRound: piece.deadAtRound,
       };
@@ -1021,9 +1028,9 @@ export class GameService {
       ...piece,
       skill: piece.skill
         ? {
-            ...piece.skill,
-            currentCooldown: 0,
-          }
+          ...piece.skill,
+          currentCooldown: 0,
+        }
         : piece.skill,
     }));
 

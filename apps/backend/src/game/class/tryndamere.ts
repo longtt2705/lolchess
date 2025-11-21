@@ -47,6 +47,6 @@ export class Tryndamere extends ChessObject {
     if (this.isPassiveDisabled()) {
       return super.ad;
     }
-    return super.ad + Math.floor((this.maxHp - this.chess.stats.hp) / 3) * (1 + this.ap * 0.05);
+    return super.ad + Math.floor((this.maxHp - this.chess.stats.hp) / 5) * (1 + this.ap * 0.05);
   }
 }

@@ -316,7 +316,8 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/NashorsTooth.png",
     effects: [
       { stat: "sunder", value: 20, type: "add" },
-      { stat: "ap", value: 25, type: "add" },
+      { stat: "ap", value: 15, type: "add" },
+      { stat: "maxHp", value: 35, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "giants_belt"],
@@ -354,7 +355,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "crownguard",
     name: "Crownguard",
-    description: "Immidiate gain a 30% of max Health Shield.",
+    description: "Immidiate gain a 30% of max Health Shield. If the shield is broken, gain 10 AP.",
     cost: 0,
     icon: "/icons/Crownguard.png",
     effects: [
@@ -514,7 +515,7 @@ export const combinedItems: ItemData[] = [
   {
     id: "quicksilver",
     name: "Quicksilver",
-    description: "Resistance to all active debuffs for 2 turns",
+    description: "Resistance to all active debuffs from opponent for 2 turns",
     cost: 0,
     icon: "/icons/Quicksilver.png",
     effects: [
@@ -647,7 +648,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "maxHp", value: 35, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
-      { stat: "hpRegen", value: 5, type: "add" },
+      { stat: "hpRegen", value: 2, type: "add" },
     ],
     isBasic: false,
     recipe: ["tear", "giants_belt"],
