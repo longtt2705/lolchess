@@ -164,13 +164,13 @@ export class ChessObject {
       chess.preTakenDamage(this, calDamage, fromAttack)
     );
     if (
-      this.chess.items.some((item) => item.id === "deaths_dance") &&
+      chess.chess.items.some((item) => item.id === "deaths_dance") &&
       damageType !== "non-lethal" &&
       damageType !== "true"
     ) {
       finalDamage = Math.floor(finalDamage * 0.5);
       const duration = 2;
-      const damagePerTurn = (finalDamage * 0.5) / duration;
+      const damagePerTurn = finalDamage / duration;
       this.applyDebuff(chess, {
         id: `deaths_dance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: "Death's Dance",
