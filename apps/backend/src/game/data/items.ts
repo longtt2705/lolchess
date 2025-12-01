@@ -167,12 +167,12 @@ export const combinedItems: ItemData[] = [
     unique: true,
   },
   {
-    id: "edge_of_night",
-    name: "Edge of Night",
+    id: "deaths_dance",
+    name: "Death's Dance",
     description:
-      "Once per game, when this chess is about to be killed, they survive with 1 HP",
+      "50% of the physical or magic damage the holder receives is instead dealt over 2 turns as non-lethal damage.",
     cost: 0,
-    icon: "/icons/EdgeofNight.png",
+    icon: "/icons/DeathsDance.png",
     effects: [
       { stat: "ad", value: 15, type: "add" },
       { stat: "physicalResistance", value: 20, type: "add" },

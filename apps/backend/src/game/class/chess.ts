@@ -93,7 +93,7 @@ export class ChessObject {
   private calculateDamage(
     target: ChessObject,
     damage: number,
-    damageType: "physical" | "magic" | "true",
+    damageType: "physical" | "magic" | "true" | "non-lethal",
     sunder: number = 0
   ): number {
     if (damageType === "physical") {
@@ -114,7 +114,7 @@ export class ChessObject {
         magicResistance - sunder
       );
       return damage * (1 - reducePercentage);
-    } else if (damageType === "true") {
+    } else if (damageType === "true" || damageType === "non-lethal") {
       return Math.max(damage, 1);
     }
   }
@@ -122,7 +122,7 @@ export class ChessObject {
   protected damage(
     chess: ChessObject,
     damage: number,
-    damageType: "physical" | "magic" | "true",
+    damageType: "physical" | "magic" | "true" | "non-lethal",
     attacker: ChessObject,
     sunder: number = 0,
     fromAttack: boolean = false
@@ -160,10 +160,40 @@ export class ChessObject {
       }
     }
 
-    const finalDamage = Math.floor(
+    let finalDamage = Math.floor(
       chess.preTakenDamage(this, calDamage, fromAttack)
     );
+    if (
+      this.chess.items.some((item) => item.id === "deaths_dance") &&
+      damageType !== "non-lethal" &&
+      damageType !== "true"
+    ) {
+      finalDamage = Math.floor(finalDamage * 0.5);
+      const duration = 2;
+      const damagePerTurn = (finalDamage * 0.5) / duration;
+      this.applyDebuff(chess, {
+        id: `deaths_dance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: "Death's Dance",
+        description:
+          "50% of the damage the holder receives is instead dealt over 2 turns as non-lethal damage.",
+        duration,
+        maxDuration: duration,
+        effects: [],
+        damagePerTurn: damagePerTurn,
+        damageType: "non-lethal",
+        healPerTurn: 0,
+        unique: false,
+        appliedAt: Date.now(),
+        casterPlayerId: this.chess.ownerId,
+        casterName: this.chess.name,
+        currentStacks: 1,
+        maximumStacks: 1,
+      } as Debuff);
+    }
     chess.chess.stats.hp -= finalDamage;
+    if (damageType === "non-lethal") {
+      chess.chess.stats.hp = Math.max(chess.chess.stats.hp, 1);
+    }
     chess.postTakenDamage(this, finalDamage, damageType, fromAttack);
 
     if (chess.chess.stats.hp <= 0) {
@@ -218,7 +248,7 @@ export class ChessObject {
   protected postTakenDamage(
     attacker: ChessObject,
     damage: number,
-    damageType: "physical" | "magic" | "true",
+    damageType: "physical" | "magic" | "true" | "non-lethal",
     fromAttack: boolean = false
   ): void {
     if (this.chess.items.some((item) => item.id === "titans_resolve")) {
@@ -787,7 +817,10 @@ export class ChessObject {
     chess.debuffs.forEach((debuff) => {
       debuff.effects.forEach((effect) => {
         if (effect.stat === stat) {
-          modifiers.push({ value: effect.modifier, type: effect.type });
+          modifiers.push({
+            value: effect.modifier * debuff.currentStacks,
+            type: effect.type,
+          });
         }
       });
     });

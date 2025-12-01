@@ -134,7 +134,7 @@ export class Debuff {
   damagePerTurn: number; // damage dealt each turn
 
   @Prop({ default: 0 })
-  damageType: "physical" | "magic" | "true"; // 'physical', 'magic', 'true'
+  damageType: "physical" | "magic" | "true" | "non-lethal"; // 'physical', 'magic', 'true', 'non-lethal'
 
   @Prop({ default: 0 })
   healPerTurn: number; // heal each turn
