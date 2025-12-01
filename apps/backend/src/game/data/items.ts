@@ -205,6 +205,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/SpearofShojin.png",
     effects: [
       { stat: "ad", value: 15, type: "add" },
+      { stat: "ap", value: 15, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
     ],
     isBasic: false,
@@ -234,7 +235,6 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/RapidFirecannon.png",
     effects: [
       { stat: "sunder", value: 30, type: "add" },
-      { stat: "damageAmplification", value: 5, type: "add" },
       { stat: "attackRange", value: 1, type: "add" },
     ],
     isBasic: false,
@@ -244,7 +244,8 @@ export const combinedItems: ItemData[] = [
   {
     id: "guinsoo_rageblade",
     name: "Guinsoo's Rageblade",
-    description: "Each attack grant 2 permanent Sunder.",
+    description:
+      "When attack, the user can make another attack but it deals 50% less damage.",
     cost: 0,
     icon: "/icons/GuinsoosRageblade.png",
     effects: [
@@ -253,17 +254,19 @@ export const combinedItems: ItemData[] = [
     ],
     isBasic: false,
     recipe: ["recurve_bow", "needlessly_rod"],
+    cooldown: 5,
   },
   {
     id: "titans_resolve",
     name: "Titan's Resolve",
     description:
-      "Each times being attacked, grant 5 damage amplification + armor + magic resistance for 3 turns. (Max 4 times)",
+      "Gains 12% Durability. Convert 25% of damage taken into AD and AP for 3 turns.",
     cost: 0,
     icon: "/icons/TitansResolve.png",
     effects: [
       { stat: "sunder", value: 20, type: "add" },
       { stat: "physicalResistance", value: 20, type: "add" },
+      { stat: "durability", value: 12, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "chain_vest"],
@@ -271,12 +274,14 @@ export const combinedItems: ItemData[] = [
   {
     id: "wit_s_end",
     name: "Wit's End",
-    description: "Each attacks grant 3 permanent magic resistance.",
+    description:
+      "Each attacks deals (5 + 25% of bonus AD) magic damage to the target.",
     cost: 0,
     icon: "/icons/WitsEnd.png",
     effects: [
       { stat: "sunder", value: 20, type: "add" },
       { stat: "magicResistance", value: 20, type: "add" },
+      { stat: "speed", value: 1, type: "add" },
     ],
     isBasic: false,
     recipe: ["recurve_bow", "negatron_cloak"],
@@ -355,7 +360,8 @@ export const combinedItems: ItemData[] = [
   {
     id: "crownguard",
     name: "Crownguard",
-    description: "Immidiate gain a 30% of max Health Shield. If the shield is broken, gain 10 AP.",
+    description:
+      "Immidiate gain a 30% of max Health Shield. If the shield is broken, gain 10 AP.",
     cost: 0,
     icon: "/icons/Crownguard.png",
     effects: [
@@ -389,6 +395,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "ap", value: 25, type: "add" },
       { stat: "maxHp", value: 35, type: "add" },
+      { stat: "damageAmplification", value: 7, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "giants_belt"],
@@ -425,23 +432,23 @@ export const combinedItems: ItemData[] = [
   {
     id: "gargoyle_stoneplate",
     name: "Gargoyle Stoneplate",
-    description: "Gain 20 Armor and 20 Magic Resist when HP is below 40%.",
+    description: "Gain 25 Armor and 25 Magic Resist when HP is below 60%.",
     cost: 0,
     icon: "/icons/GargoyleStoneplate.png",
     effects: [
-      { stat: "physicalResistance", value: 20, type: "add" },
-      { stat: "magicResistance", value: 20, type: "add" },
+      { stat: "physicalResistance", value: 25, type: "add" },
+      { stat: "magicResistance", value: 25, type: "add" },
       {
         stat: "physicalResistance",
         value: 20,
         type: "add",
-        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.4,
+        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.6,
       },
       {
         stat: "magicResistance",
         value: 20,
         type: "add",
-        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.4,
+        condition: (chess) => chess.chess.stats.hp < chess.maxHp * 0.6,
       },
     ],
     isBasic: false,
@@ -466,12 +473,19 @@ export const combinedItems: ItemData[] = [
     id: "steadfast_heart",
     name: "Steadfast Heart",
     description:
-      "Gain 10% Durability. While above 50% Health, instead gain 18% Durability.",
+      "Gain 10% Durability. While above 50% Health, instead gain 20% Durability.",
     cost: 0,
     icon: "/icons/SteadfastHeart.png",
     effects: [
       { stat: "physicalResistance", value: 20, type: "add" },
       { stat: "criticalChance", value: 25, type: "add" },
+      { stat: "durability", value: 10, type: "add" },
+      {
+        stat: "durability",
+        value: 10,
+        type: "add",
+        condition: (chess) => chess.chess.stats.hp > chess.maxHp * 0.5,
+      },
     ],
     isBasic: false,
     recipe: ["chain_vest", "sparring_gloves"],
@@ -487,6 +501,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/DragonsClaw.png",
     effects: [
       { stat: "magicResistance", value: 40, type: "add" },
+      { stat: "durability", value: 5, type: "add" },
       {
         stat: "magicResistance",
         value: 30,
@@ -565,12 +580,13 @@ export const combinedItems: ItemData[] = [
   {
     id: "blue_buff",
     name: "Blue Buff",
-    description: "Reduce 1 round of cooldown of skill after using it.",
+    description: "Reduce 25% of skill cooldown after using it.",
     cost: 0,
     icon: "/icons/BlueBuff.png",
     effects: [
       { stat: "cooldownReduction", value: 10, type: "add" },
       { stat: "damageAmplification", value: 5, type: "add" },
+      { stat: "ap", value: 10, type: "add" },
     ],
     isBasic: false,
     recipe: ["tear", "tear"],
@@ -628,12 +644,13 @@ export const combinedItems: ItemData[] = [
     id: "adaptive_helm",
     name: "Adaptive Helm",
     description:
-      "Gain 20 Armor or 20 Magic Resist for 3 turns when taken damage based on the damage type.",
+      "Gain 30 Armor or 30 Magic Resist for 3 turns when taken damage based on the damage type.",
     cost: 0,
     icon: "/icons/AdaptiveHelm.png",
     effects: [
       { stat: "cooldownReduction", value: 5, type: "add" },
-      { stat: "magicResistance", value: 20, type: "add" },
+      { stat: "magicResistance", value: 15, type: "add" },
+      { stat: "physicalResistance", value: 15, type: "add" },
     ],
     isBasic: false,
     recipe: ["tear", "negatron_cloak"],

@@ -32,6 +32,7 @@ export interface ChessPiece {
     cooldownReduction?: number;
     lifesteal?: number;
     hpRegen: number;
+    durability?: number;
     attackRange: {
       range: number;
       diagonal: boolean;
@@ -55,6 +56,7 @@ export interface ChessPiece {
     cooldownReduction?: number;
     lifesteal?: number;
     hpRegen: number;
+    durability?: number;
     attackRange: {
       range: number;
       diagonal: boolean;
@@ -77,12 +79,12 @@ export interface ChessPiece {
       lShape?: boolean;
     };
     targetTypes?:
-    | "square"
-    | "squareInRange"
-    | "ally"
-    | "allyMinion"
-    | "enemy"
-    | "none";
+      | "square"
+      | "squareInRange"
+      | "ally"
+      | "allyMinion"
+      | "enemy"
+      | "none";
   };
   shields?: Array<{
     amount: number;
@@ -457,13 +459,13 @@ export const useGame = (gameId: string) => {
       if (attackRange && attackRange.lShape) {
         // All 8 possible L-shape moves: 2 squares in one direction, 1 perpendicular
         const lShapeOffsets = [
-          { dx: 2, dy: 1 },   // Right 2, Up 1
-          { dx: 2, dy: -1 },  // Right 2, Down 1
-          { dx: -2, dy: 1 },  // Left 2, Up 1
+          { dx: 2, dy: 1 }, // Right 2, Up 1
+          { dx: 2, dy: -1 }, // Right 2, Down 1
+          { dx: -2, dy: 1 }, // Left 2, Up 1
           { dx: -2, dy: -1 }, // Left 2, Down 1
-          { dx: 1, dy: 2 },   // Right 1, Up 2
-          { dx: 1, dy: -2 },  // Right 1, Down 2
-          { dx: -1, dy: 2 },  // Left 1, Up 2
+          { dx: 1, dy: 2 }, // Right 1, Up 2
+          { dx: 1, dy: -2 }, // Right 1, Down 2
+          { dx: -1, dy: 2 }, // Left 1, Up 2
           { dx: -1, dy: -2 }, // Left 1, Down 2
         ];
 
@@ -803,7 +805,7 @@ export const useGame = (gameId: string) => {
   const isMyTurn =
     gameState && currentUser
       ? gameState.currentRound % 2 ===
-      (gameState.bluePlayer === currentUser.id ? 1 : 0)
+        (gameState.bluePlayer === currentUser.id ? 1 : 0)
       : false;
 
   // Get current player data

@@ -24,6 +24,7 @@ export interface ChampionStats {
   lifesteal?: number;
   damageAmplification?: number;
   hpRegen?: number;
+  durability?: number;
 }
 
 export interface ChampionSkill {

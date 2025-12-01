@@ -48,7 +48,7 @@ export const champions: ChampionData[] = [
       },
       magicResistance: 5,
       physicalResistance: 5,
-      speed: 1
+      speed: 1,
     },
     skill: {
       type: "active",
@@ -153,7 +153,7 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
-      speed: 1
+      speed: 1,
     },
     skill: {
       type: "passive",
@@ -166,19 +166,19 @@ export const champions: ChampionData[] = [
   {
     name: "Tristana",
     stats: {
-      maxHp: 75,
+      maxHp: 70,
       ad: 20,
       ap: 0,
       physicalResistance: 5,
       magicResistance: 5,
       attackRange: {
-        range: 2, // Passive range (base is 2 when disabled)
+        range: 1,
         diagonal: true,
         horizontal: true,
         vertical: true,
         lShape: false,
       },
-      speed: 1
+      speed: 1,
     },
     skill: {
       type: "passive",
@@ -332,11 +332,12 @@ export const champions: ChampionData[] = [
       hpRegen: 3,
     },
     skill: {
-      type: "passive",
+      type: "active",
       name: "Soul Furnace",
       description:
-        "When Sion kills enemies, he passively gains maximum Health. He deals bonus (10 + 25% AP) of his max health magic damage to his target.",
-      cooldown: 0,
+        "Sion drains 5% of all enemy pieces' max health that are adjacent to him and then gains (10 + 40% of AP)% of his max health as shield for 3 turns.",
+      cooldown: 6,
+      targetTypes: "none",
     },
   },
   {
@@ -555,7 +556,7 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
-      speed: 1
+      speed: 1,
     },
     skill: {
       type: "active",
@@ -589,14 +590,14 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
-      speed: 1
+      speed: 1,
     },
     skill: {
       type: "active",
       name: "Wild Cards",
       description:
         "Throws (3 + 20% of AP) cards to a target and his adjacent enemies, each card deals (1 + 5% AP + 5% AD) magic damage to the target and his adjacent enemies.",
-      cooldown: 5,
+      cooldown: 7,
       attackRange: {
         range: 3,
         diagonal: true,
@@ -623,7 +624,7 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
-      speed: 1
+      speed: 1,
     },
     skill: {
       type: "active",

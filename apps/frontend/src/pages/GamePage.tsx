@@ -2252,6 +2252,7 @@ const getStatIcon = (stat: string): string => {
     cooldownReduction: '/icons/icon-cdr.webp',
     lifesteal: '/icons/icon-sv.png',
     hpRegen: '/icons/icon-hp-regen.png',
+    durability: '/icons/icon-durability.png',
   };
   return iconMap[stat] || '/icons/AD.svg';
 };
@@ -3521,6 +3522,19 @@ const GamePage: React.FC = () => {
                     : ''
                     }`}>
                     {detailViewPiece.stats.hpRegen || 0}
+                  </span>
+                </div>
+                <div
+                  className="stat-item"
+                  onMouseEnter={(e) => handleTooltipShow(e, 'Durability (% damage reduction)')}
+                  onMouseLeave={handleTooltipHide}
+                >
+                  <span className="stat-label"><img src="/icons/icon-durability.png" alt="Durability" width={14} height={14} /></span>
+                  <span className={`stat-value ${detailViewPiece.rawStats && (detailViewPiece.rawStats as any).durability !== detailViewPiece.stats.durability
+                    ? `modified ${(detailViewPiece.stats.durability || 0) > ((detailViewPiece.rawStats as any).durability || 0) ? 'buffed' : 'debuffed'}`
+                    : ''
+                    }`}>
+                    {detailViewPiece.stats.durability || 0}%
                   </span>
                 </div>
               </div>

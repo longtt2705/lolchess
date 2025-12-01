@@ -95,6 +95,9 @@ export class ChessStats {
 
   @Prop({ default: 0 })
   hpRegen: number; // HP regenerated per turn
+
+  @Prop({ default: 0 })
+  durability: number; // Durability of the piece (percentage)
 }
 
 export class DebuffEffect {

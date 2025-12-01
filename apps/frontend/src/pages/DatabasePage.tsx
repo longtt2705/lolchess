@@ -546,6 +546,7 @@ const getStatIcon = (stat: string): string => {
         lifesteal: '/icons/icon-sv.png',
         hpRegen: '/icons/icon-hp-regen.png',
         goldValue: '/icons/gold.png',
+        durability: '/icons/icon-durability.png',
     };
     return iconMap[stat] || '/icons/AD.svg';
 };
@@ -937,7 +938,15 @@ const DatabasePage: React.FC = () => {
                                                             {item.name}
                                                             {item.unique && <UniqueBadge>UNIQUE</UniqueBadge>}
                                                         </h3>
-                                                        <div className="cost">{item.cost}g</div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                            <div className="cost">{item.cost}g</div>
+                                                            {(item as any).cooldown > 0 && (
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
+                                                                    <img src={getStatIcon('cooldownReduction')} alt="Cooldown" width={14} height={14} />
+                                                                    <span style={{ color: 'var(--gold)' }}>{(item as any).cooldown}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </ItemHeader>
                                                 <ItemEffects>
@@ -977,6 +986,11 @@ const DatabasePage: React.FC = () => {
                                                             {item.name}
                                                             {item.unique && <UniqueBadge>UNIQUE</UniqueBadge>}
                                                         </h3>
+                                                        {(item as any).cooldown > 0 && (
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
+                                                                <span style={{ color: 'var(--gold)' }}>{(item as any).cooldown} turn cooldown</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </ItemHeader>
                                                 <ItemEffects>

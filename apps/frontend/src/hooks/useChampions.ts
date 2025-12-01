@@ -10,6 +10,7 @@ export interface ChampionData {
     magicResistance?: number;
     speed?: number;
     goldValue?: number;
+    durability?: number;
     attackRange?: {
       range: number | undefined;
       diagonal: boolean;

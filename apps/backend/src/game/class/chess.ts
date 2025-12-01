@@ -124,7 +124,8 @@ export class ChessObject {
     damage: number,
     damageType: "physical" | "magic" | "true",
     attacker: ChessObject,
-    sunder: number = 0
+    sunder: number = 0,
+    fromAttack: boolean = false
   ): number {
     let damageAmplification = this.damageAmplification;
     if (
@@ -159,9 +160,11 @@ export class ChessObject {
       }
     }
 
-    const finalDamage = Math.floor(chess.preTakenDamage(this, calDamage));
+    const finalDamage = Math.floor(
+      chess.preTakenDamage(this, calDamage, fromAttack)
+    );
     chess.chess.stats.hp -= finalDamage;
-    chess.postTakenDamage(this, finalDamage, damageType);
+    chess.postTakenDamage(this, finalDamage, damageType, fromAttack);
 
     if (chess.chess.stats.hp <= 0) {
       chess.chess.stats.hp = 0;
@@ -200,12 +203,14 @@ export class ChessObject {
     return damage; // Return the actual damage dealt
   }
 
-  protected preTakenDamage(attacker: ChessObject, damage: number): number {
-    if (this.chess.items.some((item) => item.id === "steadfast_heart")) {
-      if (this.chess.stats.hp > this.chess.stats.maxHp * 0.5) {
-        return damage * 0.82;
-      }
-      return damage * 0.9;
+  protected preTakenDamage(
+    attacker: ChessObject,
+    damage: number,
+    fromAttack: boolean = false
+  ): number {
+    const durability = this.durability;
+    if (durability > 0) {
+      return damage * ((100 - durability) / 100);
     }
     return damage;
   }
@@ -213,21 +218,31 @@ export class ChessObject {
   protected postTakenDamage(
     attacker: ChessObject,
     damage: number,
-    damageType: "physical" | "magic" | "true"
+    damageType: "physical" | "magic" | "true",
+    fromAttack: boolean = false
   ): void {
-    if (
-      this.chess.items.some((item) => item.id === "edge_of_night") &&
-      this.chess.stats.hp <= 0
-    ) {
-      const edgeOfNight = this.chess.items.find(
-        (item) => item.id === "edge_of_night"
-      );
-      if (edgeOfNight && !edgeOfNight.payload?.hasUsedEdgeOfNight) {
-        edgeOfNight.payload = {
-          hasUsedEdgeOfNight: true,
-        };
-        this.chess.stats.hp = 1;
-      }
+    if (this.chess.items.some((item) => item.id === "titans_resolve")) {
+      const damageToConvert = Math.floor(damage * 0.25);
+      this.applyDebuff(this, {
+        id: "titans_resolve",
+        name: "Titan's Resolve",
+        description: `Gains ${damageToConvert} AD and AP for 3 turns.`,
+        duration: 3,
+        maxDuration: 3,
+        effects: [
+          { stat: "ad", modifier: damageToConvert, type: "add" },
+          { stat: "ap", modifier: damageToConvert, type: "add" },
+        ],
+        damagePerTurn: 0,
+        damageType: "physical",
+        healPerTurn: 0,
+        appliedAt: Date.now(),
+        casterPlayerId: this.chess.ownerId,
+        casterName: this.chess.name,
+        unique: false,
+        currentStacks: 1,
+        maximumStacks: 1,
+      } as Debuff);
     }
     if (
       this.chess.items.some((item) => item.id === "sterak_gage") &&
@@ -377,11 +392,11 @@ export class ChessObject {
     return {
       id: "burned",
       name: "Burned",
-      description: "Burns enemies for 5 true damage each turn.",
+      description: `Burns enemies for ${5 + Math.floor(owner.game.currentRound / 10)} true damage each turn.`,
       duration: turn,
       maxDuration: turn,
       effects: [],
-      damagePerTurn: 5,
+      damagePerTurn: 5 + Math.floor(owner.game.currentRound / 10),
       damageType: "true",
       healPerTurn: 0,
       unique: true,
@@ -497,7 +512,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -508,7 +523,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -545,7 +560,8 @@ export class ChessObject {
       chess.chess.debuffs.push({
         id: "quicksilver",
         name: "Quicksilver",
-        description: "Resistance to all active debuffs from opponent for 2 turns.",
+        description:
+          "Resistance to all active debuffs from opponent for 2 turns.",
         duration: 2,
         maxDuration: 2,
         effects: [],
@@ -563,7 +579,10 @@ export class ChessObject {
       return true;
     }
 
-    if (chess.chess.debuffs.some((d) => d.id === "quicksilver") && debuff.casterPlayerId !== this.chess.ownerId) {
+    if (
+      chess.chess.debuffs.some((d) => d.id === "quicksilver") &&
+      debuff.casterPlayerId !== this.chess.ownerId
+    ) {
       return false;
     }
     // Check if debuff is unique and already exists
@@ -670,6 +689,10 @@ export class ChessObject {
         chess.chess.shields.splice(i, 1);
       }
     }
+  }
+
+  get durability(): number {
+    return this.getEffectiveStat(this.chess, "durability");
   }
 
   get attackRange(): AttackRange {
@@ -1147,45 +1170,19 @@ export class ChessObject {
       this.damage(chess, 10 + this.ap * 0.2, "magic", this, this.sunder);
     }
     if (this.chess.items.some((item) => item.id === "guinsoo_rageblade")) {
-      this.chess.stats.sunder += 2;
+      const guinsooRageblade = this.chess.items.find(
+        (item) => item.id === "guinsoo_rageblade"
+      );
+      if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
+        this.attack(chess, false, 0.5);
+        guinsooRageblade.currentCooldown =
+          this.getItemCooldown(guinsooRageblade);
+      }
     }
-    if (chess.chess.items.some((item) => item.id === "titans_resolve")) {
-      chess.applyDebuff(chess, {
-        id: "titans_resolve",
-        name: "Titan's Resolve",
-        description:
-          "Each times being attacked, grant 5 damage amplification + armor + magic resistance for 3 turns. (Max 4 times)",
-        duration: 3,
-        maxDuration: 3,
-        effects: [
-          {
-            stat: "damageAmplification",
-            modifier: 5,
-            type: "add",
-          },
-          {
-            stat: "physicalResistance",
-            modifier: 5,
-            type: "add",
-          },
-          {
-            stat: "magicResistance",
-            modifier: 5,
-            type: "add",
-          },
-        ],
-        damagePerTurn: 0,
-        damageType: "physical",
-        healPerTurn: 0,
-        appliedAt: Date.now(),
-        casterPlayerId: this.chess.ownerId,
-        casterName: this.chess.name,
-        unique: false,
-        maximumStacks: 4,
-      } as Debuff);
-    }
+
     if (this.chess.items.some((item) => item.id === "wit_s_end")) {
-      this.chess.stats.magicResistance += 3;
+      const bonusAd = this.ad - this.chess.stats.ad;
+      this.damage(chess, 5 + bonusAd * 0.25, "magic", this, this.sunder);
     }
     if (this.chess.items.some((item) => item.id === "thiefs_gloves")) {
       const stats = [
@@ -1260,7 +1257,8 @@ export class ChessObject {
       damage * damageMultiplier,
       "physical",
       this,
-      this.sunder
+      this.sunder,
+      true
     );
   }
 
@@ -1268,7 +1266,7 @@ export class ChessObject {
     // Set skill on cooldown
     this.chess.skill.currentCooldown = this.skillCooldown;
     if (this.chess.items.some((item) => item.id === "blue_buff")) {
-      this.chess.skill.currentCooldown -= 1;
+      this.chess.skill.currentCooldown -= Math.round(this.skillCooldown * 0.25);
       if (this.chess.skill.currentCooldown < 0) {
         this.chess.skill.currentCooldown = 0;
       }

@@ -1,29 +1,47 @@
 import { ChessObject } from "./chess";
+import { GameLogic } from "../game.logic";
+import { Square } from "../game.schema";
+import { ChessFactory } from "./chessFactory";
 
 export class Sion extends ChessObject {
-  protected attack(chess: ChessObject): number {
-    const baseDamage = super.attack(chess);
+  // Soul Furnace active skill
+  skill(position?: Square): void {
+    // Get all adjacent squares
+    const adjacentSquares = GameLogic.getAdjacentSquares(this.chess.position);
 
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return baseDamage;
-    }
-
-    const bonusDamage = Math.floor(
-      this.chess.stats.maxHp * (0.1 + (this.ap * 0.25) / 100)
-    );
-    if (bonusDamage > 0) {
-      this.damage(chess, bonusDamage, "magic", this, this.sunder);
-    }
-    // Soul Furnace: gain max health when killing enemies
-    if (chess.chess.stats.hp <= 0) {
-      this.chess.stats.maxHp += chess.chess.stats.goldValue;
-      // Also heal to the new max HP to show the effect
-      this.chess.stats.hp = Math.min(
-        this.chess.stats.hp + chess.chess.stats.goldValue,
-        this.chess.stats.maxHp
+    // Drain 5% of max health from each enemy adjacent to Sion
+    adjacentSquares.forEach((square) => {
+      // Get enemy pieces (opposite team)
+      const targetChess = GameLogic.getChess(
+        this.game,
+        !this.chess.blue, // Opposite team
+        square
       );
-    }
-    return baseDamage;
+
+      if (targetChess) {
+        const targetChessObject = ChessFactory.createChess(
+          targetChess,
+          this.game
+        );
+
+        // Deal 5% of target's max health as magic damage
+        const drainDamage = Math.floor(targetChessObject.maxHp * 0.05);
+        this.activeSkillDamage(
+          targetChessObject,
+          drainDamage,
+          "magic",
+          this,
+          this.sunder
+        );
+
+        this.chess.stats.maxHp += drainDamage;
+        this.chess.stats.hp += drainDamage;
+      }
+    });
+
+    // After draining all adjacent enemies, grant shield
+    // Shield amount: (10 + 40% of AP)% of Sion's max health
+    const shieldAmount = Math.floor((this.maxHp * (10 + this.ap * 0.4)) / 100);
+    this.applyShield(shieldAmount, 3);
   }
 }
