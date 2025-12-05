@@ -159,7 +159,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Frost Shot",
       description:
-        "Ashe's attacks slow their target by 1 Move Speed. Her attacks cannot be critical, but she gains (10+10% of AP) physical damage for each 25 percent of critical chance she has.",
+        "Her attacks cannot be critical, but she gains (10+10% of AP) physical damage for each 25 percent of critical chance she has. Ashe's attacks slow their target by 1 (It can be critical to 2) Move Speed. ",
       cooldown: 0,
     },
   },
@@ -563,7 +563,7 @@ export const champions: ChampionData[] = [
       name: "Siphon Power",
       description:
         "Viktor deals (10 + 50% of AP) magic damage to a target, and empowers his next basic attack, dealing bonus (10 + 50% of AP) magic damage.",
-      cooldown: 3,
+      cooldown: 5,
       attackRange: {
         range: 3,
         diagonal: true,
@@ -662,8 +662,8 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Arise",
       description:
-        "Azir can promote a Minion to a Sand Soldier. Sand Soldiers deal additional (5 + 40% of AP) magic damage to their target. If Azir is dead, the Sand Soldier will die with him.",
-      cooldown: 10,
+        "Azir can promote a Minion to a Sand Soldier. Sand Soldiers deal additional (5 + 65% of AP) magic damage to their target. If Azir is dead, the Sand Soldier will die with him.",
+      cooldown: 9,
       attackRange: {
         range: 2,
         diagonal: true,

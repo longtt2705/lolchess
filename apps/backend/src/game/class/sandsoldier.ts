@@ -38,7 +38,7 @@ export class SandSoldier extends ChessObject {
     // Calculate and deal bonus magic damage
     const azir = this.getAzirChess();
     if (azir) {
-      bonusDamage = 5 + azir.ap * 0.4;
+      bonusDamage = 5 + azir.ap * 0.65;
       if (bonusDamage > 0) {
         this.damage(chess, bonusDamage, "magic", this, this.sunder);
       }

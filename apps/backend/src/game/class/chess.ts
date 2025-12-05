@@ -233,6 +233,18 @@ export class ChessObject {
     return damage; // Return the actual damage dealt
   }
 
+  /**
+   * Public method to deal damage from external sources (e.g., item effects)
+   */
+  public dealDamage(
+    target: ChessObject,
+    damage: number,
+    damageType: "physical" | "magic" | "true" | "non-lethal",
+    sunder: number = 0
+  ): number {
+    return this.damage(target, damage, damageType, this, sunder, false);
+  }
+
   protected preTakenDamage(
     attacker: ChessObject,
     damage: number,
@@ -1217,23 +1229,6 @@ export class ChessObject {
       const bonusAd = this.ad - this.chess.stats.ad;
       this.damage(chess, 5 + bonusAd * 0.25, "magic", this, this.sunder);
     }
-    if (this.chess.items.some((item) => item.id === "thiefs_gloves")) {
-      const stats = [
-        "ad",
-        "ap",
-        "physicalResistance",
-        "magicResistance",
-      ] as const;
-      const values = stats
-        .map((stat) => ({ stat, value: chess.chess.stats[stat] }))
-        .filter((value) => value.value > 1);
-      if (values.length === 0) {
-        return;
-      }
-      const randomStat = values[Math.floor(Math.random() * values.length)].stat;
-      chess.chess.stats[randomStat] -= 2;
-      this.chess.stats[randomStat] += 2;
-    }
 
     if (
       chess.chess.items.some((item) => item.id === "bramble_vest") &&
@@ -1265,6 +1260,12 @@ export class ChessObject {
     }
   }
 
+  protected isCriticalStrike(forceCritical: boolean = false): boolean {
+    const criticalChance = this.criticalChance / 100;
+    const randomChance = Math.random();
+    return forceCritical || randomChance < criticalChance;
+  }
+
   protected attack(
     chess: ChessObject,
     forceCritical: boolean = false,
@@ -1275,9 +1276,7 @@ export class ChessObject {
     }
 
     // Critical strike system from RULE.md: 20% chance, 150% damage
-    const criticalChance = this.criticalChance / 100;
-    const randomChance = Math.random();
-    this.willCrit = forceCritical || randomChance < criticalChance;
+    this.willCrit = this.isCriticalStrike(forceCritical);
     let damage = this.ad;
 
     if (this.willCrit) {

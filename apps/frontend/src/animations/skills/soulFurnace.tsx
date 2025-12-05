@@ -312,3 +312,7 @@ export const soulFurnaceRenderer: SkillAnimationRenderer = {
 
 
 
+
+
+
+

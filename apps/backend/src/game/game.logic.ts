@@ -200,7 +200,12 @@ export class GameLogic {
       { x: square.x + 1, y: square.y - 1 }, // Northeast (was missing!)
       { x: square.x + 1, y: square.y }, // East
       { x: square.x + 1, y: square.y + 1 }, // Southeast
-    ].filter((square) => (square.x >= 0 && square.x <= 7 && square.y >= 0 && square.y <= 7) || (square.x === -1 && square.y === 4) || (square.x === 8 && square.y === 3));
+    ].filter(
+      (square) =>
+        (square.x >= 0 && square.x <= 7 && square.y >= 0 && square.y <= 7) ||
+        (square.x === -1 && square.y === 4) ||
+        (square.x === 8 && square.y === 3)
+    );
   }
 
   private static processMoveChess(
@@ -291,6 +296,37 @@ export class GameLogic {
 
     const chessObject = ChessFactory.createChess(casterChess, game);
     chessObject.executeSkill(skillPosition);
+
+    // Ionic Spark: Deal damage to caster when they use an ability
+    const ionicSparkHolders = game.board.filter(
+      (piece) =>
+        piece.blue !== casterChess.blue && // Enemy team
+        piece.stats.hp > 0 &&
+        piece.items.some((item) => item.id === "ionic_spark")
+    );
+
+    for (const holder of ionicSparkHolders) {
+      const ionicSparkItem = holder.items.find(
+        (item) => item.id === "ionic_spark"
+      );
+      if (ionicSparkItem && ionicSparkItem.currentCooldown <= 0) {
+        // Calculate damage: 5x skill cooldown
+        const skillCooldown = casterChess.skill?.cooldown || 0;
+        const damage = skillCooldown * 5;
+
+        // Deal magic damage from Ionic Spark holder to caster
+        const holderObject = ChessFactory.createChess(holder, game);
+        holderObject.dealDamage(
+          chessObject,
+          damage,
+          "magic",
+          holderObject.sunder
+        );
+
+        // Set item on cooldown
+        ionicSparkItem.currentCooldown = ionicSparkItem.cooldown || 7;
+      }
+    }
 
     // After executing the skill, check for skill-specific payload data
     if (actionDetails && casterChess.skill?.payload) {
@@ -855,20 +891,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-          type: championData.skill.type,
-          name: championData.skill.name,
-          description: championData.skill.description,
-          cooldown: championData.skill.cooldown,
-          currentCooldown: championData.skill.currentCooldown || 0,
-          attackRange: championData.skill.attackRange ||
-            championData.stats.attackRange || {
-            range: 1,
-            diagonal: true,
-            horizontal: true,
-            vertical: true,
-          },
-          targetTypes: championData.skill.targetTypes || "none",
-        }
+            type: championData.skill.type,
+            name: championData.skill.name,
+            description: championData.skill.description,
+            cooldown: championData.skill.cooldown,
+            currentCooldown: championData.skill.currentCooldown || 0,
+            attackRange: championData.skill.attackRange ||
+              championData.stats.attackRange || {
+                range: 1,
+                diagonal: true,
+                horizontal: true,
+                vertical: true,
+              },
+            targetTypes: championData.skill.targetTypes || "none",
+          }
         : undefined,
       items: [],
       debuffs: [],

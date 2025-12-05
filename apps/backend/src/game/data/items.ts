@@ -373,15 +373,17 @@ export const combinedItems: ItemData[] = [
     recipe: ["needlessly_rod", "chain_vest"],
   },
   {
-    id: "thiefs_gloves",
-    name: "Thief's Gloves",
+    id: "ionic_spark",
+    name: "Ionic Spark",
     description:
-      "Steal 2 points from random stats (AD/AP/Armor/Magic Resist) of the enemy for each attack.",
+      "When enemies cast an Ability, deal magic damage equal to 5x their cooldown of their skill.",
     cost: 0,
-    icon: "/icons/ThiefsGloves.png",
+    cooldown: 7,
+    icon: "/icons/IonicSpark.png",
     effects: [
       { stat: "ap", value: 25, type: "add" },
       { stat: "magicResistance", value: 20, type: "add" },
+      { stat: "sunder", value: 8, type: "add" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "negatron_cloak"],
@@ -522,6 +524,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "maxHp", value: 35, type: "add" },
       { stat: "magicResistance", value: 20, type: "add" },
+      { stat: "durability", value: 5, type: "add" },
     ],
     isBasic: false,
     recipe: ["giants_belt", "negatron_cloak"],
