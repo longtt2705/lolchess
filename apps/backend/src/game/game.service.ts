@@ -1033,6 +1033,12 @@ export class GameService {
             currentCooldown: 0,
           }
         : piece.skill,
+      items: piece.items
+        ? piece.items.map((item) => ({
+            ...item,
+            currentCooldown: 0,
+          }))
+        : piece.items,
     }));
 
     // Save to Redis cache and queue MongoDB persistence

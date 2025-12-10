@@ -261,6 +261,14 @@ export class GameLogic {
     actionDetails.targetId = targetChess.id;
     actionDetails.targetPosition = targetPosition;
 
+    // Check if Guinsoo's Rageblade will proc on this attack (before executing the attack)
+    const guinsooRageblade = casterChess.items.find(
+      (item) => item.id === "guinsoo_rageblade"
+    );
+    if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
+      actionDetails.guinsooProc = true;
+    }
+
     const hpBefore = targetChess.stats.hp;
 
     const chessObject = ChessFactory.createChess(casterChess, game);
