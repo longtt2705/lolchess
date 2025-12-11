@@ -185,7 +185,7 @@ export const combinedItems: ItemData[] = [
     id: "sterak_gage",
     name: "Sterak's Gage",
     description:
-      "At 40% Health, gain a shield equal to 50% of the wearer's maximum Health that decays over 3 turns.",
+      "At 60% Health, gain a shield equal to 50% of the wearer's maximum Health and gain 20 AD that decays over 3 turns.",
     cost: 0,
     icon: "/icons/SteraksGage.png",
     effects: [
