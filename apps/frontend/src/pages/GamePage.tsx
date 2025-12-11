@@ -17,6 +17,7 @@ interface AttackAnimation {
   attackerPos: ChessPosition
   targetPos: ChessPosition
   damage?: number
+  guinsooProc?: boolean
 }
 
 interface MoveAnimation {
@@ -1359,6 +1360,27 @@ const AttackEffect = styled(motion.div)`
   z-index: 15;
 `
 
+const AfterimageEffect = styled(motion.div)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.6;
+  filter: hue-rotate(270deg) brightness(1.2);
+  pointer-events: none;
+  z-index: 14;
+  
+  /* Clone all child styles */
+  .piece-icon,
+  .piece-name,
+  .hp-bar,
+  .shield-bar,
+  img {
+    pointer-events: none;
+  }
+`
+
 const ItemPurchaseEffect = styled(motion.div)`
   position: absolute;
   top: 50%;
@@ -1934,6 +1956,46 @@ const ChessPieceRenderer: React.FC<{
     }
   }
 
+  // Calculate afterimage animation values (for Guinsoo's Rageblade)
+  const getAfterimageAnimation = () => {
+    if (!isAttacking || !attackAnimation || !attackAnimation.guinsooProc) return {}
+
+    // Same as main attack but with slight delay and smaller scale
+    const { cellWidth, cellHeight } = getCellDimensions()
+
+    let deltaX = attackAnimation.targetPos.x - attackAnimation.attackerPos.x
+    let deltaY = attackAnimation.targetPos.y - attackAnimation.attackerPos.y
+
+    if (isRedPlayer) {
+      deltaX = -deltaX
+      deltaY = -deltaY
+    }
+
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+    if (distance === 0) return {}
+
+    const dirX = deltaX / distance
+    const dirY = deltaY / distance
+
+    const avgCellSize = (cellWidth + cellHeight) / 2
+    const lungeDistance = avgCellSize * 0.3
+    const moveX = dirX * lungeDistance
+    const moveY = -dirY * lungeDistance
+
+    return {
+      x: [0, moveX, 0],
+      y: [0, moveY, 0],
+      scale: [0.9, 1.08, 0.9], // Slightly smaller scale
+      opacity: [0, 0.6, 0.6, 0], // Fade in and out
+      transition: {
+        duration: 0.6,
+        delay: 0.05, // 50ms delay
+        times: [0, 0.5, 1],
+        ease: "easeInOut"
+      }
+    }
+  }
+
   // Calculate actual cell dimensions from board
   const getCellDimensions = () => {
     if (!boardRef.current) {
@@ -2231,6 +2293,21 @@ const ChessPieceRenderer: React.FC<{
           )
         })}
       </AnimatePresence>
+
+      {/* Guinsoo's Rageblade Afterimage Effect */}
+      {isAttacking && attackAnimation?.guinsooProc && (
+        <AfterimageEffect
+          initial={{ x: -5, y: -5, scale: 0.9, opacity: 0 }}
+          animate={getAfterimageAnimation()}
+        >
+          <div className="piece-icon">
+            <img
+              src={getImageUrl(piece)}
+              alt={`${piece.name} afterimage`}
+            />
+          </div>
+        </AfterimageEffect>
+      )}
     </ChessPieceComponent>
   )
 }
@@ -2574,12 +2651,13 @@ const GamePage: React.FC = () => {
       }
 
       case 'attack': {
-        const { attackerId, attackerPosition, targetId, targetPosition } = animation.data
+        const { attackerId, attackerPosition, targetId, targetPosition, guinsooProc } = animation.data
         setAttackAnimation({
           attackerId,
           targetId,
           attackerPos: attackerPosition,
           targetPos: targetPosition,
+          guinsooProc,
         })
         await new Promise(resolve => setTimeout(resolve, animation.duration))
         setAttackAnimation(null)

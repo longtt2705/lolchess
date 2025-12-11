@@ -1234,9 +1234,9 @@ export class ChessObject {
         (item) => item.id === "guinsoo_rageblade"
       );
       if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
-        this.attack(chess, false, 0.5);
         guinsooRageblade.currentCooldown =
           this.getItemCooldown(guinsooRageblade);
+        this.executeAttack(chess, false, 0.5);
       }
     }
 

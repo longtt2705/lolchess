@@ -88,8 +88,8 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Perseverance",
       description:
-        "If Garen has not recently been struck by damage, he regenerates 10% of his total health each turn. If he is taken damage, he gains a shield equal to (10 + 40% of AP)% of his max health for 2 turns.",
-      cooldown: 6,
+        "Garen regenerates 10% of his missing health each turn if there is no enemy piece adjacent to him.",
+      cooldown: 0,
       currentCooldown: 0,
     },
   },

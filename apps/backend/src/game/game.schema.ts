@@ -377,6 +377,9 @@ export class ActionDetails {
 
   @Prop({ type: mongoose.Schema.Types.Mixed })
   selfDamage?: Record<string, number>; // Track self-damage for champions like Dr. Mundo (pieceId -> damage amount)
+
+  @Prop()
+  guinsooProc?: boolean; // For Guinsoo's Rageblade: indicates the attack triggered a second attack
 }
 
 @Schema()

@@ -29,6 +29,7 @@ export interface AttackAnimationData {
   targetId: string;
   targetPosition: ChessPosition;
   damage?: number;
+  guinsooProc?: boolean;
 }
 
 export interface SkillAnimationData {
@@ -133,6 +134,7 @@ export class AnimationEngine {
             attackerPosition: lastAction.casterPosition,
             targetId: lastAction.targetId,
             targetPosition: lastAction.targetPosition,
+            guinsooProc: lastAction.guinsooProc,
           } as AttackAnimationData,
         });
         currentDelay += 600;
