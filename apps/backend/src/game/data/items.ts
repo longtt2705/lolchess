@@ -255,6 +255,7 @@ export const combinedItems: ItemData[] = [
     isBasic: false,
     recipe: ["recurve_bow", "needlessly_rod"],
     cooldown: 5,
+    unique: true,
   },
   {
     id: "titans_resolve",

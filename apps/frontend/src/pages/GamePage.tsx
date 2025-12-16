@@ -2334,6 +2334,18 @@ const getStatIcon = (stat: string): string => {
   return iconMap[stat] || '/icons/AD.svg';
 };
 
+// Helper function to format numbers and avoid floating point precision issues
+const formatNumber = (value: number, decimals: number = 0): string => {
+  // Round to avoid floating point precision issues
+  const rounded = Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+  // If it's a whole number, don't show decimals
+  if (Math.abs(rounded % 1) < 0.0001) {
+    return Math.round(rounded).toString();
+  }
+  // Otherwise, show up to the specified decimal places and remove trailing zeros
+  return rounded.toFixed(decimals).replace(/\.?0+$/, '');
+};
+
 // Helper function to get skill state display for champions with payload-based mechanics
 const getSkillStateDisplay = (championName: string, skillPayload: any) => {
   if (!skillPayload) return null;
@@ -3372,7 +3384,7 @@ const GamePage: React.FC = () => {
                 <div className="hp-label">
                   <span className="hp-text">Health</span>
                   <span className="hp-numbers">
-                    {detailViewPiece.stats.hp} / {detailViewPiece.stats.maxHp}
+                    {formatNumber(detailViewPiece.stats.hp)} / {formatNumber(detailViewPiece.stats.maxHp)}
                     {detailViewPiece.rawStats && detailViewPiece.rawStats.maxHp !== detailViewPiece.stats.maxHp && (
                       <span style={{
                         fontSize: '10px',
@@ -3380,7 +3392,7 @@ const GamePage: React.FC = () => {
                         marginLeft: '4px',
                         opacity: 0.7
                       }}>
-                        (base: {detailViewPiece.rawStats.maxHp})
+                        (base: {formatNumber(detailViewPiece.rawStats.maxHp)})
                       </span>
                     )}
                   </span>
@@ -3394,7 +3406,7 @@ const GamePage: React.FC = () => {
                         🛡️ Shield
                       </span>
                       <span className="hp-numbers" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                        {detailViewPiece.shields.reduce((sum, s) => sum + s.amount, 0)}
+                        {formatNumber(detailViewPiece.shields.reduce((sum, s) => sum + s.amount, 0))}
                         {detailViewPiece.shields.length > 0 && detailViewPiece.shields[0].duration !== Number.MAX_SAFE_INTEGER && (
                           <span style={{
                             fontSize: '10px',
@@ -3728,14 +3740,14 @@ const GamePage: React.FC = () => {
                         {debuff.damagePerTurn > 0 && (
                           <div className="debuff-effects">
                             <div className="effect-tag negative">
-                              💥 {debuff.damagePerTurn} {debuff.damageType} dmg/turn
+                              💥 {formatNumber(debuff.damagePerTurn)} {debuff.damageType} dmg/turn
                             </div>
                           </div>
                         )}
                         {debuff.healPerTurn > 0 && (
                           <div className="debuff-effects">
                             <div className="effect-tag positive">
-                              💚 {debuff.healPerTurn} heal/turn
+                              💚 {formatNumber(debuff.healPerTurn)} heal/turn
                             </div>
                           </div>
                         )}

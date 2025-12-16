@@ -262,9 +262,25 @@ export class GameLogic {
     actionDetails.targetPosition = targetPosition;
 
     // Check if Guinsoo's Rageblade will proc on this attack (before executing the attack)
-    const guinsooRageblade = casterChess.items.find(
-      (item) => item.id === "guinsoo_rageblade"
-    );
+    // For Sand Soldiers, check Azir's items instead
+    let guinsooRageblade;
+    if (casterChess.name === "Sand Soldier" && casterChess.skill?.payload?.azirId) {
+      // Find Azir on the board
+      const azir = game.board.find(
+        (chess) => chess.id === casterChess.skill.payload.azirId && chess.stats.hp > 0
+      );
+      if (azir) {
+        guinsooRageblade = azir.items.find(
+          (item) => item.id === "guinsoo_rageblade"
+        );
+      }
+    } else {
+      // Normal chess pieces - check their own items
+      guinsooRageblade = casterChess.items.find(
+        (item) => item.id === "guinsoo_rageblade"
+      );
+    }
+
     if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
       actionDetails.guinsooProc = true;
     }
@@ -899,20 +915,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-            type: championData.skill.type,
-            name: championData.skill.name,
-            description: championData.skill.description,
-            cooldown: championData.skill.cooldown,
-            currentCooldown: championData.skill.currentCooldown || 0,
-            attackRange: championData.skill.attackRange ||
-              championData.stats.attackRange || {
-                range: 1,
-                diagonal: true,
-                horizontal: true,
-                vertical: true,
-              },
-            targetTypes: championData.skill.targetTypes || "none",
-          }
+          type: championData.skill.type,
+          name: championData.skill.name,
+          description: championData.skill.description,
+          cooldown: championData.skill.cooldown,
+          currentCooldown: championData.skill.currentCooldown || 0,
+          attackRange: championData.skill.attackRange ||
+            championData.stats.attackRange || {
+            range: 1,
+            diagonal: true,
+            horizontal: true,
+            vertical: true,
+          },
+          targetTypes: championData.skill.targetTypes || "none",
+        }
         : undefined,
       items: [],
       debuffs: [],

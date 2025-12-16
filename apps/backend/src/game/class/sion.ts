@@ -25,11 +25,11 @@ export class Sion extends ChessObject {
         );
 
         // Deal 5% of target's max health as magic damage
-        const drainDamage = Math.floor(targetChessObject.maxHp * 0.05);
+        const drainDamage = Math.floor(targetChessObject.maxHp * (0.04 + (this.ap * 0.03) / 100));
         this.activeSkillDamage(
           targetChessObject,
           drainDamage,
-          "magic",
+          "true",
           this,
           this.sunder
         );
@@ -41,7 +41,7 @@ export class Sion extends ChessObject {
 
     // After draining all adjacent enemies, grant shield
     // Shield amount: (10 + 40% of AP)% of Sion's max health
-    const shieldAmount = Math.floor((this.maxHp * (10 + this.ap * 0.4)) / 100);
+    const shieldAmount = Math.floor((this.maxHp * 0.1 + this.ap * 0.4));
     this.applyShield(shieldAmount, 3);
   }
 }

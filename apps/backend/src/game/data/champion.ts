@@ -335,7 +335,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Soul Furnace",
       description:
-        "Sion drains 5% of all enemy pieces' max health that are adjacent to him and then gains (10 + 40% of AP)% of his max health as shield for 3 turns.",
+        "Sion drains (4 + 3% of AP)% of all enemy pieces' max health that are adjacent to him and then gains (10% of his max health + 40% of AP) as shield for 3 turns.",
       cooldown: 6,
       targetTypes: "none",
     },
@@ -596,7 +596,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Wild Cards",
       description:
-        "Throws (3 + 20% of AP) cards to a target and his adjacent enemies, each card deals (1 + 5% AP + 5% AD) magic damage to the target and his adjacent enemies.",
+        "Throws (3 + 20% of AP) cards to a target and his adjacent enemies, the first card deals (1 + 5% AP + 5% AD) magic damage to the target. Subsequent cards deal 50% of the first card's damage to the target and his adjacent enemies.",
       cooldown: 7,
       attackRange: {
         range: 3,

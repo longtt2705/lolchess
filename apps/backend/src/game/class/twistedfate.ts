@@ -36,15 +36,27 @@ export class TwistedFate extends ChessObject {
       { targetId: string; targetPosition: Square; cardCount: number }
     >();
 
+    const isFirstCard = new Set<string>();
     for (let i = 0; i < cardCount; i++) {
       const target = targets[i % targets.length];
-      this.activeSkillDamage(
-        target,
-        1 + this.ap * 0.05 + this.ad * 0.05,
-        "magic",
-        this,
-        this.sunder
-      );
+      if (isFirstCard.has(target.chess.id)) {
+        this.activeSkillDamage(
+          target,
+          (1 + this.ap * 0.05 + this.ad * 0.05) * 0.5,
+          "magic",
+          this,
+          this.sunder
+        );
+      } else {
+        this.activeSkillDamage(
+          target,
+          (1 + this.ap * 0.05 + this.ad * 0.05),
+          "magic",
+          this,
+          this.sunder
+        );
+        isFirstCard.add(target.chess.id);
+      }
 
       // Track which target received this card
       const targetId = target.chess.id;

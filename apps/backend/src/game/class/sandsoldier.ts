@@ -51,9 +51,27 @@ export class SandSoldier extends ChessObject {
     super.postAttack(chess, damage);
 
     const azir = this.getAzirChess();
-    // Apply post attack for Azir
-    if (azir) {
-      azir.postAttack(chess, damage);
+    if (!azir) {
+      return;
     }
+
+    // Special handling for Azir's Guinsoo's Rageblade
+    // When Azir has Guinsoo's Rageblade, the Sand Soldier should perform the additional attack
+    if (azir.chess.items.some((item) => item.id === "guinsoo_rageblade")) {
+      const guinsooRageblade = azir.chess.items.find(
+        (item) => item.id === "guinsoo_rageblade"
+      );
+      if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
+        // Set Guinsoo's cooldown on Azir
+        guinsooRageblade.currentCooldown = azir.getItemCooldown(guinsooRageblade);
+        // Trigger Sand Soldier's additional attack (not Azir's)
+        this.executeAttack(chess, false, 0.5);
+      }
+    }
+
+    // Apply other post attack effects from Azir
+    // Note: Guinsoo's Rageblade is already handled above and now on cooldown,
+    // so it won't double-trigger when azir.postAttack is called
+    azir.postAttack(chess, damage);
   }
 }
