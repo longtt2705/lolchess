@@ -4,11 +4,6 @@ export class Aatrox extends ChessObject {
   protected attack(chess: ChessObject): number {
     const baseDamage = super.attack(chess);
 
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return baseDamage;
-    }
-
     if (this.chess.skill.currentCooldown > 0) {
       return baseDamage;
     }
@@ -23,10 +18,6 @@ export class Aatrox extends ChessObject {
   }
 
   get range(): number {
-    if (this.isPassiveDisabled()) {
-      return super.range;
-    }
-
     if (this.chess.skill.currentCooldown > 0) {
       return super.range;
     }

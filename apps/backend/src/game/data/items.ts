@@ -519,7 +519,8 @@ export const combinedItems: ItemData[] = [
   {
     id: "evenshroud",
     name: "Evenshroud",
-    description: "Disables all enemies' passive skills adjacent to the wearer.",
+    description:
+      "Reduces Physical and Magic Resistance of adjacent enemies by 10.",
     cost: 0,
     icon: "/icons/Evenshroud.png",
     effects: [

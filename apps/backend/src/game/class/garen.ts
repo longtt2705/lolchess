@@ -17,10 +17,6 @@ export class Garen extends ChessObject {
     if (isBlueTurn !== this.chess.blue) {
       return;
     }
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return;
-    }
     this.heal(this, (this.maxHp - this.chess.stats.hp) * 0.1);
   }
 }

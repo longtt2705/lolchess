@@ -41,9 +41,6 @@ export class Ashe extends ChessObject {
   }
 
   get ad(): number {
-    if (this.isPassiveDisabled()) {
-      return super.ad;
-    }
     return (
       super.ad + Math.floor((this.criticalChance / 25) * (10 + this.ap * 0.1))
     );
@@ -51,11 +48,6 @@ export class Ashe extends ChessObject {
 
   attack(chess: ChessObject): number {
     let baseDamage = super.attack(chess);
-
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return baseDamage;
-    }
 
     // Apply Frost Shot debuff
     this.applyFrostShot(chess, this.chess.ownerId);

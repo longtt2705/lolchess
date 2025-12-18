@@ -1,8 +1,8 @@
-import { GameLogic } from "../game.logic";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { MeleeMinion } from "./meleeminion";
 
-export class SandSoldier extends ChessObject {
+export class SandSoldier extends MeleeMinion {
   /**
    * Get Azir's AP for bonus damage calculation
    * Sand Soldiers deal additional (10 + 50% of Azir's AP) magic damage
@@ -63,7 +63,8 @@ export class SandSoldier extends ChessObject {
       );
       if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
         // Set Guinsoo's cooldown on Azir
-        guinsooRageblade.currentCooldown = azir.getItemCooldown(guinsooRageblade);
+        guinsooRageblade.currentCooldown =
+          azir.getItemCooldown(guinsooRageblade);
         // Trigger Sand Soldier's additional attack (not Azir's)
         this.executeAttack(chess, false, 0.5);
       }

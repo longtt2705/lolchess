@@ -2,18 +2,11 @@ import { ChessObject } from "./chess";
 
 export class Tristana extends ChessObject {
   get range(): number {
-    if (this.isPassiveDisabled()) {
-      return super.range;
-    }
-
     return Math.min(super.range + Math.floor(this.game.currentRound / 5), 8);
   }
 
   attack(chess: ChessObject): number {
     const baseDamage = super.attack(chess);
-    if (this.isPassiveDisabled()) {
-      return baseDamage;
-    }
 
     // Initialize or get attack count from skill payload
     if (!this.chess.skill?.payload) {

@@ -569,7 +569,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -580,7 +580,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -1055,13 +1055,6 @@ export class ChessObject {
     } as Aura;
   }
 
-  // Check if this champion's passive is disabled by Evenshroud debuff
-  isPassiveDisabled(): boolean {
-    return this.chess.debuffs.some(
-      (debuff) => debuff.id === "aura_evenshroud_passive_disable"
-    );
-  }
-
   move(position: Square, customSpeed?: number): void {
     // Check if this is a castling move (Poro moving 2 squares horizontally)
     if (this.chess.name === "Poro" && !this.chess.hasMovedBefore) {
@@ -1478,16 +1471,22 @@ export class ChessObject {
       );
     }
     if (item.id === "evenshroud") {
-      // Create aura that disables enemy passives
+      // Create aura that reduces enemy armor and magic resistance
       const evenshroudAura = this.createAura(
-        "evenshroud_passive_disable",
+        "evenshroud_armor_reduction",
         "Evenshroud",
-        "This champion's passive skills are disabled.",
+        "Reduces Physical and Magic Resistance by 10.",
         1, // Adjacent squares only
         [
           {
-            stat: "speed",
-            modifier: 0,
+            stat: "physicalResistance",
+            modifier: -10,
+            type: "add",
+            target: "enemies",
+          },
+          {
+            stat: "magicResistance",
+            modifier: -10,
             type: "add",
             target: "enemies",
           },

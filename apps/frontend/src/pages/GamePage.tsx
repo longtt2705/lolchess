@@ -2392,7 +2392,7 @@ const getDebuffIcon = (debuff: any) => {
     wounded: { src: '/icons/wounded.webp', alt: 'Wounded' },
     burned: { src: '/icons/burned.jpg', alt: 'Burned' },
     venom: { src: '/icons/SerpentsFang.png', alt: 'Venom' },
-    aura_evenshroud_passive_disable: { src: '/icons/Evenshroud.png', alt: 'Evenshroud' },
+    aura_evenshroud_armor_reduction: { src: '/icons/Evenshroud.png', alt: 'Evenshroud' },
     titans_resolve: { src: '/icons/TitansResolve.png', alt: 'Titans Resolve' },
     adaptive_helm_armor: { src: '/icons/AdaptiveHelm.png', alt: 'Adaptive Helm' },
     adaptive_helm_mr: { src: '/icons/AdaptiveHelm.png', alt: 'Adaptive Helm' },
@@ -3673,13 +3673,10 @@ const GamePage: React.FC = () => {
                             <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>{detailViewPiece.skill.cooldown}</span>
                           </div>}
                         </div>
-                        <div className={`card-cooldown ${detailViewPiece.skill.currentCooldown > 0 ? 'cooling' : detailViewPiece.skill.type === 'passive' && (detailViewPiece as any).debuffs?.some((debuff: any) => debuff.id === "aura_evenshroud_passive_disable") ? 'disabled' : 'ready'}`}>
+                        <div className={`card-cooldown ${detailViewPiece.skill.currentCooldown > 0 ? 'cooling' : 'ready'}`}>
                           {detailViewPiece.skill.currentCooldown > 0
                             ? `Cooldown: ${Math.ceil(detailViewPiece.skill.currentCooldown)} turns`
-                            :
-                            detailViewPiece.skill.type === 'passive' && (detailViewPiece as any).debuffs?.some((debuff: any) => debuff.id === "aura_evenshroud_passive_disable") ?
-                              'Disabled' :
-                              'Ready to use'
+                            : 'Ready to use'
                           }
                         </div>
                       </div>

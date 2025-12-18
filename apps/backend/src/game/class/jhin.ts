@@ -27,11 +27,6 @@ export class Jhin extends ChessObject {
   }
 
   attack(chess: ChessObject): number {
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return super.attack(chess);
-    }
-
     // Initialize or get attack count from skill payload
     if (!this.chess.skill?.payload) {
       this.chess.skill.payload = { attackCount: 0 };

@@ -28,12 +28,6 @@ export class CasterMinion extends ChessObject {
    */
   get ad(): number {
     const baseAd = super.ad;
-
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return baseAd;
-    }
-
     const adjacentMinionCount = this.countAdjacentMinions();
     return baseAd + adjacentMinionCount * 15;
   }
@@ -44,12 +38,6 @@ export class CasterMinion extends ChessObject {
    */
   get physicalResistance(): number {
     const basePhysicalResistance = super.physicalResistance;
-
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return basePhysicalResistance;
-    }
-
     const adjacentMinionCount = this.countAdjacentMinions();
     return basePhysicalResistance + adjacentMinionCount * 15;
   }
@@ -60,12 +48,6 @@ export class CasterMinion extends ChessObject {
    */
   get magicResistance(): number {
     const baseMagicResistance = super.magicResistance;
-
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return baseMagicResistance;
-    }
-
     const adjacentMinionCount = this.countAdjacentMinions();
     return baseMagicResistance + adjacentMinionCount * 15;
   }

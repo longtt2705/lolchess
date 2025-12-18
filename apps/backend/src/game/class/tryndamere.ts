@@ -29,11 +29,6 @@ export class Tryndamere extends ChessObject {
       return;
     }
 
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return;
-    }
-
     // Undying Rage: survive with 1 HP for 2 turns the first time he would die
     if (this.chess.stats.hp <= 0 && this.chess.skill.currentCooldown <= 0) {
       this.chess.stats.hp = 1;
@@ -44,9 +39,6 @@ export class Tryndamere extends ChessObject {
   }
 
   get ad(): number {
-    if (this.isPassiveDisabled()) {
-      return super.ad;
-    }
     return super.ad + Math.floor((this.maxHp - this.chess.stats.hp) / 5) * (1 + this.ap * 0.05);
   }
 }

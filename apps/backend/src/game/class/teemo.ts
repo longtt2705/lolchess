@@ -32,11 +32,6 @@ export class Teemo extends ChessObject {
   attack(chess: ChessObject): number {
     const baseDamage = super.attack(chess);
 
-    // Check if passive is disabled by Evenshroud
-    if (this.isPassiveDisabled()) {
-      return baseDamage;
-    }
-
     // Apply Toxic Shot debuff on every basic attack
     this.applyToxicShot(chess, this.chess.ownerId);
     this.damage(chess, 5 + this.ap * 0.4, "magic", this, this.sunder);
