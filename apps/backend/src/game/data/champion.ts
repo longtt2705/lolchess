@@ -347,8 +347,8 @@ export const champions: ChampionData[] = [
       maxHp: 44,
       ad: 44,
       ap: 4,
-      physicalResistance: 9,
-      magicResistance: 9,
+      physicalResistance: 4,
+      magicResistance: 4,
       attackRange: {
         range: 4,
         diagonal: true,
