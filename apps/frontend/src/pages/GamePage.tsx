@@ -2611,9 +2611,14 @@ const getDebuffIcon = (debuff: any) => {
     adaptive_helm_armor: { src: '/icons/AdaptiveHelm.png', alt: 'Adaptive Helm' },
     adaptive_helm_mr: { src: '/icons/AdaptiveHelm.png', alt: 'Adaptive Helm' },
     undying_rage: { src: '/icons/tryndamere_skill.webp', alt: 'Undying Rage' },
+    deaths_dance: { src: '/icons/DeathsDance.png', alt: 'Deaths Dance' },
   };
 
-  const iconConfig = debuffIconMap[debuff.id];
+  let iconConfig = debuffIconMap[debuff.id];
+  if (debuff.id.startsWith('deaths_dance_')) {
+    iconConfig = { src: '/icons/DeathsDance.png', alt: 'Deaths Dance' };
+  }
+
 
   if (iconConfig) {
     return (
