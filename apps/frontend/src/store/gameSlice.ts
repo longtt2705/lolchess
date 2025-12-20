@@ -122,11 +122,19 @@ export const joinGame = createAsyncThunk(
 
 export const resetGameplay = createAsyncThunk(
   "game/resetGameplay",
-  async (gameId: string) => {
+  async ({
+    gameId,
+    blueChampions,
+    redChampions,
+  }: {
+    gameId: string;
+    blueChampions?: string[];
+    redChampions?: string[];
+  }) => {
     const token = localStorage.getItem("token");
     const response = await axios.post(
       `${API_URL}/games/${gameId}/reset-gameplay`,
-      {},
+      { blueChampions, redChampions },
       {
         headers: {
           Authorization: `Bearer ${token}`,

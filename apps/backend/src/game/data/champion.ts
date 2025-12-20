@@ -69,11 +69,11 @@ export const champions: ChampionData[] = [
   {
     name: "Garen",
     stats: {
-      maxHp: 125,
-      ad: 30,
-      ap: 20,
-      physicalResistance: 30,
-      magicResistance: 15,
+      maxHp: 110,
+      ad: 35,
+      ap: 10,
+      physicalResistance: 40,
+      magicResistance: 30,
       attackRange: {
         range: 1,
         diagonal: true,
@@ -81,16 +81,17 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
-      hpRegen: 3,
+      hpRegen: 5,
       sunder: 10,
     },
     skill: {
-      type: "passive",
-      name: "Perseverance",
+      type: "active",
+      name: "Judgment",
       description:
-        "Garen regenerates 10% of his missing health each turn if there is no enemy piece adjacent to him.",
-      cooldown: 0,
+        "Garen spins his sword, dealing 100% AD as physical damage to all adjacent enemies each turn and gaining a shield of 20 + 100% AP for 2 turns.",
+      cooldown: 4,
       currentCooldown: 0,
+      targetTypes: "none",
     },
   },
   {
@@ -309,7 +310,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Granite Shield",
       description:
-        "If Malphite didn't get hit by damage for 2 turns, he gains a shield equal to (10+40% of AP)% of his max health. He gains 15 armor if having shield.",
+        "If Malphite didn't get hit by damage for 4 turns, he gains a shield equal to (10+40% of AP)% of his max health. He gains (15 + 10% of AP) armor if having shield.",
       cooldown: 4,
       currentCooldown: 0,
     },
@@ -510,7 +511,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Way of the Wanderer",
       description:
-        "Yasuo's Critical Strike Chance is doubled. After a Critical Strike, Yasuo gains (2 + 10% of AP) Sunder. The 50% redundant critical chance is converted to AD.",
+        "Yasuo's Critical Strike Chance is doubled. The 50% redundant critical chance is converted to AD. When Yasuo lands a Critical Strike, he fires a whirlwind to the target direction, dealing (10 + 30% of AD + 20% of AP) magic damage to all the enemies in the way and gaining a shield of (10 + 10% of AP)% of his max health for 3 turns.",
       cooldown: 0,
     },
   },

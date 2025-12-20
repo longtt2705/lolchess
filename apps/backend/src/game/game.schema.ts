@@ -380,6 +380,12 @@ export class ActionDetails {
 
   @Prop()
   guinsooProc?: boolean; // For Guinsoo's Rageblade: indicates the attack triggered a second attack
+
+  @Prop({ type: [mongoose.Schema.Types.Mixed] })
+  whirlwindTargets?: Array<{
+    targetId: string;
+    targetPosition: Square;
+  }>; // For Yasuo: targets hit by the whirlwind on critical strike
 }
 
 @Schema()

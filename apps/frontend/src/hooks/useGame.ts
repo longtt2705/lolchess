@@ -122,6 +122,11 @@ export interface ActionDetails {
   killedPieceIds?: string[];
   killerPlayerId?: string;
   selfDamage?: Record<string, number>; // Track self-damage for animation (pieceId -> damage amount)
+  guinsooProc?: boolean; // Track if Guinsoo's Rageblade proc'd on this attack
+  whirlwindTargets?: Array<{
+    targetId: string;
+    targetPosition: ChessPosition;
+  }>; // For Yasuo: targets hit by the whirlwind on critical strike
 }
 
 export interface GameState {
@@ -137,6 +142,9 @@ export interface GameState {
     userId: string;
     username: string;
     gold: number;
+    side?: "blue" | "red";
+    selectedChampions?: string[];
+    bannedChampions?: string[];
   }>;
   winner?: string;
   lastAction?: ActionDetails;

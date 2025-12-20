@@ -18,6 +18,10 @@ export interface SkillAnimationConfig {
     cardCount: number
   }> // For Twisted Fate: all targets hit by cards
   totalCardCount?: number // For Twisted Fate: total number of cards thrown
+  whirlwindTargets?: Array<{
+    targetId: string;
+    targetPosition: ChessPosition;
+  }> // For Yasuo: targets hit by the whirlwind on critical strike
 }
 
 export interface SkillAnimationRenderer {

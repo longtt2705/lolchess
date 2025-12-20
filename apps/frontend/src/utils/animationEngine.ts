@@ -45,6 +45,10 @@ export interface SkillAnimationData {
     cardCount: number;
   }>; // For Twisted Fate: all targets hit by cards
   totalCardCount?: number; // For Twisted Fate: total number of cards thrown
+  whirlwindTargets?: Array<{
+    targetId: string;
+    targetPosition: ChessPosition;
+  }>; // For Yasuo: targets hit by the whirlwind on critical strike
 }
 
 export interface DamageAnimationData {
@@ -122,6 +126,13 @@ export class AnimationEngine {
         (p) => p.id === lastAction.casterId
       );
 
+      console.log('[AnimationEngine] Attack action detected:', {
+        casterId: lastAction.casterId,
+        attackerName: attacker?.name,
+        whirlwindTargets: lastAction.whirlwindTargets,
+        hasWhirlwind: !!lastAction.whirlwindTargets
+      });
+
       if (attacker) {
         animations.push({
           id: `attack_${lastAction.timestamp}`,
@@ -138,6 +149,39 @@ export class AnimationEngine {
           } as AttackAnimationData,
         });
         currentDelay += 600;
+
+        // Handle Yasuo's whirlwind animation (triggered on critical strike)
+        // The whirlwind animation plays whenever whirlwindTargets is set (even if empty)
+        if (lastAction.whirlwindTargets) {
+          console.log('[AnimationEngine] Whirlwind detected! Creating animation:', lastAction.whirlwindTargets);
+          const skillRenderer = getSkillAnimationRenderer(
+            "Way of the Wanderer"
+          );
+
+          const whirlwindAnimationData = {
+            casterId: lastAction.casterId,
+            casterPosition: lastAction.casterPosition,
+            skillName: "Way of the Wanderer",
+            targetPosition: lastAction.targetPosition,
+            targetId: lastAction.targetId,
+            whirlwindTargets: lastAction.whirlwindTargets,
+          } as SkillAnimationData;
+
+          const calculatedDuration =
+            typeof skillRenderer.duration === "function"
+              ? skillRenderer.duration(whirlwindAnimationData)
+              : skillRenderer.duration;
+
+          animations.push({
+            id: `whirlwind_${lastAction.timestamp}`,
+            type: "skill",
+            timestamp: lastAction.timestamp,
+            delay: currentDelay,
+            duration: calculatedDuration,
+            data: whirlwindAnimationData,
+          });
+          currentDelay += calculatedDuration;
+        }
 
         // Note: Damage numbers are handled by stat changes below, no need to add here
       }
@@ -221,7 +265,8 @@ export class AnimationEngine {
             const hpDiff = change.newValue - change.oldValue;
             // Only show NET stat changes if not already covered by selfDamage
             // Skip showing if the piece had selfDamage and the change is negative (already shown)
-            const hasSelfDamage = lastAction.selfDamage && lastAction.selfDamage[pieceId];
+            const hasSelfDamage =
+              lastAction.selfDamage && lastAction.selfDamage[pieceId];
             if (hpDiff !== 0 && !(hasSelfDamage && hpDiff < 0)) {
               animations.push({
                 id: `damage_${pieceId}_${lastAction.timestamp}`,

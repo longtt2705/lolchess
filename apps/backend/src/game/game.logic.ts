@@ -294,6 +294,16 @@ export class GameLogic {
     const hpAfter = targetChess.stats.hp;
     actionDetails.damage = Math.max(0, hpBefore - hpAfter);
 
+    // After executing the attack, check for attack-triggered payload data
+    if (casterChess.skill?.payload) {
+      // Yasuo's Way of the Wanderer: whirlwindTargets (triggered on critical strike)
+      if (casterChess.skill.payload.whirlwindTargets !== undefined) {
+        actionDetails.whirlwindTargets = casterChess.skill.payload.whirlwindTargets;
+        // Clear the payload after copying so it doesn't persist to next attack
+        delete casterChess.skill.payload.whirlwindTargets;
+      }
+    }
+
     return game;
   }
 

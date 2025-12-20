@@ -28,7 +28,7 @@ export class Malphite extends ChessObject {
   // Override physical resistance calculation to include the +15 bonus
   get physicalResistance(): number {
     if (this.chess.shields?.length > 0) {
-      return super.physicalResistance + 15;
+      return super.physicalResistance + 15 + this.ap * 0.1;
     }
     return super.physicalResistance;
   }

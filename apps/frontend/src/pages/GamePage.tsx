@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertCircle, Coins, Crown, Package, RotateCcw, Shield, ShoppingCart, Users, Zap } from 'lucide-react'
+import { AlertCircle, Coins, Crown, Package, RotateCcw, Shield, ShoppingCart, Users, Zap, X, Check } from 'lucide-react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
@@ -10,6 +10,7 @@ import { ChessPiece, ChessPosition, GameState, useGame } from '../hooks/useGame'
 import { resetGameplay, restoreHp, restoreCooldown } from '../store/gameSlice'
 import { fetchAllItems, fetchBasicItems, ItemData } from '../store/itemsSlice'
 import { AnimationAction, AnimationEngine } from '../utils/animationEngine'
+import { useChampions } from '../hooks/useChampions'
 
 interface AttackAnimation {
   attackerId: string
@@ -49,7 +50,9 @@ const GameContainer = styled.div`
     "players-list game-board"
     "player-info game-board";
   grid-template-columns: 280px 1fr;
-  gap: 16px;
+  grid-template-rows: auto 1fr;
+  column-gap: 16px;
+  row-gap: 16px;
   height: 100vh;
   overflow: hidden;
 `
@@ -59,6 +62,7 @@ const PlayersPanel = styled.div`
   background: linear-gradient(135deg, rgba(30, 35, 40, 0.95) 0%, rgba(20, 25, 35, 0.95) 100%);
   border: 2px solid rgba(200, 155, 60, 0.3);
   border-radius: 12px;
+  border-bottom: none;
   padding: 18px;
   overflow-y: auto;
   max-height: 30vh;
@@ -149,29 +153,28 @@ const ChessDetailPanel = styled.div`
   border-radius: 12px;
   padding: 18px;
   overflow-y: auto;
-  overflow-x: visible;
-  max-height: calc(70vh - 32px);
+  overflow-x: hidden;
+  height: 100%;
   box-shadow: 
     inset 0 0 20px rgba(0, 0, 0, 0.3),
     0 4px 16px rgba(0, 0, 0, 0.4);
   
   h3 {
     color: var(--gold);
-    margin-bottom: 14px;
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 17px;
     position: sticky;
-    top: 0;
-    background: linear-gradient(135deg, rgba(30, 35, 40, 0.98) 0%, rgba(20, 25, 35, 0.98) 100%);
-    padding: 8px 0;
+    top: -18px;
+    background: linear-gradient(135deg, rgba(30, 35, 40, 1) 0%, rgba(20, 25, 35, 1) 100%);
+    padding: 18px 18px 12px 18px;
+    margin: -18px -18px 16px -18px;
     z-index: 10;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     font-weight: bold;
     letter-spacing: 0.5px;
     border-bottom: 1px solid rgba(200, 155, 60, 0.2);
-    margin-bottom: 16px;
   }
   
   /* Custom scrollbar */
@@ -568,15 +571,14 @@ const ChessDetailPanel = styled.div`
       max-width: 350px;
       opacity: 0;
       visibility: hidden;
-      transition: all 0.2s ease;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
       z-index: 10000;
       pointer-events: none;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
       
-      /* Position will be calculated via JS or use a reasonable default */
-      bottom: auto;
-      left: auto;
-      transform: translateY(-5px);
+      /* Position will be calculated via JS */
+      top: 0;
+      left: 0;
       
       .tooltip-title {
         color: var(--gold);
@@ -766,15 +768,15 @@ const ChessDetailPanel = styled.div`
         max-width: 300px;
         opacity: 0;
         visibility: hidden;
-        transition: all 0.2s ease;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
         z-index: 10000;
         pointer-events: none;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
         
-        /* Position will be calculated via JS or use a reasonable default */
+        /* Position will be calculated via JS */
+        top: 0;
+        left: 0;
         bottom: auto;
-        left: auto;
-        transform: translateY(-5px);
         
         .tooltip-title {
           color: var(--gold);
@@ -1138,10 +1140,9 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
     
     .shield-fill {
       position: absolute;
-      right: 0;
       height: 100%;
-      background: linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(200, 200, 220, 0.9) 100%);
-      transition: width 0.3s ease;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.95) 0%, rgba(220, 220, 240, 0.95) 100%);
+      transition: width 0.3s ease, left 0.3s ease, right 0.3s ease;
       box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
     }
   }
@@ -1846,6 +1847,191 @@ const DevToolsPanel = styled.div`
   }
 `
 
+const ModalBackdrop = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+`
+
+const ModalContainer = styled(motion.div)`
+  background: var(--secondary-bg);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  position: relative;
+`
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+  
+  h3 {
+    color: var(--gold);
+    margin: 0;
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+`
+
+const CloseButton = styled.button`
+  background: transparent;
+  border: 2px solid var(--border);
+  color: var(--primary-text);
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: scale(1.1);
+  }
+`
+
+const SquadSection = styled.div`
+  margin-bottom: 24px;
+  
+  h4 {
+    color: var(--primary-text);
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+`
+
+const ChampionDropdowns = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+`
+
+const DropdownWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  
+  label {
+    color: var(--secondary-text);
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+  select {
+    background: var(--primary-bg);
+    border: 2px solid var(--border);
+    color: var(--primary-text);
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      border-color: var(--gold);
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(200, 155, 60, 0.1);
+    }
+  }
+`
+
+const ModalActions = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 2px solid var(--border);
+`
+
+const PrimaryButton = styled.button`
+  background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+  border: none;
+  color: var(--primary-bg);
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(200, 155, 60, 0.3);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(200, 155, 60, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+`
+
+const SecondaryButton = styled.button`
+  background: transparent;
+  border: 2px solid var(--border);
+  color: var(--primary-text);
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: translateY(-2px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+`
+
 const getImageUrl = (piece: ChessPiece) => {
   if (piece.name === "Poro") {
     return "/icons/poro.png"
@@ -2151,17 +2337,45 @@ const ChessPieceRenderer: React.FC<{
         </ItemIconsContainer>
       )}
 
-      {/* Shield Bar (above HP bar) */}
-      {piece.shields && piece.shields.length > 0 && (
-        <div className="shield-bar">
-          <div
-            className="shield-fill"
-            style={{
-              width: `${Math.min(100, (piece.shields.reduce((sum, s) => sum + s.amount, 0) / piece.stats.maxHp) * 100)}%`
-            }}
-          />
-        </div>
-      )}
+      {/* Shield Bar (next to HP bar, League of Legends style) */}
+      {piece.shields && piece.shields.length > 0 && (() => {
+        const shieldAmount = piece.shields.reduce((sum, s) => sum + s.amount, 0)
+        const shieldPercentage = (shieldAmount / piece.stats.maxHp) * 100
+        const totalPercentage = hpPercentage + shieldPercentage
+
+        // Shield starts where HP ends
+        // If total > 100%, the entire shield is shown from the right side
+        const hasOverflow = totalPercentage > 100
+
+        if (hasOverflow) {
+          // When overflowing, show entire shield from right side
+          return (
+            <div className="shield-bar">
+              <div
+                className="shield-fill"
+                style={{
+                  right: '0%',
+                  left: 'auto',
+                  width: `${shieldPercentage}%`
+                }}
+              />
+            </div>
+          )
+        }
+
+        // Normal case: shield starts where HP ends
+        return (
+          <div className="shield-bar">
+            <div
+              className="shield-fill"
+              style={{
+                left: `${hpPercentage}%`,
+                width: `${shieldPercentage}%`
+              }}
+            />
+          </div>
+        )
+      })()}
 
       <div className="hp-bar">
         <div
@@ -2432,6 +2646,152 @@ const getDebuffIcon = (debuff: any) => {
   return null;
 };
 
+interface ChampionSelectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (blueChampions: string[], redChampions: string[]) => void;
+  currentBlueChampions: string[];
+  currentRedChampions: string[];
+  availableChampions: string[];
+  isResetting: boolean;
+}
+
+const ChampionSelectionModal: React.FC<ChampionSelectionModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  currentBlueChampions,
+  currentRedChampions,
+  availableChampions,
+  isResetting,
+}) => {
+  const [blueChampions, setBlueChampions] = useState<string[]>(currentBlueChampions);
+  const [redChampions, setRedChampions] = useState<string[]>(currentRedChampions);
+
+  useEffect(() => {
+    if (isOpen) {
+      setBlueChampions(currentBlueChampions);
+      setRedChampions(currentRedChampions);
+    }
+  }, [isOpen, currentBlueChampions, currentRedChampions]);
+
+  const handleBlueChange = (index: number, value: string) => {
+    const newChampions = [...blueChampions];
+    newChampions[index] = value;
+    setBlueChampions(newChampions);
+  };
+
+  const handleRedChange = (index: number, value: string) => {
+    const newChampions = [...redChampions];
+    newChampions[index] = value;
+    setRedChampions(newChampions);
+  };
+
+  const handleKeepCurrent = () => {
+    onConfirm(currentBlueChampions, currentRedChampions);
+  };
+
+  const handleResetWithNew = () => {
+    onConfirm(blueChampions, redChampions);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <ModalBackdrop
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <ModalContainer
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          transition={{ type: 'spring', duration: 0.4 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ModalHeader>
+            <h3>
+              <RotateCcw size={20} />
+              Reset Game with Champion Selection
+            </h3>
+            <CloseButton onClick={onClose}>
+              <X size={18} />
+            </CloseButton>
+          </ModalHeader>
+
+          <SquadSection>
+            <h4>
+              <Shield size={16} style={{ color: '#5bc0de' }} />
+              Blue Player Squad
+            </h4>
+            <ChampionDropdowns>
+              {blueChampions.map((champion, index) => (
+                <DropdownWrapper key={`blue-${index}`}>
+                  <label>Champion {index + 1}</label>
+                  <select
+                    value={champion}
+                    onChange={(e) => handleBlueChange(index, e.target.value)}
+                    disabled={isResetting}
+                  >
+                    {availableChampions.map((champ) => (
+                      <option key={champ} value={champ}>
+                        {champ}
+                      </option>
+                    ))}
+                  </select>
+                </DropdownWrapper>
+              ))}
+            </ChampionDropdowns>
+          </SquadSection>
+
+          <SquadSection>
+            <h4>
+              <Shield size={16} style={{ color: '#e74c3c' }} />
+              Red Player Squad
+            </h4>
+            <ChampionDropdowns>
+              {redChampions.map((champion, index) => (
+                <DropdownWrapper key={`red-${index}`}>
+                  <label>Champion {index + 1}</label>
+                  <select
+                    value={champion}
+                    onChange={(e) => handleRedChange(index, e.target.value)}
+                    disabled={isResetting}
+                  >
+                    {availableChampions.map((champ) => (
+                      <option key={champ} value={champ}>
+                        {champ}
+                      </option>
+                    ))}
+                  </select>
+                </DropdownWrapper>
+              ))}
+            </ChampionDropdowns>
+          </SquadSection>
+
+          <ModalActions>
+            <SecondaryButton onClick={onClose} disabled={isResetting}>
+              <X size={16} />
+              Cancel
+            </SecondaryButton>
+            <SecondaryButton onClick={handleKeepCurrent} disabled={isResetting}>
+              <Shield size={16} />
+              Keep Current Squad
+            </SecondaryButton>
+            <PrimaryButton onClick={handleResetWithNew} disabled={isResetting}>
+              <Check size={16} />
+              {isResetting ? 'Resetting...' : 'Reset with New Squad'}
+            </PrimaryButton>
+          </ModalActions>
+        </ModalContainer>
+      </ModalBackdrop>
+    </AnimatePresence>
+  );
+};
+
 const GamePage: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>()
   const {
@@ -2513,6 +2873,10 @@ const GamePage: React.FC = () => {
 
   // Get loading state from Redux for reset operation
   const isResetting = useAppSelector((state) => state.game.loading)
+
+  // Champion selection modal state
+  const [showResetModal, setShowResetModal] = useState(false)
+  const { champions: availableChampions } = useChampions()
 
   // Update detailViewPiece when displayState changes (to reflect item purchases, etc.)
   useEffect(() => {
@@ -2721,7 +3085,7 @@ const GamePage: React.FC = () => {
       }
 
       case 'skill': {
-        const { casterId, casterPosition, skillName, targetPosition, targetId, pulledToPosition, cardTargets, totalCardCount } = animation.data
+        const { casterId, casterPosition, skillName, targetPosition, targetId, pulledToPosition, cardTargets, totalCardCount, whirlwindTargets } = animation.data
         const skillRenderer = getSkillAnimationRenderer(skillName)
 
         // Determine if current player is red (for coordinate transformation)
@@ -2741,6 +3105,7 @@ const GamePage: React.FC = () => {
             pulledToPosition,
             cardTargets,
             totalCardCount,
+            whirlwindTargets,
           })
         })
 
@@ -2865,12 +3230,21 @@ const GamePage: React.FC = () => {
   }
 
   // Reset gameplay (dev tools)
-  const handleResetGameplay = useCallback(async () => {
+  const handleResetGameplay = useCallback(() => {
+    if (!gameId || isResetting) return
+    setShowResetModal(true)
+  }, [gameId, isResetting])
+
+  // Handle reset with selected champions
+  const handleResetWithChampions = useCallback(async (blueChampions: string[], redChampions: string[]) => {
     if (!gameId || isResetting) return
 
     try {
-      // Dispatch the reset gameplay thunk
-      const result = await dispatch(resetGameplay(gameId))
+      // Close modal first
+      setShowResetModal(false)
+
+      // Dispatch the reset gameplay thunk with champion arrays
+      const result = await dispatch(resetGameplay({ gameId, blueChampions, redChampions }))
 
       if (resetGameplay.fulfilled.match(result)) {
         // Success - clear local animation state
@@ -3934,9 +4308,22 @@ const GamePage: React.FC = () => {
                             const tooltip = e.currentTarget.querySelector('.shop-item-tooltip') as HTMLElement;
                             if (tooltip) {
                               const rect = e.currentTarget.getBoundingClientRect();
-                              tooltip.style.top = `${rect.top - 10}px`;
-                              tooltip.style.left = `${rect.left + rect.width / 2}px`;
-                              tooltip.style.transform = 'translate(-50%, -100%)';
+                              const tooltipHeight = tooltip.offsetHeight || 150; // estimate if not rendered yet
+                              const viewportHeight = window.innerHeight;
+
+                              // Position tooltip to the right of the item
+                              tooltip.style.left = `${rect.right + 10}px`;
+
+                              // Check if tooltip would overflow bottom of viewport
+                              if (rect.top + tooltipHeight > viewportHeight - 20) {
+                                // Position from bottom instead
+                                tooltip.style.top = 'auto';
+                                tooltip.style.bottom = `${viewportHeight - rect.bottom}px`;
+                              } else {
+                                tooltip.style.top = `${rect.top}px`;
+                                tooltip.style.bottom = 'auto';
+                              }
+                              tooltip.style.transform = 'translateY(0)';
                             }
                           }}
                         >
@@ -4137,7 +4524,7 @@ const GamePage: React.FC = () => {
               className="dev-button"
               onClick={handleResetGameplay}
               disabled={isResetting || !gameState}
-              title="Reset the game to initial state"
+              title={`Reset the game to initial state\n\nCurrent Blue Squad:\n${gameState?.players?.find((p: any) => p.side === 'blue')?.selectedChampions?.join(', ') || 'N/A'}\n\nCurrent Red Squad:\n${gameState?.players?.find((p: any) => p.side === 'red')?.selectedChampions?.join(', ') || 'N/A'}`}
             >
               <RotateCcw size={14} />
               {isResetting ? 'Resetting...' : 'Reset Game'}
@@ -4163,6 +4550,25 @@ const GamePage: React.FC = () => {
               {isResetting ? 'Restoring...' : 'Restore Cooldowns'}
             </button>
           </DevToolsPanel>
+        )}
+
+        {/* Champion Selection Modal */}
+        {import.meta.env.DEV && (
+          <ChampionSelectionModal
+            isOpen={showResetModal}
+            onClose={() => setShowResetModal(false)}
+            onConfirm={handleResetWithChampions}
+            currentBlueChampions={
+              gameState?.players?.find((p: any) => p.side === 'blue')?.selectedChampions ||
+              ['Garen', 'Garen', 'Garen', 'Garen', 'Garen']
+            }
+            currentRedChampions={
+              gameState?.players?.find((p: any) => p.side === 'red')?.selectedChampions ||
+              ['Aatrox', 'Aatrox', 'Aatrox', 'Aatrox', 'Aatrox']
+            }
+            availableChampions={availableChampions.map((c) => c.name)}
+            isResetting={isResetting}
+          />
         )}
       </GameContainer>
     </>

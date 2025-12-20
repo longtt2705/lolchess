@@ -8,6 +8,8 @@ import { tasteTheirFearRenderer } from "./skills/tasteTheirFear";
 import { infectedBonesawRenderer } from "./skills/infectedBonesaw";
 import { deathMarkRenderer } from "./skills/deathMark";
 import { soulFurnaceRenderer } from "./skills/soulFurnace";
+import { judgmentRenderer } from "./skills/judgment";
+import { wayOfTheWandererRenderer } from "./skills/wayOfTheWanderer";
 
 /**
  * Registry mapping skill names to their animation renderers
@@ -37,6 +39,12 @@ const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
 
   // Sion
   "Soul Furnace": soulFurnaceRenderer,
+
+  // Garen
+  "Judgment": judgmentRenderer,
+
+  // Yasuo
+  "Way of the Wanderer": wayOfTheWandererRenderer,
 
   // Add more skills here as they're implemented
   // 'Skill Name': skillRenderer,

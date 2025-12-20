@@ -958,7 +958,9 @@ export class GameService {
   }
 
   async resetGameplay(
-    gameId: string
+    gameId: string,
+    customBlueChampions?: string[],
+    customRedChampions?: string[]
   ): Promise<{ game: Game; message: string }> {
     // Get game from Redis cache first
     const game = await this.getGameState(gameId);
@@ -972,8 +974,9 @@ export class GameService {
     const bluePlayer = game.players.find((p) => p.side === "blue");
     const redPlayer = game.players.find((p) => p.side === "red");
 
-    const blueChampions = bluePlayer?.selectedChampions || [];
-    const redChampions = redPlayer?.selectedChampions || [];
+    // Use custom champions if provided, otherwise fall back to player's selected champions
+    const blueChampions = customBlueChampions || bluePlayer?.selectedChampions || [];
+    const redChampions = customRedChampions || redPlayer?.selectedChampions || [];
 
     // Import GameLogic and initialize the game board
     const { GameLogic } = await import("./game.logic");
