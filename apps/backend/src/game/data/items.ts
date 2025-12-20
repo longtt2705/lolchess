@@ -220,7 +220,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "ad", value: 25, type: "add" },
       { stat: "damageAmplification", value: 10, type: "add" },
-      { stat: "ad", value: 1.2, type: "multiply" },
+      { stat: "ad", value: 1.1, type: "multiply" },
     ],
     isBasic: false,
     recipe: ["bf_sword", "bf_sword"],
@@ -340,7 +340,7 @@ export const combinedItems: ItemData[] = [
     effects: [
       { stat: "ap", value: 45, type: "add" },
       { stat: "damageAmplification", value: 10, type: "add" },
-      { stat: "ap", value: 1.2, type: "multiply" },
+      { stat: "ap", value: 1.1, type: "multiply" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "needlessly_rod"],
@@ -684,11 +684,7 @@ export const combinedItems: ItemData[] = [
       "Deal damage will inflict the venom debuff on the enemy for 3 turns. If the enemy doesn't have the venom debuff, reduce all their active shields by 50%.",
     cost: 0,
     icon: "/icons/SerpentsFang.png",
-    effects: [
-      { stat: "criticalChance", value: 50, type: "add" },
-      { stat: "ad", value: 10, type: "add" },
-      { stat: "ap", value: 10, type: "add" },
-    ],
+    effects: [{ stat: "criticalChance", value: 45, type: "add" }],
     isBasic: false,
     recipe: ["sparring_gloves", "sparring_gloves"],
     unique: true,
