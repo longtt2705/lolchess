@@ -214,12 +214,13 @@ export const combinedItems: ItemData[] = [
   {
     id: "deathblade",
     name: "Deathblade",
-    description: "",
+    description: "Increase 25% of AD.",
     cost: 0,
     icon: "/icons/Deathblade.png",
     effects: [
-      { stat: "ad", value: 30, type: "add" },
+      { stat: "ad", value: 25, type: "add" },
       { stat: "damageAmplification", value: 10, type: "add" },
+      { stat: "ad", value: 1.2, type: "multiply" },
     ],
     isBasic: false,
     recipe: ["bf_sword", "bf_sword"],
@@ -337,8 +338,9 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/RabadonsDeathcap.png",
     effects: [
-      { stat: "ap", value: 50, type: "add" },
+      { stat: "ap", value: 45, type: "add" },
       { stat: "damageAmplification", value: 10, type: "add" },
+      { stat: "ap", value: 1.2, type: "multiply" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "needlessly_rod"],

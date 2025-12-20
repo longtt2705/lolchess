@@ -537,6 +537,12 @@ export class Game {
 
   @Prop({ default: false })
   hasPerformedActionThisTurn: boolean;
+
+  @Prop({ type: [String], default: [] })
+  shopItems: string[]; // Current available shop item IDs
+
+  @Prop({ default: 0 })
+  shopRefreshRound: number; // Track when shop was last refreshed
 }
 
 export const SquareSchema = SchemaFactory.createForClass(Square);

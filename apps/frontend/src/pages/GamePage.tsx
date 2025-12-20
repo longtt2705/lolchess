@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertCircle, Coins, Crown, Package, RotateCcw, Shield, ShoppingCart, Users, Zap, X, Check } from 'lucide-react'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { getSkillAnimationRenderer } from '../animations/SkillAnimator'
@@ -2832,17 +2832,27 @@ const GamePage: React.FC = () => {
   const dispatch = useAppDispatch()
 
   // Get items from Redux store
-  const { basicItems: shopItems, allItems, loading: itemsLoading } = useAppSelector((state) => state.items)
+  const { basicItems, allItems, loading: itemsLoading } = useAppSelector((state) => state.items)
 
   // Fetch items on component mount
   useEffect(() => {
-    if (shopItems.length === 0 && !itemsLoading) {
+    if (basicItems.length === 0 && !itemsLoading) {
       dispatch(fetchBasicItems())
     }
     if (allItems.length === 0 && !itemsLoading) {
       dispatch(fetchAllItems())
     }
-  }, [dispatch, shopItems.length, allItems.length, itemsLoading])
+  }, [dispatch, basicItems.length, allItems.length, itemsLoading])
+
+  // Filter shop items based on gameState.shopItems (rotated selection) or fall back to all basicItems
+  const shopItems = useMemo(() => {
+    if (gameState?.shopItems && gameState.shopItems.length > 0) {
+      // Filter basicItems to only show the ones in gameState.shopItems
+      return basicItems.filter(item => gameState.shopItems?.includes(item.id))
+    }
+    // Fallback: show all basic items if shopItems not set (backwards compatibility)
+    return basicItems
+  }, [gameState?.shopItems, basicItems])
 
   // Animation state
   const [attackAnimation, setAttackAnimation] = useState<AttackAnimation | null>(null)
@@ -3484,7 +3494,7 @@ const GamePage: React.FC = () => {
   const isDraw = isGameFinished && !gameState.winner
 
   const isBasicItem = (itemId: string) => {
-    return shopItems.some(item => item.id === itemId)
+    return basicItems.some(item => item.id === itemId)
   }
 
   const checkItemNotPurchasability = (item: ItemData, piece: ChessPiece, gold: number) => {

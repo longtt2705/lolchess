@@ -150,6 +150,7 @@ export interface GameState {
   lastAction?: ActionDetails;
   hasBoughtItemThisTurn: boolean;
   hasPerformedActionThisTurn: boolean;
+  shopItems?: string[]; // Current available shop item IDs (rotates periodically)
 }
 
 export interface GameAction {

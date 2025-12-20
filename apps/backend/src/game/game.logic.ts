@@ -9,8 +9,12 @@ import {
 } from "./game.schema";
 import { Game } from "./game.schema";
 import { champions } from "./data/champion";
-import { ItemData } from "./data/items";
+import { ItemData, basicItems } from "./data/items";
 import { ChessObject } from "./class/chess";
+
+// Shop rotation constants
+export const SHOP_ITEMS_COUNT = 3; // Number of items displayed in shop
+export const SHOP_REFRESH_INTERVAL = 4; // Refresh shop every N rounds (4 rounds = 2 turns per player)
 
 export class GameLogic {
   public static processGame(game: Game, event: EventPayload): Game {
@@ -388,6 +392,20 @@ export class GameLogic {
     return game.currentRound % 2 !== 0;
   }
 
+  // Shuffle shop items - randomly select N items from basic items
+  private static shuffleShopItems(game: Game): void {
+    // Fisher-Yates shuffle to randomly select items
+    const shuffled = [...basicItems];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    // Take the first N items
+    game.shopItems = shuffled.slice(0, SHOP_ITEMS_COUNT).map(item => item.id);
+    game.shopRefreshRound = game.currentRound;
+  }
+
   private static startNextRound(game: Game): Game {
     // Now increment the round for the next player
     game.currentRound++;
@@ -395,6 +413,13 @@ export class GameLogic {
     if (game.currentRound % 20 === 0) {
       game.players[0].gold += 50;
       game.players[1].gold += 50;
+    }
+
+    // Refresh shop items after red player's turn every SHOP_REFRESH_INTERVAL rounds
+    // (currentRound - 1) is the just-completed round; check if it's a refresh interval
+    const justCompletedRound = game.currentRound - 1;
+    if (justCompletedRound > 0 && justCompletedRound % SHOP_REFRESH_INTERVAL === 0) {
+      this.shuffleShopItems(game);
     }
 
     const currentPlayerId = this.isBlueTurn(game)
@@ -586,6 +611,10 @@ export class GameLogic {
         ? 1000
         : game.gameSettings?.startingGold || 0;
     }
+    
+    // Initialize shop items with random selection
+    this.shuffleShopItems(game);
+    
     this.applyAuraDebuffs(game);
 
     return game;
