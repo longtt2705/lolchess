@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
 
+export interface AttackProjectile {
+  shape: "bullet" | "arrow" | "orb" | "bolt" | "missile";
+  color: string;
+  trailColor?: string;
+  size?: number; // 0.5 to 2, default 1
+  speed?: number; // 0.5 to 2, default 1
+  icon?: string; // Optional emoji/icon
+}
+
 export interface ChampionData {
   name: string;
   stats: {
@@ -49,6 +58,7 @@ export interface ChampionData {
     requiresAlive: boolean;
     duration: string;
   };
+  attackProjectile?: AttackProjectile;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";

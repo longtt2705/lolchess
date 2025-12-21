@@ -4,13 +4,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { getSkillAnimationRenderer } from '../animations/SkillAnimator'
+import { AttackProjectileRenderer } from '../animations/AttackProjectileRenderer'
 import { AttackRangeIndicator } from '../components/AttackRangeIndicator'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { ChessPiece, ChessPosition, GameState, useGame } from '../hooks/useGame'
 import { resetGameplay, restoreHp, restoreCooldown } from '../store/gameSlice'
 import { fetchAllItems, fetchBasicItems, ItemData } from '../store/itemsSlice'
 import { AnimationAction, AnimationEngine } from '../utils/animationEngine'
-import { useChampions } from '../hooks/useChampions'
+import { useChampions, AttackProjectile } from '../hooks/useChampions'
 
 interface AttackAnimation {
   attackerId: string
@@ -2871,6 +2872,12 @@ const GamePage: React.FC = () => {
     id: string
     component: JSX.Element | null
   } | null>(null)
+  const [activeAttackProjectile, setActiveAttackProjectile] = useState<{
+    id: string
+    attackerPosition: ChessPosition
+    targetPosition: ChessPosition
+    projectile: AttackProjectile
+  } | null>(null)
 
   // Track previous game state for animation
   const previousGameStateRef = useRef<GameState | null>(null)
@@ -3043,15 +3050,48 @@ const GamePage: React.FC = () => {
 
       case 'attack': {
         const { attackerId, attackerPosition, targetId, targetPosition, guinsooProc } = animation.data
-        setAttackAnimation({
-          attackerId,
-          targetId,
-          attackerPos: attackerPosition,
-          targetPos: targetPosition,
-          guinsooProc,
-        })
-        await new Promise(resolve => setTimeout(resolve, animation.duration))
-        setAttackAnimation(null)
+
+        // Find the attacker piece to check for ranged attack projectile
+        const attackerPiece = displayState?.board.find(p => p.id === attackerId)
+        // Check piece's own attackProjectile first (for minions), then look up champion data
+        let attackProjectile = (attackerPiece as any)?.attackProjectile
+        if (!attackProjectile && attackerPiece) {
+          const championData = availableChampions.find(c => c.name === attackerPiece.name)
+          attackProjectile = championData?.attackProjectile
+        }
+
+        // If attacker has attackProjectile config, show projectile animation instead of melee lunge
+        if (attackProjectile) {
+          // Calculate ranged attack duration based on distance
+          // Charging: 200ms, Flight: varies by distance (min 250ms), Impact: 300ms
+          const deltaX = Math.abs(targetPosition.x - attackerPosition.x)
+          const deltaY = Math.abs(targetPosition.y - attackerPosition.y)
+          const chessDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+          const speed = attackProjectile.speed ?? 1
+          const flightDuration = Math.max(250, (chessDistance * 100) / speed)
+          const totalDuration = 200 + flightDuration + 300 // charge + flight + impact
+
+          // Set projectile animation (no melee lunge for ranged)
+          setActiveAttackProjectile({
+            id: animation.id,
+            attackerPosition,
+            targetPosition,
+            projectile: attackProjectile,
+          })
+          await new Promise(resolve => setTimeout(resolve, totalDuration))
+          setActiveAttackProjectile(null)
+        } else {
+          // Melee attack - use existing lunge animation
+          setAttackAnimation({
+            attackerId,
+            targetId,
+            attackerPos: attackerPosition,
+            targetPos: targetPosition,
+            guinsooProc,
+          })
+          await new Promise(resolve => setTimeout(resolve, animation.duration))
+          setAttackAnimation(null)
+        }
         break
       }
 
@@ -4508,6 +4548,32 @@ const GamePage: React.FC = () => {
 
           <Board ref={boardRef} isTargeting={isSkillMode}>
             {renderBoard()}
+
+            {/* Attack projectile animations overlay */}
+            <AnimatePresence mode="wait">
+              {activeAttackProjectile && (
+                <div
+                  key={activeAttackProjectile.id}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: 'none',
+                    zIndex: 100
+                  }}
+                >
+                  <AttackProjectileRenderer
+                    attackerPosition={activeAttackProjectile.attackerPosition}
+                    targetPosition={activeAttackProjectile.targetPosition}
+                    projectile={activeAttackProjectile.projectile}
+                    boardRef={boardRef}
+                    isRedPlayer={!!(gameState && currentUser && gameState.redPlayer === currentUser.id)}
+                  />
+                </div>
+              )}
+            </AnimatePresence>
 
             {/* Skill animations overlay */}
             <AnimatePresence mode="wait">

@@ -400,7 +400,7 @@ export class GameLogic {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    
+
     // Take the first N items
     game.shopItems = shuffled.slice(0, SHOP_ITEMS_COUNT).map(item => item.id);
     game.shopRefreshRound = game.currentRound;
@@ -611,10 +611,10 @@ export class GameLogic {
         ? 1000
         : game.gameSettings?.startingGold || 0;
     }
-    
+
     // Initialize shop items with random selection
     this.shuffleShopItems(game);
-    
+
     this.applyAuraDebuffs(game);
 
     return game;
@@ -721,6 +721,7 @@ export class GameLogic {
     const pieceId = `${type.toLowerCase().replace(/\s+/g, "_")}_${position.x}_${position.y}_${Date.now()}`;
 
     const baseStats = this.getPieceBaseStats(type);
+    const { attackProjectile, ...statsOnly } = baseStats;
 
     return {
       id: pieceId,
@@ -735,13 +736,14 @@ export class GameLogic {
       ownerId,
       blue: isBlue,
       stats: {
-        ...baseStats,
-        hp: baseStats.maxHp, // Start with full HP
+        ...statsOnly,
+        hp: statsOnly.maxHp, // Start with full HP
       },
       skill:
         type !== "Poro" && !type.includes("Minion")
           ? this.getDefaultSkill(type)
           : undefined,
+      attackProjectile: attackProjectile, // Add attackProjectile at the piece level
       items: [],
       debuffs: [],
       auras: [],
@@ -812,6 +814,14 @@ export class GameLogic {
         criticalDamage: 150,
         damageAmplification: 0,
         hpRegen: 0,
+        attackProjectile: {
+          shape: "missile",
+          color: "#FF6600",
+          trailColor: "#FF9944",
+          size: 1.2,
+          speed: 0.9,
+          icon: "💣",
+        },
       },
       "Melee Minion": {
         maxHp: 100,
@@ -854,6 +864,14 @@ export class GameLogic {
         criticalDamage: 150,
         damageAmplification: 0,
         hpRegen: 0,
+        attackProjectile: {
+          shape: "orb",
+          color: "#9966FF",
+          trailColor: "#BB99FF",
+          size: 0.6,
+          speed: 1.2,
+          icon: "⚫",
+        },
       },
       "Super Minion": {
         maxHp: 500,

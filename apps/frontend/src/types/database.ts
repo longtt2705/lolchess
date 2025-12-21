@@ -54,11 +54,21 @@ export interface ChampionAura {
   duration?: string;
 }
 
+export interface AttackProjectile {
+  shape: "bullet" | "arrow" | "orb" | "bolt" | "missile";
+  color: string;
+  trailColor?: string;
+  size?: number; // 0.5 to 2, default 1
+  speed?: number; // 0.5 to 2, default 1
+  icon?: string; // Optional emoji/icon
+}
+
 export interface ChampionData {
   name: string;
   stats: ChampionStats;
   skill: ChampionSkill;
   aura?: ChampionAura;
+  attackProjectile?: AttackProjectile;
 }
 
 export interface ItemEffect {

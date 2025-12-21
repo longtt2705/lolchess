@@ -1,10 +1,20 @@
 import { Aura, ChessStats, Skill } from "../game.schema";
 
+export interface AttackProjectile {
+  shape: "bullet" | "arrow" | "orb" | "bolt" | "missile";
+  color: string;
+  trailColor?: string;
+  size?: number; // 0.5 to 2, default 1
+  speed?: number; // 0.5 to 2, default 1
+  icon?: string; // Optional emoji/icon
+}
+
 export type ChampionData = {
   name: string;
   stats: Partial<ChessStats>;
   skill: Partial<Skill>;
   aura?: Partial<Aura>;
+  attackProjectile?: AttackProjectile;
 };
 
 export const champions: ChampionData[] = [
@@ -64,6 +74,14 @@ export const champions: ChampionData[] = [
         lShape: false,
       },
       targetTypes: "square",
+    },
+    attackProjectile: {
+      shape: "orb",
+      color: "#FF69B4",
+      trailColor: "#FFB6C1",
+      size: 0.8,
+      speed: 1,
+      icon: "🔮",
     },
   },
   {
@@ -137,6 +155,14 @@ export const champions: ChampionData[] = [
       requiresAlive: true,
       duration: "permanent",
     },
+    attackProjectile: {
+      shape: "orb",
+      color: "#87CEEB",
+      trailColor: "#B0E0E6",
+      size: 0.7,
+      speed: 1.2,
+      icon: "💨",
+    },
   },
   {
     name: "Ashe",
@@ -163,6 +189,14 @@ export const champions: ChampionData[] = [
         "Her attacks cannot be critical, but she gains (10+10% of AP) physical damage for each 25 percent of critical chance she has. Ashe's attacks slow their target by 1 (It can be critical to 2) Move Speed. ",
       cooldown: 0,
     },
+    attackProjectile: {
+      shape: "arrow",
+      color: "#00BFFF",
+      trailColor: "#87CEEB",
+      size: 1,
+      speed: 1.2,
+      icon: "🏹",
+    },
   },
   {
     name: "Tristana",
@@ -187,6 +221,14 @@ export const champions: ChampionData[] = [
       description:
         "Tristana's Attack Range gains 1 every 5 rounds (max 8). Every 4th attack deals bonus (10+50% of AP) physical damage to the target and his adjacent squares.",
       cooldown: 0,
+    },
+    attackProjectile: {
+      shape: "bullet",
+      color: "#FF4500",
+      trailColor: "#FF4500",
+      size: 1,
+      speed: 1,
+      icon: "🔫",
     },
   },
   {
@@ -369,6 +411,14 @@ export const champions: ChampionData[] = [
         "Every 4th attack deals critical damage and deals bonus (4+44% of AP + 44% of bonus AD) physical damage. When critical, Jhin gains +1 Move Speed for 2 turns.",
       cooldown: 0,
     },
+    attackProjectile: {
+      shape: "bullet",
+      color: "#8B0000",
+      trailColor: "#DC143C",
+      size: 1.2,
+      speed: 1.5,
+      icon: "🎯",
+    },
   },
   {
     name: "Soraka",
@@ -401,6 +451,14 @@ export const champions: ChampionData[] = [
         lShape: false,
       },
       targetTypes: "ally",
+    },
+    attackProjectile: {
+      shape: "orb",
+      color: "#FFD700",
+      trailColor: "#FFF8DC",
+      size: 0.7,
+      speed: 1,
+      icon: "✨",
     },
   },
   {
@@ -460,6 +518,14 @@ export const champions: ChampionData[] = [
       description:
         "Teemo's basic attacks apply a debuff to the target, dealing more (5 + 40% of AP) magic damage and applying (5 + 25% of AP) magic damage each turn for 2 turns.",
       cooldown: 0,
+    },
+    attackProjectile: {
+      shape: "orb",
+      color: "#9932CC",
+      trailColor: "#8B008B",
+      size: 0.6,
+      speed: 1.3,
+      icon: "🍄",
     },
   },
   {
@@ -574,6 +640,14 @@ export const champions: ChampionData[] = [
       },
       targetTypes: "enemy",
     },
+    attackProjectile: {
+      shape: "bolt",
+      color: "#FF4500",
+      trailColor: "#FFD700",
+      size: 1,
+      speed: 1.2,
+      icon: "⚡",
+    },
   },
   {
     name: "Twisted Fate",
@@ -607,6 +681,14 @@ export const champions: ChampionData[] = [
         lShape: false,
       },
       targetTypes: "enemy",
+    },
+    attackProjectile: {
+      shape: "orb",
+      color: "#4169E1",
+      trailColor: "#6495ED",
+      size: 0.8,
+      speed: 1,
+      icon: "🃏",
     },
   },
   {
@@ -642,6 +724,14 @@ export const champions: ChampionData[] = [
       },
       targetTypes: "squareInRange",
     },
+    attackProjectile: {
+      shape: "bolt",
+      color: "#FFD700",
+      trailColor: "#FFA500",
+      size: 0.9,
+      speed: 1.4,
+      icon: "✨",
+    },
   },
   {
     name: "Azir",
@@ -673,6 +763,14 @@ export const champions: ChampionData[] = [
         lShape: false,
       },
       targetTypes: "allyMinion",
+    },
+    attackProjectile: {
+      shape: "orb",
+      color: "#DAA520",
+      trailColor: "#F4A460",
+      size: 0.8,
+      speed: 1,
+      icon: "☀️",
     },
   },
   {

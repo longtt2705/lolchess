@@ -252,6 +252,26 @@ export class Shield {
   duration: number;
 }
 
+export class AttackProjectile {
+  @Prop({ required: true })
+  shape: string; // "bullet" | "arrow" | "orb" | "bolt" | "missile"
+
+  @Prop({ required: true })
+  color: string;
+
+  @Prop()
+  trailColor?: string;
+
+  @Prop()
+  size?: number;
+
+  @Prop()
+  speed?: number;
+
+  @Prop()
+  icon?: string;
+}
+
 @Schema()
 export class Chess {
   @Prop({ required: true })
@@ -301,6 +321,9 @@ export class Chess {
 
   @Prop({ type: [Shield], default: [] })
   shields: Shield[];
+
+  @Prop({ type: AttackProjectile })
+  attackProjectile?: AttackProjectile;
 
   @Prop()
   deadAtRound?: number; // Track which round the piece died
