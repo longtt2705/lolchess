@@ -4,13 +4,13 @@ import { ChessPosition, GameState } from "../hooks/useGame";
 export interface AnimationAction {
   id: string;
   type:
-    | "move"
-    | "attack"
-    | "skill"
-    | "damage"
-    | "stat_change"
-    | "death"
-    | "buy_item";
+  | "move"
+  | "attack"
+  | "skill"
+  | "damage"
+  | "stat_change"
+  | "death"
+  | "buy_item";
   timestamp: number;
   delay: number; // When to start this animation (in ms from sequence start)
   duration: number; // How long the animation lasts
@@ -116,7 +116,7 @@ export class AnimationEngine {
             toPosition: lastAction.targetPosition,
           } as MoveAnimationData,
         });
-        currentDelay += 500;
+        // currentDelay += 500;
       }
     }
 
@@ -153,7 +153,6 @@ export class AnimationEngine {
         // Handle Yasuo's whirlwind animation (triggered on critical strike)
         // The whirlwind animation plays whenever whirlwindTargets is set (even if empty)
         if (lastAction.whirlwindTargets) {
-          console.log('[AnimationEngine] Whirlwind detected! Creating animation:', lastAction.whirlwindTargets);
           const skillRenderer = getSkillAnimationRenderer(
             "Way of the Wanderer"
           );
@@ -181,6 +180,32 @@ export class AnimationEngine {
             data: whirlwindAnimationData,
           });
           currentDelay += calculatedDuration;
+        }
+
+        // Handle Sand Soldier chain attacks (additional attacks from nearby Sand Soldiers)
+        if (lastAction.additionalAttacks && lastAction.additionalAttacks.length > 0) {
+          // All chain attacks animate simultaneously (same delay)
+          const CHAIN_ATTACK_DURATION = 400; // Shorter duration for chain attacks
+
+          lastAction.additionalAttacks.forEach((chainAttack, index) => {
+            animations.push({
+              id: `chain_attack_${index}_${lastAction.timestamp}`,
+              type: "attack",
+              timestamp: lastAction.timestamp,
+              delay: currentDelay, // All chain attacks start at the same time
+              duration: CHAIN_ATTACK_DURATION,
+              data: {
+                attackerId: chainAttack.attackerId,
+                attackerPosition: chainAttack.attackerPosition,
+                targetId: chainAttack.targetId,
+                targetPosition: chainAttack.targetPosition,
+                guinsooProc: false, // Chain attacks don't trigger Guinsoo's
+              } as AttackAnimationData,
+            });
+          });
+
+          // Add delay for chain attacks to complete (they all play at once)
+          currentDelay += CHAIN_ATTACK_DURATION;
         }
 
         // Note: Damage numbers are handled by stat changes below, no need to add here

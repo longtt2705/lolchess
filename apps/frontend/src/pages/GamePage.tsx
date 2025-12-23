@@ -2872,12 +2872,13 @@ const GamePage: React.FC = () => {
     id: string
     component: JSX.Element | null
   } | null>(null)
-  const [activeAttackProjectile, setActiveAttackProjectile] = useState<{
+  const [activeAttackProjectiles, setActiveAttackProjectiles] = useState<Array<{
     id: string
     attackerPosition: ChessPosition
     targetPosition: ChessPosition
     projectile: AttackProjectile
-  } | null>(null)
+    guinsooProc?: boolean
+  }>>([])
 
   // Track previous game state for animation
   const previousGameStateRef = useRef<GameState | null>(null)
@@ -3069,17 +3070,22 @@ const GamePage: React.FC = () => {
           const chessDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
           const speed = attackProjectile.speed ?? 1
           const flightDuration = Math.max(250, (chessDistance * 100) / speed)
-          const totalDuration = 200 + flightDuration + 300 // charge + flight + impact
+          // Add extra time for Guinsoo ghost projectile (120ms delay + same flight duration + impact)
+          const guinsooExtraDuration = guinsooProc ? 120 + flightDuration + 300 : 0
+          const totalDuration = 200 + flightDuration + 300 + guinsooExtraDuration // charge + flight + impact (+ guinsoo ghost)
 
-          // Set projectile animation (no melee lunge for ranged)
-          setActiveAttackProjectile({
+          // Add projectile animation to array (supports multiple simultaneous projectiles)
+          const projectileData = {
             id: animation.id,
             attackerPosition,
             targetPosition,
             projectile: attackProjectile,
-          })
+            guinsooProc,
+          }
+          setActiveAttackProjectiles(prev => [...prev, projectileData])
           await new Promise(resolve => setTimeout(resolve, totalDuration))
-          setActiveAttackProjectile(null)
+          // Remove this specific projectile after animation completes
+          setActiveAttackProjectiles(prev => prev.filter(p => p.id !== animation.id))
         } else {
           // Melee attack - use existing lunge animation
           setAttackAnimation({
@@ -4549,11 +4555,11 @@ const GamePage: React.FC = () => {
           <Board ref={boardRef} isTargeting={isSkillMode}>
             {renderBoard()}
 
-            {/* Attack projectile animations overlay */}
-            <AnimatePresence mode="wait">
-              {activeAttackProjectile && (
+            {/* Attack projectile animations overlay - supports multiple simultaneous projectiles */}
+            <AnimatePresence>
+              {activeAttackProjectiles.map(projectile => (
                 <div
-                  key={activeAttackProjectile.id}
+                  key={projectile.id}
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -4565,14 +4571,15 @@ const GamePage: React.FC = () => {
                   }}
                 >
                   <AttackProjectileRenderer
-                    attackerPosition={activeAttackProjectile.attackerPosition}
-                    targetPosition={activeAttackProjectile.targetPosition}
-                    projectile={activeAttackProjectile.projectile}
+                    attackerPosition={projectile.attackerPosition}
+                    targetPosition={projectile.targetPosition}
+                    projectile={projectile.projectile}
                     boardRef={boardRef}
                     isRedPlayer={!!(gameState && currentUser && gameState.redPlayer === currentUser.id)}
+                    guinsooProc={projectile.guinsooProc}
                   />
                 </div>
-              )}
+              ))}
             </AnimatePresence>
 
             {/* Skill animations overlay */}

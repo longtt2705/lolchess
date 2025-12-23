@@ -12,6 +12,7 @@ export interface AttackProjectileConfig {
   boardRef: React.RefObject<HTMLDivElement>
   isRedPlayer?: boolean
   onComplete?: () => void
+  guinsooProc?: boolean // Indicates Guinsoo's Rageblade triggered a double attack
 }
 
 // Animation keyframes
@@ -274,6 +275,56 @@ const MissileProjectile = styled(motion.div) <{ $color: string; $size: number }>
   }
 `
 
+// Spear projectile for Sand Soldier - elongated stabbing spear
+const SpearProjectile = styled(motion.div) <{ $color: string; $size: number }>`
+  position: relative;
+  width: ${props => 60 * props.$size}px;
+  height: ${props => 8 * props.$size}px;
+  
+  /* Spear shaft */
+  background: linear-gradient(
+    90deg,
+    ${props => adjustColor(props.$color, -40)} 0%,
+    ${props => props.$color} 20%,
+    ${props => adjustColor(props.$color, 20)} 40%,
+    ${props => props.$color} 60%,
+    ${props => adjustColor(props.$color, -20)} 80%,
+    transparent 100%
+  );
+  border-radius: ${props => `${2 * props.$size}px ${4 * props.$size}px ${4 * props.$size}px ${2 * props.$size}px`};
+  box-shadow: 
+    0 0 ${props => 10 * props.$size}px ${props => props.$color},
+    0 0 ${props => 20 * props.$size}px ${props => props.$color}60;
+  
+  /* Spear tip (pointed head) */
+  &::before {
+    content: '';
+    position: absolute;
+    right: -${props => 14 * props.$size}px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: ${props => 16 * props.$size}px solid ${props => props.$color};
+    border-top: ${props => 8 * props.$size}px solid transparent;
+    border-bottom: ${props => 8 * props.$size}px solid transparent;
+    filter: drop-shadow(0 0 ${props => 6 * props.$size}px ${props => props.$color});
+  }
+  
+  /* Golden highlight on shaft */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 10%;
+    width: 60%;
+    height: 30%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6) 30%, rgba(255, 255, 255, 0.8) 50%, rgba(255, 255, 255, 0.6) 70%, transparent);
+    border-radius: ${props => 2 * props.$size}px;
+    filter: blur(1px);
+  }
+`
+
 const TrailParticle = styled(motion.div) <{ $color: string; $size: number }>`
   position: absolute;
   pointer-events: none;
@@ -299,6 +350,45 @@ const ProjectileIcon = styled.span<{ $size: number }>`
   filter: drop-shadow(0 0 6px white) drop-shadow(0 0 12px currentColor);
 `
 
+// Guinsoo's Rageblade ghost projectile styling
+const GUINSOO_COLOR = '#aa44ff' // Purple/magenta for Guinsoo's magic effect
+const GUINSOO_DELAY = 0.12 // 120ms delay for ghost projectile
+
+const GhostProjectileWrapper = styled(motion.div)`
+  position: absolute;
+  pointer-events: none;
+  z-index: 101;
+  opacity: 0.6;
+  filter: hue-rotate(45deg) brightness(1.2);
+`
+
+const GhostTrailParticle = styled(motion.div) <{ $size: number }>`
+  position: absolute;
+  pointer-events: none;
+  z-index: 99;
+  border-radius: 50%;
+  background: radial-gradient(circle, white 0%, ${GUINSOO_COLOR} 50%, transparent 100%);
+  box-shadow: 0 0 ${props => 8 * props.$size}px ${GUINSOO_COLOR};
+  opacity: 0.7;
+`
+
+const GhostImpactEffect = styled(motion.div)`
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 148;
+`
+
+const GhostSparkleEffect = styled(motion.div)`
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 6px ${GUINSOO_COLOR}, 0 0 12px white;
+  opacity: 0.7;
+`
+
 // Helper function to adjust color brightness
 function adjustColor(color: string, amount: number): string {
   if (color.startsWith('#')) {
@@ -320,10 +410,13 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
   projectile,
   boardRef,
   isRedPlayer = false,
-  onComplete
+  onComplete,
+  guinsooProc = false
 }) => {
   const [phase, setPhase] = useState<AnimationPhase>('charging')
+  const [ghostPhase, setGhostPhase] = useState<AnimationPhase>('charging')
   const [trails, setTrails] = useState<Array<{ id: number; x: number; y: number; size: number }>>([])
+  const [ghostTrails, setGhostTrails] = useState<Array<{ id: number; x: number; y: number; size: number }>>([])
   const [sparkles, setSparkles] = useState<Array<{ id: number; x: number; y: number; angle: number }>>([])
 
   // Get pixel positions
@@ -352,6 +445,17 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
       return () => clearTimeout(timer)
     }
   }, [phase])
+
+  // Ghost projectile phase transitions (delayed for Guinsoo's Rageblade)
+  useEffect(() => {
+    if (!guinsooProc) return
+
+    if (ghostPhase === 'charging') {
+      // Ghost starts firing after main projectile + GUINSOO_DELAY
+      const timer = setTimeout(() => setGhostPhase('firing'), (chargeDuration + GUINSOO_DELAY) * 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [ghostPhase, guinsooProc, chargeDuration])
 
   // Generate charging particles
   useEffect(() => {
@@ -389,6 +493,8 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
           return <BoltProjectile $color={projectile.color} $size={size} style={commonStyle} />
         case 'missile':
           return <MissileProjectile $color={projectile.color} $size={size} style={commonStyle} />
+        case 'spear':
+          return <SpearProjectile $color={projectile.color} $size={size} style={commonStyle} />
         default:
           return <OrbProjectile $color={projectile.color} $size={size} />
       }
@@ -603,6 +709,139 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
           </>
         )}
       </AnimatePresence>
+
+      {/* Guinsoo's Rageblade Ghost Projectile */}
+      {guinsooProc && (
+        <>
+          {/* Ghost trail particles */}
+          <AnimatePresence>
+            {ghostTrails.map(trail => (
+              <GhostTrailParticle
+                key={trail.id}
+                $size={size}
+                style={{
+                  left: trail.x - (6 * trail.size),
+                  top: trail.y - (6 * trail.size),
+                  width: 12 * trail.size * size,
+                  height: 12 * trail.size * size,
+                }}
+                initial={{ opacity: 0.7, scale: 1 }}
+                animate={{ opacity: 0, scale: 0.2 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+              />
+            ))}
+          </AnimatePresence>
+
+          {/* Ghost projectile */}
+          {ghostPhase === 'firing' && (
+            <GhostProjectileWrapper
+              initial={{
+                left: attackerPixels.x - (18 * size),
+                top: attackerPixels.y - (14 * size),
+                scale: 0.3 * 0.9, // Slightly smaller
+                opacity: 0
+              }}
+              animate={{
+                left: targetPixels.x - (18 * size),
+                top: targetPixels.y - (14 * size),
+                scale: [0.27, 1.08, 0.9], // 90% of main projectile
+                opacity: 0.6
+              }}
+              transition={{
+                duration: flightDuration,
+                ease: [0.2, 0.8, 0.3, 1],
+                scale: { duration: 0.15, ease: 'easeOut' }
+              }}
+              onUpdate={(latest) => {
+                // Add ghost trail particles during flight
+                if (typeof latest.left === 'number' && typeof latest.top === 'number') {
+                  const trailSize = 0.4 + Math.random() * 0.4
+                  setGhostTrails(prev => [...prev, {
+                    id: Date.now() + Math.random(),
+                    x: (latest.left as number) + (18 * size),
+                    y: (latest.top as number) + (14 * size),
+                    size: trailSize
+                  }].slice(-10))
+                }
+              }}
+              onAnimationComplete={() => {
+                setGhostPhase('impact')
+                setTimeout(() => {
+                  setGhostPhase('done')
+                }, 300)
+              }}
+            >
+              {renderProjectile()}
+            </GhostProjectileWrapper>
+          )}
+
+          {/* Ghost impact effect */}
+          <AnimatePresence>
+            {ghostPhase === 'impact' && (
+              <>
+                {/* Ghost impact burst */}
+                <GhostImpactEffect
+                  style={{
+                    left: targetPixels.x - 40,
+                    top: targetPixels.y - 40,
+                    width: 80,
+                    height: 80,
+                    background: `radial-gradient(circle, white 0%, ${GUINSOO_COLOR} 30%, ${GUINSOO_COLOR}80 60%, transparent 100%)`,
+                  }}
+                  initial={{ scale: 0, opacity: 0.6 }}
+                  animate={{ scale: [0, 1.5, 1.6], opacity: [0.6, 0.5, 0] }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                />
+
+                {/* Ghost impact ring */}
+                <motion.div
+                  style={{
+                    position: 'absolute',
+                    left: targetPixels.x - 32,
+                    top: targetPixels.y - 32,
+                    width: 64,
+                    height: 64,
+                    borderRadius: '50%',
+                    border: `2px solid ${GUINSOO_COLOR}`,
+                    pointerEvents: 'none',
+                    zIndex: 147,
+                    opacity: 0.6,
+                  }}
+                  initial={{ scale: 0.5, opacity: 0.6 }}
+                  animate={{ scale: 1.8, opacity: 0 }}
+                  transition={{ duration: 0.35, ease: 'easeOut' }}
+                />
+
+                {/* Ghost impact sparkles */}
+                {[...Array(6)].map((_, i) => {
+                  const sparkAngle = (i / 6) * Math.PI * 2
+                  const sparkDist = 30 + Math.random() * 15
+                  return (
+                    <GhostSparkleEffect
+                      key={`ghost-sparkle-${i}`}
+                      style={{
+                        left: targetPixels.x,
+                        top: targetPixels.y,
+                        zIndex: 149,
+                      }}
+                      initial={{ x: 0, y: 0, scale: 0.8, opacity: 0.7 }}
+                      animate={{
+                        x: Math.cos(sparkAngle) * sparkDist,
+                        y: Math.sin(sparkAngle) * sparkDist,
+                        scale: 0,
+                        opacity: 0
+                      }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                    />
+                  )
+                })}
+              </>
+            )}
+          </AnimatePresence>
+        </>
+      )}
     </>
   )
 }

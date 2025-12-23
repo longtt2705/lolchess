@@ -753,7 +753,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Arise",
       description:
-        "Azir can promote a Minion to a Sand Soldier. Sand Soldiers deal additional (5 + 65% of AP) magic damage to their target. If Azir is dead, the Sand Soldier will die with him.",
+        "Azir can promote a Minion to a Sand Soldier. You can only control at most 3 Sand Soldiers at a time. If Azir is dead, the Sand Soldier will die with him.",
       cooldown: 9,
       attackRange: {
         range: 2,

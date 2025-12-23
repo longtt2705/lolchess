@@ -49,6 +49,10 @@ export class GameLogic {
       killerPlayerId: event.playerId, // Track who performed the action for gold rewards
     };
 
+    // Assign action details to game BEFORE processing so it's available during action execution
+    // (e.g., for Sand Soldier chain attacks to add to additionalAttacks)
+    game.lastAction = actionDetails;
+
     // Take snapshots of pieces before action
     const pieceStatsBefore = new Map<string, any>();
     game.board.forEach((piece) => {
@@ -150,9 +154,6 @@ export class GameLogic {
         actionDetails.killedPieceIds!.push(pieceId);
       }
     });
-
-    // Assign action details to game
-    game.lastAction = actionDetails;
 
     this.applyAuraDebuffs(game);
 
@@ -914,6 +915,13 @@ export class GameLogic {
         criticalDamage: 150,
         damageAmplification: 0,
         hpRegen: 0,
+        attackProjectile: {
+          shape: "spear",
+          color: "#DAA520",
+          trailColor: "#F4A460",
+          size: 1.0,
+          speed: 1.2,
+        },
       },
     };
 

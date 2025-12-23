@@ -10,6 +10,7 @@ import { deathMarkRenderer } from "./skills/deathMark";
 import { soulFurnaceRenderer } from "./skills/soulFurnace";
 import { judgmentRenderer } from "./skills/judgment";
 import { wayOfTheWandererRenderer } from "./skills/wayOfTheWanderer";
+import { ariseRenderer } from "./skills/arise";
 
 /**
  * Registry mapping skill names to their animation renderers
@@ -45,6 +46,9 @@ const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
 
   // Yasuo
   "Way of the Wanderer": wayOfTheWandererRenderer,
+
+  // Azir
+  "Arise": ariseRenderer,
 
   // Add more skills here as they're implemented
   // 'Skill Name': skillRenderer,

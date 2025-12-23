@@ -409,6 +409,14 @@ export class ActionDetails {
     targetId: string;
     targetPosition: Square;
   }>; // For Yasuo: targets hit by the whirlwind on critical strike
+
+  @Prop({ type: [mongoose.Schema.Types.Mixed] })
+  additionalAttacks?: Array<{
+    attackerId: string;
+    attackerPosition: Square;
+    targetId: string;
+    targetPosition: Square;
+  }>; // For Sand Soldiers: chain attacks from nearby soldiers
 }
 
 @Schema()

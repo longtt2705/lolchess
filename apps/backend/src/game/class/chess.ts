@@ -59,7 +59,7 @@ export class ChessObject {
   protected activeSkillDamage(
     chess: ChessObject,
     damage: number,
-    damageType: "physical" | "magic" | "true",
+    damageType: "physical" | "magic" | "true" | "non-lethal",
     attacker: ChessObject,
     sunder: number = 0
   ): number {
@@ -240,8 +240,12 @@ export class ChessObject {
     target: ChessObject,
     damage: number,
     damageType: "physical" | "magic" | "true" | "non-lethal",
-    sunder: number = 0
+    sunder: number = 0,
+    isSkillDamage: boolean = false
   ): number {
+    if (isSkillDamage) {
+      return this.activeSkillDamage(target, damage, damageType, this, sunder);
+    }
     return this.damage(target, damage, damageType, this, sunder, false);
   }
 
@@ -569,7 +573,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -580,7 +584,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }

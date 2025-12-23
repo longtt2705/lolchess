@@ -127,6 +127,12 @@ export interface ActionDetails {
     targetId: string;
     targetPosition: ChessPosition;
   }>; // For Yasuo: targets hit by the whirlwind on critical strike
+  additionalAttacks?: Array<{
+    attackerId: string;
+    attackerPosition: ChessPosition;
+    targetId: string;
+    targetPosition: ChessPosition;
+  }>; // For Sand Soldiers: chain attacks from nearby soldiers
 }
 
 export interface GameState {

@@ -4,10 +4,33 @@ import { ChessObject } from "./chess";
 
 export class Azir extends ChessObject {
   /**
+   * Maximum number of Sand Soldiers Azir can control
+   */
+  private static readonly MAX_SAND_SOLDIERS = 3;
+
+  /**
+   * Count Sand Soldiers owned by this Azir
+   */
+  private countSandSoldiers(): number {
+    return this.game.board.filter(
+      (chess) =>
+        chess.name === "Sand Soldier" &&
+        chess.skill?.payload?.azirId === this.chess.id &&
+        chess.stats.hp > 0
+    ).length;
+  }
+
+  /**
    * Arise - Promote a Minion to a Sand Soldier
    * Targets ally Melee or Caster Minions within range
+   * Maximum 3 Sand Soldiers can be controlled at a time
    */
   skill(position?: Square): void {
+    // Check if we already have max Sand Soldiers
+    if (this.countSandSoldiers() >= Azir.MAX_SAND_SOLDIERS) {
+      return;
+    }
+
     // Find the target ally minion at the position
     const targetChess = GameLogic.getChess(
       this.game,
@@ -53,6 +76,7 @@ export class Azir extends ChessObject {
     // Remove minion movement restrictions
     minion.cannotMoveBackward = false;
     minion.canOnlyMoveVertically = false;
+    minion.attackProjectile = sandSoldierStats.attackProjectile;
 
     // Store Azir's ID in the Sand Soldier's skill payload
     // This allows the Sand Soldier to find Azir for bonus damage calculation
@@ -60,7 +84,7 @@ export class Azir extends ChessObject {
       minion.skill = {
         name: "Sand Soldier",
         description:
-          "This unit deals additional (5 + 40% of AP) magic damage to their target. After attacking, apply the Azir's attack effects.",
+          "This unit deals additional (15 + 35% of Azir's AP) magic damage to their target, also, apply the Azir's attack effects after attacking. When a Sand Soldier attacks, other Sand Soldiers within 2 squares of the target will also attack the target but deal less than 50% of the Sand Soldier's damage.",
         cooldown: 0,
         currentCooldown: 0,
         type: "passive",

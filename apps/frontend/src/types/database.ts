@@ -55,7 +55,7 @@ export interface ChampionAura {
 }
 
 export interface AttackProjectile {
-  shape: "bullet" | "arrow" | "orb" | "bolt" | "missile";
+  shape: "bullet" | "arrow" | "orb" | "bolt" | "missile" | "spear";
   color: string;
   trailColor?: string;
   size?: number; // 0.5 to 2, default 1
