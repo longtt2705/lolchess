@@ -299,13 +299,13 @@ export class ChessObject {
         (item) => item.id === "sterak_gage"
       );
       if (sterakGage && sterakGage.currentCooldown <= 0) {
-        this.applyShield(this.maxHp * 0.5, 3);
+        this.applyShield(this.maxHp * 0.5, 5);
         this.applyDebuff(this, {
           id: "sterak_gage",
           name: "Sterak's Gage",
-          description: "Gain 20 AD for 3 turns.",
-          duration: 3,
-          maxDuration: 3,
+          description: "Gain 20 AD for 5 turns.",
+          duration: 5,
+          maxDuration: 5,
           effects: [{ stat: "ad", modifier: 20, type: "add" }],
           damagePerTurn: 0,
           damageType: "physical",
@@ -574,7 +574,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -585,7 +585,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }

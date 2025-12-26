@@ -139,6 +139,11 @@ export interface ActionDetails {
     targetId: string;
     targetPosition: ChessPosition;
   }>; // For Sand Soldiers: chain attacks from nearby soldiers
+  fourthShotProc?: boolean; // For Jhin and Tristana: indicates this is their 4th shot
+  fourthShotAoeTargets?: Array<{
+    targetId: string;
+    targetPosition: ChessPosition;
+  }>; // For Tristana: adjacent enemies hit by 4th shot explosion
 }
 
 export interface GameState {

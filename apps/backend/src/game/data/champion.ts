@@ -21,8 +21,8 @@ export const champions: ChampionData[] = [
   {
     name: "Aatrox",
     stats: {
-      maxHp: 110,
-      ad: 45,
+      maxHp: 120,
+      ad: 35,
       ap: 10,
       physicalResistance: 15,
       magicResistance: 10,
@@ -46,8 +46,8 @@ export const champions: ChampionData[] = [
   {
     name: "Ahri",
     stats: {
-      maxHp: 70,
-      ad: 15,
+      maxHp: 80,
+      ad: 5,
       ap: 30,
       attackRange: {
         range: 2,
@@ -87,8 +87,8 @@ export const champions: ChampionData[] = [
   {
     name: "Garen",
     stats: {
-      maxHp: 110,
-      ad: 35,
+      maxHp: 120,
+      ad: 25,
       ap: 10,
       physicalResistance: 25,
       magicResistance: 25,
@@ -115,7 +115,7 @@ export const champions: ChampionData[] = [
   {
     name: "Janna",
     stats: {
-      maxHp: 70,
+      maxHp: 80,
       ad: 10,
       ap: 30,
       physicalResistance: 10,
@@ -167,8 +167,8 @@ export const champions: ChampionData[] = [
   {
     name: "Ashe",
     stats: {
-      maxHp: 80,
-      ad: 25,
+      maxHp: 90,
+      ad: 20,
       ap: 0,
       physicalResistance: 10,
       magicResistance: 10,
@@ -201,13 +201,13 @@ export const champions: ChampionData[] = [
   {
     name: "Tristana",
     stats: {
-      maxHp: 70,
-      ad: 20,
+      maxHp: 85,
+      ad: 25,
       ap: 0,
       physicalResistance: 10,
       magicResistance: 10,
       attackRange: {
-        range: 1,
+        range: 2,
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -219,7 +219,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Draw a Bead",
       description:
-        "Tristana's Attack Range gains 1 every 10 rounds (max 8). Every 4th attack deals bonus (10+50% of AP) physical damage to the target and his adjacent squares.",
+        "Tristana's Attack Range gains 1 every 10 rounds (max 8). Every 4th attack deals bonus (10+50% of AP + 25% of AD) physical damage to the target and his adjacent squares.",
       cooldown: 0,
     },
     attackProjectile: {
@@ -234,7 +234,7 @@ export const champions: ChampionData[] = [
   {
     name: "Blitzcrank",
     stats: {
-      maxHp: 115,
+      maxHp: 125,
       ad: 15,
       ap: 30,
       attackRange: {
@@ -267,8 +267,8 @@ export const champions: ChampionData[] = [
   {
     name: "Kha'Zix",
     stats: {
-      maxHp: 80,
-      ad: 55,
+      maxHp: 90,
+      ad: 35,
       ap: 10,
       criticalChance: 20,
       attackRange: {
@@ -300,8 +300,9 @@ export const champions: ChampionData[] = [
   {
     name: "Zed",
     stats: {
-      maxHp: 85,
-      ad: 50,
+      maxHp: 95,
+      ad: 30,
+      ap: 10,
       attackRange: {
         range: 1,
         diagonal: true,
@@ -334,8 +335,8 @@ export const champions: ChampionData[] = [
   {
     name: "Malphite",
     stats: {
-      maxHp: 150,
-      ad: 35,
+      maxHp: 160,
+      ad: 20,
       ap: 30,
       physicalResistance: 30,
       magicResistance: 15,
@@ -360,8 +361,8 @@ export const champions: ChampionData[] = [
   {
     name: "Sion",
     stats: {
-      maxHp: 150,
-      ad: 25,
+      maxHp: 160,
+      ad: 20,
       ap: 30,
       physicalResistance: 20,
       magicResistance: 15,
@@ -402,7 +403,7 @@ export const champions: ChampionData[] = [
       criticalChance: 4,
       sunder: 4,
       lifesteal: 4,
-      speed: 2,
+      speed: 1,
     },
     skill: {
       type: "passive",
@@ -422,7 +423,7 @@ export const champions: ChampionData[] = [
   {
     name: "Soraka",
     stats: {
-      maxHp: 80,
+      maxHp: 90,
       ad: 10,
       ap: 20,
       physicalResistance: 10,
@@ -463,7 +464,7 @@ export const champions: ChampionData[] = [
   {
     name: "Nasus",
     stats: {
-      maxHp: 115,
+      maxHp: 125,
       ad: 35,
       ap: 10,
       physicalResistance: 15,
@@ -497,7 +498,7 @@ export const champions: ChampionData[] = [
   {
     name: "Teemo",
     stats: {
-      maxHp: 80,
+      maxHp: 90,
       ad: 5,
       ap: 30,
       physicalResistance: 15,
@@ -530,7 +531,7 @@ export const champions: ChampionData[] = [
   {
     name: "Rammus",
     stats: {
-      maxHp: 120,
+      maxHp: 135,
       ad: 15,
       ap: 20,
       physicalResistance: 35,
@@ -555,8 +556,8 @@ export const champions: ChampionData[] = [
   {
     name: "Yasuo",
     stats: {
-      maxHp: 95,
-      ad: 45,
+      maxHp: 105,
+      ad: 30,
       ap: 10,
       sunder: 5,
       physicalResistance: 20,
@@ -583,8 +584,8 @@ export const champions: ChampionData[] = [
   {
     name: "Tryndamere",
     stats: {
-      maxHp: 100,
-      ad: 45,
+      maxHp: 110,
+      ad: 30,
       ap: 10,
       criticalChance: 25,
       physicalResistance: 15,
@@ -609,9 +610,9 @@ export const champions: ChampionData[] = [
   {
     name: "Viktor",
     stats: {
-      maxHp: 75,
+      maxHp: 85,
       ad: 5,
-      ap: 40,
+      ap: 35,
       criticalChance: 30,
       physicalResistance: 15,
       magicResistance: 15,
@@ -651,8 +652,8 @@ export const champions: ChampionData[] = [
   {
     name: "Twisted Fate",
     stats: {
-      maxHp: 75,
-      ad: 25,
+      maxHp: 85,
+      ad: 20,
       ap: 20,
       criticalChance: 15,
       physicalResistance: 15,
@@ -693,8 +694,8 @@ export const champions: ChampionData[] = [
   {
     name: "Ezreal",
     stats: {
-      maxHp: 80,
-      ad: 30,
+      maxHp: 90,
+      ad: 25,
       ap: 30,
       criticalChance: 10,
       physicalResistance: 15,
@@ -735,7 +736,7 @@ export const champions: ChampionData[] = [
   {
     name: "Azir",
     stats: {
-      maxHp: 80,
+      maxHp: 90,
       ad: 5,
       ap: 35,
       physicalResistance: 10,
@@ -776,9 +777,9 @@ export const champions: ChampionData[] = [
   {
     name: "Dr.Mundo",
     stats: {
-      maxHp: 120,
+      maxHp: 140,
       ad: 30,
-      ap: 0,
+      ap: 10,
       physicalResistance: 20,
       magicResistance: 20,
       attackRange: {

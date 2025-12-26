@@ -325,6 +325,38 @@ export class GameLogic {
         // Clear the payload after copying so it doesn't persist to next attack
         delete casterChess.skill.payload.whirlwindTargets;
       }
+
+      // Jhin and Tristana's 4th shot detection
+      if (
+        (casterChess.name === "Jhin" || casterChess.name === "Tristana") &&
+        casterChess.skill.payload.attackCount !== undefined &&
+        casterChess.skill.payload.attackCount % 4 === 0
+      ) {
+        actionDetails.fourthShotProc = true;
+
+        // For Tristana, collect AOE targets (adjacent enemies hit by explosion)
+        if (casterChess.name === "Tristana") {
+          const adjacentSquares = this.getAdjacentSquares(targetPosition);
+          const aoeTargets: Array<{
+            targetId: string;
+            targetPosition: Square;
+          }> = [];
+
+          for (const square of adjacentSquares) {
+            const adjacentEnemy = this.getChess(game, !isBlue, square);
+            if (adjacentEnemy && adjacentEnemy.stats.hp > 0) {
+              aoeTargets.push({
+                targetId: adjacentEnemy.id,
+                targetPosition: square,
+              });
+            }
+          }
+
+          if (aoeTargets.length > 0) {
+            actionDetails.fourthShotAoeTargets = aoeTargets;
+          }
+        }
+      }
     }
 
     return game;

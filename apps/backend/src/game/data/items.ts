@@ -125,6 +125,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/GiantSlayer.png",
     effects: [
       { stat: "ad", value: 15, type: "add" },
+      { stat: "ap", value: 15, type: "add" },
       { stat: "sunder", value: 20, type: "add" },
       { stat: "damageAmplification", value: 5, type: "add" },
     ],
@@ -186,7 +187,7 @@ export const combinedItems: ItemData[] = [
     id: "sterak_gage",
     name: "Sterak's Gage",
     description:
-      "At 60% Health, gain a shield equal to 50% of the wearer's maximum Health and gain 20 AD that decays over 3 turns.",
+      "At 60% Health, gain a shield equal to 50% of the wearer's maximum Health and gain 20 AD that decays over 5 turns.",
     cost: 0,
     icon: "/icons/SteraksGage.png",
     effects: [
@@ -215,13 +216,12 @@ export const combinedItems: ItemData[] = [
   {
     id: "deathblade",
     name: "Deathblade",
-    description: "Increase 25% of AD.",
+    description: "Increase 30% of AD.",
     cost: 0,
     icon: "/icons/Deathblade.png",
     effects: [
-      { stat: "ad", value: 25, type: "add" },
       { stat: "damageAmplification", value: 10, type: "add" },
-      { stat: "ad", value: 1.1, type: "multiply" },
+      { stat: "ad", value: 1.3, type: "multiply" },
     ],
     isBasic: false,
     recipe: ["bf_sword", "bf_sword"],
@@ -335,13 +335,12 @@ export const combinedItems: ItemData[] = [
   {
     id: "rabadon_deathcap",
     name: "Rabadon's Deathcap",
-    description: "",
+    description: "Increase 50% of AP.",
     cost: 0,
     icon: "/icons/RabadonsDeathcap.png",
     effects: [
-      { stat: "ap", value: 45, type: "add" },
       { stat: "damageAmplification", value: 10, type: "add" },
-      { stat: "ap", value: 1.1, type: "multiply" },
+      { stat: "ap", value: 1.5, type: "multiply" },
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "needlessly_rod"],

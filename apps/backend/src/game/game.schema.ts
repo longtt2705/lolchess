@@ -420,6 +420,15 @@ export class ActionDetails {
     targetId: string;
     targetPosition: Square;
   }>; // For Sand Soldiers: chain attacks from nearby soldiers
+
+  @Prop()
+  fourthShotProc?: boolean; // For Jhin and Tristana: indicates this is their 4th shot
+
+  @Prop({ type: [mongoose.Schema.Types.Mixed] })
+  fourthShotAoeTargets?: Array<{
+    targetId: string;
+    targetPosition: Square;
+  }>; // For Tristana: adjacent enemies hit by 4th shot explosion
 }
 
 @Schema()

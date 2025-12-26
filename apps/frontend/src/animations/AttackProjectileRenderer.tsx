@@ -13,6 +13,12 @@ export interface AttackProjectileConfig {
   isRedPlayer?: boolean
   onComplete?: () => void
   guinsooProc?: boolean // Indicates Guinsoo's Rageblade triggered a double attack
+  fourthShotProc?: boolean // Indicates Jhin or Tristana's 4th shot
+  fourthShotAoeTargets?: Array<{
+    targetId: string
+    targetPosition: ChessPosition
+  }> // For Tristana: adjacent targets hit by explosion
+  attackerName?: string // Champion name to determine special effects
 }
 
 // Animation keyframes
@@ -411,7 +417,10 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
   boardRef,
   isRedPlayer = false,
   onComplete,
-  guinsooProc = false
+  guinsooProc = false,
+  fourthShotProc = false,
+  fourthShotAoeTargets = [],
+  attackerName = ''
 }) => {
   const [phase, setPhase] = useState<AnimationPhase>('charging')
   const [ghostPhase, setGhostPhase] = useState<AnimationPhase>('charging')
@@ -430,7 +439,12 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
   const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
   // Projectile properties with defaults
-  const size = projectile.size ?? 1
+  // For Jhin's 4th shot, double the size
+  let size = projectile.size ?? 1
+  if (fourthShotProc && attackerName === 'Jhin') {
+    size = size * 2
+  }
+  
   const speed = projectile.speed ?? 1
   const trailColor = projectile.trailColor ?? projectile.color
 
@@ -504,7 +518,10 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
       <>
         <ProjectileGlow $color={projectile.color} $size={size} />
         {ProjectileComponent}
-        {projectile.icon && (
+        {/* Only show icon for: 
+            - All attacks if not Tristana
+            - Tristana's 4th shot only (hide bomb icon on normal attacks) */}
+        {projectile.icon && !(attackerName === 'Tristana' && !fourthShotProc) && (
           <div style={{
             position: 'absolute',
             inset: 0,
@@ -648,44 +665,69 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
       <AnimatePresence>
         {phase === 'impact' && (
           <>
-            {/* Main impact burst */}
+            {/* Main impact burst - larger for 4th shots */}
             <ImpactEffect
               style={{
-                left: targetPixels.x - 50,
-                top: targetPixels.y - 50,
-                width: 100,
-                height: 100,
-                background: `radial-gradient(circle, white 0%, ${projectile.color} 30%, ${projectile.color}80 60%, transparent 100%)`,
+                left: targetPixels.x - (fourthShotProc ? 70 : 50),
+                top: targetPixels.y - (fourthShotProc ? 70 : 50),
+                width: fourthShotProc ? 140 : 100,
+                height: fourthShotProc ? 140 : 100,
+                background: fourthShotProc 
+                  ? `radial-gradient(circle, white 0%, ${projectile.color} 20%, #FFD700 40%, ${projectile.color}80 70%, transparent 100%)`
+                  : `radial-gradient(circle, white 0%, ${projectile.color} 30%, ${projectile.color}80 60%, transparent 100%)`,
                 zIndex: 150,
               }}
               initial={{ scale: 0, opacity: 1 }}
-              animate={{ scale: [0, 1.8, 2], opacity: [1, 0.9, 0] }}
+              animate={{ 
+                scale: fourthShotProc ? [0, 2.2, 2.5] : [0, 1.8, 2], 
+                opacity: [1, 0.9, 0] 
+              }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
+              transition={{ duration: fourthShotProc ? 0.4 : 0.3, ease: 'easeOut' }}
             />
+
+            {/* Additional shockwave for 4th shots */}
+            {fourthShotProc && (
+              <motion.div
+                style={{
+                  position: 'absolute',
+                  left: targetPixels.x - 60,
+                  top: targetPixels.y - 60,
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle, ${projectile.color}40 0%, ${projectile.color}20 50%, transparent 100%)`,
+                  pointerEvents: 'none',
+                  zIndex: 148,
+                }}
+                initial={{ scale: 0, opacity: 1 }}
+                animate={{ scale: 3, opacity: 0 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+              />
+            )}
 
             {/* Impact ring */}
             <motion.div
               style={{
                 position: 'absolute',
-                left: targetPixels.x - 40,
-                top: targetPixels.y - 40,
-                width: 80,
-                height: 80,
+                left: targetPixels.x - (fourthShotProc ? 50 : 40),
+                top: targetPixels.y - (fourthShotProc ? 50 : 40),
+                width: fourthShotProc ? 100 : 80,
+                height: fourthShotProc ? 100 : 80,
                 borderRadius: '50%',
-                border: `3px solid ${projectile.color}`,
+                border: `${fourthShotProc ? 4 : 3}px solid ${projectile.color}`,
                 pointerEvents: 'none',
                 zIndex: 149,
               }}
               initial={{ scale: 0.5, opacity: 1 }}
-              animate={{ scale: 2, opacity: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
+              animate={{ scale: fourthShotProc ? 2.5 : 2, opacity: 0 }}
+              transition={{ duration: fourthShotProc ? 0.5 : 0.4, ease: 'easeOut' }}
             />
 
-            {/* Impact sparkles */}
-            {[...Array(8)].map((_, i) => {
-              const sparkAngle = (i / 8) * Math.PI * 2
-              const sparkDist = 40 + Math.random() * 20
+            {/* Impact sparkles - more for 4th shots */}
+            {[...Array(fourthShotProc ? 16 : 8)].map((_, i) => {
+              const sparkAngle = (i / (fourthShotProc ? 16 : 8)) * Math.PI * 2
+              const sparkDist = (fourthShotProc ? 60 : 40) + Math.random() * 20
               return (
                 <SparkleEffect
                   key={i}
@@ -702,8 +744,77 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
                     scale: 0,
                     opacity: 0
                   }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  transition={{ duration: fourthShotProc ? 0.4 : 0.3, ease: 'easeOut' }}
                 />
+              )
+            })}
+
+            {/* Tristana's AOE explosions on adjacent targets */}
+            {fourthShotProc && attackerName === 'Tristana' && fourthShotAoeTargets.map((aoeTarget, idx) => {
+              const aoePixels = getPixelPosition(aoeTarget.targetPosition, boardRef, isRedPlayer)
+              return (
+                <React.Fragment key={`aoe_${aoeTarget.targetId}_${idx}`}>
+                  {/* AOE impact effect */}
+                  <motion.div
+                    style={{
+                      position: 'absolute',
+                      left: aoePixels.x - 40,
+                      top: aoePixels.y - 40,
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      background: `radial-gradient(circle, ${projectile.color} 0%, ${projectile.color}80 40%, transparent 100%)`,
+                      pointerEvents: 'none',
+                      zIndex: 148,
+                    }}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: [0, 1.5, 1.8], opacity: [0, 0.8, 0] }}
+                    transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+                  />
+                  
+                  {/* AOE ring */}
+                  <motion.div
+                    style={{
+                      position: 'absolute',
+                      left: aoePixels.x - 30,
+                      top: aoePixels.y - 30,
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      border: `2px solid ${projectile.color}`,
+                      pointerEvents: 'none',
+                      zIndex: 147,
+                    }}
+                    initial={{ scale: 0.5, opacity: 1 }}
+                    animate={{ scale: 2, opacity: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+                  />
+
+                  {/* AOE sparkles */}
+                  {[...Array(6)].map((_, i) => {
+                    const angle = (i / 6) * Math.PI * 2
+                    const dist = 30
+                    return (
+                      <SparkleEffect
+                        key={`aoe_sparkle_${i}`}
+                        $color={projectile.color}
+                        style={{
+                          left: aoePixels.x,
+                          top: aoePixels.y,
+                          zIndex: 149,
+                        }}
+                        initial={{ x: 0, y: 0, scale: 0.8, opacity: 1 }}
+                        animate={{
+                          x: Math.cos(angle) * dist,
+                          y: Math.sin(angle) * dist,
+                          scale: 0,
+                          opacity: 0
+                        }}
+                        transition={{ duration: 0.3, delay: 0.1, ease: 'easeOut' }}
+                      />
+                    )
+                  })}
+                </React.Fragment>
               )
             })}
           </>

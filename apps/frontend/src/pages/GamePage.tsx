@@ -2955,6 +2955,12 @@ const GamePage: React.FC = () => {
     targetPosition: ChessPosition
     projectile: AttackProjectile
     guinsooProc?: boolean
+    fourthShotProc?: boolean
+    fourthShotAoeTargets?: Array<{
+      targetId: string
+      targetPosition: ChessPosition
+    }>
+    attackerName?: string
   }>>([])
 
   // Track previous game state for animation
@@ -3127,7 +3133,7 @@ const GamePage: React.FC = () => {
       }
 
       case 'attack': {
-        const { attackerId, attackerPosition, targetId, targetPosition, guinsooProc } = animation.data
+        const { attackerId, attackerPosition, targetId, targetPosition, guinsooProc, fourthShotProc, fourthShotAoeTargets, attackerName } = animation.data
 
         // Find the attacker piece to check for ranged attack projectile
         const attackerPiece = displayState?.board.find(p => p.id === attackerId)
@@ -3149,7 +3155,9 @@ const GamePage: React.FC = () => {
           const flightDuration = Math.max(250, (chessDistance * 100) / speed)
           // Add extra time for Guinsoo ghost projectile (120ms delay + same flight duration + impact)
           const guinsooExtraDuration = guinsooProc ? 120 + flightDuration + 300 : 0
-          const totalDuration = 200 + flightDuration + 300 + guinsooExtraDuration // charge + flight + impact (+ guinsoo ghost)
+          // Add extra time for Tristana's AOE explosions (400ms for secondary explosions)
+          const tristanaAoeExtraDuration = (fourthShotProc && attackerName === 'Tristana' && fourthShotAoeTargets && fourthShotAoeTargets.length > 0) ? 200 : 0
+          const totalDuration = 200 + flightDuration + 300 + guinsooExtraDuration + tristanaAoeExtraDuration // charge + flight + impact (+ guinsoo ghost) (+ tristana aoe)
 
           // Add projectile animation to array (supports multiple simultaneous projectiles)
           const projectileData = {
@@ -3158,6 +3166,9 @@ const GamePage: React.FC = () => {
             targetPosition,
             projectile: attackProjectile,
             guinsooProc,
+            fourthShotProc,
+            fourthShotAoeTargets,
+            attackerName,
           }
           setActiveAttackProjectiles(prev => [...prev, projectileData])
           await new Promise(resolve => setTimeout(resolve, totalDuration))
@@ -4873,6 +4884,9 @@ const GamePage: React.FC = () => {
                     boardRef={boardRef}
                     isRedPlayer={!!(gameState && currentUser && gameState.redPlayer === currentUser.id)}
                     guinsooProc={projectile.guinsooProc}
+                    fourthShotProc={projectile.fourthShotProc}
+                    fourthShotAoeTargets={projectile.fourthShotAoeTargets}
+                    attackerName={projectile.attackerName}
                   />
                 </div>
               ))}

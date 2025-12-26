@@ -30,6 +30,12 @@ export interface AttackAnimationData {
   targetPosition: ChessPosition;
   damage?: number;
   guinsooProc?: boolean;
+  fourthShotProc?: boolean;
+  fourthShotAoeTargets?: Array<{
+    targetId: string;
+    targetPosition: ChessPosition;
+  }>;
+  attackerName?: string;
 }
 
 export interface SkillAnimationData {
@@ -146,6 +152,9 @@ export class AnimationEngine {
             targetId: lastAction.targetId,
             targetPosition: lastAction.targetPosition,
             guinsooProc: lastAction.guinsooProc,
+            fourthShotProc: lastAction.fourthShotProc,
+            fourthShotAoeTargets: lastAction.fourthShotAoeTargets,
+            attackerName: attacker.name,
           } as AttackAnimationData,
         });
         currentDelay += 600;
