@@ -85,6 +85,12 @@ export interface ChessPiece {
       | "allyMinion"
       | "enemy"
       | "none";
+    payload?: {
+      currentModuleIndex?: number;
+      cumulativeDamage?: number;
+      unlockedModulesCount?: number;
+      [key: string]: any; // Allow other skill-specific data
+    };
   };
   shields?: Array<{
     amount: number;
@@ -160,11 +166,12 @@ export interface GameState {
 }
 
 export interface GameAction {
-  type: "move" | "attack" | "skill" | "buy_item";
+  type: "move" | "attack" | "skill" | "buy_item" | "buy_viktor_module";
   casterPosition?: ChessPosition;
   targetPosition?: ChessPosition;
   itemId?: string;
   targetChampionId?: string;
+  viktorId?: string; // For buying Viktor modules
 }
 
 export const useGame = (gameId: string) => {
@@ -221,6 +228,26 @@ export const useGame = (gameId: string) => {
       setError(null);
     }
   }, [wsGameState, wsOldGameState]);
+
+  // Clear selection if selected piece becomes stunned
+  useEffect(() => {
+    if (selectedPiece && gameState) {
+      const currentPiece = gameState.board.find(
+        (p) => p.id === selectedPiece.id
+      );
+      if (currentPiece) {
+        const isStunned =
+          (currentPiece as any).debuffs?.some((d: any) => d.stun) ?? false;
+        if (isStunned) {
+          setSelectedPiece(null);
+          setValidMoves([]);
+          setValidAttacks([]);
+          setValidSkillTargets([]);
+          setIsSkillMode(false);
+        }
+      }
+    }
+  }, [gameState, selectedPiece]);
 
   // Fetch initial game state if WebSocket isn't connected
   useEffect(() => {
@@ -357,6 +384,11 @@ export const useGame = (gameId: string) => {
         gameState.currentRound % 2 ===
         (gameState.bluePlayer === currentUser.id ? 1 : 0);
       if (!isPlayerTurn) return;
+
+      // Check if piece is stunned - stunned pieces cannot be selected for actions
+      const isStunned =
+        (piece as any).debuffs?.some((debuff: any) => debuff.stun) ?? false;
+      if (isStunned) return;
 
       setSelectedPiece(piece);
 

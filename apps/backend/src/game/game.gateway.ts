@@ -340,3 +340,4 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(gameId).emit(event, data);
   }
 }
+

@@ -13,25 +13,21 @@ export class MeleeMinion extends ChessObject {
       const ally = GameLogic.getChess(this.game, this.chess.blue, square);
       if (
         ally &&
-        (ally.name === "Melee Minion" || ally.name === "Caster Minion")
+        ally.name in
+          [
+            "Melee Minion",
+            "Caster Minion",
+            "Sand Soldier",
+            "Super Minion",
+            "Poro",
+          ] &&
+        ally.stats.hp > 0
       ) {
         count++;
       }
     }
-
     return count;
   }
-
-  /**
-   * Override AD to include bonus from adjacent minions
-   * +15 AD per adjacent minion
-   */
-  get ad(): number {
-    const baseAd = super.ad;
-    const adjacentMinionCount = this.countAdjacentMinions();
-    return baseAd + adjacentMinionCount * 15;
-  }
-
   /**
    * Override Physical Resistance to include bonus from adjacent minions
    * +15 Physical Resistance per adjacent minion
@@ -52,4 +48,3 @@ export class MeleeMinion extends ChessObject {
     return baseMagicResistance + adjacentMinionCount * 15;
   }
 }
-

@@ -136,6 +136,9 @@ export class Debuff {
   @Prop({ default: 0 })
   damageType: "physical" | "magic" | "true" | "non-lethal"; // 'physical', 'magic', 'true', 'non-lethal'
 
+  @Prop({ default: false })
+  stun: boolean; // whether the debuff is a stun
+
   @Prop({ default: 0 })
   healPerTurn: number; // heal each turn
 

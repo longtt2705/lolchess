@@ -13,7 +13,15 @@ export class CasterMinion extends ChessObject {
       const ally = GameLogic.getChess(this.game, this.chess.blue, square);
       if (
         ally &&
-        (ally.name === "Melee Minion" || ally.name === "Caster Minion")
+        ally.name in
+          [
+            "Melee Minion",
+            "Caster Minion",
+            "Sand Soldier",
+            "Super Minion",
+            "Poro",
+          ] &&
+        ally.stats.hp > 0
       ) {
         count++;
       }

@@ -196,6 +196,17 @@ export const useWebSocket = (gameId: string | null) => {
     socketRef.current.emit("buy-item", { gameId, itemId, championId });
   };
 
+  // Buy Viktor module
+  const buyViktorModule = (viktorId: string) => {
+    if (!socketRef.current || !connected || !gameId) {
+      console.warn("Cannot buy Viktor module: socket not connected");
+      return;
+    }
+
+    console.log(`Buying Viktor module for Viktor ${viktorId}`);
+    socketRef.current.emit("buy-viktor-module", { gameId, viktorId });
+  };
+
   return {
     connected,
     gameState,
@@ -207,6 +218,7 @@ export const useWebSocket = (gameId: string | null) => {
     offerDraw,
     respondToDraw,
     buyItem,
+    buyViktorModule,
     drawOfferReceived,
     setDrawOfferReceived,
     drawOfferSent,

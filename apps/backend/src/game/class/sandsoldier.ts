@@ -90,27 +90,19 @@ export class SandSoldier extends MeleeMinion {
       ) as SandSoldier;
       soldierObject.isChainAttack = true;
 
-      // Check if soldier can attack the target (range validation)
-      if (
-        soldierObject.validateAttack(
-          target.chess.position,
-          soldierObject.attackRange
-        )
-      ) {
-        // Record the additional attack for animation
-        this.game.lastAction.additionalAttacks.push({
-          attackerId: soldier.id,
-          attackerPosition: { x: soldier.position.x, y: soldier.position.y },
-          targetId: target.chess.id,
-          targetPosition: {
-            x: target.chess.position.x,
-            y: target.chess.position.y,
-          },
-        });
+      // Ignore the attack direction
+      this.game.lastAction.additionalAttacks.push({
+        attackerId: soldier.id,
+        attackerPosition: { x: soldier.position.x, y: soldier.position.y },
+        targetId: target.chess.id,
+        targetPosition: {
+          x: target.chess.position.x,
+          y: target.chess.position.y,
+        },
+      });
 
-        // Execute chain attack at 50% damage
-        soldierObject.executeAttack(target, false, 0.5);
-      }
+      // Execute chain attack at 50% damage
+      soldierObject.executeAttack(target, false, 0.6);
     }
   }
 
@@ -131,7 +123,13 @@ export class SandSoldier extends MeleeMinion {
     if (azir) {
       bonusDamage = 15 + azir.ap * 0.3;
       if (bonusDamage > 0) {
-        azir.dealDamage(chess, bonusDamage * damageMultiplier, "magic", azir.sunder, true);
+        azir.dealDamage(
+          chess,
+          bonusDamage * damageMultiplier,
+          "magic",
+          azir.sunder,
+          true
+        );
       }
     }
 

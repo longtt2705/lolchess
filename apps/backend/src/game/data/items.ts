@@ -19,6 +19,7 @@ export interface ItemData {
   recipe?: [string, string]; // Two basic items that combine into this
   unique?: boolean;
   cooldown?: number; // Cooldown in turns for items with active effects
+  isViktorModule?: boolean; // Flag for Viktor's unique modules
 }
 
 // Basic Items (Components)
@@ -691,8 +692,93 @@ export const combinedItems: ItemData[] = [
   },
 ];
 
-// All items combined
-export const allItems: ItemData[] = [...basicItems, ...combinedItems];
+// Viktor's Modules - Unique items only purchasable by Viktor
+export const viktorModules: ItemData[] = [
+  {
+    id: "viktor_module_1",
+    name: "Neutralizing Bolt",
+    description:
+      "Viktor's Siphon Power deals bonus (15 + 10% of AP)% of current target's HP as magic damage and has 25% chance to stun the target for 2 turn.",
+    cost: 0,
+    icon: "/icons/NeutralizingBolt.png",
+    effects: [
+      { stat: "ap", value: 1.2, type: "multiply" },
+      { stat: "criticalChance", value: 30, type: "add" },
+    ],
+    isBasic: false,
+    unique: true,
+    isViktorModule: true,
+  },
+  {
+    id: "viktor_module_2",
+    name: "Superconductive Coil",
+    description:
+      "After Viktor's Siphon Power is used, Viktor's next basic attack deals bonus (10 + 50% of AP) magic damage.",
+    cost: 0,
+    icon: "/icons/SuperconductiveCoil.png",
+    effects: [
+      { stat: "ap", value: 15, type: "add" },
+      { stat: "ad", value: 15, type: "add" },
+      { stat: "sunder", value: 15, type: "add" },
+    ],
+    isBasic: false,
+    unique: true,
+    isViktorModule: true,
+  },
+  {
+    id: "viktor_module_3",
+    name: "Energy Capacitor",
+    description:
+      "After Viktor's Siphon Power is used, Viktor gains a shield of (10 + 30% of AP) and 1 Move Speed for 2 turns.",
+    cost: 0,
+    icon: "/icons/EnergyCapacitor.png",
+    effects: [
+      { stat: "ap", value: 15, type: "add" },
+      { stat: "magicResistance", value: 15, type: "add" },
+      { stat: "physicalResistance", value: 15, type: "add" },
+    ],
+    isBasic: false,
+    unique: true,
+    isViktorModule: true,
+  },
+  {
+    id: "viktor_module_4",
+    name: "Disruptor",
+    description:
+      "Viktor's Siphon Power can kill the target instantly if the target has less than 5% of their maximum HP.",
+    cost: 0,
+    icon: "/icons/Disruptor.png",
+    effects: [
+      { stat: "sunder", value: 30, type: "add" },
+      { stat: "cooldownReduction", value: 1, type: "add" },
+    ],
+    isBasic: false,
+    unique: true,
+    isViktorModule: true,
+  },
+  {
+    id: "viktor_module_5",
+    name: "Electrical Overload",
+    description:
+      "After Viktor's Siphon Power is used, an electrical shock will be triggered on the target and adjacent pieces, dealing (5 + 25% of AP) magic damage to each target.",
+    cost: 0,
+    icon: "/icons/ElectricalOverload.png",
+    effects: [
+      { stat: "ap", value: 30, type: "add" },
+      { stat: "sunder", value: 10, type: "add" },
+    ],
+    isBasic: false,
+    unique: true,
+    isViktorModule: true,
+  },
+];
+
+// All items combined (including Viktor modules for lookup)
+export const allItems: ItemData[] = [
+  ...basicItems,
+  ...combinedItems,
+  ...viktorModules,
+];
 
 // Helper function to get item by ID
 export function getItemById(itemId: string): ItemData | undefined {
@@ -743,4 +829,22 @@ export function applyItemStats(
   });
 
   return stats;
+}
+
+// Viktor Module helper functions
+
+// Get Viktor module by ID
+export function getViktorModuleById(moduleId: string): ItemData | undefined {
+  return viktorModules.find((module) => module.id === moduleId);
+}
+
+// Get Viktor module by index (for rotation system, 0-4)
+export function getViktorModuleByIndex(index: number): ItemData | undefined {
+  const normalizedIndex = index % viktorModules.length;
+  return viktorModules[normalizedIndex];
+}
+
+// Get total count of Viktor modules
+export function getViktorModulesCount(): number {
+  return viktorModules.length;
 }

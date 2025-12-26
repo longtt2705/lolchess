@@ -22,6 +22,16 @@ export interface SkillAnimationConfig {
     targetId: string;
     targetPosition: ChessPosition;
   }> // For Yasuo: targets hit by the whirlwind on critical strike
+  viktorModules?: {
+    stunProc?: boolean;           // Module 1: Neutralizing Bolt triggered stun
+    empowered?: boolean;          // Module 2: Superconductive Coil empowerment applied
+    shielded?: boolean;           // Module 3: Energy Capacitor shield applied
+    executed?: boolean;           // Module 4: Disruptor execute triggered
+    aoeTargets?: Array<{          // Module 5: Electrical Overload targets
+      targetId: string;
+      targetPosition: ChessPosition;
+    }>;
+  } // For Viktor: module effect states
 }
 
 export interface SkillAnimationRenderer {

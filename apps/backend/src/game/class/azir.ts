@@ -84,7 +84,7 @@ export class Azir extends ChessObject {
       minion.skill = {
         name: "Sand Soldier",
         description:
-          "This unit deals additional (15 + 35% of Azir's AP) magic damage to their target, also, apply the Azir's attack effects after attacking. When a Sand Soldier attacks, other Sand Soldiers within 2 squares of the target will also attack the target but deal less than 50% of the Sand Soldier's damage.",
+          "This unit deals additional (15 + 35% of Azir's AP) magic damage to their target, also, apply the Azir's attack effects after attacking. When a Sand Soldier attacks, other Sand Soldiers within 2 squares of the target will also attack the target (ignoring the attack direction) but deal less than 40% of the Sand Soldier's damage.",
         cooldown: 0,
         currentCooldown: 0,
         type: "passive",

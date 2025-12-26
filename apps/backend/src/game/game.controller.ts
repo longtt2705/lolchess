@@ -173,4 +173,10 @@ export class GameController {
   ) {
     return this.gameService.buyItem(gameId, buyItemData);
   }
+
+  @Get("items/viktor-modules")
+  async getViktorModules() {
+    const { viktorModules } = await import("./data/items");
+    return { modules: viktorModules };
+  }
 }

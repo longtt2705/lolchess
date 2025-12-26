@@ -219,7 +219,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Draw a Bead",
       description:
-        "Tristana's Attack Range gains 1 every 5 rounds (max 8). Every 4th attack deals bonus (10+50% of AP) physical damage to the target and his adjacent squares.",
+        "Tristana's Attack Range gains 1 every 10 rounds (max 8). Every 4th attack deals bonus (10+50% of AP) physical damage to the target and his adjacent squares.",
       cooldown: 0,
     },
     attackProjectile: {
@@ -228,7 +228,7 @@ export const champions: ChampionData[] = [
       trailColor: "#FF4500",
       size: 1,
       speed: 1,
-      icon: "🔫",
+      icon: "💣",
     },
   },
   {
@@ -417,7 +417,6 @@ export const champions: ChampionData[] = [
       trailColor: "#DC143C",
       size: 1.2,
       speed: 1.5,
-      icon: "🎯",
     },
   },
   {
@@ -611,8 +610,8 @@ export const champions: ChampionData[] = [
     name: "Viktor",
     stats: {
       maxHp: 75,
-      ad: 10,
-      ap: 30,
+      ad: 5,
+      ap: 40,
       criticalChance: 30,
       physicalResistance: 15,
       magicResistance: 15,
@@ -629,7 +628,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Siphon Power",
       description:
-        "Viktor deals (10 + 50% of AP) magic damage to a target, and empowers his next basic attack, dealing bonus (10 + 50% of AP) magic damage.",
+        "Viktor deals (10 + 50% of AP) magic damage to a target. Damage dealt unlocks modules at 50/150/300 cumulative damage thresholds. Viktor can equip up to 3 items (modules or regular items). After equipping 3 modules, Viktor gains 50% bonus AP.",
       cooldown: 5,
       attackRange: {
         range: 3,
@@ -671,7 +670,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Wild Cards",
       description:
-        "Throws (3 + 20% of AP) cards to a target and his adjacent enemies, the first card deals (1 + 5% AP + 5% AD) magic damage to the target. Subsequent cards deal 50% of the first card's damage to the target and his adjacent enemies.",
+        "Throws (10 + 20% of AP) cards to a target and his adjacent enemies, the first card deals (1 + 5% AP + 5% AD) magic damage to the target. Subsequent cards deal 50% of the first card's damage to the target and his adjacent enemies.",
       cooldown: 7,
       attackRange: {
         range: 3,
@@ -748,12 +747,13 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
+      speed: 1,
     },
     skill: {
       type: "active",
       name: "Arise",
       description:
-        "Azir can promote a Minion to a Sand Soldier. You can only control at most 3 Sand Soldiers at a time. If Azir is dead, the Sand Soldier will die with him.",
+        "Azir can promote a Minion to a Sand Soldier. You can only control at most 3 Sand Soldiers at a time. When Azir attacks, the Sand Soldiers within 2 squares of the target will also attack the target (ignoring the attack direction) but deal less than 40% of the Sand Soldier's damage. If Azir is dead, the Sand Soldier will die with him.",
       cooldown: 9,
       attackRange: {
         range: 2,

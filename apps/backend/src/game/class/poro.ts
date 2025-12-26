@@ -1,7 +1,19 @@
+import { Debuff } from "../game.schema";
 import { GameLogic } from "../game.logic";
 import { ChessObject } from "./chess";
 
 export class Poro extends ChessObject {
+  /**
+   * Override applyDebuff to make Poro immune to stun effects.
+   * This prevents situations where all chess pieces are stunned and no one can move.
+   */
+  applyDebuff(chess: ChessObject, debuff: Debuff): boolean {
+    // If the debuff would stun and the target is a Poro, ignore it
+    if (debuff.stun && chess.chess.name === "Poro") {
+      return false;
+    }
+    return super.applyDebuff(chess, debuff);
+  }
   get speed(): number {
     return 1;
   }
@@ -16,7 +28,15 @@ export class Poro extends ChessObject {
       const ally = GameLogic.getChess(this.game, this.chess.blue, square);
       if (
         ally &&
-        (ally.name === "Melee Minion" || ally.name === "Caster Minion")
+        ally.name in
+          [
+            "Melee Minion",
+            "Caster Minion",
+            "Sand Soldier",
+            "Super Minion",
+            "Poro",
+          ] &&
+        ally.stats.hp > 0
       ) {
         count++;
       }
@@ -55,4 +75,3 @@ export class Poro extends ChessObject {
     return baseMagicResistance + adjacentMinionCount * 15;
   }
 }
-

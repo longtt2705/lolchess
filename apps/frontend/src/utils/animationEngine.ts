@@ -230,6 +230,7 @@ export class AnimationEngine {
           pulledToPosition: lastAction.pulledToPosition, // Add pulledToPosition for Rocket Grab
           cardTargets: (lastAction as any).cardTargets, // Add cardTargets for Twisted Fate
           totalCardCount: (lastAction as any).totalCardCount, // Add totalCardCount for Twisted Fate
+          viktorModules: (lastAction as any).viktorModules, // Add viktorModules for Viktor
         } as SkillAnimationData;
 
         // Calculate duration - support both static and dynamic duration

@@ -33,6 +33,7 @@ export interface Item {
 interface ItemsState {
   basicItems: ItemData[];
   allItems: ItemData[];
+  viktorModules: ItemData[];
   loading: boolean;
   error: string | null;
 }
@@ -40,6 +41,7 @@ interface ItemsState {
 const initialState: ItemsState = {
   basicItems: [],
   allItems: [],
+  viktorModules: [],
   loading: false,
   error: null,
 };
@@ -68,6 +70,19 @@ export const fetchAllItems = createAsyncThunk(
       },
     });
     return response.data.items;
+  }
+);
+
+export const fetchViktorModules = createAsyncThunk(
+  "items/fetchViktorModules",
+  async () => {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(`${API_URL}/games/items/viktor-modules`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data.modules;
   }
 );
 
@@ -108,6 +123,19 @@ const itemsSlice = createSlice({
       .addCase(fetchAllItems.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to fetch all items";
+      })
+      // Fetch Viktor modules
+      .addCase(fetchViktorModules.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchViktorModules.fulfilled, (state, action) => {
+        state.loading = false;
+        state.viktorModules = action.payload;
+      })
+      .addCase(fetchViktorModules.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch Viktor modules";
       });
   },
 });

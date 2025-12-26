@@ -9,7 +9,7 @@ import {
 } from "./game.schema";
 import { Game } from "./game.schema";
 import { champions } from "./data/champion";
-import { ItemData, basicItems } from "./data/items";
+import { ItemData, basicItems, getViktorModulesCount } from "./data/items";
 import { ChessObject } from "./class/chess";
 
 // Shop rotation constants
@@ -67,8 +67,15 @@ export class GameLogic {
       });
     });
 
+    // Check if the caster is stunned (cannot perform move, attack, or skill actions)
+    const isStunned =
+      casterChess.debuffs?.some((debuff) => debuff.stun) ?? false;
+
     switch (event.event) {
       case GameEvent.MOVE_CHESS:
+        if (isStunned) {
+          throw new Error("Stunned unit cannot move");
+        }
         this.processMoveChess(
           game,
           isBlue,
@@ -80,6 +87,9 @@ export class GameLogic {
         game.hasPerformedActionThisTurn = true;
         break;
       case GameEvent.ATTACK_CHESS: {
+        if (isStunned) {
+          throw new Error("Stunned unit cannot attack");
+        }
         this.processAttackChess(
           game,
           isBlue,
@@ -92,6 +102,9 @@ export class GameLogic {
         break;
       }
       case GameEvent.SKILL: {
+        if (isStunned) {
+          throw new Error("Stunned unit cannot use skills");
+        }
         this.processSkill(
           game,
           casterChess,
@@ -269,10 +282,14 @@ export class GameLogic {
     // Check if Guinsoo's Rageblade will proc on this attack (before executing the attack)
     // For Sand Soldiers, check Azir's items instead
     let guinsooRageblade;
-    if (casterChess.name === "Sand Soldier" && casterChess.skill?.payload?.azirId) {
+    if (
+      casterChess.name === "Sand Soldier" &&
+      casterChess.skill?.payload?.azirId
+    ) {
       // Find Azir on the board
       const azir = game.board.find(
-        (chess) => chess.id === casterChess.skill.payload.azirId && chess.stats.hp > 0
+        (chess) =>
+          chess.id === casterChess.skill.payload.azirId && chess.stats.hp > 0
       );
       if (azir) {
         guinsooRageblade = azir.items.find(
@@ -303,7 +320,8 @@ export class GameLogic {
     if (casterChess.skill?.payload) {
       // Yasuo's Way of the Wanderer: whirlwindTargets (triggered on critical strike)
       if (casterChess.skill.payload.whirlwindTargets !== undefined) {
-        actionDetails.whirlwindTargets = casterChess.skill.payload.whirlwindTargets;
+        actionDetails.whirlwindTargets =
+          casterChess.skill.payload.whirlwindTargets;
         // Clear the payload after copying so it doesn't persist to next attack
         delete casterChess.skill.payload.whirlwindTargets;
       }
@@ -384,6 +402,12 @@ export class GameLogic {
         (actionDetails as any).totalCardCount =
           casterChess.skill.payload.totalCardCount;
       }
+
+      // Viktor's Siphon Power: viktorModules
+      if (casterChess.skill.payload.viktorModules) {
+        (actionDetails as any).viktorModules =
+          casterChess.skill.payload.viktorModules;
+      }
     }
 
     return game;
@@ -403,7 +427,7 @@ export class GameLogic {
     }
 
     // Take the first N items
-    game.shopItems = shuffled.slice(0, SHOP_ITEMS_COUNT).map(item => item.id);
+    game.shopItems = shuffled.slice(0, SHOP_ITEMS_COUNT).map((item) => item.id);
     game.shopRefreshRound = game.currentRound;
   }
 
@@ -419,7 +443,10 @@ export class GameLogic {
     // Refresh shop items after red player's turn every SHOP_REFRESH_INTERVAL rounds
     // (currentRound - 1) is the just-completed round; check if it's a refresh interval
     const justCompletedRound = game.currentRound - 1;
-    if (justCompletedRound > 0 && justCompletedRound % SHOP_REFRESH_INTERVAL === 0) {
+    if (
+      justCompletedRound > 0 &&
+      justCompletedRound % SHOP_REFRESH_INTERVAL === 0
+    ) {
       this.shuffleShopItems(game);
     }
 
@@ -980,25 +1007,34 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-          type: championData.skill.type,
-          name: championData.skill.name,
-          description: championData.skill.description,
-          cooldown: championData.skill.cooldown,
-          currentCooldown: championData.skill.currentCooldown || 0,
-          attackRange: championData.skill.attackRange ||
-            championData.stats.attackRange || {
-            range: 1,
-            diagonal: true,
-            horizontal: true,
-            vertical: true,
-          },
-          targetTypes: championData.skill.targetTypes || "none",
-        }
+            type: championData.skill.type,
+            name: championData.skill.name,
+            description: championData.skill.description,
+            cooldown: championData.skill.cooldown,
+            currentCooldown: championData.skill.currentCooldown || 0,
+            attackRange: championData.skill.attackRange ||
+              championData.stats.attackRange || {
+                range: 1,
+                diagonal: true,
+                horizontal: true,
+                vertical: true,
+              },
+            targetTypes: championData.skill.targetTypes || "none",
+          }
         : undefined,
       items: [],
       debuffs: [],
       auras: championData.aura ? [championData.aura] : [],
     } as Chess;
+
+    // Initialize Viktor's module data in skill.payload if this is Viktor
+    if (championName === "Viktor") {
+      result.skill.payload = {
+        currentModuleIndex: Math.floor(Math.random() * getViktorModulesCount()), // Random starting module
+        cumulativeDamage: 0, // No damage dealt yet
+        unlockedModulesCount: 0, // No modules unlocked yet
+      };
+    }
 
     return result;
   }
@@ -1217,15 +1253,18 @@ export class GameLogic {
     const player = game.players[playerIndex];
 
     // Import item system
-    const { getItemById } = require("./data/items");
+    const { getItemById, getViktorModulesCount } = require("./data/items");
     const itemData = getItemById(itemId);
 
     if (!itemData) {
       throw new Error("Item not found");
     }
 
-    // Only basic items can be purchased
-    if (!itemData.isBasic) {
+    // Check if this is a Viktor module
+    const isViktorModule = itemData.isViktorModule === true;
+
+    // Only basic items OR Viktor modules can be purchased directly
+    if (!itemData.isBasic && !isViktorModule) {
       throw new Error(
         "Can only purchase basic items. Combined items are created automatically."
       );
@@ -1244,6 +1283,46 @@ export class GameLogic {
     );
     if (!champion) {
       throw new Error("Champion not found or not owned by player");
+    }
+
+    // Viktor modules can only be bought for Viktor
+    if (isViktorModule) {
+      if (champion.name !== "Viktor") {
+        throw new Error("Viktor modules can only be equipped by Viktor");
+      }
+
+      // Initialize Viktor's module data in skill.payload if not present
+      if (!champion.skill?.payload) {
+        champion.skill.payload = {
+          currentModuleIndex: Math.floor(
+            Math.random() * getViktorModulesCount()
+          ),
+          cumulativeDamage: 0,
+          unlockedModulesCount: 0,
+        };
+      }
+
+      // Check if this module is the currently available one
+      const currentModuleIndex = champion.skill.payload.currentModuleIndex;
+      const expectedModuleId = `viktor_module_${(currentModuleIndex % 5) + 1}`;
+      if (itemId !== expectedModuleId) {
+        throw new Error(
+          "This module is not currently available in Viktor's shop"
+        );
+      }
+
+      // Check damage thresholds: 50/150/300 for 1st/2nd/3rd modules
+      const modulesPurchased = champion.items.filter(
+        (item) => getItemById(item.id)?.isViktorModule
+      ).length;
+      const damageThresholds = [50, 150, 300];
+      const requiredDamage = damageThresholds[modulesPurchased] || 9999;
+
+      if (champion.skill.payload.cumulativeDamage < requiredDamage) {
+        throw new Error(
+          `Need ${requiredDamage} cumulative Siphon Power damage to unlock this module (current: ${champion.skill.payload.cumulativeDamage})`
+        );
+      }
     }
 
     // Only champions can receive items (not minions, Poro, or neutral monsters)
@@ -1284,8 +1363,12 @@ export class GameLogic {
     const championObject = ChessFactory.createChess(champion, game);
     let maxHpBefore = championObject.maxHp;
     championObject.acquireItem(newItem);
-    // Check for item combining (TFT-style)
-    this.checkAndCombineItems(championObject);
+
+    // Check for item combining (TFT-style) - but not for Viktor modules
+    if (!isViktorModule) {
+      this.checkAndCombineItems(championObject);
+    }
+
     // After combining, check if champion has more than 3 items
     if (championObject.chess.items.length > 3) {
       throw new Error("Champion already has maximum items (3)");
@@ -1294,6 +1377,54 @@ export class GameLogic {
     let maxHpAfter = championObject.maxHp;
     let hpIncrease = maxHpAfter - maxHpBefore;
     championObject.chess.stats.hp += hpIncrease;
+
+    // For Viktor modules, shuffle to next module in rotation
+    if (isViktorModule && champion.skill?.payload) {
+      champion.skill.payload.currentModuleIndex =
+        (champion.skill.payload.currentModuleIndex + 1) %
+        getViktorModulesCount();
+
+      // Check if Viktor now has 3 modules (all item slots are modules)
+      const moduleCount = champion.items.filter(
+        (item) => getItemById(item.id)?.isViktorModule
+      ).length;
+      if (moduleCount >= 3) {
+        // Apply permanent 50% AP bonus as a debuff
+        const hasGloriousEvolution = champion.debuffs?.some(
+          (d) => d.id === "viktor_glorious_evolution"
+        );
+        if (!hasGloriousEvolution) {
+          const apBonusDebuff = {
+            id: "viktor_glorious_evolution",
+            name: "Glorious Evolution",
+            description: "Viktor has fully evolved, gaining 50% bonus AP.",
+            duration: -1,
+            maxDuration: -1,
+            effects: [
+              {
+                stat: "ap",
+                modifier: 1.5,
+                type: "multiply",
+              },
+            ],
+            damagePerTurn: 0,
+            damageType: "magic" as const,
+            healPerTurn: 0,
+            stun: false,
+            unique: true,
+            currentStacks: 1,
+            maximumStacks: 1,
+            appliedAt: Date.now(),
+            casterPlayerId: playerId,
+            casterName: "Viktor",
+          };
+          if (!champion.debuffs) {
+            champion.debuffs = [];
+          }
+          champion.debuffs.push(apBonusDebuff);
+        }
+      }
+    }
 
     // Deduct gold
     game.players[playerIndex].gold -= itemData.cost;

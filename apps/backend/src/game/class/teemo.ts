@@ -14,6 +14,7 @@ export class Teemo extends ChessObject {
       damagePerTurn: 10 + this.ap * 0.1,
       damageType: "magic",
       healPerTurn: 0,
+      stun: false,
       unique: false, // Multiple toxic shots can stack
       appliedAt: Date.now(),
       casterPlayerId: casterPlayerId,

@@ -9,7 +9,7 @@ import { AttackRangeIndicator } from '../components/AttackRangeIndicator'
 import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { ChessPiece, ChessPosition, GameState, useGame } from '../hooks/useGame'
 import { resetGameplay, restoreHp, restoreCooldown } from '../store/gameSlice'
-import { fetchAllItems, fetchBasicItems, ItemData } from '../store/itemsSlice'
+import { fetchAllItems, fetchBasicItems, fetchViktorModules, ItemData } from '../store/itemsSlice'
 import { AnimationAction, AnimationEngine } from '../utils/animationEngine'
 import { useChampions, AttackProjectile } from '../hooks/useChampions'
 
@@ -41,6 +41,9 @@ interface ItemPurchaseAnimation {
   itemId: string
   itemIcon?: string
 }
+
+// Damage thresholds for unlocking Viktor modules
+const VIKTOR_DAMAGE_THRESHOLDS = [50, 150, 300];
 
 const GameContainer = styled.div`
   max-width: 1600px;
@@ -1061,13 +1064,14 @@ const Board = styled.div<{ isTargeting?: boolean }>`
   }
 `
 
-const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: boolean; canSelect: boolean; isAttacking?: boolean; isMoving?: boolean; hasShield?: boolean }>`
+const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: boolean; canSelect: boolean; isAttacking?: boolean; isMoving?: boolean; hasShield?: boolean; isStunned?: boolean }>`
   width: 90%;
   height: 90%;
   border-radius: 8px;
   border: 1px solid ${props =>
-    props.isNeutral ? '#9333ea' :
-      props.isBlue ? '#3b82f6' : '#ef4444'};
+    props.isStunned ? '#facc15' :
+      props.isNeutral ? '#9333ea' :
+        props.isBlue ? '#3b82f6' : '#ef4444'};
   background: ${props =>
     props.isNeutral ? 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)' :
       props.isBlue ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'};
@@ -1075,13 +1079,27 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  cursor: ${props => props.canSelect ? 'pointer' : 'default'};
+  cursor: ${props => props.isStunned ? 'not-allowed' : props.canSelect ? 'pointer' : 'default'};
   position: relative;
   z-index: ${props => props.isMoving ? 20 : props.isAttacking ? 10 : 1};
-  box-shadow: ${props => props.hasShield
-    ? '0 0 8px 3px rgba(255, 255, 255, 0.6), 0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
-    : '0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
+  box-shadow: ${props => props.isStunned
+    ? '0 0 10px 4px rgba(250, 204, 21, 0.6), 0 0 20px 6px rgba(250, 204, 21, 0.3)'
+    : props.hasShield
+      ? '0 0 8px 3px rgba(255, 255, 255, 0.6), 0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
+      : '0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
   };
+  filter: ${props => props.isStunned ? 'grayscale(0.5) brightness(0.8)' : 'none'};
+  opacity: ${props => props.isStunned ? 0.85 : 1};
+  animation: ${props => props.isStunned ? 'stunPulse 1.5s ease-in-out infinite' : 'none'};
+  
+  @keyframes stunPulse {
+    0%, 100% {
+      box-shadow: 0 0 10px 4px rgba(250, 204, 21, 0.6), 0 0 20px 6px rgba(250, 204, 21, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 15px 6px rgba(250, 204, 21, 0.8), 0 0 30px 10px rgba(250, 204, 21, 0.5);
+    }
+  }
   
   .piece-icon {
     width: 100%;
@@ -1271,6 +1289,26 @@ const CrownIcon = styled.div`
       filter: drop-shadow(0 0 8px rgba(200, 155, 60, 1));
     }
   }
+`
+
+const StunIndicator = styled(motion.div)`
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+  z-index: 30;
+  pointer-events: none;
+`
+
+const StunStar = styled(motion.span)`
+  font-size: 14px;
+  text-shadow: 
+    0 0 8px rgba(250, 204, 21, 1),
+    0 0 16px rgba(250, 204, 21, 0.8),
+    0 0 24px rgba(250, 204, 21, 0.5);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 `
 
 const ItemIconsContainer = styled.div`
@@ -2267,20 +2305,24 @@ const ChessPieceRenderer: React.FC<{
 
   const hasShield = piece.shields && piece.shields.length > 0 && piece.shields.reduce((sum, s) => sum + s.amount, 0) > 0
 
+  // Check if piece is stunned
+  const isStunned = (piece as any).debuffs?.some((debuff: any) => debuff.stun) ?? false
+
   return (
     <ChessPieceComponent
       key={animationKey}
       data-piece-id={piece.id}
       isBlue={piece.blue}
       isNeutral={isNeutral}
-      canSelect={canSelect && !isAnimating && !isDead}
+      canSelect={canSelect && !isAnimating && !isDead && !isStunned}
       isAttacking={isAttacking}
       isMoving={isMoving}
       hasShield={hasShield}
+      isStunned={isStunned}
       onClick={onClick}
       animate={getCombinedAnimation()}
-      whileHover={canSelect && !isAnimating && !isDead ? { scale: 1.05 } : {}}
-      whileTap={canSelect && !isAnimating && !isDead ? { scale: 0.95 } : {}}
+      whileHover={canSelect && !isAnimating && !isDead && !isStunned ? { scale: 1.05 } : {}}
+      whileTap={canSelect && !isAnimating && !isDead && !isStunned ? { scale: 0.95 } : {}}
     >
       <div className="piece-icon">
         <img
@@ -2293,6 +2335,37 @@ const ChessPieceRenderer: React.FC<{
         />
       </div>
       <div className="piece-name">{piece.name}</div>
+
+      {/* Stun Indicator - rotating stars */}
+      {isStunned && (
+        <StunIndicator>
+          {[0, 1, 2].map((index) => (
+            <StunStar
+              key={index}
+              animate={{
+                rotate: [0, 360],
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                rotate: {
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: index * 0.3,
+                },
+                scale: {
+                  duration: 1,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: index * 0.3,
+                },
+              }}
+            >
+              ⭐
+            </StunStar>
+          ))}
+        </StunIndicator>
+      )}
 
       {/* Crown Icon for Poro (King) */}
       {piece.name === "Poro" && (
@@ -2613,6 +2686,7 @@ const getDebuffIcon = (debuff: any) => {
     adaptive_helm_mr: { src: '/icons/AdaptiveHelm.png', alt: 'Adaptive Helm' },
     undying_rage: { src: '/icons/tryndamere_skill.webp', alt: 'Undying Rage' },
     deaths_dance: { src: '/icons/DeathsDance.png', alt: 'Deaths Dance' },
+    viktor_stun: { src: '/icons/NeutralizingBolt.png', alt: 'Stunned' },
   };
 
   let iconConfig = debuffIconMap[debuff.id];
@@ -2838,7 +2912,7 @@ const GamePage: React.FC = () => {
   const dispatch = useAppDispatch()
 
   // Get items from Redux store
-  const { basicItems, allItems, loading: itemsLoading } = useAppSelector((state) => state.items)
+  const { basicItems, allItems, viktorModules, loading: itemsLoading } = useAppSelector((state) => state.items)
 
   // Fetch items on component mount
   useEffect(() => {
@@ -2848,7 +2922,10 @@ const GamePage: React.FC = () => {
     if (allItems.length === 0 && !itemsLoading) {
       dispatch(fetchAllItems())
     }
-  }, [dispatch, basicItems.length, allItems.length, itemsLoading])
+    if (viktorModules.length === 0 && !itemsLoading) {
+      dispatch(fetchViktorModules())
+    }
+  }, [dispatch, basicItems.length, allItems.length, viktorModules.length, itemsLoading])
 
   // Filter shop items based on gameState.shopItems (rotated selection) or fall back to all basicItems
   const shopItems = useMemo(() => {
@@ -3146,7 +3223,7 @@ const GamePage: React.FC = () => {
       }
 
       case 'skill': {
-        const { casterId, casterPosition, skillName, targetPosition, targetId, pulledToPosition, cardTargets, totalCardCount, whirlwindTargets } = animation.data
+        const { casterId, casterPosition, skillName, targetPosition, targetId, pulledToPosition, cardTargets, totalCardCount, whirlwindTargets, viktorModules } = animation.data
         const skillRenderer = getSkillAnimationRenderer(skillName)
 
         // Determine if current player is red (for coordinate transformation)
@@ -3167,6 +3244,7 @@ const GamePage: React.FC = () => {
             cardTargets,
             totalCardCount,
             whirlwindTargets,
+            viktorModules,
           })
         })
 
@@ -3239,6 +3317,13 @@ const GamePage: React.FC = () => {
       piece.position.x === x && piece.position.y === y && piece.stats.hp > 0
     )
 
+    // Check if selected piece is stunned - if so, clear selection and don't allow actions
+    const selectedPieceIsStunned = selectedPiece && (selectedPiece as any).debuffs?.some((d: any) => d.stun)
+    if (selectedPieceIsStunned) {
+      clearSelection()
+      return
+    }
+
     // If in skill mode, check for valid skill target
     if (isSkillMode && selectedPiece) {
       const isValidSkillTarget = validSkillTargets.some(target => target.x === x && target.y === y)
@@ -3275,6 +3360,13 @@ const GamePage: React.FC = () => {
   // Use skill action - enter targeting mode or execute immediately for non-targeted skills
   const handleSkill = () => {
     if (!selectedPiece || !isMyTurn || !selectedPiece.skill) return
+
+    // Check if selected piece is stunned - stunned pieces cannot use skills
+    const isStunned = (selectedPiece as any).debuffs?.some((d: any) => d.stun)
+    if (isStunned) {
+      clearSelection()
+      return
+    }
 
     const skill = selectedPiece.skill
 
@@ -4295,6 +4387,210 @@ const GamePage: React.FC = () => {
                   <div className="no-items">No items equipped</div>
                 )}
               </div>
+
+              {/* Viktor Module Shop - Only show for owned Viktor */}
+              {detailViewPiece.name === "Viktor" &&
+                detailViewPiece.ownerId === currentPlayer?.userId &&
+                detailViewPiece.skill?.payload &&
+                viktorModules.length > 0 && (() => {
+                  // Count purchased modules (modules are items with isViktorModule flag)
+                  const purchasedModules = detailViewPiece.items?.filter(
+                    item => viktorModules.some(m => m.id === item.id)
+                  ) || [];
+                  const moduleCount = purchasedModules.length;
+                  const cumulativeDamage = detailViewPiece.skill.payload.cumulativeDamage || 0;
+                  const currentModuleIndex = detailViewPiece.skill.payload.currentModuleIndex || 0;
+                  const currentModule = viktorModules[currentModuleIndex % viktorModules.length];
+
+                  // Calculate which modules are unlocked based on damage thresholds
+                  const nextThreshold = VIKTOR_DAMAGE_THRESHOLDS[moduleCount] || 9999;
+                  const isModuleUnlocked = cumulativeDamage >= nextThreshold;
+                  const hasMaxItems = (detailViewPiece.items?.length || 0) >= 3;
+                  const canPurchase = isMyTurn && !gameState?.hasBoughtItemThisTurn && !gameState?.hasPerformedActionThisTurn && isModuleUnlocked && !hasMaxItems;
+
+                  return (
+                    <div className="shop-section" style={{ borderColor: 'rgba(147, 51, 234, 0.5)' }}>
+                      <div className="section-header" style={{ color: '#9333ea' }}>
+                        <Zap size={16} />
+                        Viktor's Module Shop
+                      </div>
+
+                      {/* Damage progress */}
+                      <div style={{ marginBottom: '12px' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--secondary-text)', marginBottom: '4px' }}>
+                          Siphon Power Damage: <span style={{ color: '#a855f7', fontWeight: 'bold' }}>{cumulativeDamage}</span>
+                        </div>
+                        {moduleCount < 3 && (
+                          <div style={{
+                            height: '6px',
+                            background: 'rgba(147, 51, 234, 0.2)',
+                            borderRadius: '3px',
+                            overflow: 'hidden'
+                          }}>
+                            <div
+                              style={{
+                                height: '100%',
+                                width: `${Math.min(100, (cumulativeDamage / nextThreshold) * 100)}%`,
+                                background: 'linear-gradient(90deg, #9333ea, #a855f7)',
+                                borderRadius: '3px',
+                                transition: 'width 0.3s ease'
+                              }}
+                            />
+                          </div>
+                        )}
+                        <div style={{ fontSize: '10px', color: 'var(--secondary-text)', marginTop: '2px' }}>
+                          {moduleCount >= 3
+                            ? "Glorious Evolution Complete! +50% AP"
+                            : `Next module unlocks at ${nextThreshold} damage`}
+                        </div>
+                      </div>
+
+                      {/* Purchased modules */}
+                      {purchasedModules.length > 0 && (
+                        <div style={{ marginBottom: '12px' }}>
+                          <div style={{ fontSize: '11px', color: 'var(--secondary-text)', marginBottom: '6px' }}>
+                            Equipped Modules ({moduleCount}/3):
+                          </div>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {purchasedModules.map((item) => {
+                              const module = viktorModules.find(m => m.id === item.id);
+                              return module ? (
+                                <div
+                                  key={item.id}
+                                  style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '4px',
+                                    background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(88, 28, 135, 0.3))',
+                                    border: '1px solid #9333ea',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    position: 'relative',
+                                  }}
+                                  title={`${module.name}: ${module.description}`}
+                                >
+                                  <img
+                                    src={module.icon}
+                                    alt={module.name}
+                                    style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                  />
+                                  <div style={{
+                                    position: 'absolute',
+                                    bottom: '-2px',
+                                    right: '-2px',
+                                    width: '12px',
+                                    height: '12px',
+                                    background: '#22c55e',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                  }}>
+                                    <Check size={8} color="white" />
+                                  </div>
+                                </div>
+                              ) : null;
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Current available module */}
+                      {!hasMaxItems && currentModule && (
+                        <div style={{
+                          background: isModuleUnlocked
+                            ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.15), rgba(88, 28, 135, 0.15))'
+                            : 'rgba(50, 50, 50, 0.3)',
+                          border: `1px solid ${isModuleUnlocked ? 'rgba(147, 51, 234, 0.5)' : 'rgba(100, 100, 100, 0.3)'}`,
+                          borderRadius: '8px',
+                          padding: '12px',
+                          opacity: isModuleUnlocked ? 1 : 0.6,
+                        }}>
+                          <div style={{ fontSize: '12px', color: 'var(--secondary-text)', marginBottom: '8px' }}>
+                            {isModuleUnlocked ? 'Available Module:' : 'Next Module (Locked):'}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                            <div style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '8px',
+                              background: isModuleUnlocked
+                                ? 'linear-gradient(135deg, #9333ea, #581c87)'
+                                : 'rgba(100, 100, 100, 0.3)',
+                              border: `2px solid ${isModuleUnlocked ? '#a855f7' : 'rgba(100, 100, 100, 0.5)'}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}>
+                              <img
+                                src={currentModule.icon}
+                                alt={currentModule.name}
+                                style={{ width: '36px', height: '36px', objectFit: 'contain', filter: isModuleUnlocked ? 'none' : 'grayscale(100%)' }}
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ color: isModuleUnlocked ? '#a855f7' : 'var(--secondary-text)', fontWeight: 'bold', fontSize: '13px', marginBottom: '4px' }}>
+                                {currentModule.name}
+                              </div>
+                              <div style={{ color: 'var(--secondary-text)', fontSize: '11px', lineHeight: '1.4' }}>
+                                {currentModule.description}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (buyItemWS && detailViewPiece.id && currentModule) {
+                                buyItemWS(currentModule.id, detailViewPiece.id);
+                              }
+                            }}
+                            disabled={!canPurchase}
+                            style={{
+                              marginTop: '12px',
+                              width: '100%',
+                              padding: '8px 16px',
+                              borderRadius: '6px',
+                              border: 'none',
+                              background: canPurchase
+                                ? 'linear-gradient(135deg, #9333ea, #581c87)'
+                                : 'rgba(100, 100, 100, 0.3)',
+                              color: canPurchase ? 'white' : 'var(--secondary-text)',
+                              fontWeight: 'bold',
+                              cursor: canPurchase ? 'pointer' : 'not-allowed',
+                              transition: 'all 0.2s ease',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                            }}
+                          >
+                            <Zap size={14} />
+                            <span>{isModuleUnlocked ? 'Acquire Module' : `Unlock at ${nextThreshold} damage`}</span>
+                          </button>
+                          {!isMyTurn && (
+                            <div style={{ fontSize: '10px', color: 'var(--secondary-text)', textAlign: 'center', marginTop: '4px' }}>
+                              Wait for your turn
+                            </div>
+                          )}
+                          {isMyTurn && gameState?.hasPerformedActionThisTurn && (
+                            <div style={{ fontSize: '10px', color: '#ff9999', textAlign: 'center', marginTop: '4px' }}>
+                              Cannot buy after performing an action
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {hasMaxItems && moduleCount < 3 && (
+                        <div style={{ fontSize: '11px', color: '#ff9999', textAlign: 'center', padding: '8px' }}>
+                          Viktor has maximum items (3). Remove an item to buy more modules.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
               {/* Item Shop - Only show for owned champions */}
               {detailViewPiece.ownerId === currentPlayer?.userId && isChampion(detailViewPiece) && (
