@@ -570,7 +570,7 @@ export const champions: ChampionData[] = [
         lShape: false,
       },
       hpRegen: 2,
-      criticalDamage: 125,
+      criticalDamage: 100,
       criticalChance: 0,
     },
     skill: {

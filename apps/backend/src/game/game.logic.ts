@@ -850,7 +850,7 @@ export class GameLogic {
         goldValue: 50,
         sunder: 0,
         criticalChance: 0,
-        criticalDamage: 150,
+        criticalDamage: 125,
         damageAmplification: 0,
         hpRegen: 0,
       },
@@ -1034,7 +1034,7 @@ export class GameLogic {
         goldValue: championData.stats.goldValue ?? 50,
         sunder: championData.stats.sunder ?? 0,
         criticalChance: championData.stats.criticalChance ?? 15,
-        criticalDamage: championData.stats.criticalDamage ?? 150,
+        criticalDamage: championData.stats.criticalDamage ?? 125,
         damageAmplification: championData.stats.damageAmplification ?? 0,
       },
       skill: championData.skill

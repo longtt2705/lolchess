@@ -81,8 +81,8 @@ export class ChessStats {
   @Prop({ default: 0 })
   criticalChance: number;
 
-  @Prop({ default: 150 })
-  criticalDamage: number; // Default 150% (1.5x multiplier)
+  @Prop({ default: 125 })
+  criticalDamage: number; // Default 125% (1.25x multiplier)
 
   @Prop({ default: 0 })
   cooldownReduction: number; // Reduces skill cooldowns (percentage)

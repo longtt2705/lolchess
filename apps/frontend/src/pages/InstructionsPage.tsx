@@ -705,7 +705,7 @@ const InstructionsPage: React.FC = () => {
                                 <h4>Critical Strikes</h4>
                                 <HighlightBox variant="warning">
                                     <p><strong>Critical Strike Chance:</strong> Percentage chance to land a critical hit</p>
-                                    <p><strong>Critical Damage:</strong> Deals 150% damage by default (modifiable)</p>
+                                    <p><strong>Critical Damage:</strong> Deals 125% damage by default (modifiable)</p>
                                 </HighlightBox>
 
                                 <h4>Slaying Pieces</h4>

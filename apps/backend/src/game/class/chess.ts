@@ -69,7 +69,7 @@ export class ChessObject {
       this.willCrit = Math.random() < this.criticalChance / 100;
 
       if (this.willCrit) {
-        updatedDamage = (updatedDamage * this.criticalDamage) / 100; // 150% damage
+        updatedDamage = (updatedDamage * this.criticalDamage) / 100; // 125% damage
         this.postCritDamage(chess, updatedDamage);
       }
     }
@@ -1289,12 +1289,12 @@ export class ChessObject {
       throw new Error("Invalid attack");
     }
 
-    // Critical strike system from RULE.md: 20% chance, 150% damage
+    // Critical strike system from RULE.md: 20% chance, 125% damage
     this.willCrit = this.isCriticalStrike(forceCritical);
     let damage = this.ad;
 
     if (this.willCrit) {
-      damage = (damage * this.criticalDamage) / 100; // 150% damage
+      damage = (damage * this.criticalDamage) / 100; // 125% damage
       this.postCritDamage(chess, damage);
     }
 

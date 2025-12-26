@@ -4097,7 +4097,7 @@ const GamePage: React.FC = () => {
                     ? `modified ${(detailViewPiece as any).stats.criticalDamage > (detailViewPiece as any).rawStats.criticalDamage ? 'buffed' : 'debuffed'}`
                     : ''
                     }`}>
-                    {(detailViewPiece as any).stats.criticalDamage || 150}
+                    {(detailViewPiece as any).stats.criticalDamage || 125}
                   </span>
                 </div>
                 <div

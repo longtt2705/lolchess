@@ -821,7 +821,7 @@ const DatabasePage: React.FC = () => {
                                                 <div className="label">
                                                     <img src={getStatIcon('criticalDamage')} alt="Crit Damage" width={16} height={16} />
                                                 </div>
-                                                <div className="value">{champion.stats.criticalDamage || 150}%</div>
+                                                <div className="value">{champion.stats.criticalDamage || 125}%</div>
                                                 <div className="tooltip">{getStatTooltip('criticalDamage')}</div>
                                             </StatItem>
                                             <StatItem>
