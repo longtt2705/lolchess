@@ -1,13 +1,4 @@
-import { Aura, ChessStats, Skill } from "../game.schema";
-
-export interface AttackProjectile {
-  shape: "bullet" | "arrow" | "orb" | "bolt" | "missile";
-  color: string;
-  trailColor?: string;
-  size?: number; // 0.5 to 2, default 1
-  speed?: number; // 0.5 to 2, default 1
-  icon?: string; // Optional emoji/icon
-}
+import { Aura, ChessStats, Skill, AttackProjectile } from "../types";
 
 export type ChampionData = {
   name: string;

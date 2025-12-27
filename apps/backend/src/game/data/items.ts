@@ -1,5 +1,5 @@
 import { ChessObject } from "../class/chess";
-import { ChessStats } from "../game.schema";
+import { ChessStats } from "../types";
 
 export interface ItemEffect {
   stat: keyof ChessStats;

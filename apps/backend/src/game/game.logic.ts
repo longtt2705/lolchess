@@ -6,8 +6,8 @@ import {
   Chess,
   Square,
   ActionDetails,
-} from "./game.schema";
-import { Game } from "./game.schema";
+  Game,
+} from "./types";
 import { champions } from "./data/champion";
 import { ItemData, basicItems, getViktorModulesCount } from "./data/items";
 import { ChessObject } from "./class/chess";
@@ -807,6 +807,7 @@ export class GameLogic {
       items: [],
       debuffs: [],
       auras: [],
+      shields: [],
     } as Chess;
   }
 
@@ -832,6 +833,9 @@ export class GameLogic {
         criticalDamage: 150,
         damageAmplification: 0,
         hpRegen: 0,
+        cooldownReduction: 0,
+        lifesteal: 0,
+        durability: 0,
       },
       Champion: {
         maxHp: 80,
@@ -853,6 +857,9 @@ export class GameLogic {
         criticalDamage: 125,
         damageAmplification: 0,
         hpRegen: 0,
+        cooldownReduction: 0,
+        lifesteal: 0,
+        durability: 0,
       },
       "Siege Minion": {
         maxHp: 200,
@@ -874,6 +881,9 @@ export class GameLogic {
         criticalDamage: 150,
         damageAmplification: 0,
         hpRegen: 0,
+        cooldownReduction: 0,
+        lifesteal: 0,
+        durability: 0,
         attackProjectile: {
           shape: "missile",
           color: "#FF6600",
@@ -903,6 +913,9 @@ export class GameLogic {
         criticalDamage: 150,
         damageAmplification: 0,
         hpRegen: 0,
+        cooldownReduction: 0,
+        lifesteal: 0,
+        durability: 0,
       },
       "Caster Minion": {
         maxHp: 50,
@@ -924,6 +937,9 @@ export class GameLogic {
         criticalDamage: 150,
         damageAmplification: 0,
         hpRegen: 0,
+        cooldownReduction: 0,
+        lifesteal: 0,
+        durability: 0,
         attackProjectile: {
           shape: "orb",
           color: "#9966FF",
@@ -953,6 +969,9 @@ export class GameLogic {
         criticalDamage: 150,
         damageAmplification: 0,
         hpRegen: 0,
+        cooldownReduction: 0,
+        lifesteal: 0,
+        durability: 0,
       },
       "Sand Soldier": {
         maxHp: 100,
@@ -974,6 +993,9 @@ export class GameLogic {
         criticalDamage: 150,
         damageAmplification: 0,
         hpRegen: 0,
+        cooldownReduction: 0,
+        lifesteal: 0,
+        durability: 0,
         attackProjectile: {
           shape: "spear",
           color: "#DAA520",
@@ -1030,12 +1052,16 @@ export class GameLogic {
           diagonal: true,
           horizontal: true,
           vertical: true,
+          lShape: false,
         },
         goldValue: championData.stats.goldValue ?? 50,
         sunder: championData.stats.sunder ?? 0,
         criticalChance: championData.stats.criticalChance ?? 15,
         criticalDamage: championData.stats.criticalDamage ?? 125,
         damageAmplification: championData.stats.damageAmplification ?? 0,
+        cooldownReduction: championData.stats.cooldownReduction ?? 0,
+        lifesteal: championData.stats.lifesteal ?? 0,
+        durability: championData.stats.durability ?? 0,
       },
       skill: championData.skill
         ? {
@@ -1057,6 +1083,7 @@ export class GameLogic {
       items: [],
       debuffs: [],
       auras: championData.aura ? [championData.aura] : [],
+      shields: [],
     } as Chess;
 
     // Initialize Viktor's module data in skill.payload if this is Viktor
@@ -1124,9 +1151,6 @@ export class GameLogic {
 
     // If position is occupied, don't spawn yet (will retry next turn)
     if (occupiedByPiece) {
-      console.log(
-        `Drake spawn position (${drakePosition.x},${drakePosition.y}) is occupied by ${occupiedByPiece.name}. Waiting...`
-      );
       return;
     }
 
@@ -1158,16 +1182,18 @@ export class GameLogic {
         criticalChance: 0,
         criticalDamage: 150,
         damageAmplification: 0,
+        hpRegen: 0,
+        cooldownReduction: 0,
+        lifesteal: 0,
+        durability: 0,
       },
       skill: undefined,
       items: [],
       debuffs: [],
       auras: [],
+      shields: [],
     } as Chess;
 
-    console.log(
-      `Drake spawned at position (${drakePosition.x},${drakePosition.y})`
-    );
     game.board.push(drake);
   }
 
@@ -1189,9 +1215,6 @@ export class GameLogic {
 
     // If position is occupied, don't spawn yet (will retry next turn)
     if (occupiedByPiece) {
-      console.log(
-        `Baron spawn position (${baronPosition.x},${baronPosition.y}) is occupied by ${occupiedByPiece.name}. Waiting...`
-      );
       return;
     }
 
@@ -1223,16 +1246,18 @@ export class GameLogic {
         criticalChance: 0,
         criticalDamage: 150,
         damageAmplification: 0,
+        hpRegen: 0,
+        cooldownReduction: 0,
+        lifesteal: 0,
+        durability: 0,
       },
       skill: undefined,
       items: [],
       debuffs: [],
       auras: [],
+      shields: [],
     } as Chess;
 
-    console.log(
-      `Baron Nashor spawned at position (${baronPosition.x},${baronPosition.y})`
-    );
     game.board.push(baron);
   }
 

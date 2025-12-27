@@ -1,5 +1,5 @@
 import { ChessObject } from "./chess";
-import { Debuff } from "../game.schema";
+import { Debuff } from "../types";
 
 export class Teemo extends ChessObject {
   // Create the Toxic Shot debuff

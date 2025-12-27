@@ -1,28 +1,75 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose, { Document } from "mongoose";
 
-export type GameDocument = Game & Document;
-export type SquareDocument = Square & Document;
-export type AttackRangeDocument = AttackRange & Document;
-export type ChessStatsDocument = ChessStats & Document;
-export type DebuffEffectDocument = DebuffEffect & Document;
-export type DebuffDocument = Debuff & Document;
-export type AuraEffectDocument = AuraEffect & Document;
-export type AuraDocument = Aura & Document;
-export type ChessDocument = Chess & Document;
-export type EventPayloadDocument = EventPayload & Document;
-export type BanPickStateDocument = BanPickState & Document;
-export type PlayerDocument = Player & Document;
-export type GameSettingsDocument = GameSettings & Document;
+// Import pure types
+import {
+  Square as SquareType,
+  AttackRange as AttackRangeType,
+  ChessStats as ChessStatsType,
+  DebuffEffect as DebuffEffectType,
+  Debuff as DebuffType,
+  AuraEffect as AuraEffectType,
+  Aura as AuraType,
+  Item as ItemType,
+  Skill as SkillType,
+  Shield as ShieldType,
+  AttackProjectile as AttackProjectileType,
+  Chess as ChessType,
+  EventPayload as EventPayloadType,
+  ActionDetails as ActionDetailsType,
+  BanPickState as BanPickStateType,
+  Player as PlayerType,
+  GameSettings as GameSettingsType,
+  Game as GameType,
+  GameEvent,
+} from "./types";
 
-export enum GameEvent {
-  MOVE_CHESS = "move_chess",
-  ATTACK_CHESS = "attack_chess",
-  BUY_ITEM = "buy_item",
-  SKILL = "skill",
-}
+// Re-export pure types for backward compatibility
+export type {
+  SquareType as Square,
+  AttackRangeType as AttackRange,
+  ChessStatsType as ChessStats,
+  DebuffEffectType as DebuffEffect,
+  DebuffType as Debuff,
+  AuraEffectType as AuraEffect,
+  AuraType as Aura,
+  ItemType as Item,
+  SkillType as Skill,
+  ShieldType as Shield,
+  AttackProjectileType as AttackProjectile,
+  ChessType as Chess,
+  EventPayloadType as EventPayload,
+  ActionDetailsType as ActionDetails,
+  BanPickStateType as BanPickState,
+  PlayerType as Player,
+  GameSettingsType as GameSettings,
+  GameType as Game,
+};
 
-export class Square {
+// Re-export the enum
+export { GameEvent };
+
+// Model name constants for Mongoose
+export const GAME_MODEL_NAME = "Game";
+
+// Mongoose Document types
+export type GameDocument = GameType & Document;
+export type SquareDocument = SquareType & Document;
+export type AttackRangeDocument = AttackRangeType & Document;
+export type ChessStatsDocument = ChessStatsType & Document;
+export type DebuffEffectDocument = DebuffEffectType & Document;
+export type DebuffDocument = DebuffType & Document;
+export type AuraEffectDocument = AuraEffectType & Document;
+export type AuraDocument = AuraType & Document;
+export type ChessDocument = ChessType & Document;
+export type EventPayloadDocument = EventPayloadType & Document;
+export type ActionDetailsDocument = ActionDetailsType & Document;
+export type BanPickStateDocument = BanPickStateType & Document;
+export type PlayerDocument = PlayerType & Document;
+export type GameSettingsDocument = GameSettingsType & Document;
+
+// Mongoose Subdocument Classes (no @Schema decorator - these are embedded)
+export class SquareSchema implements SquareType {
   @Prop({ required: true })
   x: number;
 
@@ -30,7 +77,7 @@ export class Square {
   y: number;
 }
 
-export class AttackRange {
+export class AttackRangeSchema implements AttackRangeType {
   @Prop({ default: false })
   diagonal: boolean;
 
@@ -47,7 +94,7 @@ export class AttackRange {
   lShape: boolean;
 }
 
-export class ChessStats {
+export class ChessStatsSchema implements ChessStatsType {
   @Prop({ required: true })
   hp: number;
 
@@ -69,8 +116,8 @@ export class ChessStats {
   @Prop({ required: true })
   speed: number;
 
-  @Prop({ type: AttackRange, required: true })
-  attackRange: AttackRange;
+  @Prop({ type: AttackRangeSchema, required: true })
+  attackRange: AttackRangeType;
 
   @Prop({ required: true })
   goldValue: number;
@@ -100,7 +147,7 @@ export class ChessStats {
   durability: number; // Durability of the piece (percentage)
 }
 
-export class DebuffEffect {
+export class DebuffEffectSchema implements DebuffEffectType {
   @Prop({ required: true })
   stat: string; // 'speed', 'hp', 'ad', 'ap', etc.
 
@@ -111,7 +158,7 @@ export class DebuffEffect {
   type: string; // 'add', 'multiply', 'set'
 }
 
-export class Debuff {
+export class DebuffSchema implements DebuffType {
   @Prop({ required: true })
   id: string; // unique identifier
 
@@ -127,13 +174,13 @@ export class Debuff {
   @Prop({ required: true })
   maxDuration: number; // original duration
 
-  @Prop({ type: [DebuffEffect], default: [] })
-  effects: DebuffEffect[]; // stat modifications
-
-  @Prop({ default: "physical" })
-  damagePerTurn: number; // damage dealt each turn
+  @Prop({ type: [DebuffEffectSchema], default: [] })
+  effects: DebuffEffectType[]; // stat modifications
 
   @Prop({ default: 0 })
+  damagePerTurn: number; // damage dealt each turn
+
+  @Prop({ default: "physical" })
   damageType: "physical" | "magic" | "true" | "non-lethal"; // 'physical', 'magic', 'true', 'non-lethal'
 
   @Prop({ default: false })
@@ -164,7 +211,7 @@ export class Debuff {
   payload?: any; // flexible payload for custom debuff data
 }
 
-export class AuraEffect {
+export class AuraEffectSchema implements AuraEffectType {
   @Prop({ required: true })
   stat: string; // 'speed', 'ad', 'ap', etc.
 
@@ -178,7 +225,7 @@ export class AuraEffect {
   target: string; // 'allies', 'enemies', 'all'
 }
 
-export class Aura {
+export class AuraSchema implements AuraType {
   @Prop({ required: true })
   id: string; // unique identifier
 
@@ -191,8 +238,8 @@ export class Aura {
   @Prop({ default: 1 })
   range: number; // how many squares the aura reaches (1 = adjacent only)
 
-  @Prop({ type: [AuraEffect], default: [] })
-  effects: AuraEffect[]; // stat modifications
+  @Prop({ type: [AuraEffectSchema], default: [] })
+  effects: AuraEffectType[]; // stat modifications
 
   @Prop({ default: true })
   active: boolean; // whether the aura is currently active
@@ -204,7 +251,7 @@ export class Aura {
   duration: string; // 'permanent', 'turn', 'combat'
 }
 
-export class Item {
+export class ItemSchema implements ItemType {
   @Prop({ required: true })
   id: string;
   @Prop({ required: true })
@@ -221,15 +268,15 @@ export class Item {
   currentCooldown: number;
 }
 
-export class Skill {
+export class SkillSchema implements SkillType {
   @Prop({ required: true })
   name: string;
   @Prop({ required: true })
   description: string;
   @Prop({ required: true })
   cooldown: number;
-  @Prop({ type: AttackRange, required: true })
-  attackRange: AttackRange;
+  @Prop({ type: AttackRangeSchema, required: true })
+  attackRange: AttackRangeType;
   @Prop({ required: true })
   targetTypes:
     | "square"
@@ -246,7 +293,7 @@ export class Skill {
   payload?: any;
 }
 
-export class Shield {
+export class ShieldSchema implements ShieldType {
   @Prop({ required: true })
   id: string;
   @Prop({ required: true })
@@ -255,7 +302,7 @@ export class Shield {
   duration: number;
 }
 
-export class AttackProjectile {
+export class AttackProjectileSchema implements AttackProjectileType {
   @Prop({ required: true })
   shape: string; // "bullet" | "arrow" | "orb" | "bolt" | "missile"
 
@@ -276,18 +323,18 @@ export class AttackProjectile {
 }
 
 @Schema()
-export class Chess {
+export class ChessSchema implements ChessType {
   @Prop({ required: true })
   id: string;
 
   @Prop({ required: true })
   name: string;
 
-  @Prop({ type: Square, required: true })
-  position: Square;
+  @Prop({ type: SquareSchema, required: true })
+  position: SquareType;
 
-  @Prop({ type: Square })
-  startingPosition?: Square;
+  @Prop({ type: SquareSchema })
+  startingPosition?: SquareType;
 
   @Prop({ default: false })
   cannotMoveBackward: boolean;
@@ -304,47 +351,47 @@ export class Chess {
   @Prop({ required: true })
   ownerId: string;
 
-  @Prop({ type: ChessStats, required: true })
-  stats: ChessStats;
+  @Prop({ type: ChessStatsSchema, required: true })
+  stats: ChessStatsType;
 
   @Prop({ required: true })
   blue: boolean;
 
-  @Prop({ type: Skill })
-  skill?: Skill;
+  @Prop({ type: SkillSchema })
+  skill?: SkillType;
 
-  @Prop({ type: [Item], required: true })
-  items: Item[];
+  @Prop({ type: [ItemSchema], required: true })
+  items: ItemType[];
 
-  @Prop({ type: [Debuff], default: [] })
-  debuffs: Debuff[];
+  @Prop({ type: [DebuffSchema], default: [] })
+  debuffs: DebuffType[];
 
-  @Prop({ type: [Aura], default: [] })
-  auras: Aura[];
+  @Prop({ type: [AuraSchema], default: [] })
+  auras: AuraType[];
 
-  @Prop({ type: [Shield], default: [] })
-  shields: Shield[];
+  @Prop({ type: [ShieldSchema], default: [] })
+  shields: ShieldType[];
 
-  @Prop({ type: AttackProjectile })
-  attackProjectile?: AttackProjectile;
+  @Prop({ type: AttackProjectileSchema })
+  attackProjectile?: AttackProjectileType;
 
   @Prop()
   deadAtRound?: number; // Track which round the piece died
 }
 
 @Schema()
-export class EventPayload {
+export class EventPayloadSchema implements EventPayloadType {
   @Prop({ required: true })
   playerId: string;
 
   @Prop({ required: true, enum: GameEvent })
   event: GameEvent;
 
-  @Prop({ type: Square })
-  casterPosition?: Square;
+  @Prop({ type: SquareSchema })
+  casterPosition?: SquareType;
 
-  @Prop({ type: Square })
-  targetPosition?: Square;
+  @Prop({ type: SquareSchema })
+  targetPosition?: SquareType;
 
   // For BUY_ITEM events
   @Prop()
@@ -355,7 +402,8 @@ export class EventPayload {
 }
 
 // Action details for animation tracking
-export class ActionDetails {
+@Schema()
+export class ActionDetailsSchema implements ActionDetailsType {
   @Prop({ required: true })
   timestamp: number;
 
@@ -365,17 +413,17 @@ export class ActionDetails {
   @Prop({ required: true })
   casterId: string; // Chess piece ID
 
-  @Prop({ type: Square, required: true })
-  casterPosition: Square;
+  @Prop({ type: SquareSchema, required: true })
+  casterPosition: SquareType;
 
   @Prop()
   targetId?: string; // Chess piece ID (if applicable)
 
-  @Prop({ type: Square })
-  targetPosition?: Square;
+  @Prop({ type: SquareSchema })
+  targetPosition?: SquareType;
 
-  @Prop({ type: Square })
-  fromPosition?: Square; // For moves
+  @Prop({ type: SquareSchema })
+  fromPosition?: SquareType; // For moves
 
   @Prop({ default: 0 })
   damage?: number; // Damage dealt
@@ -392,8 +440,8 @@ export class ActionDetails {
   @Prop()
   skillName?: string; // For SKILL events
 
-  @Prop({ type: Square })
-  pulledToPosition?: Square; // For Rocket Grab: actual position the target was pulled to
+  @Prop({ type: SquareSchema })
+  pulledToPosition?: SquareType; // For Rocket Grab: actual position the target was pulled to
 
   @Prop({ type: [String], default: [] })
   killedPieceIds?: string[]; // Pieces that died as a result of this action
@@ -410,15 +458,15 @@ export class ActionDetails {
   @Prop({ type: [mongoose.Schema.Types.Mixed] })
   whirlwindTargets?: Array<{
     targetId: string;
-    targetPosition: Square;
+    targetPosition: SquareType;
   }>; // For Yasuo: targets hit by the whirlwind on critical strike
 
   @Prop({ type: [mongoose.Schema.Types.Mixed] })
   additionalAttacks?: Array<{
     attackerId: string;
-    attackerPosition: Square;
+    attackerPosition: SquareType;
     targetId: string;
-    targetPosition: Square;
+    targetPosition: SquareType;
   }>; // For Sand Soldiers: chain attacks from nearby soldiers
 
   @Prop()
@@ -427,12 +475,12 @@ export class ActionDetails {
   @Prop({ type: [mongoose.Schema.Types.Mixed] })
   fourthShotAoeTargets?: Array<{
     targetId: string;
-    targetPosition: Square;
+    targetPosition: SquareType;
   }>; // For Tristana: adjacent enemies hit by 4th shot explosion
 }
 
 @Schema()
-export class BanPickState {
+export class BanPickStateSchema implements BanPickStateType {
   @Prop({ required: true, enum: ["ban", "pick", "reorder", "complete"] })
   phase: string;
 
@@ -480,7 +528,7 @@ export class BanPickState {
 }
 
 @Schema()
-export class Player {
+export class PlayerSchema implements PlayerType {
   @Prop({ required: true })
   id: string;
 
@@ -519,7 +567,7 @@ export class Player {
 }
 
 @Schema()
-export class GameSettings {
+export class GameSettingsSchema implements GameSettingsType {
   @Prop({ default: 60 })
   roundTime: number;
 
@@ -528,7 +576,7 @@ export class GameSettings {
 }
 
 @Schema({ timestamps: true })
-export class Game {
+export class GameSchema implements GameType {
   @Prop({ required: true })
   name: string;
 
@@ -538,8 +586,8 @@ export class Game {
   })
   status: string;
 
-  @Prop({ type: [Player], default: [] })
-  players: Player[];
+  @Prop({ type: [PlayerSchema], default: [] })
+  players: PlayerType[];
 
   @Prop({ required: true, default: 2 })
   maxPlayers: number;
@@ -547,8 +595,8 @@ export class Game {
   @Prop({ default: 1 })
   currentRound: number;
 
-  @Prop({ type: GameSettings, default: {} })
-  gameSettings: GameSettings;
+  @Prop({ type: GameSettingsSchema, default: {} })
+  gameSettings: GameSettingsType;
 
   @Prop()
   winner?: string;
@@ -560,8 +608,8 @@ export class Game {
   })
   phase: string;
 
-  @Prop({ type: BanPickState })
-  banPickState?: BanPickState;
+  @Prop({ type: BanPickStateSchema })
+  banPickState?: BanPickStateType;
 
   @Prop()
   bluePlayer?: string;
@@ -569,11 +617,11 @@ export class Game {
   @Prop()
   redPlayer?: string;
 
-  @Prop({ type: [Chess], default: [] })
-  board: Chess[];
+  @Prop({ type: [ChessSchema], default: [] })
+  board: ChessType[];
 
-  @Prop({ type: ActionDetails })
-  lastAction?: ActionDetails;
+  @Prop({ type: ActionDetailsSchema })
+  lastAction?: ActionDetailsType;
 
   @Prop({ default: false })
   hasBoughtItemThisTurn: boolean;
@@ -588,20 +636,15 @@ export class Game {
   shopRefreshRound: number; // Track when shop was last refreshed
 }
 
-export const SquareSchema = SchemaFactory.createForClass(Square);
-export const AttackRangeSchema = SchemaFactory.createForClass(AttackRange);
-export const ChessStatsSchema = SchemaFactory.createForClass(ChessStats);
-export const DebuffEffectSchema = SchemaFactory.createForClass(DebuffEffect);
-export const DebuffSchema = SchemaFactory.createForClass(Debuff);
-export const AuraEffectSchema = SchemaFactory.createForClass(AuraEffect);
-export const AuraSchema = SchemaFactory.createForClass(Aura);
-export const ChessSchema = SchemaFactory.createForClass(Chess);
-export const SkillSchema = SchemaFactory.createForClass(Skill);
-export const EventPayloadSchema = SchemaFactory.createForClass(EventPayload);
-export const ActionDetailsSchema = SchemaFactory.createForClass(ActionDetails);
-export const BanPickStateSchema = SchemaFactory.createForClass(BanPickState);
-export const PlayerSchema = SchemaFactory.createForClass(Player);
-export const GameSettingsSchema = SchemaFactory.createForClass(GameSettings);
-export const GameSchema = SchemaFactory.createForClass(Game);
-export const ItemSchema = SchemaFactory.createForClass(Item);
-export const ShieldSchema = SchemaFactory.createForClass(Shield);
+// Export Mongoose schema factories (only for document classes with @Schema decorator)
+export const ChessMongooseSchema = SchemaFactory.createForClass(ChessSchema);
+export const EventPayloadMongooseSchema =
+  SchemaFactory.createForClass(EventPayloadSchema);
+export const ActionDetailsMongooseSchema =
+  SchemaFactory.createForClass(ActionDetailsSchema);
+export const BanPickStateMongooseSchema =
+  SchemaFactory.createForClass(BanPickStateSchema);
+export const PlayerMongooseSchema = SchemaFactory.createForClass(PlayerSchema);
+export const GameSettingsMongooseSchema =
+  SchemaFactory.createForClass(GameSettingsSchema);
+export const GameMongooseSchema = SchemaFactory.createForClass(GameSchema);

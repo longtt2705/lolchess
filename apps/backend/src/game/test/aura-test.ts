@@ -1,4 +1,4 @@
-import { Game, Chess, Square } from "../game.schema";
+import { Game, Chess, Square } from "../types";
 import { ChessFactory } from "../class/chessFactory";
 import { GameLogic } from "../game.logic";
 

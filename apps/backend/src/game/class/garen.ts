@@ -1,6 +1,6 @@
 import { ChessObject } from "./chess";
 import { GameLogic } from "../game.logic";
-import { Square } from "../game.schema";
+import { Square } from "../types";
 import { ChessFactory } from "./chessFactory";
 
 export class Garen extends ChessObject {

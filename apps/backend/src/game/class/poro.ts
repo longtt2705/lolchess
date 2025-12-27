@@ -1,4 +1,4 @@
-import { Debuff } from "../game.schema";
+import { Debuff } from "../types";
 import { GameLogic } from "../game.logic";
 import { ChessObject } from "./chess";
 

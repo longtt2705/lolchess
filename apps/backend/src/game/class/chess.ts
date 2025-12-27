@@ -10,7 +10,7 @@ import {
   Shield,
   Skill,
   Square,
-} from "../game.schema";
+} from "../types";
 import { ChessFactory } from "./chessFactory";
 import { GameLogic } from "../game.logic";
 

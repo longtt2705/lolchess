@@ -1,5 +1,5 @@
 import { ChessObject } from "./chess";
-import { Debuff } from "../game.schema";
+import { Debuff } from "../types";
 
 export class Ashe extends ChessObject {
   // Create the Frost Shot debuff

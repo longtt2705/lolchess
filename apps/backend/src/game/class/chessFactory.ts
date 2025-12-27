@@ -1,4 +1,4 @@
-import { Chess, Game } from "../game.schema";
+import { Chess, Game } from "../types";
 import { ChessObject } from "./chess";
 import { Aatrox } from "./aatrox";
 import { Ahri } from "./ahri";

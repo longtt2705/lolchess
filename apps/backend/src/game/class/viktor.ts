@@ -1,5 +1,5 @@
 import { GameLogic } from "../game.logic";
-import { Square, Debuff } from "../game.schema";
+import { Square, Debuff } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
 

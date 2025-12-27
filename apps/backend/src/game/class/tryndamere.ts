@@ -1,4 +1,4 @@
-import { Debuff } from "../game.schema";
+import { Debuff } from "../types";
 import { ChessObject } from "./chess";
 
 export class Tryndamere extends ChessObject {

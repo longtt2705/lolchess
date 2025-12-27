@@ -1,7 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { Chess, Game, GameDocument } from "./game.schema";
+import { GameDocument, GAME_MODEL_NAME } from "./game.schema";
+import { Chess, Game } from "./types";
 import { GameLogic } from "./game.logic";
 import { RedisGameCacheService } from "../redis/redis-game-cache.service";
 import { ChessObject } from "./class/chess";
@@ -30,7 +31,7 @@ export class GameService {
   private readonly logger = new Logger(GameService.name);
 
   constructor(
-    @InjectModel(Game.name) private gameModel: Model<GameDocument>,
+    @InjectModel(GAME_MODEL_NAME) private gameModel: Model<GameDocument>,
     private readonly redisCache: RedisGameCacheService
   ) {}
 

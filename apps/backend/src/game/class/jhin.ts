@@ -1,5 +1,5 @@
 import { ChessObject } from "./chess";
-import { Debuff } from "../game.schema";
+import { Debuff } from "../types";
 
 export class Jhin extends ChessObject {
   // Create speed boost debuff for after critical strike

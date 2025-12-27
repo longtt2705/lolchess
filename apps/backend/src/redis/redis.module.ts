@@ -3,12 +3,12 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { BullModule } from "@nestjs/bullmq";
 import { RedisGameCacheService } from "./redis-game-cache.service";
 import { GamePersistenceProcessor } from "./game-persistence.processor";
-import { Game, GameSchema } from "../game/game.schema";
+import { GameMongooseSchema, GAME_MODEL_NAME } from "../game/game.schema";
 
 @Module({
   imports: [
     // Import Game schema so GamePersistenceProcessor can access GameModel
-    MongooseModule.forFeature([{ name: Game.name, schema: GameSchema }]),
+    MongooseModule.forFeature([{ name: GAME_MODEL_NAME, schema: GameMongooseSchema }]),
     // Register BullMQ queue for game persistence
     BullModule.forRoot({
       connection: {
