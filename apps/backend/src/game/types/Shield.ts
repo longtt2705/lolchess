@@ -3,4 +3,3 @@ export interface Shield {
   amount: number;
   duration: number;
 }
-

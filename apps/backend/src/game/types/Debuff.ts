@@ -23,4 +23,3 @@ export interface Debuff {
   casterName?: string; // champion name of the caster (for icon display)
   payload?: any; // flexible payload for custom debuff data
 }
-

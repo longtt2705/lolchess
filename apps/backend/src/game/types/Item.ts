@@ -7,4 +7,3 @@ export interface Item {
   cooldown: number;
   currentCooldown: number;
 }
-

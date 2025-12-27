@@ -1,4 +1,4 @@
-import { AttackRange } from './AttackRange';
+import { AttackRange } from "./AttackRange";
 
 export interface ChessStats {
   hp: number;
@@ -19,4 +19,3 @@ export interface ChessStats {
   hpRegen: number; // HP regenerated per turn
   durability: number; // Durability of the piece (percentage)
 }
-

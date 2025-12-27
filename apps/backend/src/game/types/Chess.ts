@@ -1,11 +1,11 @@
-import { Square } from './Square';
-import { ChessStats } from './ChessStats';
-import { Skill } from './Skill';
-import { Item } from './Item';
-import { Debuff } from './Debuff';
-import { Aura } from './Aura';
-import { Shield } from './Shield';
-import { AttackProjectile } from './AttackProjectile';
+import { Square } from "./Square";
+import { ChessStats } from "./ChessStats";
+import { Skill } from "./Skill";
+import { Item } from "./Item";
+import { Debuff } from "./Debuff";
+import { Aura } from "./Aura";
+import { Shield } from "./Shield";
+import { AttackProjectile } from "./AttackProjectile";
 
 export interface Chess {
   id: string;
@@ -27,4 +27,3 @@ export interface Chess {
   attackProjectile?: AttackProjectile;
   deadAtRound?: number; // Track which round the piece died
 }
-
