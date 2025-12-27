@@ -1,7 +1,7 @@
-import { GameLogic } from "../game.logic";
 import { Square, Debuff } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getChessAtPosition } from "../utils/helpers";
 
 export class Viktor extends ChessObject {
   // Check if Viktor has a specific module (modules are stored as items)
@@ -126,7 +126,7 @@ export class Viktor extends ChessObject {
       // Check bounds
       if (pos.x < 0 || pos.x > 7 || pos.y < 0 || pos.y > 7) continue;
 
-      const chess = GameLogic.getChess(this.game, !this.chess.blue, pos);
+      const chess = getChessAtPosition(this.game, !this.chess.blue, pos);
       if (chess) {
         enemies.push(ChessFactory.createChess(chess, this.game));
       }
@@ -136,7 +136,7 @@ export class Viktor extends ChessObject {
 
   skill(position?: Square): void {
     // Find the target enemy chess piece
-    const targetChess = GameLogic.getChess(
+    const targetChess = getChessAtPosition(
       this.game,
       !this.chess.blue,
       position

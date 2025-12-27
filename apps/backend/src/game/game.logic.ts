@@ -11,6 +11,10 @@ import {
 import { champions } from "./data/champion";
 import { ItemData, basicItems, getViktorModulesCount } from "./data/items";
 import { ChessObject } from "./class/chess";
+import {
+  getAdjacentSquares as getAdjacentSquaresHelper,
+  getChessAtPosition,
+} from "./utils/helpers";
 
 // Shop rotation constants
 export const SHOP_ITEMS_COUNT = 3; // Number of items displayed in shop
@@ -208,22 +212,12 @@ export class GameLogic {
     return chess;
   }
 
+  /**
+   * Get all adjacent squares from a position
+   * @deprecated Use getAdjacentSquares from utils/helpers instead
+   */
   public static getAdjacentSquares(square: Square): Square[] {
-    return [
-      { x: square.x - 1, y: square.y - 1 }, // Northwest
-      { x: square.x - 1, y: square.y }, // West
-      { x: square.x - 1, y: square.y + 1 }, // Southwest
-      { x: square.x, y: square.y - 1 }, // North
-      { x: square.x, y: square.y + 1 }, // South
-      { x: square.x + 1, y: square.y - 1 }, // Northeast (was missing!)
-      { x: square.x + 1, y: square.y }, // East
-      { x: square.x + 1, y: square.y + 1 }, // Southeast
-    ].filter(
-      (square) =>
-        (square.x >= 0 && square.x <= 7 && square.y >= 0 && square.y <= 7) ||
-        (square.x === -1 && square.y === 4) ||
-        (square.x === 8 && square.y === 3)
-    );
+    return getAdjacentSquaresHelper(square);
   }
 
   private static processMoveChess(

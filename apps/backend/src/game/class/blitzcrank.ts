@@ -1,12 +1,12 @@
-import { GameLogic } from "../game.logic";
 import { Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class Blitzcrank extends ChessObject {
   skill(position?: Square): void {
     // Find the target chess piece to pull
-    const targetChess = GameLogic.getChess(
+    const targetChess = getChessAtPosition(
       this.game,
       !this.chess.blue,
       position
@@ -55,21 +55,21 @@ export class Blitzcrank extends ChessObject {
         );
 
       const isIdealEmpty =
-        !GameLogic.getChess(this.game, true, idealPosition) &&
-        !GameLogic.getChess(this.game, false, idealPosition);
+        !getChessAtPosition(this.game, true, idealPosition) &&
+        !getChessAtPosition(this.game, false, idealPosition);
 
       if (isAdjacentToBlitz && isIdealEmpty) {
         // Ideal position is available
         targetChess.position = idealPosition;
       } else {
         // Fallback: find any adjacent empty square (in case ideal is blocked)
-        const adjacentSquares = GameLogic.getAdjacentSquares(
+        const adjacentSquares = getAdjacentSquares(
           this.chess.position
         );
         const emptyAdjacent = adjacentSquares.find(
           (square) =>
-            !GameLogic.getChess(this.game, true, square) &&
-            !GameLogic.getChess(this.game, false, square)
+            !getChessAtPosition(this.game, true, square) &&
+            !getChessAtPosition(this.game, false, square)
         );
 
         if (emptyAdjacent) {

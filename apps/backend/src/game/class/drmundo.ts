@@ -1,12 +1,12 @@
-import { GameLogic } from "../game.logic";
 import { Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getChessAtPosition } from "../utils/helpers";
 
 export class DrMundo extends ChessObject {
   skill(position?: Square): void {
     // Find the target enemy chess piece
-    const targetChess = GameLogic.getChess(
+    const targetChess = getChessAtPosition(
       this.game,
       !this.chess.blue,
       position

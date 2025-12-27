@@ -1,6 +1,7 @@
 import { GameLogic } from "../game.logic";
 import { Square } from "../types";
 import { ChessObject } from "./chess";
+import { getChessAtPosition } from "../utils/helpers";
 
 export class Azir extends ChessObject {
   /**
@@ -32,7 +33,7 @@ export class Azir extends ChessObject {
     }
 
     // Find the target ally minion at the position
-    const targetChess = GameLogic.getChess(
+    const targetChess = getChessAtPosition(
       this.game,
       this.chess.blue,
       position

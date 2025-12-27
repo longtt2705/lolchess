@@ -1,7 +1,7 @@
-import { GameLogic } from "../game.logic";
 import { Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class KhaZix extends ChessObject {
   // Check if a target is isolated (no allied pieces adjacent)
@@ -9,10 +9,10 @@ export class KhaZix extends ChessObject {
     targetPosition: Square,
     targetIsBlue: boolean
   ): boolean {
-    const adjacentSquares = GameLogic.getAdjacentSquares(targetPosition);
+    const adjacentSquares = getAdjacentSquares(targetPosition);
 
     for (const square of adjacentSquares) {
-      const adjacentChess = GameLogic.getChess(this.game, targetIsBlue, square);
+      const adjacentChess = getChessAtPosition(this.game, targetIsBlue, square);
       if (adjacentChess) {
         return false; // Found an ally, not isolated
       }
@@ -23,7 +23,7 @@ export class KhaZix extends ChessObject {
 
   skill(position?: Square): void {
     // Find the target chess piece
-    const targetChess = GameLogic.getChess(
+    const targetChess = getChessAtPosition(
       this.game,
       !this.chess.blue,
       position

@@ -1,4 +1,3 @@
-import { GameLogic } from "../game.logic";
 import { Chess, Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";

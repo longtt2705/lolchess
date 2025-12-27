@@ -1,12 +1,12 @@
-import { GameLogic } from "../game.logic";
 import { Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class TwistedFate extends ChessObject {
   skill(position?: Square): void {
     const cardCount = 10 + Math.floor(this.ap * 0.2);
-    const targetChess = GameLogic.getChess(
+    const targetChess = getChessAtPosition(
       this.game,
       !this.chess.blue,
       position
@@ -15,8 +15,8 @@ export class TwistedFate extends ChessObject {
     const targets: ChessObject[] = [
       ChessFactory.createChess(targetChess, this.game),
     ];
-    GameLogic.getAdjacentSquares(position).forEach((square) => {
-      const targetChess = GameLogic.getChess(
+    getAdjacentSquares(position).forEach((square) => {
+      const targetChess = getChessAtPosition(
         this.game,
         !this.chess.blue,
         square

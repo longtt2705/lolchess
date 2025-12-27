@@ -1,7 +1,7 @@
-import { GameLogic } from "../game.logic";
 import { Debuff, Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class Ezreal extends ChessObject {
   skill(position?: Square): void {
@@ -46,14 +46,14 @@ export class Ezreal extends ChessObject {
     }> = [];
 
     // Find all adjacent squares and get all adjacent enemies
-    const adjacentSquares = GameLogic.getAdjacentSquares(position);
+    const adjacentSquares = getAdjacentSquares(position);
     const adjacentEnemies: Array<{
       chess: any;
       chessObject: ChessObject;
     }> = [];
 
     adjacentSquares.forEach((square) => {
-      const targetChess = GameLogic.getChess(
+      const targetChess = getChessAtPosition(
         this.game,
         !this.chess.blue,
         square

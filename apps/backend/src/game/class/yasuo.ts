@@ -1,7 +1,7 @@
-import { GameLogic } from "../game.logic";
 import { Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getChessAtPosition, isValidBoardPosition } from "../utils/helpers";
 
 export class Yasuo extends ChessObject {
   get criticalChance(): number {
@@ -56,11 +56,11 @@ export class Yasuo extends ChessObject {
 
     // Continue until we reach the board edge
     // Board x: -1 to 8, y: 0 to 7
-    while (this.isValidBoardPosition(currentX, currentY)) {
+    while (isValidBoardPosition(currentX, currentY)) {
       const currentSquare: Square = { x: currentX, y: currentY };
 
       // Find enemy at this position
-      const enemyChess = GameLogic.getChess(
+      const enemyChess = getChessAtPosition(
         this.game,
         !this.chess.blue,
         currentSquare
@@ -100,15 +100,5 @@ export class Yasuo extends ChessObject {
       this.chess.skill.payload = {};
     }
     this.chess.skill.payload.whirlwindTargets = whirlwindTargets;
-  }
-
-  private isValidBoardPosition(x: number, y: number): boolean {
-    // Main board: x from 0 to 7, y from 0 to 7
-    const isMainBoard = x >= 0 && x <= 7 && y >= 0 && y <= 7;
-    // Special positions: (-1, 4) and (8, 3) for bases
-    const isBlueBase = x === -1 && y === 4;
-    const isRedBase = x === 8 && y === 3;
-
-    return isMainBoard || isBlueBase || isRedBase;
   }
 }

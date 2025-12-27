@@ -1,12 +1,12 @@
-import { GameLogic } from "../game.logic";
 import { Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getChessAtPosition } from "../utils/helpers";
 
 export class Soraka extends ChessObject {
   skill(position?: Square): void {
     // Find the target allied chess piece to heal
-    const targetChess = GameLogic.getChess(
+    const targetChess = getChessAtPosition(
       this.game,
       this.chess.blue,
       position

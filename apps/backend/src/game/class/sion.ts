@@ -1,18 +1,18 @@
 import { ChessObject } from "./chess";
-import { GameLogic } from "../game.logic";
 import { Square } from "../types";
 import { ChessFactory } from "./chessFactory";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class Sion extends ChessObject {
   // Soul Furnace active skill
   skill(position?: Square): void {
     // Get all adjacent squares
-    const adjacentSquares = GameLogic.getAdjacentSquares(this.chess.position);
+    const adjacentSquares = getAdjacentSquares(this.chess.position);
 
     // Drain 5% of max health from each enemy adjacent to Sion
     adjacentSquares.forEach((square) => {
       // Get enemy pieces (opposite team)
-      const targetChess = GameLogic.getChess(
+      const targetChess = getChessAtPosition(
         this.game,
         !this.chess.blue, // Opposite team
         square

@@ -1,6 +1,6 @@
 import { ChessObject } from "./chess";
-import { GameLogic } from "../game.logic";
 import { ChessFactory } from "./chessFactory";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class Tristana extends ChessObject {
   get range(): number {
@@ -25,11 +25,11 @@ export class Tristana extends ChessObject {
       this.damage(chess, bonusDamage, "physical", this, this.sunder);
 
       // Get adjacent squares and damage enemies in them
-      const adjacentSquares = GameLogic.getAdjacentSquares(
+      const adjacentSquares = getAdjacentSquares(
         chess.chess.position
       );
       for (const square of adjacentSquares) {
-        const adjacentEnemy = GameLogic.getChess(
+        const adjacentEnemy = getChessAtPosition(
           this.game,
           !this.chess.blue,
           square

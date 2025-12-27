@@ -1,7 +1,7 @@
-import { GameLogic } from "../game.logic";
 import { Chess, Debuff, Game, Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class Ahri extends ChessObject {
   // Create the Spirit Rush debuff
@@ -42,8 +42,8 @@ export class Ahri extends ChessObject {
     this.move(position, this.chess.skill?.attackRange?.range);
 
     // Deal damage and apply Spirit Rush debuff to any piece at or adjacent to the target square
-    GameLogic.getAdjacentSquares(position).forEach((square) => {
-      const targetChess = GameLogic.getChess(
+    getAdjacentSquares(position).forEach((square) => {
+      const targetChess = getChessAtPosition(
         this.game,
         !this.chess.blue,
         square

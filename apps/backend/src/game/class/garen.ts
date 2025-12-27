@@ -1,7 +1,7 @@
 import { ChessObject } from "./chess";
-import { GameLogic } from "../game.logic";
 import { Square } from "../types";
 import { ChessFactory } from "./chessFactory";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class Garen extends ChessObject {
   /**
@@ -22,11 +22,11 @@ export class Garen extends ChessObject {
    * Deal 100% AD physical damage to all adjacent enemies
    */
   private dealSpinDamage(): void {
-    const adjacentSquares = GameLogic.getAdjacentSquares(this.chess.position);
+    const adjacentSquares = getAdjacentSquares(this.chess.position);
 
     adjacentSquares.forEach((square) => {
       // Get enemy pieces (opposite team)
-      const targetChess = GameLogic.getChess(
+      const targetChess = getChessAtPosition(
         this.game,
         !this.chess.blue,
         square

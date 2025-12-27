@@ -1,7 +1,7 @@
-import { GameLogic } from "../game.logic";
 import { AttackRange, Debuff, Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class Zed extends ChessObject {
   // Create Death Mark debuff
@@ -28,7 +28,7 @@ export class Zed extends ChessObject {
 
   skill(position?: Square): void {
     // Find the target enemy chess piece
-    const targetChess = GameLogic.getChess(
+    const targetChess = getChessAtPosition(
       this.game,
       !this.chess.blue,
       position
@@ -48,7 +48,7 @@ export class Zed extends ChessObject {
   // Override validateAttack to allow attacks on marked targets from any position
   validateAttack(position: Square, attackRange: AttackRange): boolean {
     // Find if there's a chess piece at the target position
-    const targetChess = GameLogic.getChess(
+    const targetChess = getChessAtPosition(
       this.game,
       !this.chess.blue,
       position
@@ -80,7 +80,7 @@ export class Zed extends ChessObject {
 
   // Find nearest adjacent empty square to target
   private findNearestAdjacentSquare(targetPosition: Square): Square | null {
-    const adjacentSquares = GameLogic.getAdjacentSquares(targetPosition);
+    const adjacentSquares = getAdjacentSquares(targetPosition);
     const emptySquares: Square[] = [];
 
     // Filter for empty squares

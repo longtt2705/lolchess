@@ -12,7 +12,7 @@ import {
   Square,
 } from "../types";
 import { ChessFactory } from "./chessFactory";
-import { GameLogic } from "../game.logic";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class ChessObject {
   public chess: Chess;
@@ -553,9 +553,8 @@ export class ChessObject {
 
       // Apply Sunfire Cape effect
       if (this.chess.items.some((item) => item.id === "sunfire_cape")) {
-        const { GameLogic } = require("../game.logic");
-        GameLogic.getAdjacentSquares(this.chess.position).forEach((square) => {
-          const targetChess = GameLogic.getChess(
+        getAdjacentSquares(this.chess.position).forEach((square) => {
+          const targetChess = getChessAtPosition(
             this.game,
             !this.chess.blue,
             square
@@ -1248,9 +1247,8 @@ export class ChessObject {
       chess.chess.items.some((item) => item.id === "bramble_vest") &&
       chess.chess.stats.hp > 0
     ) {
-      const { GameLogic } = require("../game.logic");
-      GameLogic.getAdjacentSquares(chess.chess.position).forEach((square) => {
-        const targetChess = GameLogic.getChess(
+      getAdjacentSquares(chess.chess.position).forEach((square) => {
+        const targetChess = getChessAtPosition(
           this.game,
           !chess.chess.blue,
           square
@@ -1374,7 +1372,7 @@ export class ChessObject {
     }
 
     // Check if there's an ally at the target position
-    const targetChess = GameLogic.getChess(
+    const targetChess = getChessAtPosition(
       this.game,
       this.chess.blue,
       position

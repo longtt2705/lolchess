@@ -1,6 +1,6 @@
 import { Debuff } from "../types";
-import { GameLogic } from "../game.logic";
 import { ChessObject } from "./chess";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class Poro extends ChessObject {
   /**
@@ -21,11 +21,11 @@ export class Poro extends ChessObject {
    * Count adjacent ally minions (Melee Minion or Caster Minion only)
    */
   private countAdjacentMinions(): number {
-    const adjacentSquares = GameLogic.getAdjacentSquares(this.chess.position);
+    const adjacentSquares = getAdjacentSquares(this.chess.position);
     let count = 0;
 
     for (const square of adjacentSquares) {
-      const ally = GameLogic.getChess(this.game, this.chess.blue, square);
+      const ally = getChessAtPosition(this.game, this.chess.blue, square);
       if (
         ally &&
         ally.name in

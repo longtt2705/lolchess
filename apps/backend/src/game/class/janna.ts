@@ -1,7 +1,7 @@
-import { GameLogic } from "../game.logic";
 import { Chess, Aura, AuraEffect, Debuff, Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
+import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
 
 export class Janna extends ChessObject {
   constructor(chess: Chess, game: any) {
@@ -40,8 +40,8 @@ export class Janna extends ChessObject {
   // Override skill method if Janna has special abilities
   skill(position?: Square): void {
     // Add +2 Move Speed to nearby allies for 2 turns (does not stack with aura)
-    GameLogic.getAdjacentSquares(this.chess.position).forEach((square) => {
-      const targetChess = GameLogic.getChess(
+    getAdjacentSquares(this.chess.position).forEach((square) => {
+      const targetChess = getChessAtPosition(
         this.game,
         this.chess.blue,
         square
