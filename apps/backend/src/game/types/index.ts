@@ -1,17 +1,3 @@
-// Export all pure types
-export * from './Square';
-export * from './AttackRange';
-export * from './ChessStats';
-export * from './Debuff';
-export * from './Aura';
-export * from './Item';
-export * from './Skill';
-export * from './Shield';
-export * from './AttackProjectile';
-export * from './Chess';
-export * from './Player';
-export * from './BanPickState';
-export * from './Game';
-export * from './Events';
-export * from './callbacks';
-
+// Re-export all types from the game engine package
+// This maintains backward compatibility with existing imports in the backend
+export * from '@lolchess/game-engine';
