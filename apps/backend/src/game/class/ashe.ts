@@ -1,12 +1,12 @@
 import { ChessObject } from "./chess";
 import { Debuff } from "../types";
+import { getGameRng } from "../utils/SeededRandom";
 
 export class Ashe extends ChessObject {
   // Create the Frost Shot debuff
   createFrostShotDebuff(casterPlayerId: string): Debuff {
-    const criticalChance = this.criticalChance / 100;
-    const randomChance = Math.random();
-    const isCritical = randomChance < criticalChance;
+    const rng = getGameRng();
+    const isCritical = rng.chance(this.criticalChance);
     return {
       id: "frost_shot",
       name: "Frost Shot",

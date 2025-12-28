@@ -2,6 +2,7 @@ import { Square } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
 import { getChessAtPosition } from "../utils/helpers";
+import { getGameRng } from "../utils/SeededRandom";
 
 export class DrMundo extends ChessObject {
   skill(position?: Square): void {
@@ -39,9 +40,9 @@ export class DrMundo extends ChessObject {
     // At 100 AP: 0% miss chance
     const missChance = Math.min(50, Math.max(0, 50 - this.ap * 0.5));
 
-    // STEP 3: Roll for hit/miss
-    const roll = Math.random() * 100;
-    const skillHits = roll >= missChance;
+    // STEP 3: Roll for hit/miss using seeded RNG
+    const rng = getGameRng();
+    const skillHits = !rng.chance(missChance); // Inverted: chance returns true if "miss" happens
 
     if (skillHits) {
       // STEP 4: Skill HIT - deal damage and heal

@@ -2,6 +2,7 @@ import { Square, Debuff } from "../types";
 import { ChessObject } from "./chess";
 import { ChessFactory } from "./chessFactory";
 import { getChessAtPosition } from "../utils/helpers";
+import { getGameRng } from "../utils/SeededRandom";
 
 export class Viktor extends ChessObject {
   // Check if Viktor has a specific module (modules are stored as items)
@@ -201,8 +202,8 @@ export class Viktor extends ChessObject {
         (15 + this.ap * 0.1) * (targetChessObject.chess.stats.hp / 100);
       baseDamage += bonusDamage;
 
-      const roll = Math.random() * 100;
-      if (roll < 25) {
+      const rng = getGameRng();
+      if (rng.chance(25)) {
         // Apply stun
         this.applyDebuff(targetChessObject, this.createStunDebuff());
 

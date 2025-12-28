@@ -634,6 +634,12 @@ export class GameSchema implements GameType {
 
   @Prop({ default: 0 })
   shopRefreshRound: number; // Track when shop was last refreshed
+
+  @Prop({ required: true, default: () => Date.now() })
+  rngSeed: number; // Initial seed for this game (for replays)
+
+  @Prop({ required: true, default: () => Date.now() })
+  rngState: number; // Current RNG state (for save/load)
 }
 
 // Export Mongoose schema factories (only for document classes with @Schema decorator)

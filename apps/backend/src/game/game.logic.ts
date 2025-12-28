@@ -15,6 +15,12 @@ import {
   getAdjacentSquares as getAdjacentSquaresHelper,
   getChessAtPosition,
 } from "./utils/helpers";
+import {
+  SeededRandom,
+  getGameRng,
+  setGameRng,
+  clearGameRng,
+} from "./utils/SeededRandom";
 
 // Shop rotation constants
 export const SHOP_ITEMS_COUNT = 3; // Number of items displayed in shop
@@ -26,6 +32,24 @@ export class GameLogic {
       throw new Error("Game not found");
     }
 
+    // Initialize RNG from game state
+    const rng = new SeededRandom(game.rngState || game.rngSeed || Date.now());
+    setGameRng(rng);
+
+    try {
+      return this._processGameInternal(game, event, rng);
+    } finally {
+      // Save RNG state back to game and clear global context
+      game.rngState = rng.getSeed();
+      clearGameRng();
+    }
+  }
+
+  private static _processGameInternal(
+    game: Game,
+    event: EventPayload,
+    rng: SeededRandom
+  ): Game {
     const isBlue = event.playerId === game.bluePlayer;
 
     let casterChess: Chess | null = null;
@@ -445,12 +469,9 @@ export class GameLogic {
 
   // Shuffle shop items - randomly select N items from basic items
   private static shuffleShopItems(game: Game): void {
-    // Fisher-Yates shuffle to randomly select items
-    const shuffled = [...basicItems];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
+    // Use seeded RNG for deterministic shuffling
+    const rng = getGameRng();
+    const shuffled = rng.shuffle([...basicItems]);
 
     // Take the first N items
     game.shopItems = shuffled.slice(0, SHOP_ITEMS_COUNT).map((item) => item.id);
@@ -1082,8 +1103,9 @@ export class GameLogic {
 
     // Initialize Viktor's module data in skill.payload if this is Viktor
     if (championName === "Viktor") {
+      const rng = getGameRng();
       result.skill.payload = {
-        currentModuleIndex: Math.floor(Math.random() * getViktorModulesCount()), // Random starting module
+        currentModuleIndex: rng.nextInt(0, getViktorModulesCount()), // Random starting module (deterministic)
         cumulativeDamage: 0, // No damage dealt yet
         unlockedModulesCount: 0, // No modules unlocked yet
       };
@@ -1344,10 +1366,9 @@ export class GameLogic {
 
       // Initialize Viktor's module data in skill.payload if not present
       if (!champion.skill?.payload) {
+        const rng = getGameRng();
         champion.skill.payload = {
-          currentModuleIndex: Math.floor(
-            Math.random() * getViktorModulesCount()
-          ),
+          currentModuleIndex: rng.nextInt(0, getViktorModulesCount()),
           cumulativeDamage: 0,
           unlockedModulesCount: 0,
         };

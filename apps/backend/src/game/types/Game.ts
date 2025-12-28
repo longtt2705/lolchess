@@ -26,5 +26,7 @@ export interface Game {
   hasPerformedActionThisTurn: boolean;
   shopItems: string[]; // Current available shop item IDs
   shopRefreshRound: number; // Track when shop was last refreshed
+  rngSeed: number; // Initial seed for this game (for replays)
+  rngState: number; // Current RNG state (for save/load)
 }
 

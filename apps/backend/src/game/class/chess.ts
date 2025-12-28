@@ -13,6 +13,7 @@ import {
 } from "../types";
 import { ChessFactory } from "./chessFactory";
 import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
+import { getGameRng } from "../utils/SeededRandom";
 
 export class ChessObject {
   public chess: Chess;
@@ -66,7 +67,8 @@ export class ChessObject {
   ): number {
     let updatedDamage = damage;
     if (this.chess.items.some((item) => item.id === "jeweled_gauntlet")) {
-      this.willCrit = Math.random() < this.criticalChance / 100;
+      const rng = getGameRng();
+      this.willCrit = rng.chance(this.criticalChance);
 
       if (this.willCrit) {
         updatedDamage = (updatedDamage * this.criticalDamage) / 100; // 125% damage
@@ -172,8 +174,9 @@ export class ChessObject {
       finalDamage = Math.floor(finalDamage * 0.5);
       const duration = 2;
       const damagePerTurn = finalDamage / duration;
+      const rng = getGameRng();
       this.applyDebuff(chess, {
-        id: `deaths_dance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `deaths_dance_${Date.now()}_${rng.nextId(9)}`,
         name: "Death's Dance",
         description:
           "50% of the damage the holder receives is instead dealt over 2 turns as non-lethal damage.",
@@ -379,9 +382,9 @@ export class ChessObject {
       });
       return;
     }
+    const rng = getGameRng();
     this.chess.shields.push({
-      id:
-        id || `shield_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: id || `shield_${Date.now()}_${rng.nextId(9)}`,
       amount: Math.floor(amount),
       duration: duration,
     } as Shield);
@@ -1273,9 +1276,9 @@ export class ChessObject {
   }
 
   protected isCriticalStrike(forceCritical: boolean = false): boolean {
-    const criticalChance = this.criticalChance / 100;
-    const randomChance = Math.random();
-    return forceCritical || randomChance < criticalChance;
+    if (forceCritical) return true;
+    const rng = getGameRng();
+    return rng.chance(this.criticalChance);
   }
 
   protected attack(
