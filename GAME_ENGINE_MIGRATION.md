@@ -1861,6 +1861,178 @@ describe("GameReplay", () => {
 
 ---
 
+## Phase 5: AI Bot Integration
+
+**Status**: 📄 Documented in separate file
+
+For a complete guide on implementing the AI bot with MCTS, see **[AI_BOT_ARCHITECTURE.md](AI_BOT_ARCHITECTURE.md)**.
+
+### Summary
+
+This phase adds an intelligent AI opponent using Monte Carlo Tree Search (MCTS) that:
+- Runs as a separate service (TypeScript/Node.js)
+- Imports `@lolchess/game-engine` package directly for fast simulations
+- Communicates with backend via gRPC
+- Makes strategic decisions by simulating thousands of possible game outcomes
+- Completes turns within configurable time limits (default 5 seconds)
+
+### Architecture
+
+```mermaid
+flowchart LR
+    Frontend[React Frontend] -->|Human Move| Backend[NestJS Backend]
+    Backend -->|Bot Turn?| BotService[Bot Service]
+    BotService -->|MCTS Decision| Backend
+    Backend -->|Updated State| Frontend
+    BotService -.->|Import| GameEngine[game-engine Package]
+```
+
+### Key Components
+
+1. **gRPC Service**: Backend exposes game state and validation endpoints
+   - Protocol Buffer definitions in `proto/game-engine.proto`
+   - Serialization/deserialization utilities
+   - Service methods: GetBotAction, GetPossibleActions, ValidateAction, SimulateAction
+
+2. **Bot Service**: Standalone service implementing MCTS algorithm
+   - Location: `packages/bot-service/`
+   - Core: MCTSEngine, TreeNode, Simulator, Evaluator
+   - Action generation and heuristic policies
+   - Configuration management
+
+3. **MCTS Engine**: Core AI decision-making with UCB1 tree search
+   - Four phases: Selection, Expansion, Simulation, Backpropagation
+   - Balances exploration vs exploitation
+   - Time-bounded or iteration-bounded search
+
+4. **Action Generator**: Enumerates all legal moves/attacks/skills/purchases
+   - Integrates with GameEngine.getValidMoves/Attacks/SkillTargets
+   - Includes shop item purchases
+   - Filters based on game rules
+
+5. **Heuristic Evaluator**: Provides position scoring for faster convergence
+   - Material evaluation (HP, attack, armor)
+   - Positional evaluation (central control, forward progress)
+   - Item advantage
+   - Normalized scores for backpropagation
+
+### Technology Stack
+
+- **Language**: TypeScript (Node.js) - Direct import of game-engine package
+- **Communication**: gRPC with Protocol Buffers - Fast binary serialization
+- **Algorithm**: Monte Carlo Tree Search (MCTS) with UCB1
+- **Configuration**: JSON config files + environment variables
+
+### Implementation Status
+
+- [ ] Create Protocol Buffer definitions (`proto/game-engine.proto`)
+- [ ] Implement backend gRPC server module (`apps/backend/src/game-engine-grpc/`)
+- [ ] Create bot service package structure (`packages/bot-service/`)
+- [ ] Implement MCTS core algorithm (MCTSEngine, TreeNode)
+- [ ] Implement action generation and heuristics
+- [ ] Implement position evaluator
+- [ ] Integrate bot into game flow (GameService modifications)
+- [ ] Add frontend UI for "Play vs Bot" option
+- [ ] Add bot thinking indicator
+- [ ] Write unit tests for MCTS components
+- [ ] Write integration tests (bot completes full game)
+- [ ] Performance testing and tuning
+- [ ] Docker deployment configuration
+
+### Why MCTS?
+
+Monte Carlo Tree Search was chosen because:
+
+1. **No Domain Knowledge Required**: Learns optimal strategies through simulation
+2. **Handles Complexity**: LOL Chess has high branching factor (~50 actions/turn)
+3. **Anytime Algorithm**: Can be interrupted and still return reasonable move
+4. **Proven Success**: Used in AlphaGo, game AIs, planning problems
+5. **Handles Randomness**: Naturally averages over stochastic elements (crits, shop)
+
+### Configuration Examples
+
+**Easy Bot** (Fast, less accurate):
+```json
+{
+  "iterationBudget": 100,
+  "timeLimitMs": 1000,
+  "explorationConstant": 2.0,
+  "simulationDepthLimit": 30
+}
+```
+
+**Hard Bot** (Slow, more accurate):
+```json
+{
+  "iterationBudget": 2000,
+  "timeLimitMs": 10000,
+  "explorationConstant": 1.0,
+  "simulationDepthLimit": 50
+}
+```
+
+### Performance Expectations
+
+- **Simulations**: 1000 iterations in ~5 seconds
+- **Branching Factor**: ~40-80 actions per position
+- **Tree Size**: ~1000 nodes
+- **Typical Game Length**: 20-50 rounds (40-100 total turns)
+
+### Future Enhancements
+
+1. **Neural Network Integration**: Replace MCTS with AlphaZero-style policy/value network
+2. **Multiple Difficulty Levels**: Easy/Medium/Hard with different iteration budgets
+3. **Opening Book**: Pre-computed strong opening sequences
+4. **Endgame Tablebase**: Perfect play in simplified endgame positions
+5. **Replay Analysis**: Suggest better moves in completed games
+6. **Self-Play Training**: Bot plays against itself to generate training data
+
+### Quick Start (After Implementation)
+
+```bash
+# 1. Start backend with gRPC server
+cd apps/backend
+npm run dev
+
+# 2. Start bot service
+cd packages/bot-service
+npm run dev
+
+# 3. Create game vs bot via API
+POST /api/game/create-vs-bot
+{
+  "humanSide": "blue"
+}
+
+# Bot will automatically respond on its turns via gRPC
+```
+
+### Testing Strategy
+
+1. **Unit Tests**: Test TreeNode, ActionGenerator, Evaluator in isolation
+2. **Integration Tests**: Bot completes full games without errors
+3. **Validation Tests**: Bot never makes illegal moves
+4. **Performance Tests**: Actions complete within time limits
+5. **Determinism Tests**: Same seed produces same actions
+
+### Documentation
+
+For detailed implementation guide including:
+- Complete MCTS algorithm pseudocode
+- Protocol Buffer schema definitions
+- Backend gRPC server implementation
+- Bot service code structure
+- Action generation logic
+- Heuristic evaluation functions
+- Integration patterns
+- Configuration and tuning
+- Deployment instructions
+- Testing examples
+
+See **[AI_BOT_ARCHITECTURE.md](AI_BOT_ARCHITECTURE.md)** (~2000 lines of comprehensive documentation).
+
+---
+
 ## Progress Tracking
 
 | Phase | Status | Owner | Notes |
@@ -1869,7 +2041,7 @@ describe("GameReplay", () => {
 | Phase 2: Pure Logic | ✅ Completed | | Helper functions extracted, circular deps reduced |
 | Phase 3: Seeded RNG | ✅ Completed | | All random operations now deterministic |
 | Phase 4: Engine Package | ✅ Completed | | Types, utils, data migrated; backend imports from engine |
-| Phase 5: Simulation | ⬜ Not Started | | GameSimulator, GameReplay classes |
+| Phase 5: AI Bot Integration | 📄 Documented | | See [AI_BOT_ARCHITECTURE.md](AI_BOT_ARCHITECTURE.md) |
 | Phase 6: Migrate Entities | ✅ Completed | | ChessObject, ChessFactory, 27 champions, GameLogic migrated to engine |
 | Phase 7: Simplify Backend | ✅ Completed | | Backend is now a thin wrapper around GameEngine |
 
