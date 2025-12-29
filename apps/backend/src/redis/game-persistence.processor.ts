@@ -3,7 +3,7 @@ import { Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Job } from "bullmq";
 import { Model } from "mongoose";
-import { Game, GameDocument } from "../game/game.schema";
+import { GameDocument, GAME_MODEL_NAME } from "../game/game.schema";
 
 /**
  * BullMQ Worker that processes game persistence jobs
@@ -13,7 +13,7 @@ import { Game, GameDocument } from "../game/game.schema";
 export class GamePersistenceProcessor extends WorkerHost {
   private readonly logger = new Logger(GamePersistenceProcessor.name);
 
-  constructor(@InjectModel(Game.name) private gameModel: Model<GameDocument>) {
+  constructor(@InjectModel(GAME_MODEL_NAME) private gameModel: Model<GameDocument>) {
     super();
   }
 

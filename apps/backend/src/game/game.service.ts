@@ -1,11 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { Chess, Game, GameDocument } from "./game.schema";
-import { GameLogic } from "./game.logic";
+import { GameDocument, GAME_MODEL_NAME } from "./game.schema";
+import { Chess, Game } from "./types";
+import { GameLogic, setDevelopmentMode } from "./game.logic";
 import { RedisGameCacheService } from "../redis/redis-game-cache.service";
-import { ChessObject } from "./class/chess";
-import { ChessFactory } from "./class/chessFactory";
+import { ChessObject, ChessFactory } from "@lolchess/game-engine";
 
 // Ban/Pick patterns from RULE.md
 // 4 total bans (2 per player)
@@ -26,13 +26,24 @@ const PICK_ORDER: ("blue" | "red")[] = [
 ];
 
 @Injectable()
-export class GameService {
+export class GameService implements OnModuleInit {
   private readonly logger = new Logger(GameService.name);
 
   constructor(
-    @InjectModel(Game.name) private gameModel: Model<GameDocument>,
+    @InjectModel(GAME_MODEL_NAME) private gameModel: Model<GameDocument>,
     private readonly redisCache: RedisGameCacheService
   ) {}
+
+  /**
+   * Initialize the game engine with environment-specific settings
+   */
+  onModuleInit() {
+    const isDevelopment = process.env.NODE_ENV === "development";
+    setDevelopmentMode(isDevelopment);
+    this.logger.log(
+      `Game engine initialized (development mode: ${isDevelopment})`
+    );
+  }
 
   /**
    * Get game state - tries Redis cache first, falls back to MongoDB
@@ -699,7 +710,6 @@ export class GameService {
       });
 
       // Import GameLogic and initialize the game board
-      const { GameLogic } = await import("./game.logic");
       const initializedGame = GameLogic.initGame(
         game,
         blueChampions,
@@ -751,9 +761,6 @@ export class GameService {
     try {
       // Store old game state (deep clone) before processing
       const oldGame = JSON.parse(JSON.stringify(game));
-
-      // Import GameLogic and process the action
-      const { GameLogic } = await import("./game.logic");
 
       // Create EventPayload from actionData
       const eventPayload = {
@@ -981,8 +988,7 @@ export class GameService {
     const redChampions =
       customRedChampions || redPlayer?.selectedChampions || [];
 
-    // Import GameLogic and initialize the game board
-    const { GameLogic } = await import("./game.logic");
+    // Initialize the game board
     const initializedGame = GameLogic.initGame(
       game,
       blueChampions,
@@ -1141,8 +1147,7 @@ export class GameService {
         targetChampionId: buyItemData.championId,
       };
 
-      // Import GameLogic and process the buy item action
-      const { GameLogic } = await import("./game.logic");
+      // Process the buy item action
       const updatedGame = GameLogic.processGame(game, eventPayload);
 
       // Import ChessObject for effective stats calculation

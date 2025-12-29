@@ -1,7 +1,12 @@
 import { Controller, Get, Post, Body, Param, Query } from "@nestjs/common";
 import { GameService } from "./game.service";
-import { champions } from "./data/champion";
-import { basicItems, combinedItems, allItems } from "./data/items";
+import {
+  champions,
+  basicItems,
+  combinedItems,
+  allItems,
+  viktorModules,
+} from "@lolchess/game-engine";
 
 @Controller("games")
 export class GameController {
@@ -175,8 +180,7 @@ export class GameController {
   }
 
   @Get("items/viktor-modules")
-  async getViktorModules() {
-    const { viktorModules } = await import("./data/items");
+  getViktorModules() {
     return { modules: viktorModules };
   }
 }

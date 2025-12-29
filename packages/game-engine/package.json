@@ -1,0 +1,26 @@
+{
+  "name": "@lolchess/game-engine",
+  "version": "1.0.0",
+  "description": "Pure, framework-agnostic game engine for LOL Chess",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "game-engine",
+    "chess",
+    "lol"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}
+

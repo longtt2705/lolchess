@@ -1,5 +1,5 @@
 import { ChessObject } from './chess';
-import { Chess, Game, Shield, ChessStats, Square, AttackRange } from '../game.schema';
+import { Chess, Game, Shield, ChessStats, Square, AttackRange } from '../types';
 
 describe('ChessObject - Shield Calculation', () => {
     let mockGame: Game;

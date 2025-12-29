@@ -1,5 +1,4 @@
-import { Game, Chess, Square } from "../game.schema";
-import { ChessFactory } from "../class/chessFactory";
+import { Game, Chess, Square, ChessFactory } from "@lolchess/game-engine";
 import { GameLogic } from "../game.logic";
 
 // Utility function to create a test game with chess pieces
