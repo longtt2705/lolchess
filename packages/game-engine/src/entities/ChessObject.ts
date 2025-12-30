@@ -877,7 +877,7 @@ export class ChessObject {
       );
     });
 
-    return Math.floor(Math.max(0, statValue)); // Stats can't be negative
+    return Math.round(Math.max(0, statValue)); // Stats can't be negative
   }
 
   private applyStatModifier(
@@ -886,9 +886,9 @@ export class ChessObject {
     type: string
   ): number {
     if (type === "add") {
-      return currentValue + modifier;
+      return Math.round(currentValue + modifier);
     } else if (type === "multiply") {
-      return currentValue * modifier;
+      return Math.round(currentValue * modifier);
     } else if (type === "set") {
       return modifier;
     }

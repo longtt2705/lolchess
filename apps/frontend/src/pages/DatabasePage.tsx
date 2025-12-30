@@ -998,7 +998,7 @@ const DatabasePage: React.FC = () => {
                                                         <div key={i} className="effect positive">
                                                             <img src={getStatIcon(effect.stat)} alt={effect.stat} width={14} height={14} />
                                                             <span>
-                                                                +{effect.type === 'multiply' ? `${Math.floor(effect.value * 100 - 100)}%` : effect.value} {effect.stat.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())}
+                                                                +{effect.type === 'multiply' ? `${Math.round(effect.value * 100 - 100)}%` : effect.value} {effect.stat.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())}
                                                             </span>
                                                         </div>
                                                     ))}

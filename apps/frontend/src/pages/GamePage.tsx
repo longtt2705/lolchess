@@ -1064,14 +1064,13 @@ const Board = styled.div<{ isTargeting?: boolean }>`
   }
 `
 
-const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: boolean; canSelect: boolean; isAttacking?: boolean; isMoving?: boolean; hasShield?: boolean; isStunned?: boolean }>`
+const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: boolean; canSelect: boolean; isAttacking?: boolean; isMoving?: boolean; hasShield?: boolean }>`
   width: 90%;
   height: 90%;
   border-radius: 8px;
   border: 1px solid ${props =>
-    props.isStunned ? '#facc15' :
-      props.isNeutral ? '#9333ea' :
-        props.isBlue ? '#3b82f6' : '#ef4444'};
+    props.isNeutral ? '#9333ea' :
+      props.isBlue ? '#3b82f6' : '#ef4444'};
   background: ${props =>
     props.isNeutral ? 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)' :
       props.isBlue ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'};
@@ -1079,27 +1078,13 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  cursor: ${props => props.isStunned ? 'not-allowed' : props.canSelect ? 'pointer' : 'default'};
+  cursor: ${props => props.canSelect ? 'pointer' : 'default'};
   position: relative;
   z-index: ${props => props.isMoving ? 20 : props.isAttacking ? 10 : 1};
-  box-shadow: ${props => props.isStunned
-    ? '0 0 10px 4px rgba(250, 204, 21, 0.6), 0 0 20px 6px rgba(250, 204, 21, 0.3)'
-    : props.hasShield
-      ? '0 0 8px 3px rgba(255, 255, 255, 0.6), 0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
-      : '0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
+  box-shadow: ${props => props.hasShield
+    ? '0 0 8px 3px rgba(255, 255, 255, 0.6), 0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
+    : '0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
   };
-  filter: ${props => props.isStunned ? 'grayscale(0.5) brightness(0.8)' : 'none'};
-  opacity: ${props => props.isStunned ? 0.85 : 1};
-  animation: ${props => props.isStunned ? 'stunPulse 1.5s ease-in-out infinite' : 'none'};
-  
-  @keyframes stunPulse {
-    0%, 100% {
-      box-shadow: 0 0 10px 4px rgba(250, 204, 21, 0.6), 0 0 20px 6px rgba(250, 204, 21, 0.3);
-    }
-    50% {
-      box-shadow: 0 0 15px 6px rgba(250, 204, 21, 0.8), 0 0 30px 10px rgba(250, 204, 21, 0.5);
-    }
-  }
   
   .piece-icon {
     width: 100%;
@@ -1289,26 +1274,6 @@ const CrownIcon = styled.div`
       filter: drop-shadow(0 0 8px rgba(200, 155, 60, 1));
     }
   }
-`
-
-const StunIndicator = styled(motion.div)`
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 3px;
-  z-index: 30;
-  pointer-events: none;
-`
-
-const StunStar = styled(motion.span)`
-  font-size: 14px;
-  text-shadow: 
-    0 0 8px rgba(250, 204, 21, 1),
-    0 0 16px rgba(250, 204, 21, 0.8),
-    0 0 24px rgba(250, 204, 21, 0.5);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 `
 
 const ItemIconsContainer = styled.div`
@@ -2305,24 +2270,20 @@ const ChessPieceRenderer: React.FC<{
 
   const hasShield = piece.shields && piece.shields.length > 0 && piece.shields.reduce((sum, s) => sum + s.amount, 0) > 0
 
-  // Check if piece is stunned
-  const isStunned = (piece as any).debuffs?.some((debuff: any) => debuff.stun) ?? false
-
   return (
     <ChessPieceComponent
       key={animationKey}
       data-piece-id={piece.id}
       isBlue={piece.blue}
       isNeutral={isNeutral}
-      canSelect={canSelect && !isAnimating && !isDead && !isStunned}
+      canSelect={canSelect && !isAnimating && !isDead}
       isAttacking={isAttacking}
       isMoving={isMoving}
       hasShield={hasShield}
-      isStunned={isStunned}
       onClick={onClick}
       animate={getCombinedAnimation()}
-      whileHover={canSelect && !isAnimating && !isDead && !isStunned ? { scale: 1.05 } : {}}
-      whileTap={canSelect && !isAnimating && !isDead && !isStunned ? { scale: 0.95 } : {}}
+      whileHover={canSelect && !isAnimating && !isDead ? { scale: 1.05 } : {}}
+      whileTap={canSelect && !isAnimating && !isDead ? { scale: 0.95 } : {}}
     >
       <div className="piece-icon">
         <img
@@ -2335,37 +2296,6 @@ const ChessPieceRenderer: React.FC<{
         />
       </div>
       <div className="piece-name">{piece.name}</div>
-
-      {/* Stun Indicator - rotating stars */}
-      {isStunned && (
-        <StunIndicator>
-          {[0, 1, 2].map((index) => (
-            <StunStar
-              key={index}
-              animate={{
-                rotate: [0, 360],
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                rotate: {
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "linear",
-                  delay: index * 0.3,
-                },
-                scale: {
-                  duration: 1,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: index * 0.3,
-                },
-              }}
-            >
-              ⭐
-            </StunStar>
-          ))}
-        </StunIndicator>
-      )}
 
       {/* Crown Icon for Poro (King) */}
       {piece.name === "Poro" && (
@@ -2686,7 +2616,6 @@ const getDebuffIcon = (debuff: any) => {
     adaptive_helm_mr: { src: '/icons/AdaptiveHelm.png', alt: 'Adaptive Helm' },
     undying_rage: { src: '/icons/tryndamere_skill.webp', alt: 'Undying Rage' },
     deaths_dance: { src: '/icons/DeathsDance.png', alt: 'Deaths Dance' },
-    viktor_stun: { src: '/icons/NeutralizingBolt.png', alt: 'Stunned' },
   };
 
   let iconConfig = debuffIconMap[debuff.id];
@@ -2955,12 +2884,6 @@ const GamePage: React.FC = () => {
     targetPosition: ChessPosition
     projectile: AttackProjectile
     guinsooProc?: boolean
-    fourthShotProc?: boolean
-    fourthShotAoeTargets?: Array<{
-      targetId: string
-      targetPosition: ChessPosition
-    }>
-    attackerName?: string
   }>>([])
 
   // Track previous game state for animation
@@ -3133,7 +3056,7 @@ const GamePage: React.FC = () => {
       }
 
       case 'attack': {
-        const { attackerId, attackerPosition, targetId, targetPosition, guinsooProc, fourthShotProc, fourthShotAoeTargets, attackerName } = animation.data
+        const { attackerId, attackerPosition, targetId, targetPosition, guinsooProc } = animation.data
 
         // Find the attacker piece to check for ranged attack projectile
         const attackerPiece = displayState?.board.find(p => p.id === attackerId)
@@ -3155,9 +3078,7 @@ const GamePage: React.FC = () => {
           const flightDuration = Math.max(250, (chessDistance * 100) / speed)
           // Add extra time for Guinsoo ghost projectile (120ms delay + same flight duration + impact)
           const guinsooExtraDuration = guinsooProc ? 120 + flightDuration + 300 : 0
-          // Add extra time for Tristana's AOE explosions (400ms for secondary explosions)
-          const tristanaAoeExtraDuration = (fourthShotProc && attackerName === 'Tristana' && fourthShotAoeTargets && fourthShotAoeTargets.length > 0) ? 200 : 0
-          const totalDuration = 200 + flightDuration + 300 + guinsooExtraDuration + tristanaAoeExtraDuration // charge + flight + impact (+ guinsoo ghost) (+ tristana aoe)
+          const totalDuration = 200 + flightDuration + 300 + guinsooExtraDuration // charge + flight + impact (+ guinsoo ghost)
 
           // Add projectile animation to array (supports multiple simultaneous projectiles)
           const projectileData = {
@@ -3166,9 +3087,6 @@ const GamePage: React.FC = () => {
             targetPosition,
             projectile: attackProjectile,
             guinsooProc,
-            fourthShotProc,
-            fourthShotAoeTargets,
-            attackerName,
           }
           setActiveAttackProjectiles(prev => [...prev, projectileData])
           await new Promise(resolve => setTimeout(resolve, totalDuration))
@@ -3328,13 +3246,6 @@ const GamePage: React.FC = () => {
       piece.position.x === x && piece.position.y === y && piece.stats.hp > 0
     )
 
-    // Check if selected piece is stunned - if so, clear selection and don't allow actions
-    const selectedPieceIsStunned = selectedPiece && (selectedPiece as any).debuffs?.some((d: any) => d.stun)
-    if (selectedPieceIsStunned) {
-      clearSelection()
-      return
-    }
-
     // If in skill mode, check for valid skill target
     if (isSkillMode && selectedPiece) {
       const isValidSkillTarget = validSkillTargets.some(target => target.x === x && target.y === y)
@@ -3371,13 +3282,6 @@ const GamePage: React.FC = () => {
   // Use skill action - enter targeting mode or execute immediately for non-targeted skills
   const handleSkill = () => {
     if (!selectedPiece || !isMyTurn || !selectedPiece.skill) return
-
-    // Check if selected piece is stunned - stunned pieces cannot use skills
-    const isStunned = (selectedPiece as any).debuffs?.some((d: any) => d.stun)
-    if (isStunned) {
-      clearSelection()
-      return
-    }
 
     const skill = selectedPiece.skill
 
@@ -4097,7 +4001,7 @@ const GamePage: React.FC = () => {
                     ? `modified ${(detailViewPiece as any).stats.criticalDamage > (detailViewPiece as any).rawStats.criticalDamage ? 'buffed' : 'debuffed'}`
                     : ''
                     }`}>
-                    {(detailViewPiece as any).stats.criticalDamage || 125}
+                    {(detailViewPiece as any).stats.criticalDamage || 150}
                   </span>
                 </div>
                 <div
@@ -4884,9 +4788,6 @@ const GamePage: React.FC = () => {
                     boardRef={boardRef}
                     isRedPlayer={!!(gameState && currentUser && gameState.redPlayer === currentUser.id)}
                     guinsooProc={projectile.guinsooProc}
-                    fourthShotProc={projectile.fourthShotProc}
-                    fourthShotAoeTargets={projectile.fourthShotAoeTargets}
-                    attackerName={projectile.attackerName}
                   />
                 </div>
               ))}
