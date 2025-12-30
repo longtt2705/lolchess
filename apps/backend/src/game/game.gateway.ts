@@ -9,6 +9,10 @@ import {
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { GameService } from "./game.service";
+import { Logger } from "@nestjs/common";
+
+// Delay before bot makes a move (for UX - so it doesn't feel instant)
+const BOT_THINKING_DELAY_MS = 400;
 
 @WebSocketGateway({
   cors: {
@@ -21,6 +25,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
+  private readonly logger = new Logger(GameGateway.name);
   private gameRooms = new Map<string, Set<string>>(); // gameId -> Set of socketIds
   private userSockets = new Map<string, string>(); // userId -> socketId
   private socketUsers = new Map<string, string>(); // socketId -> userId
@@ -152,6 +157,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             winner: result.game.winner,
             game: result.game,
           });
+        } else {
+          // Check if it's now a bot's turn and process it
+          await this.checkAndProcessBotTurn(gameId, result.game);
         }
       } else {
         // Send error back to the client who made the action
@@ -178,6 +186,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           game: result.game,
           message: result.message,
         });
+
+        // Check if the first player is a bot and process their turn
+        if (result.game.status === "in_progress") {
+          await this.checkAndProcessBotTurn(gameId, result.game);
+        }
       } else {
         client.emit("error", { message: result.message });
       }
@@ -321,6 +334,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             message: result.message,
           });
         }
+
+        // Check if it's now a bot's turn and process it
+        if (result.game.status === "in_progress") {
+          await this.checkAndProcessBotTurn(gameId, result.game);
+        }
       } else {
         // Send error back to the client who made the action
         client.emit("action-error", { message: result.message });
@@ -339,6 +357,79 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   notifyGameEvent(gameId: string, event: string, data: any) {
     this.server.to(gameId).emit(event, data);
   }
+
+  /**
+   * Check if it's a bot's turn and process the bot action
+   * This is called after a human action is processed
+   */
+  private async checkAndProcessBotTurn(
+    gameId: string,
+    game: any
+  ): Promise<void> {
+    // Check if game is still in progress
+    if (game.status !== "in_progress" || game.phase !== "gameplay") {
+      return;
+    }
+
+    // Check if next player is a bot
+    const currentPlayerId = this.gameService.getCurrentPlayer(game);
+    if (!currentPlayerId || !this.gameService.isBotPlayer(currentPlayerId)) {
+      return;
+    }
+
+    this.logger.log(
+      `Bot turn detected for ${currentPlayerId} in game ${gameId}`
+    );
+
+    // Emit "bot-thinking" event to clients
+    this.server.to(gameId).emit("bot-thinking", {
+      botPlayerId: currentPlayerId,
+      message: "Bot is thinking...",
+    });
+
+    // Add a small delay for UX (so it doesn't feel instant)
+    await new Promise((resolve) => setTimeout(resolve, BOT_THINKING_DELAY_MS));
+
+    try {
+      // Process the bot's turn
+      const result = await this.gameService.processBotTurn(gameId, game);
+
+      if (result && result.game) {
+        // Broadcast the bot's action result
+        if (result.game.lastAction && result.oldGame) {
+          this.server.to(gameId).emit("game-state", {
+            game: result.game,
+            oldGame: result.oldGame,
+            message: result.message,
+            isBotAction: true,
+          });
+        } else {
+          this.server.to(gameId).emit("game-state", {
+            game: result.game,
+            message: result.message,
+            isBotAction: true,
+          });
+        }
+
+        // Check if game is finished
+        if (result.game.status === "finished") {
+          this.server.to(gameId).emit("game-over", {
+            winner: result.game.winner,
+            game: result.game,
+          });
+          return;
+        }
+
+        // Recursively check if it's still a bot's turn (shouldn't happen in 1v1)
+        // This handles scenarios where bot might have multiple actions (future feature)
+        await this.checkAndProcessBotTurn(gameId, result.game);
+      }
+    } catch (error) {
+      this.logger.error(`Error processing bot turn: ${error.message}`);
+      this.server.to(gameId).emit("bot-error", {
+        botPlayerId: currentPlayerId,
+        error: error.message,
+      });
+    }
+  }
 }
-
-

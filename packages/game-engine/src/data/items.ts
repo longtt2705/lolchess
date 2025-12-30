@@ -38,7 +38,7 @@ export const basicItems: ItemData[] = [
     description: "",
     cost: 50,
     icon: "/icons/BFSword.png",
-    effects: [{ stat: "ad", value: 10, type: "add" }],
+    effects: [{ stat: "ad", value: 1.1, type: "multiply" }],
     isBasic: true,
   },
   {
@@ -116,7 +116,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/InfinityEdge.png",
     effects: [
-      { stat: "ad", value: 20, type: "add" },
+      { stat: "ad", value: 1.2, type: "multiply" },
       { stat: "criticalChance", value: 25, type: "add" },
       { stat: "criticalDamage", value: 25, type: "add" },
     ],
@@ -132,7 +132,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/GiantSlayer.png",
     effects: [
-      { stat: "ad", value: 15, type: "add" },
+      { stat: "ad", value: 1.15, type: "multiply" },
       { stat: "ap", value: 15, type: "add" },
       { stat: "sunder", value: 20, type: "add" },
       { stat: "damageAmplification", value: 5, type: "add" },
@@ -147,7 +147,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/HextechGunblade.png",
     effects: [
-      { stat: "ad", value: 15, type: "add" },
+      { stat: "ad", value: 1.15, type: "multiply" },
       { stat: "ap", value: 25, type: "add" },
       { stat: "damageAmplification", value: 7, type: "add" },
     ],
@@ -162,7 +162,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/Bloodthirster.png",
     effects: [
-      { stat: "ad", value: 15, type: "add" },
+      { stat: "ad", value: 1.15, type: "multiply" },
       { stat: "magicResistance", value: 20, type: "add" },
       { stat: "lifesteal", value: 15, type: "add" },
       {
@@ -184,7 +184,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/DeathsDance.png",
     effects: [
-      { stat: "ad", value: 15, type: "add" },
+      { stat: "ad", value: 1.15, type: "multiply" },
       { stat: "physicalResistance", value: 20, type: "add" },
     ],
     isBasic: false,
@@ -195,11 +195,11 @@ export const combinedItems: ItemData[] = [
     id: "sterak_gage",
     name: "Sterak's Gage",
     description:
-      "At 60% Health, gain a shield equal to 50% of the wearer's maximum Health and gain 20 AD that decays over 5 turns.",
+      "At 60% Health, gain a shield equal to 50% of the wearer's maximum Health and gain 10% AD that decays over 5 turns.",
     cost: 0,
     icon: "/icons/SteraksGage.png",
     effects: [
-      { stat: "ad", value: 15, type: "add" },
+      { stat: "ad", value: 1.15, type: "multiply" },
       { stat: "maxHp", value: 35, type: "add" },
     ],
     isBasic: false,
@@ -214,7 +214,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/SpearofShojin.png",
     effects: [
-      { stat: "ad", value: 15, type: "add" },
+      { stat: "ad", value: 1.15, type: "multiply" },
       { stat: "ap", value: 15, type: "add" },
       { stat: "cooldownReduction", value: 10, type: "add" },
     ],
@@ -599,7 +599,7 @@ export const combinedItems: ItemData[] = [
       { stat: "cooldownReduction", value: 10, type: "add" },
       { stat: "damageAmplification", value: 5, type: "add" },
       { stat: "ap", value: 10, type: "add" },
-      { stat: "ad", value: 10, type: "add" },
+      { stat: "ad", value: 1.05, type: "multiply" },
     ],
     isBasic: false,
     recipe: ["tear", "tear"],
@@ -624,18 +624,18 @@ export const combinedItems: ItemData[] = [
     id: "hand_of_justice",
     name: "Hand of Justice",
     description:
-      "Gain additional 10 AD and 10 AP when HP is below 40%. Heal 15% of damage dealt from all sources.",
+      "Gain additional 10% AD and 10 AP when HP is below 40%. Heal 15% of damage dealt from all sources.",
     cost: 0,
     icon: "/icons/HandofJustice.png",
     effects: [
       { stat: "criticalChance", value: 25, type: "add" },
       { stat: "cooldownReduction", value: 5, type: "add" },
-      { stat: "ad", value: 10, type: "add" },
+      { stat: "ad", value: 1.1, type: "multiply" },
       { stat: "ap", value: 10, type: "add" },
       {
         stat: "ad",
-        value: 10,
-        type: "add",
+        value: 1.1,
+        type: "multiply",
         condition: (ctx) => ctx.chess.stats.hp < ctx.maxHp * 0.4,
       },
       {
@@ -693,7 +693,7 @@ export const combinedItems: ItemData[] = [
     icon: "/icons/SerpentsFang.png",
     effects: [
       { stat: "criticalChance", value: 40, type: "add" },
-      { stat: "ad", value: 5, type: "add" },
+      { stat: "ad", value: 1.05, type: "multiply" },
       { stat: "ap", value: 5, type: "add" },
     ],
     isBasic: false,
@@ -728,7 +728,7 @@ export const viktorModules: ItemData[] = [
     icon: "/icons/SuperconductiveCoil.png",
     effects: [
       { stat: "ap", value: 15, type: "add" },
-      { stat: "ad", value: 15, type: "add" },
+      { stat: "ad", value: 1.15, type: "multiply" },
       { stat: "sunder", value: 15, type: "add" },
     ],
     isBasic: false,
@@ -858,4 +858,3 @@ export function getViktorModuleByIndex(index: number): ItemData | undefined {
 export function getViktorModulesCount(): number {
   return viktorModules.length;
 }
-

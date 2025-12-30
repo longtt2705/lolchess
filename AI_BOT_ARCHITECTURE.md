@@ -1,5 +1,4 @@
-# LOL Chess AI Bot Architecture
-
+# LOL Chess AI Bot Architecture (This is deprecated, please refer to BOT_INTEGRATION_SUMMARY.md)
 **Version**: 1.0  
 **Date**: December 29, 2025  
 **Status**: Documentation Complete, Implementation Pending

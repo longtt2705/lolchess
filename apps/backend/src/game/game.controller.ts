@@ -113,6 +113,11 @@ export class GameController {
     return this.gameService.create(createGameDto);
   }
 
+  @Post("create-vs-bot")
+  async createGameVsBot(@Body() body: { userId: string; username: string }) {
+    return this.gameService.createGameVsBot(body.userId, body.username);
+  }
+
   @Post(":gameId/initialize-gameplay")
   async initializeGameplay(@Param("gameId") gameId: string) {
     return this.gameService.initializeGameplay(gameId);

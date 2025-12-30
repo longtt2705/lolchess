@@ -306,10 +306,10 @@ export class ChessObject {
         this.applyDebuff(this, {
           id: "sterak_gage",
           name: "Sterak's Gage",
-          description: "Gain 20 AD for 5 turns.",
+          description: "Gain 10% AD for 5 turns.",
           duration: 5,
           maxDuration: 5,
-          effects: [{ stat: "ad", modifier: 20, type: "add" }],
+          effects: [{ stat: "ad", modifier: 1.1, type: "multiply" }],
           damagePerTurn: 0,
           damageType: "physical",
           healPerTurn: 0,

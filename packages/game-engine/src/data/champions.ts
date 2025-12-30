@@ -6,11 +6,13 @@ export type ChampionData = {
   skill: Partial<Skill>;
   aura?: Partial<Aura>;
   attackProjectile?: AttackProjectile;
+  role: "assassin" | "mage" | "support" | "marksman" | "tank" | "fighter";
 };
 
 export const champions: ChampionData[] = [
   {
     name: "Aatrox",
+    role: "fighter",
     stats: {
       maxHp: 120,
       ad: 35,
@@ -36,6 +38,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Ahri",
+    role: "mage",
     stats: {
       maxHp: 80,
       ad: 5,
@@ -77,6 +80,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Garen",
+    role: "fighter",
     stats: {
       maxHp: 120,
       ad: 25,
@@ -105,6 +109,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Janna",
+    role: "support",
     stats: {
       maxHp: 80,
       ad: 10,
@@ -157,6 +162,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Ashe",
+    role: "marksman",
     stats: {
       maxHp: 90,
       ad: 20,
@@ -191,6 +197,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Tristana",
+    role: "marksman",
     stats: {
       maxHp: 85,
       ad: 25,
@@ -224,6 +231,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Blitzcrank",
+    role: "fighter",
     stats: {
       maxHp: 125,
       ad: 15,
@@ -257,6 +265,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Kha'Zix",
+    role: "assassin",
     stats: {
       maxHp: 90,
       ad: 35,
@@ -290,6 +299,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Zed",
+    role: "assassin",
     stats: {
       maxHp: 95,
       ad: 30,
@@ -325,6 +335,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Malphite",
+    role: "tank",
     stats: {
       maxHp: 160,
       ad: 20,
@@ -351,6 +362,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Sion",
+    role: "tank",
     stats: {
       maxHp: 160,
       ad: 20,
@@ -377,6 +389,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Jhin",
+    role: "marksman",
     stats: {
       maxHp: 44,
       ad: 44,
@@ -413,6 +426,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Soraka",
+    role: "support",
     stats: {
       maxHp: 90,
       ad: 10,
@@ -454,6 +468,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Nasus",
+    role: "fighter",
     stats: {
       maxHp: 125,
       ad: 35,
@@ -488,6 +503,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Teemo",
+    role: "marksman",
     stats: {
       maxHp: 90,
       ad: 5,
@@ -521,6 +537,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Rammus",
+    role: "tank",
     stats: {
       maxHp: 135,
       ad: 15,
@@ -546,6 +563,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Yasuo",
+    role: "fighter",
     stats: {
       maxHp: 105,
       ad: 30,
@@ -574,6 +592,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Tryndamere",
+    role: "fighter",
     stats: {
       maxHp: 110,
       ad: 30,
@@ -600,6 +619,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Viktor",
+    role: "mage",
     stats: {
       maxHp: 85,
       ad: 5,
@@ -642,6 +662,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Twisted Fate",
+    role: "mage",
     stats: {
       maxHp: 85,
       ad: 20,
@@ -684,6 +705,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Ezreal",
+    role: "marksman",
     stats: {
       maxHp: 90,
       ad: 25,
@@ -726,6 +748,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Azir",
+    role: "mage",
     stats: {
       maxHp: 90,
       ad: 5,
@@ -767,6 +790,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Dr.Mundo",
+    role: "fighter",
     stats: {
       maxHp: 140,
       ad: 30,
@@ -798,4 +822,3 @@ export const champions: ChampionData[] = [
     },
   },
 ];
-

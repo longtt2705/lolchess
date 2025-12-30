@@ -2,9 +2,9 @@ import React, { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { motion } from 'framer-motion'
-import { Play, Users, Trophy, Sword, AlertCircle, ArrowRight, BookOpen } from 'lucide-react'
+import { Play, Users, Trophy, Sword, AlertCircle, ArrowRight, BookOpen, Bot } from 'lucide-react'
 import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { fetchActiveGame } from '../store/gameSlice'
+import { fetchActiveGame, createGameVsBot } from '../store/gameSlice'
 
 const HomeContainer = styled.div`
   min-height: calc(100vh - 200px);
@@ -119,6 +119,32 @@ const SecondaryButton = styled(Link)`
   }
 `
 
+const BotButton = styled.button`
+  background: linear-gradient(135deg, var(--hover) 0%, #0596aa 100%);
+  color: var(--primary-bg);
+  padding: 16px 32px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(91, 192, 222, 0.3);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+`
+
 const ActiveGameBanner = styled(motion.div)`
   background: linear-gradient(135deg, var(--hover) 0%, #0596aa 100%);
   border: 2px solid var(--hover);
@@ -182,7 +208,7 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { isAuthenticated, user } = useAppSelector(state => state.auth)
-  const { activeGame } = useAppSelector(state => state.game)
+  const { activeGame, loading, error } = useAppSelector(state => state.game)
 
   useEffect(() => {
     if (user && isAuthenticated) {
@@ -200,6 +226,25 @@ const HomePage: React.FC = () => {
       navigate(`/ban-pick/${gameId}`)
     } else {
       navigate(`/game/${gameId}`)
+    }
+  }
+
+  const handlePlayVsBot = async () => {
+    if (!user) return
+
+    try {
+      const result = await dispatch(createGameVsBot({
+        userId: user.id,
+        username: user.username
+      })).unwrap()
+
+      const gameId = result.game._id || result.game.id
+
+      // Navigate to ban-pick phase
+      navigate(`/ban-pick/${gameId}`)
+    } catch (error) {
+      console.error('Error creating bot game:', error)
+      alert('Failed to create game with bot. Please try again.')
     }
   }
 
@@ -287,10 +332,16 @@ const HomePage: React.FC = () => {
         transition={{ duration: 0.8, delay: 0.8 }}
       >
         {isAuthenticated ? (
-          <PrimaryButton to="/lobby">
-            <Play size={20} />
-            Enter 1v1 Lobby
-          </PrimaryButton>
+          <>
+            <PrimaryButton to="/lobby">
+              <Play size={20} />
+              Enter 1v1 Lobby
+            </PrimaryButton>
+            <BotButton onClick={handlePlayVsBot} disabled={loading}>
+              <Bot size={20} />
+              {loading ? 'Creating Game...' : 'Play vs Bot'}
+            </BotButton>
+          </>
         ) : (
           <>
             <PrimaryButton to="/register">

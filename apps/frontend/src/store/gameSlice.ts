@@ -103,6 +103,23 @@ export const createGame = createAsyncThunk(
   }
 );
 
+export const createGameVsBot = createAsyncThunk(
+  "game/createGameVsBot",
+  async (userData: { userId: string; username: string }) => {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+      `${API_URL}/games/create-vs-bot`,
+      userData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  }
+);
+
 export const joinGame = createAsyncThunk(
   "game/joinGame",
   async (gameId: string) => {
@@ -364,6 +381,20 @@ const gameSlice = createSlice({
       .addCase(createGame.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to create game";
+      })
+      // Create game vs bot
+      .addCase(createGameVsBot.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createGameVsBot.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentGame = action.payload.game;
+        state.activeGame = action.payload.game;
+      })
+      .addCase(createGameVsBot.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to create bot game";
       })
       // Join game
       .addCase(joinGame.pending, (state) => {

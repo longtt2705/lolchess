@@ -1,11 +1,22 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  Inject,
+  forwardRef,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { GameDocument, GAME_MODEL_NAME } from "./game.schema";
 import { Chess, Game } from "./types";
 import { GameLogic, setDevelopmentMode } from "./game.logic";
 import { RedisGameCacheService } from "../redis/redis-game-cache.service";
-import { ChessObject, ChessFactory } from "@lolchess/game-engine";
+import {
+  ChessObject,
+  ChessFactory,
+  getCurrentPlayerId,
+} from "@lolchess/game-engine";
+import { SimpleBotService } from "./simple-bot.service";
 
 // Ban/Pick patterns from RULE.md
 // 4 total bans (2 per player)
@@ -31,8 +42,87 @@ export class GameService implements OnModuleInit {
 
   constructor(
     @InjectModel(GAME_MODEL_NAME) private gameModel: Model<GameDocument>,
-    private readonly redisCache: RedisGameCacheService
+    private readonly redisCache: RedisGameCacheService,
+    @Inject(forwardRef(() => SimpleBotService))
+    private readonly simpleBotService: SimpleBotService
   ) {}
+
+  /**
+   * Check if a player ID belongs to a bot
+   */
+  isBotPlayer(playerId: string): boolean {
+    return this.simpleBotService.isBotPlayer(playerId);
+  }
+
+  /**
+   * Get the current player for a game
+   */
+  getCurrentPlayer(game: Game): string | undefined {
+    return getCurrentPlayerId(game as any);
+  }
+
+  /**
+   * Check if it's currently a bot's turn and get the bot action if so
+   * Returns the bot action or null if it's not a bot's turn
+   */
+  async getBotActionIfBotTurn(
+    game: Game
+  ): Promise<{ isBotTurn: boolean; botAction?: any; botPlayerId?: string }> {
+    if (game.status !== "in_progress" || game.phase !== "gameplay") {
+      return { isBotTurn: false };
+    }
+
+    const currentPlayerId = this.getCurrentPlayer(game);
+    if (!currentPlayerId || !this.isBotPlayer(currentPlayerId)) {
+      return { isBotTurn: false };
+    }
+
+    this.logger.log(`Bot turn detected for player: ${currentPlayerId}`);
+
+    try {
+      const botAction = this.simpleBotService.getAction(
+        game as any,
+        currentPlayerId
+      );
+      if (botAction) {
+        return {
+          isBotTurn: true,
+          botAction,
+          botPlayerId: currentPlayerId,
+        };
+      }
+    } catch (error) {
+      this.logger.error(`Error getting bot action: ${error.message}`);
+    }
+
+    return { isBotTurn: false };
+  }
+
+  /**
+   * Process a bot's turn for a game
+   * Returns the updated game state after the bot's action
+   */
+  async processBotTurn(
+    gameId: string,
+    game: Game
+  ): Promise<{ game: Game; oldGame?: Game; message: string } | null> {
+    const { isBotTurn, botAction, botPlayerId } =
+      await this.getBotActionIfBotTurn(game);
+
+    if (!isBotTurn || !botAction) {
+      return null;
+    }
+
+    this.logger.log(
+      `Bot ${botPlayerId} executing action: ${JSON.stringify(botAction)}`
+    );
+
+    // Execute the bot's action
+    return this.executeAction(gameId, {
+      ...botAction,
+      playerId: botPlayerId,
+    });
+  }
 
   /**
    * Initialize the game engine with environment-specific settings
@@ -155,6 +245,46 @@ export class GameService implements OnModuleInit {
     return {
       game: savedGame,
       message: "1v1 game created successfully",
+    };
+  }
+
+  /**
+   * Create a game against the bot
+   * Bot will automatically make its ban/pick selections
+   */
+  async createGameVsBot(userId: string, username: string) {
+    // Generate unique bot player ID
+    const botPlayerId = `bot-player-${Date.now()}`;
+    const botUsername = "AI Bot";
+
+    // Create the game
+    const newGame = new this.gameModel({
+      name: `${username} vs ${botUsername}`,
+      maxPlayers: 2,
+      status: "ban_pick",
+      phase: "ban_phase",
+      players: [],
+      gameSettings: {
+        roundTime: 60,
+        startingGold: 0,
+      },
+    });
+
+    const savedGame = await newGame.save();
+    const gameId = savedGame._id.toString();
+
+    // Add both players
+    await this.addPlayersToGameForQueue(gameId, [
+      { userId: userId, username: username },
+      { userId: botPlayerId, username: botUsername },
+    ]);
+
+    // Get the updated game with initialized ban/pick state
+    const gameResult = await this.findOne(gameId);
+
+    return {
+      game: gameResult.game,
+      message: "Bot game created successfully",
     };
   }
 
