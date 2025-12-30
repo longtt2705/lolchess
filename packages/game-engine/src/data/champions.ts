@@ -15,7 +15,7 @@ export const champions: ChampionData[] = [
       maxHp: 120,
       ad: 35,
       ap: 10,
-      physicalResistance: 15,
+      physicalResistance: 30,
       magicResistance: 10,
       attackRange: {
         range: 1,
@@ -48,7 +48,7 @@ export const champions: ChampionData[] = [
         lShape: false,
       },
       magicResistance: 10,
-      physicalResistance: 10,
+      physicalResistance: 25,
       speed: 1,
     },
     skill: {
@@ -81,7 +81,7 @@ export const champions: ChampionData[] = [
       maxHp: 120,
       ad: 25,
       ap: 10,
-      physicalResistance: 25,
+      physicalResistance: 40,
       magicResistance: 25,
       attackRange: {
         range: 1,
@@ -109,7 +109,7 @@ export const champions: ChampionData[] = [
       maxHp: 80,
       ad: 10,
       ap: 30,
-      physicalResistance: 10,
+      physicalResistance: 25,
       magicResistance: 10,
       speed: 2,
       goldValue: 45,
@@ -161,7 +161,7 @@ export const champions: ChampionData[] = [
       maxHp: 90,
       ad: 20,
       ap: 0,
-      physicalResistance: 10,
+      physicalResistance: 25,
       magicResistance: 10,
       criticalChance: 25,
       attackRange: {
@@ -195,7 +195,7 @@ export const champions: ChampionData[] = [
       maxHp: 85,
       ad: 25,
       ap: 0,
-      physicalResistance: 10,
+      physicalResistance: 25,
       magicResistance: 10,
       attackRange: {
         range: 2,
@@ -236,7 +236,7 @@ export const champions: ChampionData[] = [
         lShape: false,
       },
       magicResistance: 15,
-      physicalResistance: 15,
+      physicalResistance: 30,
       hpRegen: 2,
     },
     skill: {
@@ -303,7 +303,7 @@ export const champions: ChampionData[] = [
       },
       speed: 2,
       hpRegen: 2,
-      physicalResistance: 15,
+      physicalResistance: 30,
       magicResistance: 15,
       criticalChance: 10,
     },
@@ -329,7 +329,7 @@ export const champions: ChampionData[] = [
       maxHp: 160,
       ad: 20,
       ap: 30,
-      physicalResistance: 30,
+      physicalResistance: 45,
       magicResistance: 15,
       attackRange: {
         range: 2,
@@ -355,7 +355,7 @@ export const champions: ChampionData[] = [
       maxHp: 160,
       ad: 20,
       ap: 30,
-      physicalResistance: 20,
+      physicalResistance: 35,
       magicResistance: 15,
       attackRange: {
         range: 1,
@@ -417,7 +417,7 @@ export const champions: ChampionData[] = [
       maxHp: 90,
       ad: 10,
       ap: 20,
-      physicalResistance: 10,
+      physicalResistance: 25,
       magicResistance: 10,
       attackRange: {
         range: 2,
@@ -458,7 +458,7 @@ export const champions: ChampionData[] = [
       maxHp: 125,
       ad: 35,
       ap: 10,
-      physicalResistance: 15,
+      physicalResistance: 30,
       magicResistance: 15,
       attackRange: {
         range: 1,
@@ -492,7 +492,7 @@ export const champions: ChampionData[] = [
       maxHp: 90,
       ad: 5,
       ap: 30,
-      physicalResistance: 15,
+      physicalResistance: 30,
       magicResistance: 10,
       attackRange: {
         range: 2,
@@ -525,7 +525,7 @@ export const champions: ChampionData[] = [
       maxHp: 135,
       ad: 15,
       ap: 20,
-      physicalResistance: 35,
+      physicalResistance: 50,
       magicResistance: 20,
       hpRegen: 2,
       attackRange: {
@@ -551,7 +551,7 @@ export const champions: ChampionData[] = [
       ad: 30,
       ap: 10,
       sunder: 5,
-      physicalResistance: 20,
+      physicalResistance: 35,
       magicResistance: 15,
       attackRange: {
         range: 1,
@@ -579,7 +579,7 @@ export const champions: ChampionData[] = [
       ad: 30,
       ap: 10,
       criticalChance: 25,
-      physicalResistance: 15,
+      physicalResistance: 30,
       magicResistance: 15,
       attackRange: {
         range: 1,
@@ -605,7 +605,7 @@ export const champions: ChampionData[] = [
       ad: 5,
       ap: 35,
       criticalChance: 30,
-      physicalResistance: 15,
+      physicalResistance: 30,
       magicResistance: 15,
       attackRange: {
         range: 3,
@@ -647,7 +647,7 @@ export const champions: ChampionData[] = [
       ad: 20,
       ap: 20,
       criticalChance: 15,
-      physicalResistance: 15,
+      physicalResistance: 30,
       magicResistance: 15,
       attackRange: {
         range: 2,
@@ -689,7 +689,7 @@ export const champions: ChampionData[] = [
       ad: 25,
       ap: 30,
       criticalChance: 10,
-      physicalResistance: 15,
+      physicalResistance: 30,
       magicResistance: 15,
       attackRange: {
         range: 2,
@@ -730,7 +730,7 @@ export const champions: ChampionData[] = [
       maxHp: 90,
       ad: 5,
       ap: 35,
-      physicalResistance: 10,
+      physicalResistance: 25,
       magicResistance: 10,
       attackRange: {
         range: 2,
@@ -771,7 +771,7 @@ export const champions: ChampionData[] = [
       maxHp: 140,
       ad: 30,
       ap: 10,
-      physicalResistance: 20,
+      physicalResistance: 35,
       magicResistance: 20,
       attackRange: {
         range: 1,
