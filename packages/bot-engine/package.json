@@ -1,0 +1,26 @@
+{
+  "name": "@lolchess/bot-engine",
+  "version": "1.0.0",
+  "description": "AI/Bot decision-making engine for LOL Chess",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@lolchess/game-engine": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "lolchess",
+    "bot",
+    "ai",
+    "game-engine"
+  ],
+  "license": "MIT"
+}

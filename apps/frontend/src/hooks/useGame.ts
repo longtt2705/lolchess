@@ -1,7 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { useAppDispatch, useAppSelector } from "./redux";
 import { useWebSocket } from "./useWebSocket";
+
+// Queue item for sequential animation processing
+export interface GameStateQueueItem {
+  oldState: GameState;
+  newState: GameState;
+}
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -203,7 +209,10 @@ export const useGame = (gameId: string) => {
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [displayState, setDisplayState] = useState<GameState | null>(null); // What's currently displayed
-  const [queuedState, setQueuedState] = useState<GameState | null>(null); // Waiting for animations to finish
+  const [gameStateQueue, setGameStateQueue] = useState<GameStateQueueItem[]>(
+    []
+  ); // Queue of states waiting for animations
+  const isAnimatingRef = useRef(false); // Track if animations are currently playing
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPiece, setSelectedPiece] = useState<ChessPiece | null>(null);
@@ -214,19 +223,35 @@ export const useGame = (gameId: string) => {
   );
   const [isSkillMode, setIsSkillMode] = useState(false);
 
-  // Update game state from WebSocket
+  // Update game state from WebSocket - add to queue for sequential processing
   useEffect(() => {
     if (wsGameState) {
       setGameState(wsGameState);
 
-      // If there's an oldGame and lastAction, show old state first and queue new state
+      // If there's an oldGame and lastAction, we need to animate
       if (wsOldGameState && wsGameState.lastAction) {
-        setDisplayState(wsOldGameState);
-        setQueuedState(wsGameState);
+        const queueItem: GameStateQueueItem = {
+          oldState: wsOldGameState,
+          newState: wsGameState,
+        };
+
+        setGameStateQueue((prevQueue) => {
+          // If queue is empty and not animating, set displayState to old state and add to queue
+          if (prevQueue.length === 0 && !isAnimatingRef.current) {
+            setDisplayState(wsOldGameState);
+          }
+          // Add new state to queue (will be processed after current animations finish)
+          return [...prevQueue, queueItem];
+        });
       } else {
-        // No animations - show new state immediately
-        setDisplayState(wsGameState);
-        setQueuedState(null);
+        // No animations needed - show new state immediately
+        // But only if queue is empty and not animating
+        setGameStateQueue((prevQueue) => {
+          if (prevQueue.length === 0 && !isAnimatingRef.current) {
+            setDisplayState(wsGameState);
+          }
+          return prevQueue;
+        });
       }
 
       setLoading(false);
@@ -892,12 +917,45 @@ export const useGame = (gameId: string) => {
     [wsConnected, wsRespondToDraw]
   );
 
+  // Set animation state - called by GamePage when starting/finishing animations
+  const setIsAnimating = useCallback((animating: boolean) => {
+    isAnimatingRef.current = animating;
+  }, []);
+
+  // Called when animations complete - process next item in queue
+  const onAnimationComplete = useCallback(() => {
+    setGameStateQueue((prevQueue) => {
+      if (prevQueue.length === 0) {
+        isAnimatingRef.current = false;
+        return prevQueue;
+      }
+
+      // Get the first item (current animation just finished)
+      const [currentItem, ...remaining] = prevQueue;
+
+      // Update display to the new state (animation just completed)
+      setDisplayState(currentItem.newState);
+
+      if (remaining.length === 0) {
+        // Queue is now empty
+        isAnimatingRef.current = false;
+        return [];
+      }
+
+      // More items in queue - next animation will start from useEffect in GamePage
+      // Set displayState to the next item's old state for the next animation
+      setDisplayState(remaining[0].oldState);
+      return remaining;
+    });
+  }, []);
+
   return {
     gameState,
     displayState,
-    queuedState,
+    gameStateQueue,
     setDisplayState,
-    setQueuedState,
+    setIsAnimating,
+    onAnimationComplete,
     loading,
     error,
     selectedPiece,

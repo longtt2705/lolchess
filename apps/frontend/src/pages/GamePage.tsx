@@ -2806,9 +2806,10 @@ const GamePage: React.FC = () => {
   const {
     gameState,
     displayState,
-    queuedState,
+    gameStateQueue,
     setDisplayState,
-    setQueuedState,
+    setIsAnimating: setHookIsAnimating,
+    onAnimationComplete,
     loading,
     error,
     selectedPiece,
@@ -2933,39 +2934,6 @@ const GamePage: React.FC = () => {
     }
   }, [gameState, initializeGameplay])
 
-  // Play animation sequence when game state updates
-  useEffect(() => {
-    if (!gameState) return
-
-    // Check if we should play animations
-    const shouldAnimate = AnimationEngine.shouldPlayAnimations(
-      gameState,
-      previousGameStateRef.current
-    )
-
-    if (shouldAnimate && !isPlayingAnimationsRef.current) {
-      // Generate animation sequence (comparing old state to new state)
-      const animations = AnimationEngine.generateAnimationSequence(
-        gameState,
-        previousGameStateRef.current
-      )
-
-      if (animations.length > 0) {
-        animationQueueRef.current = animations
-        playAnimationSequence(animations)
-      } else {
-        // No animations to play, but we might have a queued state
-        if (queuedState) {
-          setDisplayState(queuedState)
-          setQueuedState(null)
-        }
-      }
-    }
-
-    // Update previous game state
-    previousGameStateRef.current = gameState
-  }, [gameState, queuedState, setDisplayState, setQueuedState])
-
   // Update dead pieces based on displayState (not gameState)
   // This ensures pieces are marked as dead only when displayed, not during animations
   useEffect(() => {
@@ -2987,6 +2955,7 @@ const GamePage: React.FC = () => {
     try {
       isPlayingAnimationsRef.current = true
       setIsAnimating(true)
+      setHookIsAnimating(true)
 
       // Sort animations by delay
       const sortedAnimations = [...animations].sort((a, b) => a.delay - b.delay)
@@ -3021,24 +2990,45 @@ const GamePage: React.FC = () => {
         await Promise.all(promises)
       }
 
-      // After all animations complete, swap to new state
-      if (queuedState) {
-        setDisplayState(queuedState)
-        setQueuedState(null)
-      }
+      // After all animations complete, signal completion to process next queue item
+      onAnimationComplete()
     } catch (error) {
       console.error('Animation error:', error)
+      // On error, still try to complete to avoid stuck state
+      onAnimationComplete()
     } finally {
       // Always clean up, even if there's an error
       isPlayingAnimationsRef.current = false
       setIsAnimating(false)
+      setHookIsAnimating(false)
       // Clear any lingering animation states
       setMoveAnimation(null)
       setAttackAnimation(null)
       // Note: We don't clear damageEffects and itemPurchaseAnimations here
       // as they manage their own cleanup with setTimeout
     }
-  }, [queuedState, setDisplayState, setQueuedState])
+  }, [onAnimationComplete, setHookIsAnimating])
+
+  // Play animation sequence when queue has items and we're not currently animating
+  useEffect(() => {
+    if (gameStateQueue.length === 0 || isPlayingAnimationsRef.current) return
+
+    const nextItem = gameStateQueue[0]
+
+    // Generate animation sequence from old state to new state
+    const animations = AnimationEngine.generateAnimationSequence(
+      nextItem.newState,
+      nextItem.oldState
+    )
+
+    if (animations.length > 0) {
+      animationQueueRef.current = animations
+      playAnimationSequence(animations)
+    } else {
+      // No animations to play - move to next item in queue
+      onAnimationComplete()
+    }
+  }, [gameStateQueue, onAnimationComplete, playAnimationSequence])
 
   // Play individual animation
   const playAnimation = useCallback(async (animation: AnimationAction) => {
