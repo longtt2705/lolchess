@@ -282,38 +282,42 @@ const InstructionsPage: React.FC = () => {
             icon: '👑',
             stats: {
                 'HP': '100',
-                'Movement': '1 square',
+                'Physical Res': '50',
+                'Magic Res': '50',
+                'Movement': '1 square (any direction)',
                 'Attack': 'Cannot attack',
                 'Gold Value': 'N/A (Game ends)'
             },
-            description: 'The objective piece. If your Poro is slain, you lose the game. Can move 1 square in any direction but cannot attack.'
+            description: 'The objective piece. If your Poro is slain, you lose the game. Can move 1 square in any direction but cannot attack. Immune to stun effects. Benefits from Minion Synergy (+15 AD/Armor/MR per adjacent minion).'
         },
         {
             id: 'champion',
             name: 'Champion (Queen, Bishops, Knights)',
             icon: '⚔️',
             stats: {
-                'HP': '??',
-                'AD': '??',
-                'AP': '??',
-                'Speed': '?',
-                'Attack Range': '?',
+                'HP': '80 (varies)',
+                'AD': '50 (varies)',
+                'AP': '0 (varies)',
+                'Speed': '1-2 (varies)',
+                'Attack Range': '2 (varies)',
                 'Gold Value': '50'
             },
-            description: 'Powerful pieces with unique abilities. Can equip up to 3 items. Movement and attacks are blocked by pieces in the path.'
+            description: 'Powerful pieces with unique abilities. Can equip up to 3 items. Champions at Knight positions (b1/b8, g1/g8) can make an L-shaped knight move on their FIRST move only, jumping over pieces.'
         },
         {
             id: 'siege',
             name: 'Siege Minion (Rook)',
             icon: '🗼',
             stats: {
-                'HP': '150',
+                'HP': '200',
                 'AD': '40',
+                'Physical Res': '25',
+                'Magic Res': '10',
                 'Speed': '4',
-                'Attack Range': '8 (horizontal/vertical)',
+                'Attack Range': '8 (H/V only)',
                 'Gold Value': '40'
             },
-            description: 'Strong defensive unit with long-range attacks along horizontal and vertical lines.'
+            description: 'Strong defensive unit with long-range attacks along horizontal and vertical lines. Can castle with the Poro if neither has moved.'
         },
         {
             id: 'melee',
@@ -322,11 +326,13 @@ const InstructionsPage: React.FC = () => {
             stats: {
                 'HP': '100',
                 'AD': '25',
-                'Movement': '1 forward',
+                'Physical Res': '20',
+                'Magic Res': '5',
+                'Movement': '1 forward (2 on first move)',
                 'Attack Range': '1',
                 'Gold Value': '20'
             },
-            description: 'Basic unit that promotes to Super Minion upon reaching enemy back rank.'
+            description: 'Basic unit that promotes to Super Minion upon reaching enemy back rank. Gets +1 speed on first move. Benefits from Minion Synergy (+15 AD/Armor/MR per adjacent minion).'
         },
         {
             id: 'caster',
@@ -335,11 +341,13 @@ const InstructionsPage: React.FC = () => {
             stats: {
                 'HP': '50',
                 'AD': '35',
-                'Movement': '1 forward',
+                'Physical Res': '15',
+                'Magic Res': '5',
+                'Movement': '1 forward (2 on first move)',
                 'Attack Range': '2',
                 'Gold Value': '25'
             },
-            description: 'Ranged unit with lower health but higher damage and attack range than Melee Minions.'
+            description: 'Ranged unit with lower health but higher damage and attack range than Melee Minions. Gets +1 speed on first move. Benefits from Minion Synergy (+15 AD/Armor/MR per adjacent minion).'
         },
         {
             id: 'super',
@@ -349,12 +357,12 @@ const InstructionsPage: React.FC = () => {
                 'HP': '300',
                 'AD': '100',
                 'AP': '100',
-                'Speed': '5',
+                'Speed': '5 (any direction)',
                 'Physical Res': '50',
                 'Magic Res': '50',
                 'Gold Value': '50'
             },
-            description: 'Enhanced version of Melee Minion with significantly improved stats.'
+            description: 'Enhanced version of Melee Minion created upon promotion. Can move in any of 8 directions (no longer restricted to forward). Benefits from Minion Synergy.'
         }
     ]
 
@@ -422,9 +430,11 @@ const InstructionsPage: React.FC = () => {
                                 <ul>
                                     <li><strong>Ban & Pick Phase:</strong> Select your 5 champions strategically</li>
                                     <li><strong>Unique Abilities:</strong> Each champion has a special ability</li>
-                                    <li><strong>Item Shop:</strong> Purchase items to enhance your champions</li>
+                                    <li><strong>Item Shop:</strong> Purchase basic items that auto-combine into powerful items (TFT-style)</li>
                                     <li><strong>Neutral Objectives:</strong> Baron Nashor and Drake provide powerful buffs</li>
-                                    <li><strong>Gold Economy:</strong> Earn gold by slaying pieces and objectives</li>
+                                    <li><strong>Gold Economy:</strong> Earn gold by slaying pieces, objectives, and passive income</li>
+                                    <li><strong>Minion Synergy:</strong> Minions and Poro gain stats from adjacent allies</li>
+                                    <li><strong>Knight's First Move:</strong> Champions at knight positions can jump on first move</li>
                                 </ul>
 
                                 <h3>Winning Conditions</h3>
@@ -604,6 +614,36 @@ const InstructionsPage: React.FC = () => {
 
                                 <h3 style={{ marginTop: '32px' }}>Special Mechanics</h3>
 
+                                <h4>Minion Synergy</h4>
+                                <HighlightBox variant="success">
+                                    <p><strong>Minions, Poro, Sand Soldiers, and Super Minions</strong> gain stats for each adjacent ally from this group:</p>
+                                    <ul style={{ marginTop: '8px', marginBottom: '0' }}>
+                                        <li><strong>+15 Attack Damage (AD)</strong></li>
+                                        <li><strong>+15 Physical Resistance</strong></li>
+                                        <li><strong>+15 Magic Resistance</strong></li>
+                                    </ul>
+                                </HighlightBox>
+                                <p>This encourages maintaining formation and protecting your Poro with surrounding minions!</p>
+
+                                <h4>Knight's First Move</h4>
+                                <p>
+                                    Champions starting at <strong>Knight positions (b1/b8 and g1/g8)</strong> can make
+                                    an L-shaped knight move (2 squares + 1 perpendicular) as their <strong>first move only</strong>.
+                                    This move can jump over pieces. After their first move, they follow standard movement rules.
+                                </p>
+
+                                <h4>Minion First Move Bonus</h4>
+                                <p>
+                                    <strong>Melee Minions</strong> and <strong>Caster Minions</strong> gain <strong>+1 speed</strong> on
+                                    their first move, allowing them to move up to 2 squares forward instead of 1.
+                                </p>
+
+                                <h4>Poro Stun Immunity</h4>
+                                <p>
+                                    The <strong>Poro is immune to all stun effects</strong>. This prevents situations where
+                                    all pieces are stunned and no moves can be made.
+                                </p>
+
                                 <h4>Champion Abilities</h4>
                                 <p>
                                     Each champion has a <strong>unique special ability</strong> that can be activated
@@ -613,14 +653,14 @@ const InstructionsPage: React.FC = () => {
                                 <h4>Items</h4>
                                 <p>
                                     Champions can equip up to <strong>3 items</strong> purchased from the shop.
-                                    Items provide stat bonuses to enhance your champions' effectiveness.
+                                    Basic items automatically combine into powerful combined items (TFT-style crafting).
                                 </p>
 
                                 <h4>Promotion</h4>
                                 <p>
                                     When a <strong>Melee Minion</strong> reaches the opponent's back rank
                                     (rank 8 for Blue, rank 1 for Red), it immediately promotes to a
-                                    <strong> Super Minion</strong> with significantly enhanced stats.
+                                    <strong> Super Minion</strong> with significantly enhanced stats and unrestricted movement.
                                 </p>
                             </SectionContent>
                         </Section>
@@ -640,11 +680,20 @@ const InstructionsPage: React.FC = () => {
                             </SectionTitle>
                             <SectionContent>
                                 <HighlightBox variant="info">
-                                    <strong>Blue Side always moves first.</strong> On your turn, perform ONE action with ONE piece.
+                                    <strong>Blue Side always moves first.</strong> Each turn has two phases: optional item purchase,
+                                    then required board action.
                                 </HighlightBox>
 
-                                <h3>Turn Actions</h3>
-                                <p>On your turn, choose one of the following actions:</p>
+                                <h3>Turn Structure</h3>
+
+                                <h4>Phase 1: Buy Item (Optional)</h4>
+                                <p>
+                                    At the <strong>start of your turn</strong>, you may purchase <strong>ONE item</strong> from the shop
+                                    for a champion. Once you buy an item or perform any board action, you cannot buy more items until your next turn.
+                                </p>
+
+                                <h4>Phase 2: Board Action (Required)</h4>
+                                <p>You must perform <strong>one</strong> of the following actions with <strong>one</strong> of your pieces:</p>
 
                                 <h4>1. Move</h4>
                                 <p>
@@ -663,6 +712,10 @@ const InstructionsPage: React.FC = () => {
                                     <li>The Poro moves 2 squares toward the Siege Minion</li>
                                     <li>The Siege Minion moves to the other side of the Poro</li>
                                 </ul>
+                                <HighlightBox variant="success">
+                                    <strong>Castling Shield Bonus:</strong> Upon castling, the Poro gains a <strong>permanent shield
+                                    equal to 25% of its max HP</strong>!
+                                </HighlightBox>
 
                                 <h4>3. Attack</h4>
                                 <p>
@@ -674,13 +727,6 @@ const InstructionsPage: React.FC = () => {
                                 <p>
                                     Champions can activate their special ability instead of moving or attacking
                                     (subject to cooldown restrictions).
-                                </p>
-
-                                <h4>5. Buy Items</h4>
-                                <p>
-                                    At the start of your turn, you may purchase ONE item from the shop for a champion
-                                    before performing your board action. After buying an item or performing any board action,
-                                    you cannot buy more items until your next turn.
                                 </p>
 
                                 <h3>Combat System</h3>
@@ -843,8 +889,8 @@ const InstructionsPage: React.FC = () => {
                                         <div className="value">+5 per turn</div>
                                     </StatCard>
                                     <StatCard>
-                                        <div className="label">Slay Enemy Pieces</div>
-                                        <div className="value">Varies by piece</div>
+                                        <div className="label">Round Bonus</div>
+                                        <div className="value">+50 every 20 rounds</div>
                                     </StatCard>
                                     <StatCard>
                                         <div className="label">Drake Kill</div>
@@ -862,6 +908,18 @@ const InstructionsPage: React.FC = () => {
                                     steady economy growth throughout the game.
                                 </p>
 
+                                <h4>Round Bonus</h4>
+                                <p>
+                                    Both players gain <strong>+50 Gold every 20 rounds</strong> (rounds 20, 40, 60, etc.).
+                                    This helps accelerate late-game item purchases.
+                                </p>
+
+                                <h4>Item Refund on Death</h4>
+                                <HighlightBox variant="info">
+                                    When a champion dies, <strong>50% of the total value of their equipped items</strong> is
+                                    refunded to the owner. This helps mitigate the loss of an itemized champion.
+                                </HighlightBox>
+
                                 <h4>Slaying Enemy Pieces</h4>
                                 <p>Gold values for enemy pieces:</p>
                                 <ul>
@@ -874,31 +932,38 @@ const InstructionsPage: React.FC = () => {
 
                                 <h3>The Item Shop</h3>
                                 <HighlightBox variant="info">
-                                    <strong>Important:</strong> Opening the shop and purchasing items uses your entire turn.
-                                    You cannot perform other actions on the same turn.
+                                    <strong>Important:</strong> You can buy <strong>ONE item at the START of your turn</strong>,
+                                    before performing your board action. After buying an item or performing any board action,
+                                    you cannot buy more items until your next turn.
                                 </HighlightBox>
 
                                 <h4>Using the Shop</h4>
                                 <ol>
-                                    <li>On your turn, choose to open the shop instead of performing a board action</li>
-                                    <li>Browse available items and their stat bonuses</li>
-                                    <li>Purchase items using your accumulated gold</li>
-                                    <li>Equip items to your champions (max 3 items per champion)</li>
+                                    <li>At the start of your turn, you may purchase ONE basic item</li>
+                                    <li>Assign the item to any of your champions</li>
+                                    <li>If the champion has two basic items, they <strong>automatically combine</strong> into a combined item</li>
+                                    <li>Then perform your board action (move, attack, or use ability)</li>
                                 </ol>
+
+                                <h4>Item Combining (TFT-Style)</h4>
+                                <HighlightBox variant="warning">
+                                    <strong>Auto-Combine:</strong> When a champion has two basic items, they automatically
+                                    combine into a more powerful combined item! Plan your item builds strategically.
+                                </HighlightBox>
 
                                 <h4>Item Slots</h4>
                                 <p>
-                                    Each champion has <strong>3 item slots</strong>. Once a champion has 3 items equipped,
-                                    you must remove an item before equipping a new one.
+                                    Each champion has <strong>3 item slots</strong>. Only champions can equip items
+                                    (not minions, Poro, or neutral monsters).
                                 </p>
 
                                 <h4>Stat Bonuses</h4>
                                 <p>Items provide various stat bonuses that enhance your champions:</p>
                                 <ul>
-                                    <li><strong>Offensive:</strong> +AD, +AP, Critical Strike Chance</li>
-                                    <li><strong>Defensive:</strong> +HP, +Physical Resistance, +Magic Resistance</li>
-                                    <li><strong>Utility:</strong> +Speed, +Attack Range</li>
-                                    <li><strong>Hybrid:</strong> Combination of multiple stats</li>
+                                    <li><strong>Offensive:</strong> +AD, +AP, Critical Strike Chance, Sunder</li>
+                                    <li><strong>Defensive:</strong> +HP, +Physical Resistance, +Magic Resistance, Shields</li>
+                                    <li><strong>Utility:</strong> +Speed, +Attack Range, Cooldown Reduction</li>
+                                    <li><strong>Special Effects:</strong> Lifesteal, Burn, Stun, and more</li>
                                 </ul>
 
                                 <HighlightBox variant="warning">

@@ -26,6 +26,14 @@ Before the game begins, players engage in a champion selection phase.
 ## 4. THE PIECES & CHARACTERISTICS
 All pieces in the game have the following attributes:
 
+### Minion Synergy
+Minions (Melee Minion, Caster Minion), Poro, Sand Soldiers, and Super Minions benefit from sticking together. For each adjacent ally from this group, they gain:
+* **+15 Attack Damage (AD)**
+* **+15 Physical Resistance**
+* **+15 Magic Resistance**
+
+This encourages maintaining formation and protecting the Poro with surrounding minions.
+
 ### Core Stats
 * **HP (Health Points):** The amount of damage a piece can sustain before being slain.
 * **AD (Attack Damage):** Damage dealt by basic attacks, reduced by Physical Resistance.
@@ -52,9 +60,11 @@ All pieces in the game have the following attributes:
 * **Attacks:** Cannot attack.
 * **Stats:** 100 HP, 50 Physical Resistance, 50 Magic Resistance.
 * **Gold Value:** N/A (Game ends).
+* **Stun Immunity:** The Poro is immune to all stun effects. This prevents situations where all pieces are stunned.
 
 #### **Champion (Queen, Bishops, Knights)**
 * **Movement:** Speed determines the maximum number of squares it can move in one of the 8 directions. Blocked by any piece in its path.
+* **Knight's First Move:** Champions starting at the Knight positions (`b1/b8` and `g1/g8`) can make an L-shaped knight move (2 squares in one direction + 1 square perpendicular) as their **first move only**. This move can jump over pieces. After their first move, they follow standard movement rules.
 * **Attacks:** Can attack any piece within its Attack Range. Blocked by any piece in its path.
 * **Special Ability:** Each champion has a unique ability that can be activated instead of moving or attacking.
 * **Items:** Can be equipped with up to 3 items to enhance stats.
@@ -64,35 +74,43 @@ All pieces in the game have the following attributes:
 #### **Siege Minion (Rook)**
 * **Movement:** Speed of 4 (can move 4 squares horizontally or vertically).
 * **Attacks:** Has Attack Range of 8 horizontally and vertically. The attack stops at the first enemy piece it hits. Blocked by any piece (friendly or enemy) in its path.
-* **Stats:** 150 HP, 40 AD, 0 AP, 10 Physical Resistance, 10 Magic Resistance.
+* **Stats:** 200 HP, 40 AD, 0 AP, 25 Physical Resistance, 10 Magic Resistance.
 * **Gold Value:** 40
 
 #### **Melee Minion (Pawn)**
 * **Movement:** Can only move 1 square forward (towards the opponent's side). Speed of 1.
+* **First Move Bonus:** On their first move, Melee Minions gain +1 speed, allowing them to move up to 2 squares forward.
 * **Attacks:** Attack Range of 1. Can attack any of the 8 squares immediately surrounding it.
 * **Promotion:** If a Melee Minion reaches the opponent's back rank (rank 8 for Blue, rank 1 for Red), it is immediately promoted to a **Super Minion**.
-* **Stats:** 100 HP, 25 AD, 0 AP, 5 Physical Resistance, 0 Magic Resistance.
+* **Stats:** 100 HP, 25 AD, 0 AP, 20 Physical Resistance, 5 Magic Resistance.
 * **Gold Value:** 20
 
 #### **Caster Minion (Pawn)**
 * **Movement:** Can only move 1 square forward (towards the opponent's side). Speed of 1.
+* **First Move Bonus:** On their first move, Caster Minions gain +1 speed, allowing them to move up to 2 squares forward.
 * **Attacks:** Attack Range of 2. Can attack any of the 8 squares immediately surrounding it.
-* **Stats:** 50 HP, 35 AD, 0 AP, 0 Physical Resistance, 0 Magic Resistance.
+* **Stats:** 50 HP, 35 AD, 0 AP, 15 Physical Resistance, 5 Magic Resistance.
 * **Gold Value:** 25
 
 #### **Super Minion (Promoted Pawn)**
-* A stronger version of the Melee Minion with significantly increased stats.
-* **Movement & Attack:** Same as Melee Minion (moves 5, attacks all 8 adjacent squares). Speed of 5.
+* A stronger version of the Melee Minion created when a Melee Minion reaches the opponent's back rank.
+* **Movement:** Can move in any of the 8 directions with Speed of 5. No longer restricted to forward movement only.
+* **Attacks:** Attack Range of 1. Can attack any of the 8 squares immediately surrounding it.
 * **Stats:** 300 HP (upon promotion), 100 AD, 100 AP, 50 Physical Resistance, 50 Magic Resistance.
 * **Gold Value:** 50
 
 ## 5. GAMEPLAY & TURN STRUCTURE
-Blue Side always moves first. On your turn, you must perform **one** of the following actions with **one** of your pieces:
+Blue Side always moves first. On your turn:
+
+### Optional: Buy Item (Before Board Action)
+At the **start of your turn**, you may purchase **one** item from the shop for a champion. Once you buy an item or perform any board action, you cannot buy more items until your next turn.
+
+### Required: Board Action
+You must perform **one** of the following actions with **one** of your pieces:
 * **Move:** Move a piece to a valid empty square according to its movement rules.
-* **Castle:** If the piece is a Poro and it has not moved before, it can castle with a Siege Minion. The Siege Minion must be in the same rank as the Poro and not have moved before. The Poro can move 2 squares horizontally and the Siege Minion will move to the other side of the Poro.
-* **Attack:** Use a piece to attack an opponent's piece according to its attack rules. It can only attack pieces that are in its Attack Range. And cannot attack pieces behind the blocker.
+* **Castle:** If the piece is a Poro and it has not moved before, it can castle with a Siege Minion. The Siege Minion must be in the same rank as the Poro and not have moved before. The Poro can move 2 squares horizontally and the Siege Minion will move to the other side of the Poro. **Upon castling, the Poro gains a permanent shield equal to 25% of its max HP.**
+* **Attack:** Use a piece to attack an opponent's piece according to its attack rules. It can only attack pieces that are in its Attack Range. Cannot attack pieces behind a blocker.
 * **Use Ability:** Champions can use their special ability instead of moving or attacking (subject to cooldown).
-* **Buy Items:** At the start of your turn, you may purchase ONE item from the shop for a champion before performing your board action. After buying an item or performing any board action, you cannot buy more items until your next turn.
 
 ### Combat
 When a piece attacks another, damage is calculated.
@@ -129,13 +147,16 @@ Status effects can be applied by champion abilities and items. Multiple instance
 
 ## 7. GOLD & ITEM SHOP
 * **Earning Gold:**
-    * Slaying an enemy piece.
+    * Slaying an enemy piece (Gold Value of the slain piece).
     * Slaying a neutral monster.
     * **Passive Income:** Each player gains 5 Gold at the start of their turn.
+    * **Round Bonus:** Both players gain +50 Gold every 20 rounds (rounds 20, 40, 60, etc.).
+* **Item Refund on Death:** When a champion dies, 50% of the total value of their equipped items is refunded to the owner.
 * **The Shop:**
-    * On your turn, you may choose to open the shop instead of performing a board action.
-    * You can spend your accumulated Gold to buy items. Items provide stat bonuses.
-    * Purchased items can be equipped onto any of your Champions that have an open item slot (max 3 items per champion).
+    * At the start of your turn, you may purchase **one** item before performing your board action. After buying an item or performing any board action, you cannot buy more items until your next turn.
+    * You can spend your accumulated Gold to buy basic items. Items provide stat bonuses.
+    * **Item Combining:** When a champion has two basic items, they automatically combine into a more powerful combined item (TFT-style crafting).
+    * Purchased items can be equipped onto any of your Champions that have an open item slot (max 3 items per champion). Only champions can equip items (not minions, Poro, or neutral monsters).
 
 ## 8. WINNING & DRAW CONDITIONS
 * **Victory:** You win the game instantly when you slay the opponent's Poro. A player can also **resign**, resulting in a loss.
