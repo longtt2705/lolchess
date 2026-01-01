@@ -11,22 +11,31 @@ export class MeleeMinion extends ChessObject {
 
     for (const square of adjacentSquares) {
       const ally = getChessAtPosition(this.game, this.chess.blue, square);
+      console.log("ally", ally);
       if (
         ally &&
-        ally.name in
-          [
-            "Melee Minion",
-            "Caster Minion",
-            "Sand Soldier",
-            "Super Minion",
-            "Poro",
-          ] &&
+        [
+          "Melee Minion",
+          "Caster Minion",
+          "Sand Soldier",
+          "Super Minion",
+          "Poro",
+        ].includes(ally.name) &&
         ally.stats.hp > 0
       ) {
         count++;
       }
     }
     return count;
+  }
+  /**
+   * Override AD to include bonus from adjacent minions
+   * +15 AD per adjacent minion
+   */
+  get ad(): number {
+    const baseAd = super.ad;
+    const adjacentMinionCount = this.countAdjacentMinions();
+    return baseAd + adjacentMinionCount * 15;
   }
   /**
    * Override Physical Resistance to include bonus from adjacent minions

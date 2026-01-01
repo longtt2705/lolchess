@@ -28,14 +28,13 @@ export class Poro extends ChessObject {
       const ally = getChessAtPosition(this.game, this.chess.blue, square);
       if (
         ally &&
-        ally.name in
-          [
-            "Melee Minion",
-            "Caster Minion",
-            "Sand Soldier",
-            "Super Minion",
-            "Poro",
-          ] &&
+        [
+          "Melee Minion",
+          "Caster Minion",
+          "Sand Soldier",
+          "Super Minion",
+          "Poro",
+        ].includes(ally.name) &&
         ally.stats.hp > 0
       ) {
         count++;

@@ -38,7 +38,7 @@ export const basicItems: ItemData[] = [
     description: "",
     cost: 50,
     icon: "/icons/BFSword.png",
-    effects: [{ stat: "ad", value: 1.1, type: "multiply" }],
+    effects: [{ stat: "ad", value: 10, type: "add" }],
     isBasic: true,
   },
   {
@@ -116,7 +116,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/InfinityEdge.png",
     effects: [
-      { stat: "ad", value: 1.2, type: "multiply" },
+      { stat: "ad", value: 12, type: "add" },
       { stat: "criticalChance", value: 25, type: "add" },
       { stat: "criticalDamage", value: 25, type: "add" },
     ],
@@ -132,7 +132,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/GiantSlayer.png",
     effects: [
-      { stat: "ad", value: 1.15, type: "multiply" },
+      { stat: "ad", value: 12, type: "add" },
       { stat: "ap", value: 15, type: "add" },
       { stat: "sunder", value: 20, type: "add" },
       { stat: "damageAmplification", value: 5, type: "add" },
@@ -147,7 +147,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/HextechGunblade.png",
     effects: [
-      { stat: "ad", value: 1.15, type: "multiply" },
+      { stat: "ad", value: 12, type: "add" },
       { stat: "ap", value: 25, type: "add" },
       { stat: "damageAmplification", value: 7, type: "add" },
     ],
@@ -162,7 +162,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/Bloodthirster.png",
     effects: [
-      { stat: "ad", value: 1.15, type: "multiply" },
+      { stat: "ad", value: 12, type: "add" },
       { stat: "magicResistance", value: 20, type: "add" },
       { stat: "lifesteal", value: 15, type: "add" },
       {
@@ -184,7 +184,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/DeathsDance.png",
     effects: [
-      { stat: "ad", value: 1.15, type: "multiply" },
+      { stat: "ad", value: 12, type: "add" },
       { stat: "physicalResistance", value: 20, type: "add" },
     ],
     isBasic: false,
@@ -199,7 +199,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/SteraksGage.png",
     effects: [
-      { stat: "ad", value: 1.15, type: "multiply" },
+      { stat: "ad", value: 12, type: "add" },
       { stat: "maxHp", value: 35, type: "add" },
     ],
     isBasic: false,
@@ -214,7 +214,7 @@ export const combinedItems: ItemData[] = [
     cost: 0,
     icon: "/icons/SpearofShojin.png",
     effects: [
-      { stat: "ad", value: 1.15, type: "multiply" },
+      { stat: "ad", value: 12, type: "add" },
       { stat: "ap", value: 15, type: "add" },
       { stat: "cooldownReduction", value: 10, type: "add" },
     ],

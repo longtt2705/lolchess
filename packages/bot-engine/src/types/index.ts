@@ -33,6 +33,8 @@ export interface EvaluationBreakdown {
   safety: number;
   /** Mobility (number of valid moves) */
   mobility: number;
+  /** Line of Sight score for ranged carries (optional for backward compatibility) */
+  lineOfSight?: number;
 }
 
 /**
@@ -125,4 +127,54 @@ export interface TeamComposition {
   marksmen: number;
   supports: number;
   totalValue: number;
+}
+
+/**
+ * Information about a blocked firing lane for a ranged carry
+ */
+export interface BlockedLane {
+  /** The ranged carry that is blocked */
+  carry: Chess;
+  /** The ally piece blocking the lane */
+  blocker: Chess;
+  /** The enemy target that could be attacked if lane was clear */
+  target: Chess;
+  /** Direction vector of the blocked lane */
+  direction: { dx: number; dy: number };
+  /** Tactical value of having LoS to the target */
+  targetValue: number;
+}
+
+/**
+ * A move that would clear a blocked lane
+ */
+export interface LoSClearingMove {
+  /** The blocking piece that should move */
+  blocker: Chess;
+  /** The ranged carry that would benefit */
+  carry: Chess;
+  /** The enemy target that would become attackable */
+  target: Chess;
+  /** Current position of blocker */
+  moveFrom: Square;
+  /** Suggested destination that clears the lane */
+  moveTo: Square;
+  /** Tactical value of clearing this lane */
+  targetValue: number;
+}
+
+/**
+ * Complete Line of Sight analysis for a player's ranged pieces
+ */
+export interface LoSAnalysis {
+  /** All ranged carries belonging to the player */
+  rangedCarries: Chess[];
+  /** All blocked lanes for ranged carries */
+  blockedLanes: BlockedLane[];
+  /** Score from clear lanes (positive) */
+  clearLaneScore: number;
+  /** Score from blocked lanes (penalty) */
+  blockedLaneScore: number;
+  /** Net LoS score (clear - blocked) */
+  totalScore: number;
 }

@@ -2950,86 +2950,6 @@ const GamePage: React.FC = () => {
     prevDeadPiecesRef.current = newDeadPieces
   }, [displayState])
 
-  // Play animation sequence
-  const playAnimationSequence = useCallback(async (animations: AnimationAction[]) => {
-    try {
-      isPlayingAnimationsRef.current = true
-      setIsAnimating(true)
-      setHookIsAnimating(true)
-
-      // Sort animations by delay
-      const sortedAnimations = [...animations].sort((a, b) => a.delay - b.delay)
-
-      // Group animations by delay to play them in parallel
-      const animationGroups = new Map<number, AnimationAction[]>()
-      sortedAnimations.forEach(anim => {
-        const group = animationGroups.get(anim.delay) || []
-        group.push(anim)
-        animationGroups.set(anim.delay, group)
-      })
-
-      // Play each group in sequence
-      const delays = Array.from(animationGroups.keys()).sort((a, b) => a - b)
-
-      for (let i = 0; i < delays.length; i++) {
-        const delay = delays[i]
-        const group = animationGroups.get(delay)!
-
-        // Wait until this delay time
-        if (i === 0 && delay > 0) {
-          await new Promise(resolve => setTimeout(resolve, delay))
-        } else if (i > 0) {
-          const waitTime = delay - delays[i - 1]
-          if (waitTime > 0) {
-            await new Promise(resolve => setTimeout(resolve, waitTime))
-          }
-        }
-
-        // Play all animations in this group simultaneously
-        const promises = group.map(anim => playAnimation(anim))
-        await Promise.all(promises)
-      }
-
-      // After all animations complete, signal completion to process next queue item
-      onAnimationComplete()
-    } catch (error) {
-      console.error('Animation error:', error)
-      // On error, still try to complete to avoid stuck state
-      onAnimationComplete()
-    } finally {
-      // Always clean up, even if there's an error
-      isPlayingAnimationsRef.current = false
-      setIsAnimating(false)
-      setHookIsAnimating(false)
-      // Clear any lingering animation states
-      setMoveAnimation(null)
-      setAttackAnimation(null)
-      // Note: We don't clear damageEffects and itemPurchaseAnimations here
-      // as they manage their own cleanup with setTimeout
-    }
-  }, [onAnimationComplete, setHookIsAnimating])
-
-  // Play animation sequence when queue has items and we're not currently animating
-  useEffect(() => {
-    if (gameStateQueue.length === 0 || isPlayingAnimationsRef.current) return
-
-    const nextItem = gameStateQueue[0]
-
-    // Generate animation sequence from old state to new state
-    const animations = AnimationEngine.generateAnimationSequence(
-      nextItem.newState,
-      nextItem.oldState
-    )
-
-    if (animations.length > 0) {
-      animationQueueRef.current = animations
-      playAnimationSequence(animations)
-    } else {
-      // No animations to play - move to next item in queue
-      onAnimationComplete()
-    }
-  }, [gameStateQueue, onAnimationComplete, playAnimationSequence])
-
   // Play individual animation
   const playAnimation = useCallback(async (animation: AnimationAction) => {
     switch (animation.type) {
@@ -3209,7 +3129,87 @@ const GamePage: React.FC = () => {
       default:
         break
     }
-  }, [allItems, boardRef, currentUser, gameState])
+  }, [allItems, boardRef, currentUser, gameState, displayState, availableChampions])
+
+  // Play animation sequence
+  const playAnimationSequence = useCallback(async (animations: AnimationAction[]) => {
+    try {
+      isPlayingAnimationsRef.current = true
+      setIsAnimating(true)
+      setHookIsAnimating(true)
+
+      // Sort animations by delay
+      const sortedAnimations = [...animations].sort((a, b) => a.delay - b.delay)
+
+      // Group animations by delay to play them in parallel
+      const animationGroups = new Map<number, AnimationAction[]>()
+      sortedAnimations.forEach(anim => {
+        const group = animationGroups.get(anim.delay) || []
+        group.push(anim)
+        animationGroups.set(anim.delay, group)
+      })
+
+      // Play each group in sequence
+      const delays = Array.from(animationGroups.keys()).sort((a, b) => a - b)
+
+      for (let i = 0; i < delays.length; i++) {
+        const delay = delays[i]
+        const group = animationGroups.get(delay)!
+
+        // Wait until this delay time
+        if (i === 0 && delay > 0) {
+          await new Promise(resolve => setTimeout(resolve, delay))
+        } else if (i > 0) {
+          const waitTime = delay - delays[i - 1]
+          if (waitTime > 0) {
+            await new Promise(resolve => setTimeout(resolve, waitTime))
+          }
+        }
+
+        // Play all animations in this group simultaneously
+        const promises = group.map(anim => playAnimation(anim))
+        await Promise.all(promises)
+      }
+
+      // After all animations complete, signal completion to process next queue item
+      onAnimationComplete()
+    } catch (error) {
+      console.error('Animation error:', error)
+      // On error, still try to complete to avoid stuck state
+      onAnimationComplete()
+    } finally {
+      // Always clean up, even if there's an error
+      isPlayingAnimationsRef.current = false
+      setIsAnimating(false)
+      setHookIsAnimating(false)
+      // Clear any lingering animation states
+      setMoveAnimation(null)
+      setAttackAnimation(null)
+      // Note: We don't clear damageEffects and itemPurchaseAnimations here
+      // as they manage their own cleanup with setTimeout
+    }
+  }, [onAnimationComplete, setHookIsAnimating, playAnimation])
+
+  // Play animation sequence when queue has items and we're not currently animating
+  useEffect(() => {
+    if (gameStateQueue.length === 0 || isPlayingAnimationsRef.current) return
+
+    const nextItem = gameStateQueue[0]
+
+    // Generate animation sequence from old state to new state
+    const animations = AnimationEngine.generateAnimationSequence(
+      nextItem.newState,
+      nextItem.oldState
+    )
+
+    if (animations.length > 0) {
+      animationQueueRef.current = animations
+      playAnimationSequence(animations)
+    } else {
+      // No animations to play - move to next item in queue
+      onAnimationComplete()
+    }
+  }, [gameStateQueue, onAnimationComplete, playAnimationSequence])
 
   // Enhanced execute action - now animations are server-driven
   const executeActionWithAnimation = useCallback(async (type: string, casterPosition: ChessPosition, targetPosition: ChessPosition) => {

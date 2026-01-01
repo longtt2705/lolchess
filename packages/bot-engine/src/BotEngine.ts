@@ -109,6 +109,15 @@ export class BotEngine {
 
   /**
    * Select action using priority-based heuristics (faster, less accurate)
+   * 
+   * Priority Order:
+   * 1. Lethal attacks (can kill an enemy)
+   * 2. LoS clearing moves (opening phase only - clear ally blockers for ranged carries)
+   * 3. Use skills
+   * 4. Any attack on best target
+   * 5. Forward movement
+   * 6. Buy items
+   * 7. Any move
    */
   private selectByHeuristics(
     game: Game,
@@ -125,26 +134,35 @@ export class BotEngine {
       return this.getBestAttack(game, lethalAttacks);
     }
 
-    // Priority 2: Use skills (70% chance)
+    // Priority 2: LoS clearing moves in opening phase (turns 1-5)
+    // "Window Opening" strategy: clear firing lanes for ranged carries
+    if (this.actionGenerator.isOpeningPhase(game)) {
+      const losClearingMove = this.getBestLoSClearingMove(game, botPlayerId, actions);
+      if (losClearingMove) {
+        return losClearingMove;
+      }
+    }
+
+    // Priority 3: Use skills (70% chance)
     const skills = actions.filter((a) => a.event === GameEvent.SKILL);
     if (skills.length > 0 && Math.random() < 0.7) {
       return this.getBestSkillTarget(game, skills, isBlue);
     }
 
-    // Priority 3: Any attack on best target
+    // Priority 4: Any attack on best target
     const attacks = actions.filter((a) => a.event === GameEvent.ATTACK_CHESS);
     if (attacks.length > 0) {
       return this.getBestAttack(game, attacks);
     }
 
-    // Priority 4: Forward movement
+    // Priority 5: Forward movement
     const moves = actions.filter((a) => a.event === GameEvent.MOVE_CHESS);
     const forwardMoves = moves.filter((m) => this.isForwardMove(m, isBlue));
     if (forwardMoves.length > 0) {
       return this.pickRandom(forwardMoves);
     }
 
-    // Priority 5: Buy items
+    // Priority 6: Buy items
     if (!game.hasPerformedActionThisTurn && !game.hasBoughtItemThisTurn) {
       const itemPurchases = actions.filter(
         (a) => a.event === GameEvent.BUY_ITEM
@@ -166,13 +184,44 @@ export class BotEngine {
       }
     }
 
-    // Priority 6: Any move
+    // Priority 7: Any move
     if (moves.length > 0) {
       return this.pickRandom(moves);
     }
 
     // Fallback: random action
     return this.pickRandom(actions);
+  }
+
+  /**
+   * Get the best LoS clearing move for ranged carries
+   * Returns the move that clears the highest-value target lane
+   */
+  private getBestLoSClearingMove(
+    game: Game,
+    botPlayerId: string,
+    allActions: EventPayload[]
+  ): EventPayload | null {
+    const clearingDetails = this.actionGenerator.getLoSClearingDetails(game, botPlayerId);
+    
+    if (clearingDetails.length === 0) {
+      return null;
+    }
+
+    // Get the highest value clearing move (already sorted by targetValue)
+    const bestClearing = clearingDetails[0];
+    
+    // Find the corresponding action in the action list
+    const matchingAction = allActions.find(
+      (a) =>
+        a.event === GameEvent.MOVE_CHESS &&
+        a.casterPosition?.x === bestClearing.moveFrom.x &&
+        a.casterPosition?.y === bestClearing.moveFrom.y &&
+        a.targetPosition?.x === bestClearing.moveTo.x &&
+        a.targetPosition?.y === bestClearing.moveTo.y
+    );
+
+    return matchingAction || null;
   }
 
   /**
