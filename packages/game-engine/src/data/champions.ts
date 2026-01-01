@@ -517,7 +517,7 @@ export const champions: ChampionData[] = [
         vertical: true,
         lShape: false,
       },
-      speed: 3,
+      speed: 2,
     },
     skill: {
       type: "passive",

@@ -9,6 +9,7 @@ import { EvaluationResult, EvaluationBreakdown } from "../types";
 import { MaterialEvaluator } from "./MaterialEvaluator";
 import { ChampionEvaluator } from "./ChampionEvaluator";
 import { ThreatEvaluator } from "./ThreatEvaluator";
+import { LoSEvaluator } from "./LoSEvaluator";
 
 /**
  * Main position evaluator that combines all evaluation aspects
@@ -18,6 +19,7 @@ export class PositionEvaluator {
   private materialEvaluator: MaterialEvaluator;
   private championEvaluator: ChampionEvaluator;
   private threatEvaluator: ThreatEvaluator;
+  private losEvaluator: LoSEvaluator;
 
   // Evaluation weights
   private static readonly WEIGHTS = {
@@ -26,12 +28,14 @@ export class PositionEvaluator {
     threats: 0.4,
     safety: 0.5,
     mobility: 0.2,
+    lineOfSight: 0.35, // LoS is important for ranged carries
   };
 
   constructor(private gameEngine: GameEngine) {
     this.materialEvaluator = new MaterialEvaluator();
     this.championEvaluator = new ChampionEvaluator();
     this.threatEvaluator = new ThreatEvaluator(gameEngine);
+    this.losEvaluator = new LoSEvaluator(gameEngine);
   }
 
   /**
@@ -48,6 +52,7 @@ export class PositionEvaluator {
     const threats = this.evaluateThreats(game, playerId, opponentId);
     const safety = this.evaluateSafety(game, playerId, opponentId);
     const mobility = this.evaluateMobility(game, playerId, opponentId);
+    const lineOfSight = this.evaluateLineOfSight(game, playerId, opponentId);
 
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
@@ -56,6 +61,7 @@ export class PositionEvaluator {
       threats,
       safety,
       mobility,
+      lineOfSight,
     };
 
     // Calculate weighted total score
@@ -64,7 +70,8 @@ export class PositionEvaluator {
       position * PositionEvaluator.WEIGHTS.position +
       threats * PositionEvaluator.WEIGHTS.threats +
       safety * PositionEvaluator.WEIGHTS.safety +
-      mobility * PositionEvaluator.WEIGHTS.mobility;
+      mobility * PositionEvaluator.WEIGHTS.mobility +
+      lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight;
 
     return { score, breakdown };
   }
@@ -275,6 +282,28 @@ export class PositionEvaluator {
     }
 
     return mobility;
+  }
+
+  /**
+   * Evaluate Line of Sight for ranged carries
+   * Positive = good LoS (clear lanes to enemies)
+   * Negative = bad LoS (blocked by allies)
+   */
+  private evaluateLineOfSight(
+    game: Game,
+    playerId: string,
+    opponentId: string
+  ): number {
+    const ourLoS = this.losEvaluator.evaluateLoS(game, playerId);
+    const theirLoS = this.losEvaluator.evaluateLoS(game, opponentId);
+    return ourLoS - theirLoS;
+  }
+
+  /**
+   * Get the LoS evaluator for external use (e.g., by BotEngine)
+   */
+  getLoSEvaluator(): LoSEvaluator {
+    return this.losEvaluator;
   }
 
   /**
