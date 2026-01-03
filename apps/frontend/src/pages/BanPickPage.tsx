@@ -831,7 +831,7 @@ const ChampionOrderList = styled.div`
   margin-bottom: 20px;
 `
 
-const SortableChampionCard = styled(motion.div)<{ isDragging?: boolean; isReady?: boolean }>`
+const SortableChampionCard = styled(motion.div) <{ isDragging?: boolean; isReady?: boolean }>`
   background: linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%);
   border: 2px solid var(--border);
   border-radius: 12px;
@@ -920,7 +920,7 @@ const ReadySection = styled.div`
   border-top: 2px solid var(--border);
 `
 
-const ReadyButton = styled(motion.button)<{ isReady?: boolean }>`
+const ReadyButton = styled(motion.button) <{ isReady?: boolean }>`
   background: ${props => props.isReady
     ? 'linear-gradient(135deg, var(--gold) 0%, #b8860b 100%)'
     : 'linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%)'};
@@ -1142,7 +1142,7 @@ const BanPickPage: React.FC = () => {
       const currentOrder = playerSide === 'blue'
         ? banPickState.blueChampionOrder
         : banPickState.redChampionOrder
-      
+
       if (currentOrder && currentOrder.length > 0) {
         setLocalChampionOrder(currentOrder)
       }
@@ -1169,10 +1169,10 @@ const BanPickPage: React.FC = () => {
       const newIndex = items.indexOf(over.id as string)
 
       const newOrder = arrayMove(items, oldIndex, newIndex)
-      
+
       // Send the new order to the server
       reorderChampions(newOrder)
-      
+
       return newOrder
     })
   }
@@ -1180,8 +1180,8 @@ const BanPickPage: React.FC = () => {
   const handleReadyToggle = () => {
     if (!banPickState || banPickState.phase !== 'reorder') return
 
-    const isCurrentlyReady = playerSide === 'blue' 
-      ? banPickState.blueReady 
+    const isCurrentlyReady = playerSide === 'blue'
+      ? banPickState.blueReady
       : banPickState.redReady
 
     setReady(!isCurrentlyReady)
@@ -1197,7 +1197,6 @@ const BanPickPage: React.FC = () => {
 
       if (resetBanPick.fulfilled.match(result)) {
         // Success
-        console.log('Ban/Pick phase reset successfully')
         toast.success('Ban/Pick phase has been reset!')
       } else {
         // Error handled by Redux, but we can show additional feedback
@@ -1545,9 +1544,9 @@ const BanPickPage: React.FC = () => {
       <MainContent>
         {banPickState?.phase === 'reorder' ? (
           // Reorder phase - show reorder UI instead of pick UI
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
             alignItems: 'center',
             padding: '40px',
             maxWidth: '800px',

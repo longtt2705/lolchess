@@ -133,15 +133,7 @@ const WayOfTheWandererAnimation: React.FC<SkillAnimationConfig> = ({
     const [impactedTargets, setImpactedTargets] = useState<Set<string>>(new Set())
     const [tornadoProgress, setTornadoProgress] = useState(0)
 
-    console.log('[WayOfTheWanderer] Animation component rendered with:', { 
-        casterPosition, 
-        targetPosition, 
-        whirlwindTargets,
-        isRedPlayer 
-    })
-
     if (!targetPosition) {
-        console.warn('[WayOfTheWanderer] Missing targetPosition')
         return null
     }
 

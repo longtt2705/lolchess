@@ -64,9 +64,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const activeGameResult =
         await this.gameService.getActiveGameForUser(userId);
       if (activeGameResult.hasActiveGame) {
-        console.log(
-          `User ${userId} is already in an active game: ${activeGameResult.game.id}`
-        );
         client.emit("alreadyInGame", {
           game: activeGameResult.game,
           message:
@@ -151,17 +148,12 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Need at least 2 players for a match
     if (queue.length < 2) {
-      console.log(`Only ${queue.length} players in queue, need 2 for match`);
       return;
     }
 
     // Take the first 2 players
     const player1 = queue[0];
     const player2 = queue[1];
-
-    console.log(
-      `Creating match between ${player1.username} and ${player2.username}`
-    );
 
     try {
       // Remove players from queue first
@@ -223,8 +215,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
           opponent: { id: player1.userId, username: player1.username },
         });
       }
-
-      console.log(`✅ Match created successfully: Game ID ${game.id}`);
     } catch (error) {
       console.error("Error creating match:", error);
 
@@ -245,10 +235,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       const { gameId, playerId } = data;
-
-      console.log(
-        `Player ${playerId} joining ban-pick phase for game ${gameId}`
-      );
 
       // Store socket mapping
       this.socketUsers.set(client.id, playerId);
@@ -287,8 +273,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       const { gameId, playerId, championId } = data;
-
-      console.log(`Player ${playerId} banning ${championId} in game ${gameId}`);
 
       // Process the ban action
       const result = await this.gameService.processBanPickAction(
@@ -329,8 +313,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const { gameId, playerId, championId } = data;
 
-      console.log(`Player ${playerId} picking ${championId} in game ${gameId}`);
-
       // Process the pick action
       const result = await this.gameService.processBanPickAction(
         gameId,
@@ -340,13 +322,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
 
       if (result) {
-        console.log(
-          `[PICK] After processing pick, phase is: ${result.banPickState?.phase}`
-        );
-        console.log(
-          `[PICK] Blue picks: ${result.banPickState?.bluePicks.length}, Red picks: ${result.banPickState?.redPicks.length}`
-        );
-
         // Broadcast updated state to all players in the room
         this.server.to(gameId).emit("banPickStateUpdate", {
           game: result,
@@ -361,10 +336,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         // Check if entered reorder phase
         if (result.banPickState?.phase === "reorder") {
-          console.log(
-            `[PICK] ✅ Entered REORDER phase! Waiting for both players to be ready.`
-          );
-
           // If bot is in the game, automatically reorder and set ready
           await this.checkAndProcessBotReorderTurn(gameId, result);
         } else {
@@ -385,8 +356,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       const { gameId, playerId } = data;
-
-      console.log(`Player ${playerId} skipping ban in game ${gameId}`);
 
       // Process the skip ban action (pass null as championId)
       const result = await this.gameService.processBanPickAction(
@@ -447,11 +416,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const { gameId, playerId, newOrder } = data;
 
-      console.log(
-        `Player ${playerId} reordering champions in game ${gameId}:`,
-        newOrder
-      );
-
       // Process the reorder action
       const result = await this.gameService.processReorderAction(
         gameId,
@@ -485,10 +449,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       const { gameId, playerId, ready } = data;
-
-      console.log(
-        `Player ${playerId} setting ready status to ${ready} in game ${gameId}`
-      );
 
       // Process the ready action
       const result = await this.gameService.setPlayerReady(
@@ -550,10 +510,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    console.log(
-      `Bot turn detected for ${currentPlayerId} in ${banPickState.phase} phase`
-    );
-
     // Add a delay to make bot actions feel more natural
     await new Promise((resolve) => setTimeout(resolve, BOT_ACTION_DELAY_MS));
 
@@ -606,7 +562,6 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         // Check if entered reorder phase
         if (result.banPickState?.phase === "reorder") {
-          console.log(`[BOT] ✅ Entered REORDER phase!`);
           await this.checkAndProcessBotReorderTurn(gameId, result);
         } else {
           // Recursively check for next bot turn

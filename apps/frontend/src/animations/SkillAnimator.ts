@@ -12,6 +12,7 @@ import { judgmentRenderer } from "./skills/judgment";
 import { wayOfTheWandererRenderer } from "./skills/wayOfTheWanderer";
 import { ariseRenderer } from "./skills/arise";
 import { siphonPowerRenderer } from "./skills/siphonPower";
+import { furyOfTheSandsRenderer } from "./skills/furyOfTheSands";
 
 /**
  * Registry mapping skill names to their animation renderers
@@ -53,6 +54,9 @@ const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
 
   // Viktor
   "Siphon Power": siphonPowerRenderer,
+
+  // Nasus
+  "Fury of the Sands": furyOfTheSandsRenderer,
 
   // Add more skills here as they're implemented
   // 'Skill Name': skillRenderer,

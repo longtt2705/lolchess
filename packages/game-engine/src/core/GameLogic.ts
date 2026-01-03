@@ -20,6 +20,7 @@ import {
   EventPayload,
   Game,
   GameEvent,
+  Player,
   Square,
 } from "../types";
 
@@ -868,6 +869,22 @@ export class GameLogic {
         cooldownReduction: 0,
         lifesteal: 0,
         durability: 0,
+        skill: {
+          type: "passive",
+          name: "Poro Resilience",
+          description:
+            "Cannot take more than 50% of max HP as damage from a single source.",
+          cooldown: 0,
+          currentCooldown: 0,
+          targetTypes: "none",
+          attackRange: {
+            range: 0,
+            diagonal: false,
+            horizontal: false,
+            vertical: false,
+            lShape: false,
+          },
+        },
       },
       Champion: {
         maxHp: 80,
@@ -1097,20 +1114,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-          type: championData.skill.type,
-          name: championData.skill.name,
-          description: championData.skill.description,
-          cooldown: championData.skill.cooldown,
-          currentCooldown: championData.skill.currentCooldown || 0,
-          attackRange: championData.skill.attackRange ||
-            championData.stats.attackRange || {
-            range: 1,
-            diagonal: true,
-            horizontal: true,
-            vertical: true,
-          },
-          targetTypes: championData.skill.targetTypes || "none",
-        }
+            type: championData.skill.type,
+            name: championData.skill.name,
+            description: championData.skill.description,
+            cooldown: championData.skill.cooldown,
+            currentCooldown: championData.skill.currentCooldown || 0,
+            attackRange: championData.skill.attackRange ||
+              championData.stats.attackRange || {
+                range: 1,
+                diagonal: true,
+                horizontal: true,
+                vertical: true,
+              },
+            targetTypes: championData.skill.targetTypes || "none",
+          }
         : undefined,
       items: [],
       debuffs: [],
@@ -1359,7 +1376,12 @@ export class GameLogic {
       );
     }
 
-    if (player.gold < itemData.cost) {
+    // Calculate current item price with inflation (only for basic items, not Viktor modules)
+    const itemCost = isViktorModule
+      ? itemData.cost
+      : this.getCurrentItemPrice(player);
+
+    if (player.gold < itemCost) {
       throw new Error("Insufficient gold");
     }
 
@@ -1514,13 +1536,27 @@ export class GameLogic {
       }
     }
 
-    // Deduct gold
-    game.players[playerIndex].gold -= itemData.cost;
+    // Deduct gold and increment items bought counter (only for basic items)
+    game.players[playerIndex].gold -= itemCost;
+    if (!isViktorModule) {
+      game.players[playerIndex].itemsBought += 1;
+    }
 
     // Mark that an item was bought this turn
     game.hasBoughtItemThisTurn = true;
 
     return game;
+  }
+
+  /**
+   * Calculate the current item price based on player's inflation system
+   * Price = baseItemCost + (itemsBought * inflationStep)
+   */
+  private static getCurrentItemPrice(player: Player): number {
+    return (
+      player.baseItemCost +
+      Math.min(player.itemsBought, 5) * player.inflationStep
+    );
   }
 
   // Convert item effects to ChessStats format

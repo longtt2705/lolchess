@@ -40,17 +40,25 @@ export class Ashe extends ChessObject {
     return false;
   }
 
-  get ad(): number {
-    return (
-      super.ad + Math.floor((this.criticalChance / 25) * (10 + this.ap * 0.1))
-    );
-  }
-
   attack(chess: ChessObject): number {
     let baseDamage = super.attack(chess);
 
     // Apply Frost Shot debuff
-    this.applyFrostShot(chess, this.chess.ownerId);
+    if (this.chess.debuffs.some((debuff) => debuff.id === "frost_shot")) {
+      const damageBonus = Math.floor(
+        chess.maxHp * (0.15 + (this.ap * 0.1) / 100)
+      );
+      baseDamage += this.damage(
+        chess,
+        damageBonus,
+        "physical",
+        this,
+        this.sunder
+      );
+      this.removeDebuff(chess, "frost_shot");
+    } else {
+      this.applyFrostShot(chess, this.chess.ownerId);
+    }
     return baseDamage;
   }
 }

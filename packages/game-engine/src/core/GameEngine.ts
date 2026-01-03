@@ -334,6 +334,9 @@ export class GameEngine implements IGameEngine {
           side: "blue",
           selectedChampions: config.blueChampions ?? [],
           bannedChampions: [],
+          itemsBought: 0,
+          baseItemCost: 25,
+          inflationStep: 15,
         },
         {
           userId: config.redPlayerId,
@@ -342,6 +345,9 @@ export class GameEngine implements IGameEngine {
           side: "red",
           selectedChampions: config.redChampions ?? [],
           bannedChampions: [],
+          itemsBought: 0,
+          baseItemCost: 25,
+          inflationStep: 15,
         },
       ] as any;
 

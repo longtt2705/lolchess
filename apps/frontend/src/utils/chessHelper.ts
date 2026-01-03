@@ -1,0 +1,160 @@
+import { ChessPiece } from "@/hooks/useGame";
+
+// Damage thresholds for unlocking Viktor modules
+export const VIKTOR_DAMAGE_THRESHOLDS = [50, 150, 300];
+
+export const getImageUrl = (piece: ChessPiece) => {
+  if (piece.name === "Poro") {
+    return "/icons/poro.png";
+  }
+  if (piece.name === "Super Minion") {
+    return piece.blue
+      ? "/icons/blue_super_minion.png"
+      : "/icons/red_super_minion.png";
+  }
+  if (piece.name === "Melee Minion") {
+    return piece.blue
+      ? "/icons/blue_melee_minion.png"
+      : "/icons/red_melee_minion.png";
+  }
+  if (piece.name === "Caster Minion") {
+    return piece.blue
+      ? "/icons/blue_caster_minion.png"
+      : "/icons/red_caster_minion.png";
+  }
+  if (piece.name === "Siege Minion") {
+    return piece.blue
+      ? "/icons/blue_siege_minion.png"
+      : "/icons/red_siege_minion.png";
+  }
+  if (piece.name === "Drake") {
+    return "/icons/drake.webp";
+  }
+  if (piece.name === "Baron Nashor") {
+    return "/icons/baron.webp";
+  }
+  return `/icons/${piece.name.toLowerCase()}.webp`;
+};
+
+// Helper function to check if a piece is a champion (can buy items)
+export const isChampion = (piece: ChessPiece): boolean => {
+  const nonChampionTypes = [
+    "Poro",
+    "Melee Minion",
+    "Caster Minion",
+    "Siege Minion",
+    "Super Minion",
+    "Drake",
+    "Baron Nashor",
+  ];
+  return !nonChampionTypes.includes(piece.name);
+};
+
+// Helper function to get stat icon path
+export const getStatIcon = (stat: string): string => {
+  const iconMap: { [key: string]: string } = {
+    ad: "/icons/AD.svg",
+    ap: "/icons/AP.svg",
+    maxHp: "/icons/icon-hp.svg",
+    physicalResistance: "/icons/Armor.svg",
+    magicResistance: "/icons/MagicResist.svg",
+    speed: "/icons/speed.png",
+    attackRange: "/icons/Range.svg",
+    sunder: "/icons/AS.svg",
+    criticalChance: "/icons/CritChance.svg",
+    criticalDamage: "/icons/CritDamage.svg",
+    damageAmplification: "/icons/icon-da.png",
+    cooldownReduction: "/icons/icon-cdr.webp",
+    lifesteal: "/icons/icon-sv.png",
+    hpRegen: "/icons/icon-hp-regen.png",
+    durability: "/icons/icon-durability.png",
+  };
+  return iconMap[stat] || "/icons/AD.svg";
+};
+
+// Helper function to format numbers and avoid floating point precision issues
+export const formatNumber = (value: number, decimals: number = 0): string => {
+  // Round to avoid floating point precision issues
+  const rounded =
+    Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+  // If it's a whole number, don't show decimals
+  if (Math.abs(rounded % 1) < 0.0001) {
+    return Math.round(rounded).toString();
+  }
+  // Otherwise, show up to the specified decimal places and remove trailing zeros
+  return rounded.toFixed(decimals).replace(/\.?0+$/, "");
+};
+
+// Helper function to get skill state display for champions with payload-based mechanics
+export const getSkillStateDisplay = (
+  championName: string,
+  skillPayload: any
+) => {
+  if (!skillPayload) return null;
+
+  switch (championName) {
+    case "Jhin":
+      const jhinCount = skillPayload.attackCount || 0;
+      const jhinProgress = jhinCount % 4;
+      return {
+        badge: `${jhinProgress}/4`,
+        tooltip: `Attack Counter: ${jhinProgress}/4 attacks${jhinProgress === 3 ? " (Next attack is CRITICAL!)" : ""}`,
+      };
+
+    case "Nasus":
+      const bonusDamage = skillPayload.bonusDamage || 0;
+      return {
+        badge: `+${bonusDamage}`,
+        tooltip: `Siphoning Strike Bonus: +${bonusDamage} damage from kills`,
+      };
+
+    case "Tristana":
+      const tristanaCount = skillPayload.attackCount || 0;
+      const tristanaProgress = tristanaCount % 4;
+      return {
+        badge: `${tristanaProgress}/4`,
+        tooltip: `Explosive Charge: ${tristanaProgress}/4 attacks${tristanaProgress === 3 ? " (Next attack explodes!)" : ""}`,
+      };
+
+    case "Tryndamere":
+      const hasUsedRage = skillPayload.hasUsedUndyingRage || false;
+      return {
+        badge: hasUsedRage ? "✗" : "✓",
+        tooltip: `Undying Rage: ${hasUsedRage ? "Already used this game" : "Available (will survive at 1 HP)"}`,
+      };
+
+    default:
+      return null;
+  }
+};
+
+export const getIconConfig = (debuff: any) => {
+  const debuffIconMap: Record<string, { src: string; alt: string }> = {
+    wounded: { src: "/icons/wounded.webp", alt: "Wounded" },
+    burned: { src: "/icons/burned.jpg", alt: "Burned" },
+    venom: { src: "/icons/SerpentsFang.png", alt: "Venom" },
+    aura_evenshroud_armor_reduction: {
+      src: "/icons/Evenshroud.png",
+      alt: "Evenshroud",
+    },
+    titans_resolve: { src: "/icons/TitansResolve.png", alt: "Titans Resolve" },
+    adaptive_helm_armor: {
+      src: "/icons/AdaptiveHelm.png",
+      alt: "Adaptive Helm",
+    },
+    adaptive_helm_mr: { src: "/icons/AdaptiveHelm.png", alt: "Adaptive Helm" },
+    undying_rage: { src: "/icons/tryndamere_skill.webp", alt: "Undying Rage" },
+    deaths_dance: { src: "/icons/DeathsDance.png", alt: "Deaths Dance" },
+    fury_of_the_sands: { src: "/icons/nasus_skill.webp", alt: "Ascended Form" },
+    fury_of_the_sands_slow: {
+      src: "/icons/nasus_skill.webp",
+      alt: "Sands of Ruin",
+    },
+  };
+
+  let iconConfig = debuffIconMap[debuff.id];
+  if (debuff.id.startsWith("deaths_dance_")) {
+    iconConfig = { src: "/icons/DeathsDance.png", alt: "Deaths Dance" };
+  }
+  return iconConfig;
+};

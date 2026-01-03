@@ -73,4 +73,30 @@ export class Poro extends ChessObject {
     const adjacentMinionCount = this.countAdjacentMinions();
     return baseMagicResistance + adjacentMinionCount * 15;
   }
+
+  /**
+   * Override damage to cap maximum damage at 50% of max HP (passive skill)
+   */
+  protected damage(
+    chess: ChessObject,
+    damage: number,
+    damageType: "physical" | "magic" | "true" | "non-lethal",
+    attacker: ChessObject,
+    sunder: number = 0,
+    fromAttack: boolean = false
+  ): number {
+    // Cap damage at 50% of max HP
+    const maxDamage = this.maxHp * 0.5;
+    const cappedDamage = Math.min(damage, maxDamage);
+
+    // Call parent damage method with capped damage
+    return super.damage(
+      chess,
+      cappedDamage,
+      damageType,
+      attacker,
+      sunder,
+      fromAttack
+    );
+  }
 }

@@ -94,7 +94,6 @@ const SoulFurnaceAnimation: React.FC<SkillAnimationConfig> = ({
     const [showConvergence, setShowConvergence] = useState(false)
     const [showShield, setShowShield] = useState(false)
 
-    console.log('[SoulFurnace] Animation component rendered with:', { casterPosition, casterId })
 
     const casterPixels = getPixelPosition(casterPosition, boardRef, isRedPlayer)
 
@@ -139,22 +138,16 @@ const SoulFurnaceAnimation: React.FC<SkillAnimationConfig> = ({
     // Trigger convergence pulse when particles arrive
     useEffect(() => {
         const timer = setTimeout(() => {
-            console.log('[SoulFurnace] Showing convergence pulse')
             setShowConvergence(true)
 
             // Show shield after convergence
             setTimeout(() => {
-                console.log('[SoulFurnace] Showing shield')
                 setShowShield(true)
             }, 200)
         }, 800) // After drain phase completes
 
         return () => clearTimeout(timer)
     }, [])
-
-    console.log('[SoulFurnace] Render state:', { showConvergence, showShield })
-    console.log('[SoulFurnace] Caster position pixels:', casterPixels)
-    console.log('[SoulFurnace] Number of particles:', allParticles.length)
 
     return (
         <>

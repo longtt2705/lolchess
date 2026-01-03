@@ -67,10 +67,7 @@ const SpiritRushAnimation: React.FC<SkillAnimationConfig> = ({
     const [showImpact, setShowImpact] = useState(false)
     const [showParticles, setShowParticles] = useState(false)
 
-    console.log('[SpiritRush] Animation component rendered with:', { casterPosition, targetPosition, casterId })
-
     if (!targetPosition) {
-        console.warn('[SpiritRush] Missing targetPosition:', { targetPosition })
         return null
     }
 
@@ -97,21 +94,15 @@ const SpiritRushAnimation: React.FC<SkillAnimationConfig> = ({
     // Animate Ahri (the caster) dashing to the target position
     useEffect(() => {
         if (casterId) {
-            console.log('[SpiritRush] Starting dash animation for casterId:', casterId)
 
             // Find Ahri's piece element by ID
             const pieceElement = document.querySelector(`[data-piece-id="${casterId}"]`)
 
-            console.log('[SpiritRush] Found piece element:', pieceElement)
 
             if (pieceElement && pieceElement instanceof HTMLElement) {
                 // Calculate the dash offset
                 const dashOffsetX = targetPixels.x - casterPixels.x
                 const dashOffsetY = targetPixels.y - casterPixels.y
-
-                console.log('[SpiritRush] Dash offsets:', { dashOffsetX, dashOffsetY })
-                console.log('[SpiritRush] Caster pixels:', casterPixels)
-                console.log('[SpiritRush] Target pixels:', targetPixels)
 
                 // Animate Ahri dashing
                 const controls = animate(
@@ -129,13 +120,11 @@ const SpiritRushAnimation: React.FC<SkillAnimationConfig> = ({
 
                 // Show impact effects when dash completes
                 controls.then(() => {
-                    console.log('[SpiritRush] Dash completed, showing impact')
                     setShowImpact(true)
                     setShowParticles(true)
 
                     // Clean up effects after duration
                     setTimeout(() => {
-                        console.log('[SpiritRush] Cleaning up impact effects')
                         setShowImpact(false)
                         setShowParticles(false)
                     }, 600)
@@ -148,7 +137,6 @@ const SpiritRushAnimation: React.FC<SkillAnimationConfig> = ({
                     // Don't manually clear transforms - causes positioning issues
                 }
             } else {
-                console.warn('[SpiritRush] Piece element not found for casterId:', casterId)
             }
         }
     }, [casterId, targetPixels.x, targetPixels.y, casterPixels.x, casterPixels.y])
@@ -213,7 +201,6 @@ const SpiritRushAnimation: React.FC<SkillAnimationConfig> = ({
                     animate={{ scale: [0, 1.8, 2], opacity: [1, 0.6, 0] }}
                     transition={{ duration: 0.6, ease: 'easeOut' }}
                     onAnimationComplete={() => {
-                        console.log('[SpiritRush] Impact wave animation complete')
                         setShowImpact(false)
                     }}
                 />

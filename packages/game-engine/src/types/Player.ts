@@ -11,5 +11,8 @@ export interface Player {
   side?: string;
   selectedChampions: string[];
   bannedChampions: string[];
+  itemsBought: number;
+  baseItemCost: number;
+  inflationStep: number;
 }
 

@@ -166,7 +166,7 @@ export const champions: ChampionData[] = [
     stats: {
       maxHp: 90,
       ad: 20,
-      ap: 0,
+      ap: 10,
       physicalResistance: 25,
       magicResistance: 10,
       criticalChance: 25,
@@ -183,7 +183,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Frost Shot",
       description:
-        "Her attacks cannot be critical, but she gains (10+10% of AP) physical damage for each 25 percent of critical chance she has. Ashe's attacks slow their target by 1 (It can be critical to 2) Move Speed. ",
+        "Ashe's attacks slow their target by 1 (2 if critical) Move Speed for 3 turns. If the target is already frozen, she deals bonus (15 + 10% of AP)% of the target's max HP as physical damage to the target but removes the Frost Shot debuff.",
       cooldown: 0,
     },
     attackProjectile: {
@@ -487,18 +487,11 @@ export const champions: ChampionData[] = [
     },
     skill: {
       type: "active",
-      name: "Siphoning Strike",
+      name: "Fury of the Sands",
       description:
-        "Nasus strikes his foe, dealing (20 + 40% of AP + 100% of AD) magic damage and increasing 15 damage of his future Siphoning Strikes if he slays his target. Apply the attack's effect.",
-      cooldown: 3,
-      attackRange: {
-        range: 1,
-        diagonal: true,
-        horizontal: true,
-        vertical: true,
-        lShape: false,
-      },
-      targetTypes: "enemy",
+        "Nasus unleashes his true Ascended form for 3 turns, immidiately deals (10 + 15% of AP)% of all adjacent enemy's Max HP as magic damage and applies a slow and (5 + 10% of AP) magic damage each turn for 2 turns. While in Ascended form, Nasus gains 50 HP, 20 Physical Resistance, 1 Attack Range and his basic attacks deal bonus damage equal to (10 + 10% of bonus AD)% of the target's Max HP.",
+      cooldown: 8,
+      targetTypes: "none",
     },
   },
   {

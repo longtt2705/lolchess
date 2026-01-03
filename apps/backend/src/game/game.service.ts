@@ -484,17 +484,12 @@ export class GameService implements OnModuleInit {
       banPickState.bluePicks.length + banPickState.redPicks.length >= 10
     ) {
       // Picks complete - transition to reorder phase
-      console.log(
-        `[SERVICE] 🔄 Transitioning to REORDER phase! Total picks: ${banPickState.bluePicks.length + banPickState.redPicks.length}`
-      );
+
       banPickState.phase = "reorder";
       banPickState.blueChampionOrder = [...banPickState.bluePicks];
       banPickState.redChampionOrder = [...banPickState.redPicks];
       banPickState.blueReady = false;
       banPickState.redReady = false;
-      console.log(`[SERVICE] Phase is now: ${banPickState.phase}`);
-      console.log(`[SERVICE] Blue order:`, banPickState.blueChampionOrder);
-      console.log(`[SERVICE] Red order:`, banPickState.redChampionOrder);
       // Keep game.phase as "pick_phase" and status as "ban_pick"
     } else {
       // Continue in current phase
@@ -525,10 +520,6 @@ export class GameService implements OnModuleInit {
     // High priority (7) since this is a real-time game state update
     await this.saveGameState(gameId, gameObject, 7);
 
-    console.log("Ban/pick state after save:", gameObject.banPickState);
-    console.log(
-      `[SERVICE] ⚠️ FINAL phase after save: ${gameObject.banPickState?.phase}`
-    );
     return gameObject;
   }
 
@@ -593,10 +584,6 @@ export class GameService implements OnModuleInit {
     // Save to Redis cache
     await this.saveGameState(gameId, gameObject, 7);
 
-    console.log(
-      `Player ${playerId} (${player.side}) reordered champions:`,
-      newOrder
-    );
     return gameObject;
   }
 
@@ -665,11 +652,6 @@ export class GameService implements OnModuleInit {
     // Save to Redis cache
     await this.saveGameState(gameId, gameObject, 8);
 
-    console.log(`Player ${playerId} (${player.side}) ready status:`, ready);
-    console.log(
-      `Both ready: ${banPickState.blueReady && banPickState.redReady}`
-    );
-
     return { game: gameObject, shouldStartGame };
   }
 
@@ -698,6 +680,9 @@ export class GameService implements OnModuleInit {
       lastRoundDamage: 0,
       selectedChampions: [],
       bannedChampions: [],
+      itemsBought: 0,
+      baseItemCost: 25,
+      inflationStep: 15,
     };
 
     game.players.push(newPlayer);
@@ -745,6 +730,9 @@ export class GameService implements OnModuleInit {
         lastRoundDamage: 0,
         selectedChampions: [],
         bannedChampions: [],
+        itemsBought: 0,
+        baseItemCost: 25,
+        inflationStep: 15,
       };
       game.players.push(newPlayer);
     }
@@ -787,6 +775,9 @@ export class GameService implements OnModuleInit {
         selectedChampions: [],
         bannedChampions: [],
         side: game.players.length === 0 ? "blue" : "red", // First player is blue, second is red
+        itemsBought: 0,
+        baseItemCost: 25,
+        inflationStep: 15,
       };
       game.players.push(newPlayer);
     }

@@ -22,5 +22,6 @@ export interface Debuff {
   casterPlayerId: string; // who applied this debuff
   casterName?: string; // champion name of the caster (for icon display)
   payload?: any; // flexible payload for custom debuff data
+  isTransformation?: boolean; // whether this is a transformation debuff (affects HP management)
+  onExpireId?: string; // identifier for custom expire logic (e.g., 'nasus_transform')
 }
-

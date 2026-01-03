@@ -37,7 +37,7 @@ export class Sion extends ChessObject {
         );
 
         this.chess.stats.maxHp += drainDamage;
-        this.chess.stats.hp += drainDamage;
+        this.heal(this, drainDamage);
       }
     });
 

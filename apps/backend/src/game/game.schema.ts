@@ -209,6 +209,12 @@ export class DebuffSchema implements DebuffType {
 
   @Prop({ type: Object, default: {} })
   payload?: any; // flexible payload for custom debuff data
+
+  @Prop({ default: false })
+  isTransformation?: boolean; // whether this is a transformation debuff
+
+  @Prop()
+  onExpireId?: string; // identifier for custom expire logic
 }
 
 export class AuraEffectSchema implements AuraEffectType {
@@ -564,6 +570,15 @@ export class PlayerSchema implements PlayerType {
 
   @Prop({ type: [String], default: [] })
   bannedChampions: string[];
+
+  @Prop({ default: 0 })
+  itemsBought: number;
+
+  @Prop({ default: 25 })
+  baseItemCost: number;
+
+  @Prop({ default: 15 })
+  inflationStep: number;
 }
 
 @Schema()

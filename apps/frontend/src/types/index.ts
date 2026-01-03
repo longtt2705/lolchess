@@ -36,6 +36,9 @@ export interface Player {
   bench: Champion[];
   position: number;
   isEliminated: boolean;
+  itemsBought?: number;
+  baseItemCost?: number;
+  inflationStep?: number;
 }
 
 export interface Champion {

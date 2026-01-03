@@ -733,10 +733,36 @@ export class ChessObject {
 
       // Remove expired debuffs
       if (debuff.duration <= 0) {
+        // Handle transformation expiration with custom logic
+        if (debuff.isTransformation && debuff.onExpireId) {
+          this.handleTransformationExpire(chess, debuff);
+        }
         chess.chess.debuffs.splice(i, 1);
       }
     }
   }
+
+  /**
+   * Handle transformation debuff expiration
+   * This calculates the HP ratio and adjusts HP based on the original maxHP
+   */
+  protected handleTransformationExpire(chess: ChessObject, debuff: any): void {
+    if (debuff.onExpireId === "nasus_transform") {
+      const originalMaxHp = debuff.payload?.originalMaxHp;
+      if (originalMaxHp && originalMaxHp > 0) {
+        // Get the current maxHP (including the transformation bonus)
+        const currentMaxHp = chess.maxHp;
+        // Calculate the HP ratio before transformation ends
+        const hpRatio = chess.chess.stats.hp / currentMaxHp;
+        // Calculate new HP based on original maxHP, maintaining the ratio
+        const newHp = Math.floor(hpRatio * originalMaxHp);
+        // Clamp HP to valid range [1, originalMaxHp] (don't let it drop to 0)
+        chess.chess.stats.hp = Math.max(1, Math.min(newHp, originalMaxHp));
+      }
+    }
+    // Additional transformation handlers can be added here
+  }
+
   processShields(chess: ChessObject): void {
     if (chess.chess.stats.hp <= 0) {
       return;

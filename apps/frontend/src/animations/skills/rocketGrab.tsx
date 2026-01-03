@@ -46,11 +46,9 @@ const RocketGrabAnimation: React.FC<SkillAnimationConfig> = ({
     const [showParticles, setShowParticles] = useState(false)
     const [showPull, setShowPull] = useState(false)
 
-    console.log('[RocketGrab] Animation component rendered with:', { casterPosition, targetPosition, targetId, pulledToPosition })
 
     if (!targetPosition || !targetId) {
         // Fallback if no target
-        console.warn('[RocketGrab] Missing targetPosition or targetId:', { targetPosition, targetId })
         return null
     }
 
@@ -69,7 +67,6 @@ const RocketGrabAnimation: React.FC<SkillAnimationConfig> = ({
     if (pulledToPosition) {
         // Backend told us exactly where the target was pulled to
         pullDestPixels = getPixelPosition(pulledToPosition, boardRef, isRedPlayer)
-        console.log('[RocketGrab] Using backend-provided pulled position:', pulledToPosition, '-> pixels:', pullDestPixels)
     } else {
         // Fallback: calculate pull destination (same as before for backward compatibility)
         const chessDirectionX = casterPosition.x - targetPosition.x
@@ -81,26 +78,22 @@ const RocketGrabAnimation: React.FC<SkillAnimationConfig> = ({
             y: targetPosition.y + dirY
         }
         pullDestPixels = getPixelPosition(newTargetPosition, boardRef, isRedPlayer)
-        console.warn('[RocketGrab] No pulled position from backend, calculating fallback')
     }
 
     // Animate the actual target piece when pull starts
     useEffect(() => {
         if (showPull && targetId) {
-            console.log('[RocketGrab] Starting pull animation for targetId:', targetId)
 
             // Find the target piece element by ID
             // The piece is rendered inside a div with data-piece-id attribute
             const pieceElement = document.querySelector(`[data-piece-id="${targetId}"]`)
 
-            console.log('[RocketGrab] Found piece element:', pieceElement)
 
             if (pieceElement && pieceElement instanceof HTMLElement) {
                 // Calculate the pull offset relative to the piece's current position
                 const pullOffsetX = pullDestPixels.x - targetPixels.x
                 const pullOffsetY = pullDestPixels.y - targetPixels.y
 
-                console.log('[RocketGrab] Pull offsets:', { pullOffsetX, pullOffsetY })
 
                 // Animate the piece
                 const controls = animate(
@@ -123,13 +116,10 @@ const RocketGrabAnimation: React.FC<SkillAnimationConfig> = ({
                     // Don't manually clear transforms - causes positioning issues
                 }
             } else {
-                console.warn('[RocketGrab] Piece element not found for targetId:', targetId)
             }
         }
     }, [showPull, targetId, pullDestPixels.x, pullDestPixels.y, targetPixels.x, targetPixels.y])
 
-    console.log('[RocketGrab] Render state:', { showImpact, showParticles, showPull })
-    console.log('[RocketGrab] Position pixels:', { casterPixels, targetPixels, pullDestPixels })
 
     return (
         <>
@@ -175,21 +165,14 @@ const RocketGrabAnimation: React.FC<SkillAnimationConfig> = ({
                 }}
                 onAnimationComplete={() => {
                     if (!showPull) {
-                        console.log('[RocketGrab] Hook reached target, showing impact and particles')
-                        console.log('[RocketGrab] Impact will render at:', {
-                            left: targetPixels.x - 40,
-                            top: targetPixels.y - 40
-                        })
                         setShowImpact(true)
                         setShowParticles(true)
                         // Wait a moment before starting pull
                         setTimeout(() => {
-                            console.log('[RocketGrab] Starting pull phase')
                             setShowPull(true)
                         }, 100)
                         // Clean up particles after their duration
                         setTimeout(() => {
-                            console.log('[RocketGrab] Cleaning up particles')
                             setShowParticles(false)
                         }, 600)
                     }
@@ -217,7 +200,6 @@ const RocketGrabAnimation: React.FC<SkillAnimationConfig> = ({
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 onAnimationComplete={() => {
                     if (showImpact) {
-                        console.log('[RocketGrab] Impact animation complete')
                         setShowImpact(false)
                     }
                 }}

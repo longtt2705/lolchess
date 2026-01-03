@@ -4,13 +4,13 @@ import { ChessPosition, GameState } from "../hooks/useGame";
 export interface AnimationAction {
   id: string;
   type:
-  | "move"
-  | "attack"
-  | "skill"
-  | "damage"
-  | "stat_change"
-  | "death"
-  | "buy_item";
+    | "move"
+    | "attack"
+    | "skill"
+    | "damage"
+    | "stat_change"
+    | "death"
+    | "buy_item";
   timestamp: number;
   delay: number; // When to start this animation (in ms from sequence start)
   duration: number; // How long the animation lasts
@@ -132,13 +132,6 @@ export class AnimationEngine {
         (p) => p.id === lastAction.casterId
       );
 
-      console.log('[AnimationEngine] Attack action detected:', {
-        casterId: lastAction.casterId,
-        attackerName: attacker?.name,
-        whirlwindTargets: lastAction.whirlwindTargets,
-        hasWhirlwind: !!lastAction.whirlwindTargets
-      });
-
       if (attacker) {
         animations.push({
           id: `attack_${lastAction.timestamp}`,
@@ -192,7 +185,10 @@ export class AnimationEngine {
         }
 
         // Handle Sand Soldier chain attacks (additional attacks from nearby Sand Soldiers)
-        if (lastAction.additionalAttacks && lastAction.additionalAttacks.length > 0) {
+        if (
+          lastAction.additionalAttacks &&
+          lastAction.additionalAttacks.length > 0
+        ) {
           // All chain attacks animate simultaneously (same delay)
           const CHAIN_ATTACK_DURATION = 400; // Shorter duration for chain attacks
 

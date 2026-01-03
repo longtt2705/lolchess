@@ -11,7 +11,6 @@ export class MeleeMinion extends ChessObject {
 
     for (const square of adjacentSquares) {
       const ally = getChessAtPosition(this.game, this.chess.blue, square);
-      console.log("ally", ally);
       if (
         ally &&
         [

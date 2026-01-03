@@ -59,10 +59,7 @@ const CardThrowAnimation: React.FC<SkillAnimationConfig> = ({
     const [impacts, setImpacts] = useState<{ id: number; position: { x: number; y: number }; color: string }[]>([])
     const [particles, setParticles] = useState<{ id: number; position: { x: number; y: number } }[]>([])
 
-    console.log('[CardThrow] Animation component rendered with:', { casterPosition, cardTargets, totalCardCount })
-
     if (!cardTargets || cardTargets.length === 0 || !totalCardCount) {
-        console.warn('[CardThrow] Missing required data:', { cardTargets, totalCardCount })
         return null
     }
 
@@ -86,7 +83,6 @@ const CardThrowAnimation: React.FC<SkillAnimationConfig> = ({
             })
         }
         setCards(initialCards)
-        console.log('[CardThrow] Initialized cards:', initialCards)
     }, [totalCardCount, cardTargets.length])
 
     // Launch cards sequentially with stagger delay
@@ -106,7 +102,6 @@ const CardThrowAnimation: React.FC<SkillAnimationConfig> = ({
     const handleCardComplete = (cardId: number, targetIndex: number, color: string) => {
         const targetPixels = targetPixelsMap.get(targetIndex)
         if (targetPixels) {
-            console.log('[CardThrow] Card', cardId, 'hit target', targetIndex, 'at', targetPixels)
 
             // Add impact effect
             setImpacts(prev => [...prev, { id: cardId, position: targetPixels, color }])
@@ -125,13 +120,6 @@ const CardThrowAnimation: React.FC<SkillAnimationConfig> = ({
             }, 500)
         }
     }
-
-    console.log('[CardThrow] Render state:', {
-        cardsCount: cards.length,
-        activeCardIndex,
-        impactsCount: impacts.length,
-        particlesCount: particles.length
-    })
 
     return (
         <>

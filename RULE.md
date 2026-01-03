@@ -114,7 +114,7 @@ You must perform **one** of the following actions with **one** of your pieces:
 
 ### Combat
 When a piece attacks another, damage is calculated.
-* **Critical Strike:** A critical strike deals 150% damage (or the attacker's Critical Damage percentage if modified).
+* **Critical Strike:** A critical strike deals 125% damage (or the attacker's Critical Damage percentage if modified).
 * **Damage Calculation:** 
   1. Base damage is determined (AD for basic attacks, varies for abilities)
   2. Critical strike is rolled if applicable
