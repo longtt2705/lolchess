@@ -150,6 +150,8 @@ export interface ActionDetails {
     targetId: string;
     targetPosition: ChessPosition;
   }>; // For Tristana: adjacent enemies hit by 4th shot explosion
+  criticalFlankProc?: boolean; // For Minions: indicates The Critical Flank passive triggered (diagonal execution)
+  criticalFlankAdvancePosition?: ChessPosition; // For Minions: position the attacker advanced to after Critical Flank
 }
 
 export interface GameState {

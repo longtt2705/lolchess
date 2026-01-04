@@ -32,6 +32,7 @@ export interface SkillAnimationConfig {
       targetPosition: ChessPosition;
     }>;
   } // For Viktor: module effect states
+  criticalFlankAdvancePosition?: ChessPosition // For Minions: position the attacker advanced to after Critical Flank
 }
 
 export interface SkillAnimationRenderer {

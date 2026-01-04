@@ -483,6 +483,12 @@ export class ActionDetailsSchema implements ActionDetailsType {
     targetId: string;
     targetPosition: SquareType;
   }>; // For Tristana: adjacent enemies hit by 4th shot explosion
+
+  @Prop()
+  criticalFlankProc?: boolean; // For Minions: indicates The Critical Flank passive triggered (diagonal execution)
+
+  @Prop({ type: SquareSchema })
+  criticalFlankAdvancePosition?: SquareType; // For Minions: position the attacker advanced to after Critical Flank
 }
 
 @Schema()

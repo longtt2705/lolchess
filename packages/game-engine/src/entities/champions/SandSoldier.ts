@@ -1,9 +1,8 @@
 import { Chess, Square } from "../../types";
-import { ChessObject } from "../ChessObject";
 import { ChessFactory } from "../ChessFactory";
-import { MeleeMinion } from "./MeleeMinion";
+import { ChessObject } from "../ChessObject";
 
-export class SandSoldier extends MeleeMinion {
+export class SandSoldier extends ChessObject {
   /**
    * Flag to track if this is a chain attack (to prevent infinite recursion)
    */
@@ -101,7 +100,7 @@ export class SandSoldier extends MeleeMinion {
       });
 
       // Execute chain attack at 50% damage
-      soldierObject.executeAttack(target, false, 0.6);
+      soldierObject.executeAttack(target, false, 0.6, true);
     }
   }
 

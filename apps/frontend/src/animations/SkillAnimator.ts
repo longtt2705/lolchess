@@ -13,6 +13,7 @@ import { wayOfTheWandererRenderer } from "./skills/wayOfTheWanderer";
 import { ariseRenderer } from "./skills/arise";
 import { siphonPowerRenderer } from "./skills/siphonPower";
 import { furyOfTheSandsRenderer } from "./skills/furyOfTheSands";
+import { criticalFlankRenderer } from "./skills/criticalFlank";
 
 /**
  * Registry mapping skill names to their animation renderers
@@ -57,6 +58,9 @@ const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
 
   // Nasus
   "Fury of the Sands": furyOfTheSandsRenderer,
+
+  // Minions (Melee Minion and Caster Minion)
+  "The Critical Flank": criticalFlankRenderer,
 
   // Add more skills here as they're implemented
   // 'Skill Name': skillRenderer,

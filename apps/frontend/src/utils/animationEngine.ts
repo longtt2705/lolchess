@@ -55,6 +55,7 @@ export interface SkillAnimationData {
     targetId: string;
     targetPosition: ChessPosition;
   }>; // For Yasuo: targets hit by the whirlwind on critical strike
+  criticalFlankAdvancePosition?: ChessPosition; // For Minions: position the attacker advanced to after Critical Flank
 }
 
 export interface DamageAnimationData {
@@ -133,24 +134,55 @@ export class AnimationEngine {
       );
 
       if (attacker) {
-        animations.push({
-          id: `attack_${lastAction.timestamp}`,
-          type: "attack",
-          timestamp: lastAction.timestamp,
-          delay: currentDelay,
-          duration: 600,
-          data: {
-            attackerId: lastAction.casterId,
-            attackerPosition: lastAction.casterPosition,
-            targetId: lastAction.targetId,
+        // Check for Critical Flank (minion diagonal execution)
+        // This replaces the normal attack animation with a special execution animation
+        if (lastAction.criticalFlankProc) {
+          const skillRenderer = getSkillAnimationRenderer("The Critical Flank");
+
+          const criticalFlankAnimationData = {
+            casterId: lastAction.casterId,
+            casterPosition: lastAction.casterPosition,
+            skillName: "The Critical Flank",
             targetPosition: lastAction.targetPosition,
-            guinsooProc: lastAction.guinsooProc,
-            fourthShotProc: lastAction.fourthShotProc,
-            fourthShotAoeTargets: lastAction.fourthShotAoeTargets,
-            attackerName: attacker.name,
-          } as AttackAnimationData,
-        });
-        currentDelay += 600;
+            targetId: lastAction.targetId,
+            criticalFlankAdvancePosition: lastAction.criticalFlankAdvancePosition,
+          } as SkillAnimationData;
+
+          const calculatedDuration =
+            typeof skillRenderer.duration === "function"
+              ? skillRenderer.duration(criticalFlankAnimationData)
+              : skillRenderer.duration;
+
+          animations.push({
+            id: `critical_flank_${lastAction.timestamp}`,
+            type: "skill",
+            timestamp: lastAction.timestamp,
+            delay: currentDelay,
+            duration: calculatedDuration,
+            data: criticalFlankAnimationData,
+          });
+          currentDelay += calculatedDuration;
+        } else {
+          // Normal attack animation
+          animations.push({
+            id: `attack_${lastAction.timestamp}`,
+            type: "attack",
+            timestamp: lastAction.timestamp,
+            delay: currentDelay,
+            duration: 600,
+            data: {
+              attackerId: lastAction.casterId,
+              attackerPosition: lastAction.casterPosition,
+              targetId: lastAction.targetId,
+              targetPosition: lastAction.targetPosition,
+              guinsooProc: lastAction.guinsooProc,
+              fourthShotProc: lastAction.fourthShotProc,
+              fourthShotAoeTargets: lastAction.fourthShotAoeTargets,
+              attackerName: attacker.name,
+            } as AttackAnimationData,
+          });
+          currentDelay += 600;
+        }
 
         // Handle Yasuo's whirlwind animation (triggered on critical strike)
         // The whirlwind animation plays whenever whirlwindTargets is set (even if empty)

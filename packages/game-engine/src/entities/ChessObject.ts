@@ -576,7 +576,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -587,7 +587,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -1231,8 +1231,12 @@ export class ChessObject {
   public executeAttack(
     chess: ChessObject,
     forceCritical: boolean = false,
-    damageMultiplier: number = 1
+    damageMultiplier: number = 1,
+    ignoreValidation: boolean = false
   ): void {
+    if (!ignoreValidation && !this.validateAttack(chess.chess.position, this.attackRange)) {
+      throw new Error("Invalid attack");
+    }
     if (chess.chess.items.some((item) => item.id === "bramble_vest")) {
       damageMultiplier -= 0.08;
     }
@@ -1312,9 +1316,6 @@ export class ChessObject {
     forceCritical: boolean = false,
     damageMultiplier: number = 1
   ): number {
-    if (!this.validateAttack(chess.chess.position, this.attackRange)) {
-      throw new Error("Invalid attack");
-    }
 
     // Critical strike system from RULE.md: 20% chance, 125% damage
     this.willCrit = this.isCriticalStrike(forceCritical);
