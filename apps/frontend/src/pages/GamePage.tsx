@@ -787,7 +787,7 @@ const GamePage: React.FC = () => {
       }
 
       case 'skill': {
-        const { casterId, casterPosition, skillName, targetPosition, targetId, pulledToPosition, cardTargets, totalCardCount, whirlwindTargets, viktorModules } = animation.data
+        const { casterId, casterPosition, skillName, targetPosition, targetId, pulledToPosition, cardTargets, totalCardCount, whirlwindTargets, viktorModules, criticalFlankAdvancePosition } = animation.data
         const skillRenderer = getSkillAnimationRenderer(skillName)
 
         // Determine if current player is red (for coordinate transformation)
@@ -809,6 +809,7 @@ const GamePage: React.FC = () => {
             totalCardCount,
             whirlwindTargets,
             viktorModules,
+            criticalFlankAdvancePosition,
           })
         })
 
