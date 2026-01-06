@@ -85,12 +85,12 @@ export interface ChessPiece {
       lShape?: boolean;
     };
     targetTypes?:
-      | "square"
-      | "squareInRange"
-      | "ally"
-      | "allyMinion"
-      | "enemy"
-      | "none";
+    | "square"
+    | "squareInRange"
+    | "ally"
+    | "allyMinion"
+    | "enemy"
+    | "none";
     payload?: {
       currentModuleIndex?: number;
       cumulativeDamage?: number;
@@ -115,6 +115,7 @@ export interface ChessPiece {
   hasMovedBefore: boolean;
   cannotAttack: boolean;
   deadAtRound?: number;
+  respawnAtRound?: number;
 }
 
 export interface ActionDetails {
@@ -884,7 +885,7 @@ export const useGame = (gameId: string) => {
   const isMyTurn =
     gameState && currentUser
       ? gameState.currentRound % 2 ===
-        (gameState.bluePlayer === currentUser.id ? 1 : 0)
+      (gameState.bluePlayer === currentUser.id ? 1 : 0)
       : false;
 
   // Get current player data

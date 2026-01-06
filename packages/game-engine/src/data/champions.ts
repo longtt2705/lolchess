@@ -14,7 +14,7 @@ export const champions: ChampionData[] = [
     name: "Aatrox",
     role: "fighter",
     stats: {
-      maxHp: 120,
+      maxHp: 110,
       ad: 35,
       ap: 10,
       physicalResistance: 30,
@@ -40,7 +40,7 @@ export const champions: ChampionData[] = [
     name: "Ahri",
     role: "mage",
     stats: {
-      maxHp: 80,
+      maxHp: 70,
       ad: 5,
       ap: 30,
       attackRange: {
@@ -59,7 +59,7 @@ export const champions: ChampionData[] = [
       name: "Spirit Rush",
       description:
         "Ahri dashes to a square, dealing (10 + 25% AP) magic damage and applying a slow and (5 + 10% AP) magic damage each turn to any piece at or adjacent to that square.",
-      cooldown: 8,
+      cooldown: 7,
       attackRange: {
         range: 4,
         diagonal: true,
@@ -111,7 +111,7 @@ export const champions: ChampionData[] = [
     name: "Janna",
     role: "support",
     stats: {
-      maxHp: 80,
+      maxHp: 70,
       ad: 10,
       ap: 30,
       physicalResistance: 25,
@@ -164,7 +164,7 @@ export const champions: ChampionData[] = [
     name: "Ashe",
     role: "marksman",
     stats: {
-      maxHp: 90,
+      maxHp: 80,
       ad: 20,
       ap: 10,
       physicalResistance: 25,
@@ -199,7 +199,7 @@ export const champions: ChampionData[] = [
     name: "Tristana",
     role: "marksman",
     stats: {
-      maxHp: 85,
+      maxHp: 75,
       ad: 25,
       ap: 0,
       physicalResistance: 25,
@@ -267,7 +267,7 @@ export const champions: ChampionData[] = [
     name: "Kha'Zix",
     role: "assassin",
     stats: {
-      maxHp: 90,
+      maxHp: 80,
       ad: 35,
       ap: 10,
       criticalChance: 20,
@@ -286,7 +286,7 @@ export const champions: ChampionData[] = [
       name: "Taste Their Fear",
       description:
         "Deals (20 + 80% AD + 50% AP) physical damage to the target. Damage will double on Isolated targets.",
-      cooldown: 7,
+      cooldown: 5,
       attackRange: {
         range: 1,
         diagonal: false,
@@ -301,7 +301,7 @@ export const champions: ChampionData[] = [
     name: "Zed",
     role: "assassin",
     stats: {
-      maxHp: 95,
+      maxHp: 85,
       ad: 30,
       ap: 10,
       attackRange: {
@@ -337,7 +337,7 @@ export const champions: ChampionData[] = [
     name: "Malphite",
     role: "tank",
     stats: {
-      maxHp: 160,
+      maxHp: 150,
       ad: 20,
       ap: 30,
       physicalResistance: 45,
@@ -356,7 +356,7 @@ export const champions: ChampionData[] = [
       name: "Granite Shield",
       description:
         "If Malphite didn't get hit by damage for 4 turns, he gains a shield equal to (10+40% of AP)% of his max health. He gains (15 + 10% of AP) armor if having shield.",
-      cooldown: 4,
+      cooldown: 3,
       currentCooldown: 0,
     },
   },
@@ -383,7 +383,7 @@ export const champions: ChampionData[] = [
       name: "Soul Furnace",
       description:
         "Sion drains (4 + 3% of AP)% of all enemy pieces' max health that are adjacent to him and then gains (10% of his max health + 40% of AP) as shield for 3 turns.",
-      cooldown: 6,
+      cooldown: 5,
       targetTypes: "none",
     },
   },
@@ -607,14 +607,14 @@ export const champions: ChampionData[] = [
       name: "Undying Rage",
       description:
         "When Tryndamere is killed, he will survive with 1 HP for 2 turns. He gains (1 + 5% of AP) bonus AD for each 5 HP he lost.",
-      cooldown: 15,
+      cooldown: 10,
     },
   },
   {
     name: "Viktor",
     role: "mage",
     stats: {
-      maxHp: 85,
+      maxHp: 75,
       ad: 5,
       ap: 35,
       criticalChance: 30,
@@ -634,7 +634,7 @@ export const champions: ChampionData[] = [
       name: "Siphon Power",
       description:
         "Viktor deals (10 + 50% of AP) magic damage to a target. Damage dealt unlocks modules at 50/150/300 cumulative damage thresholds. Viktor can equip up to 3 items (modules or regular items). After equipping 3 modules, Viktor gains 50% bonus AP.",
-      cooldown: 5,
+      cooldown: 4,
       attackRange: {
         range: 3,
         diagonal: true,
@@ -657,7 +657,7 @@ export const champions: ChampionData[] = [
     name: "Twisted Fate",
     role: "mage",
     stats: {
-      maxHp: 85,
+      maxHp: 75,
       ad: 20,
       ap: 20,
       criticalChance: 15,
@@ -677,7 +677,7 @@ export const champions: ChampionData[] = [
       name: "Wild Cards",
       description:
         "Throws (10 + 20% of AP) cards to a target and his adjacent enemies, the first card deals (1 + 5% AP + 5% AD) magic damage to the target. Subsequent cards deal 50% of the first card's damage to the target and his adjacent enemies.",
-      cooldown: 7,
+      cooldown: 6,
       attackRange: {
         range: 3,
         diagonal: true,
@@ -700,7 +700,7 @@ export const champions: ChampionData[] = [
     name: "Ezreal",
     role: "marksman",
     stats: {
-      maxHp: 90,
+      maxHp: 80,
       ad: 25,
       ap: 30,
       criticalChance: 10,
@@ -720,7 +720,7 @@ export const champions: ChampionData[] = [
       name: "Arcane Shift",
       description:
         "Ezreal teleports to a square in range, dealing (10 + 40% AP + 10% AD) magic damage to the lowest health adjacent enemy and increasing his sunder by (5 + 10% of AP) for 3 turns.",
-      cooldown: 5,
+      cooldown: 4,
       attackRange: {
         range: 2,
         diagonal: true,
@@ -743,7 +743,7 @@ export const champions: ChampionData[] = [
     name: "Azir",
     role: "mage",
     stats: {
-      maxHp: 90,
+      maxHp: 80,
       ad: 5,
       ap: 35,
       physicalResistance: 25,
@@ -762,7 +762,7 @@ export const champions: ChampionData[] = [
       name: "Arise",
       description:
         "Azir can promote a Minion to a Sand Soldier. You can only control at most 3 Sand Soldiers at a time. When Azir attacks, the Sand Soldiers within 2 squares of the target will also attack the target (ignoring the attack direction) but deal less than 40% of the Sand Soldier's damage. If Azir is dead, the Sand Soldier will die with him.",
-      cooldown: 9,
+      cooldown: 6,
       attackRange: {
         range: 2,
         diagonal: true,
@@ -785,7 +785,7 @@ export const champions: ChampionData[] = [
     name: "Dr.Mundo",
     role: "fighter",
     stats: {
-      maxHp: 140,
+      maxHp: 130,
       ad: 30,
       ap: 10,
       physicalResistance: 35,
@@ -803,7 +803,7 @@ export const champions: ChampionData[] = [
       name: "Infected Bonesaw",
       description:
         "Dr. Mundo sacrifices 15% of his max health to deal (10 + 15% of his max health + 10% of AP + 15% of the target's max health) magic damage to the target. This skill has a (50 - 50% of AP)% chance to miss. If the skill hit, Dr. Mundo heals for (15 + 10% of AP)% of his max health.",
-      cooldown: 5,
+      cooldown: 4,
       attackRange: {
         range: 4,
         diagonal: true,

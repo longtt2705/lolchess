@@ -46,6 +46,7 @@ export const isChampion = (piece: ChessPiece): boolean => {
     "Super Minion",
     "Drake",
     "Baron Nashor",
+    "Sand Soldier",
   ];
   return !nonChampionTypes.includes(piece.name);
 };

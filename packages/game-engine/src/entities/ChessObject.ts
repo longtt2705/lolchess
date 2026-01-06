@@ -219,8 +219,13 @@ export class ChessObject {
       // Award gold to the killer if the target was alive before this damage
       if (wasAlive) {
         this.awardGoldForKill(chess);
-        this.refundItemValues(chess); // Refund 50% of item values to the owner
         chess.chess.deadAtRound = this.game.currentRound;
+
+        // Set respawn timer for champions only
+        if (this.isChampionByName(chess.chess.name)) {
+          const deathTimer = this.getDeathTimer(this.game.currentRound);
+          chess.chess.respawnAtRound = this.game.currentRound + deathTimer;
+        }
 
         // Check if killed monster was neutral for special rewards
         if (
@@ -1747,6 +1752,37 @@ export class ChessObject {
       name === "Chemtech Drake" ||
       name === "Elder Dragon"
     );
+  }
+
+  /**
+   * Check if a piece name represents a champion (not minion, poro, or neutral monster)
+   */
+  protected isChampionByName(name: string): boolean {
+    const nonChampions = [
+      "Poro",
+      "Melee Minion",
+      "Caster Minion",
+      "Siege Minion",
+      "Super Minion",
+      "Sand Soldier",
+    ];
+    return (
+      !nonChampions.includes(name) &&
+      !this.isDrake(name) &&
+      name !== "Baron Nashor"
+    );
+  }
+
+  /**
+   * Calculate death timer based on current round
+   * Rounds 1-15: 4 turns
+   * Rounds 16-30: 7 turns
+   * Rounds 31+: 10 turns
+   */
+  protected getDeathTimer(currentRound: number): number {
+    if (currentRound <= 15) return 4;
+    if (currentRound <= 30) return 7;
+    return 10;
   }
 
   protected hasBaronBuff(): boolean {

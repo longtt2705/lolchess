@@ -12,11 +12,11 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   height: 90%;
   border-radius: 8px;
   border: 1px solid ${props =>
-        props.isNeutral ? '#9333ea' :
-            props.isBlue ? '#3b82f6' : '#ef4444'};
+    props.isNeutral ? '#9333ea' :
+      props.isBlue ? '#3b82f6' : '#ef4444'};
   background: ${props =>
-        props.isNeutral ? 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)' :
-            props.isBlue ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'};
+    props.isNeutral ? 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)' :
+      props.isBlue ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -25,9 +25,9 @@ const ChessPieceComponent = styled(motion.div) <{ isBlue: boolean; isNeutral: bo
   position: relative;
   z-index: ${props => props.isMoving ? 20 : props.isAttacking ? 10 : 1};
   box-shadow: ${props => props.hasShield
-        ? '0 0 8px 3px rgba(255, 255, 255, 0.6), 0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
-        : '0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
-    };
+    ? '0 0 8px 3px rgba(255, 255, 255, 0.6), 0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
+    : '0 0 2px 2px ' + (props.isNeutral ? '#9333ea' : props.isBlue ? '#3b82f6' : '#ef4444')
+  };
   
   .piece-icon {
     width: 100%;
@@ -108,21 +108,21 @@ const SkillIcon = styled.div<{ isActive: boolean; onCooldown: boolean, currentCo
   height: 24px;
   border-radius: 4px;
   border: ${props => props.isActive
-        ? '2px solid #ffd700'
-        : '2px solid #9333ea'};
+    ? '2px solid #ffd700'
+    : '2px solid #9333ea'};
   background: ${props => props.onCooldown
-        ? 'rgba(0, 0, 0, 0.7)'
-        : props.isActive
-            ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(200, 155, 60, 0.3) 100%)'
-            : 'linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(124, 58, 237, 0.3) 100%)'};
+    ? 'rgba(0, 0, 0, 0.7)'
+    : props.isActive
+      ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(200, 155, 60, 0.3) 100%)'
+      : 'linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(124, 58, 237, 0.3) 100%)'};
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: ${props => props.isActive && !props.onCooldown ? 'pointer' : 'default'};
   z-index: 5;
   box-shadow: ${props => props.isActive
-        ? '0 0 8px rgba(255, 215, 0, 0.6), inset 0 0 8px rgba(255, 215, 0, 0.2)'
-        : '0 0 6px rgba(147, 51, 234, 0.6), inset 0 0 6px rgba(147, 51, 234, 0.2)'};
+    ? '0 0 8px rgba(255, 215, 0, 0.6), inset 0 0 8px rgba(255, 215, 0, 0.2)'
+    : '0 0 6px rgba(147, 51, 234, 0.6), inset 0 0 6px rgba(147, 51, 234, 0.2)'};
   transition: all 0.2s ease;
   filter: ${props => props.onCooldown ? 'grayscale(1)' : 'none'};
   opacity: ${props => props.onCooldown ? 0.5 : 1};
@@ -422,465 +422,515 @@ const GoldSpentText = styled(motion.div)`
   gap: 4px;
 `
 
+const DeathCounterOverlay = styled(motion.div)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+`
+
+const DeathCounterBadge = styled.div`
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+  border: 2px solid #888;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  z-index: 15;
+`
+
 export const ChessPieceRenderer: React.FC<{
-    piece: ChessPiece
-    canSelect: boolean
-    onClick: (e: React.MouseEvent) => void
-    attackAnimation?: AttackAnimation | null
-    moveAnimation?: MoveAnimation | null
-    isAnimating?: boolean
-    damageEffects?: DamageEffect[]
-    itemPurchaseAnimations?: ItemPurchaseAnimation[]
-    isRedPlayer?: boolean
-    isDead?: boolean
-    onSkillClick?: () => void
-    imageUrl: string
-    isChampion: boolean
-    boardRef: React.RefObject<HTMLDivElement>
-    allItems?: ItemData[]
-}> = ({ piece, canSelect, onClick, attackAnimation, moveAnimation, isAnimating = false, damageEffects = [], itemPurchaseAnimations = [], isRedPlayer = false, isDead = false, onSkillClick, boardRef, allItems = [], isChampion, imageUrl }) => {
-    const hpPercentage = (piece.stats.hp / piece.stats.maxHp) * 100
-    const isNeutral = piece.ownerId === "neutral"
-    const isAttacking = attackAnimation?.attackerId === piece.id
-    const isBeingAttacked = attackAnimation &&
-        attackAnimation.targetPos.x === piece.position.x &&
-        attackAnimation.targetPos.y === piece.position.y
-    const isMoving = moveAnimation?.pieceId === piece.id
-    const pieceEffects = damageEffects.filter(effect => effect.targetId === piece.id)
-    const piecePurchaseAnimations = itemPurchaseAnimations.filter(anim => anim.targetId === piece.id)
+  piece: ChessPiece
+  canSelect: boolean
+  onClick: (e: React.MouseEvent) => void
+  attackAnimation?: AttackAnimation | null
+  moveAnimation?: MoveAnimation | null
+  isAnimating?: boolean
+  damageEffects?: DamageEffect[]
+  itemPurchaseAnimations?: ItemPurchaseAnimation[]
+  isRedPlayer?: boolean
+  isDead?: boolean
+  onSkillClick?: () => void
+  imageUrl: string
+  isChampion: boolean
+  boardRef: React.RefObject<HTMLDivElement>
+  allItems?: ItemData[]
+  currentRound?: number
+}> = ({ piece, canSelect, onClick, attackAnimation, moveAnimation, isAnimating = false, damageEffects = [], itemPurchaseAnimations = [], isRedPlayer = false, isDead = false, onSkillClick, boardRef, allItems = [], isChampion, imageUrl, currentRound = 0 }) => {
+  const hpPercentage = (piece.stats.hp / piece.stats.maxHp) * 100
+  const isNeutral = piece.ownerId === "neutral"
+  const isAttacking = attackAnimation?.attackerId === piece.id
+  const isBeingAttacked = attackAnimation &&
+    attackAnimation.targetPos.x === piece.position.x &&
+    attackAnimation.targetPos.y === piece.position.y
+  const isMoving = moveAnimation?.pieceId === piece.id
+  const pieceEffects = damageEffects.filter(effect => effect.targetId === piece.id)
+  const piecePurchaseAnimations = itemPurchaseAnimations.filter(anim => anim.targetId === piece.id)
 
-    // Calculate attack animation values
-    const getAttackAnimation = () => {
-        if (!isAttacking || !attackAnimation) return {}
+  // Calculate attack animation values
+  const getAttackAnimation = () => {
+    if (!isAttacking || !attackAnimation) return {}
 
-        // Calculate the visual direction based on grid position
-        let deltaX = attackAnimation.targetPos.x - attackAnimation.attackerPos.x
-        let deltaY = attackAnimation.targetPos.y - attackAnimation.attackerPos.y
+    // Calculate the visual direction based on grid position
+    let deltaX = attackAnimation.targetPos.x - attackAnimation.attackerPos.x
+    let deltaY = attackAnimation.targetPos.y - attackAnimation.attackerPos.y
 
-        // Account for different player perspectives
-        // Red player has flipped coordinate system in the visual layout
-        if (isRedPlayer) {
-            // For red player, the board is visually flipped
-            // So we need to flip both X and Y directions
-            deltaX = -deltaX
-            deltaY = -deltaY
-        }
-
-        // Get actual cell dimensions from the board
-        const { cellWidth, cellHeight } = getCellDimensions()
-
-        // Calculate direction to target
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-        if (distance === 0) return {}
-
-        const dirX = deltaX / distance
-        const dirY = deltaY / distance
-
-        // Move 30% of average cell size toward target for attack lunge
-        const avgCellSize = (cellWidth + cellHeight) / 2
-        const lungeDistance = avgCellSize * 0.3
-        const moveX = dirX * lungeDistance
-        const moveY = -dirY * lungeDistance // Y direction (CSS coordinates are inverted)
-
-        return {
-            x: [0, moveX, 0],
-            y: [0, moveY, 0],
-            scale: [1, 1.2, 1],
-            transition: {
-                duration: 0.6,
-                times: [0, 0.5, 1],
-                ease: "easeInOut"
-            }
-        }
+    // Account for different player perspectives
+    // Red player has flipped coordinate system in the visual layout
+    if (isRedPlayer) {
+      // For red player, the board is visually flipped
+      // So we need to flip both X and Y directions
+      deltaX = -deltaX
+      deltaY = -deltaY
     }
 
-    // Calculate afterimage animation values (for Guinsoo's Rageblade)
-    const getAfterimageAnimation = () => {
-        if (!isAttacking || !attackAnimation || !attackAnimation.guinsooProc) return {}
+    // Get actual cell dimensions from the board
+    const { cellWidth, cellHeight } = getCellDimensions()
 
-        // Same as main attack but with slight delay and smaller scale
-        const { cellWidth, cellHeight } = getCellDimensions()
+    // Calculate direction to target
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+    if (distance === 0) return {}
 
-        let deltaX = attackAnimation.targetPos.x - attackAnimation.attackerPos.x
-        let deltaY = attackAnimation.targetPos.y - attackAnimation.attackerPos.y
+    const dirX = deltaX / distance
+    const dirY = deltaY / distance
 
-        if (isRedPlayer) {
-            deltaX = -deltaX
-            deltaY = -deltaY
-        }
+    // Move 30% of average cell size toward target for attack lunge
+    const avgCellSize = (cellWidth + cellHeight) / 2
+    const lungeDistance = avgCellSize * 0.3
+    const moveX = dirX * lungeDistance
+    const moveY = -dirY * lungeDistance // Y direction (CSS coordinates are inverted)
 
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-        if (distance === 0) return {}
+    return {
+      x: [0, moveX, 0],
+      y: [0, moveY, 0],
+      scale: [1, 1.2, 1],
+      transition: {
+        duration: 0.6,
+        times: [0, 0.5, 1],
+        ease: "easeInOut"
+      }
+    }
+  }
 
-        const dirX = deltaX / distance
-        const dirY = deltaY / distance
+  // Calculate afterimage animation values (for Guinsoo's Rageblade)
+  const getAfterimageAnimation = () => {
+    if (!isAttacking || !attackAnimation || !attackAnimation.guinsooProc) return {}
 
-        const avgCellSize = (cellWidth + cellHeight) / 2
-        const lungeDistance = avgCellSize * 0.3
-        const moveX = dirX * lungeDistance
-        const moveY = -dirY * lungeDistance
+    // Same as main attack but with slight delay and smaller scale
+    const { cellWidth, cellHeight } = getCellDimensions()
 
-        return {
-            x: [0, moveX, 0],
-            y: [0, moveY, 0],
-            scale: [0.9, 1.08, 0.9], // Slightly smaller scale
-            opacity: [0, 0.6, 0.6, 0], // Fade in and out
-            transition: {
-                duration: 0.6,
-                delay: 0.05, // 50ms delay
-                times: [0, 0.5, 1],
-                ease: "easeInOut"
-            }
-        }
+    let deltaX = attackAnimation.targetPos.x - attackAnimation.attackerPos.x
+    let deltaY = attackAnimation.targetPos.y - attackAnimation.attackerPos.y
+
+    if (isRedPlayer) {
+      deltaX = -deltaX
+      deltaY = -deltaY
     }
 
-    // Calculate actual cell dimensions from board
-    const getCellDimensions = () => {
-        if (!boardRef.current) {
-            // Fallback values if board ref is not available
-            return { cellWidth: 60, cellHeight: 60 }
-        }
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+    if (distance === 0) return {}
 
-        const boardElement = boardRef.current
-        const boardRect = boardElement.getBoundingClientRect()
+    const dirX = deltaX / distance
+    const dirY = deltaY / distance
 
-        // Board is 10 columns x 8 rows with 3px gap
-        const totalGapWidth = 9 * 3 // 9 gaps between 10 columns
-        const totalGapHeight = 7 * 3 // 7 gaps between 8 rows
+    const avgCellSize = (cellWidth + cellHeight) / 2
+    const lungeDistance = avgCellSize * 0.3
+    const moveX = dirX * lungeDistance
+    const moveY = -dirY * lungeDistance
 
-        const cellWidth = (boardRect.width - totalGapWidth) / 10
-        const cellHeight = (boardRect.height - totalGapHeight) / 8
+    return {
+      x: [0, moveX, 0],
+      y: [0, moveY, 0],
+      scale: [0.9, 1.08, 0.9], // Slightly smaller scale
+      opacity: [0, 0.6, 0.6, 0], // Fade in and out
+      transition: {
+        duration: 0.6,
+        delay: 0.05, // 50ms delay
+        times: [0, 0.5, 1],
+        ease: "easeInOut"
+      }
+    }
+  }
 
-        return { cellWidth, cellHeight }
+  // Calculate actual cell dimensions from board
+  const getCellDimensions = () => {
+    if (!boardRef.current) {
+      // Fallback values if board ref is not available
+      return { cellWidth: 60, cellHeight: 60 }
     }
 
-    // Calculate move animation values
-    const getMoveAnimation = () => {
-        if (!isMoving || !moveAnimation) return {}
+    const boardElement = boardRef.current
+    const boardRect = boardElement.getBoundingClientRect()
 
-        // Calculate the visual direction for movement
-        // With the new dual-state system, the piece is rendered at the OLD position during animation
-        // So we need to animate it FROM old (current render position) TO new position
-        let deltaX = moveAnimation.toPos.x - moveAnimation.fromPos.x
-        let deltaY = moveAnimation.toPos.y - moveAnimation.fromPos.y
+    // Board is 10 columns x 8 rows with 3px gap
+    const totalGapWidth = 9 * 3 // 9 gaps between 10 columns
+    const totalGapHeight = 7 * 3 // 7 gaps between 8 rows
 
-        // Account for player perspective
-        if (isRedPlayer) {
-            deltaX = -deltaX
-            deltaY = -deltaY
-        }
+    const cellWidth = (boardRect.width - totalGapWidth) / 10
+    const cellHeight = (boardRect.height - totalGapHeight) / 8
 
-        // Get actual cell dimensions from the board
-        const { cellWidth, cellHeight } = getCellDimensions()
+    return { cellWidth, cellHeight }
+  }
 
-        // Convert to pixel movement based on actual cell size
-        // Since the piece is rendered at OLD position, we animate it forward TO the new position
-        const moveX = deltaX * (cellWidth + 3) // +3 for gap
-        const moveY = -deltaY * (cellHeight + 3) // Y direction inverted for CSS, +3 for gap
+  // Calculate move animation values
+  const getMoveAnimation = () => {
+    if (!isMoving || !moveAnimation) return {}
 
-        return {
-            x: [0, moveX], // Start at current (old) position, animate to new position
-            y: [0, moveY],
-            transition: {
-                duration: 0.5,
-                iterations: 1
-            }
-        }
+    // Calculate the visual direction for movement
+    // With the new dual-state system, the piece is rendered at the OLD position during animation
+    // So we need to animate it FROM old (current render position) TO new position
+    let deltaX = moveAnimation.toPos.x - moveAnimation.fromPos.x
+    let deltaY = moveAnimation.toPos.y - moveAnimation.fromPos.y
+
+    // Account for player perspective
+    if (isRedPlayer) {
+      deltaX = -deltaX
+      deltaY = -deltaY
     }
 
-    // Death animation values
-    const getDeathAnimation = () => {
-        if (!isDead) return {}
+    // Get actual cell dimensions from the board
+    const { cellWidth, cellHeight } = getCellDimensions()
 
-        return {
-            scale: [1, 0.8, 0],
-            opacity: [1, 0.5, 0],
-            rotate: [0, 10, -10, 0],
-            transition: {
-                duration: 0.8,
-                ease: "easeInOut"
-            }
-        }
+    // Convert to pixel movement based on actual cell size
+    // Since the piece is rendered at OLD position, we animate it forward TO the new position
+    const moveX = deltaX * (cellWidth + 3) // +3 for gap
+    const moveY = -deltaY * (cellHeight + 3) // Y direction inverted for CSS, +3 for gap
+
+    return {
+      x: [0, moveX], // Start at current (old) position, animate to new position
+      y: [0, moveY],
+      transition: {
+        duration: 0.5,
+        iterations: 1
+      }
     }
+  }
 
-    // Combine animations
-    const getCombinedAnimation = () => {
-        if (isDead) return getDeathAnimation()
-        if (isMoving) return getMoveAnimation()
-        if (isAttacking) return getAttackAnimation()
-        return {}
+  // Death animation values
+  const getDeathAnimation = () => {
+    if (!isDead) return {}
+
+    return {
+      scale: [1, 0.8, 0],
+      opacity: [1, 0.5, 0],
+      rotate: [0, 10, -10, 0],
+      transition: {
+        duration: 0.8,
+        ease: "easeInOut"
+      }
     }
+  }
 
-    // Generate unique key to force remount on move or position change
-    const animationKey = isMoving && moveAnimation
-        ? `${piece.id}-${moveAnimation.fromPos.x}-${moveAnimation.fromPos.y}-${moveAnimation.toPos.x}-${moveAnimation.toPos.y}`
-        : `${piece.id}-${piece.position.x}-${piece.position.y}` // Include position in key to force remount after state swap
+  // Combine animations
+  const getCombinedAnimation = () => {
+    if (isDead) return getDeathAnimation()
+    if (isMoving) return getMoveAnimation()
+    if (isAttacking) return getAttackAnimation()
+    return {}
+  }
 
-    const hasShield = piece.shields && piece.shields.length > 0 && piece.shields.reduce((sum, s) => sum + s.amount, 0) > 0
+  // Generate unique key to force remount on move or position change
+  const animationKey = isMoving && moveAnimation
+    ? `${piece.id}-${moveAnimation.fromPos.x}-${moveAnimation.fromPos.y}-${moveAnimation.toPos.x}-${moveAnimation.toPos.y}`
+    : `${piece.id}-${piece.position.x}-${piece.position.y}` // Include position in key to force remount after state swap
 
-    return (
-        <ChessPieceComponent
-            key={animationKey}
-            data-piece-id={piece.id}
-            isBlue={piece.blue}
-            isNeutral={isNeutral}
-            canSelect={canSelect && !isAnimating && !isDead}
-            isAttacking={isAttacking}
-            isMoving={isMoving}
-            hasShield={hasShield}
-            onClick={onClick}
-            animate={getCombinedAnimation()}
-            whileHover={canSelect && !isAnimating && !isDead ? { scale: 1.05 } : {}}
-            whileTap={canSelect && !isAnimating && !isDead ? { scale: 0.95 } : {}}
-        >
-            <div className="piece-icon">
-                <img
-                    src={imageUrl}
-                    alt={piece.name}
+  const hasShield = piece.shields && piece.shields.length > 0 && piece.shields.reduce((sum, s) => sum + s.amount, 0) > 0
+
+  return (
+    <ChessPieceComponent
+      key={animationKey}
+      data-piece-id={piece.id}
+      isBlue={piece.blue}
+      isNeutral={isNeutral}
+      canSelect={canSelect && !isAnimating && !isDead}
+      isAttacking={isAttacking}
+      isMoving={isMoving}
+      hasShield={hasShield}
+      onClick={onClick}
+      animate={getCombinedAnimation()}
+      whileHover={canSelect && !isAnimating && !isDead ? { scale: 1.05 } : {}}
+      whileTap={canSelect && !isAnimating && !isDead ? { scale: 0.95 } : {}}
+    >
+      <div className="piece-icon">
+        <img
+          src={imageUrl}
+          alt={piece.name}
+          onError={(e) => {
+            // Fallback if image doesn't exist
+            e.currentTarget.style.display = 'none'
+          }}
+        />
+      </div>
+      <div className="piece-name">{piece.name}</div>
+
+      {/* Crown Icon for Poro (King) */}
+      {piece.name === "Poro" && (
+        <CrownIcon title="King">
+          <Crown />
+        </CrownIcon>
+      )}
+
+      {/* Transform Indicator - Show when piece has transformation debuff */}
+      {(piece as any).debuffs?.some((d: any) => d.isTransformation) && (
+        <TransformIndicator title="Transformed">
+          <span className="transform-icon">🔥</span>
+        </TransformIndicator>
+      )}
+
+      {/* Death Counter - Show respawn timer for dead champions */}
+      {isDead && isChampion && piece.respawnAtRound !== undefined && piece.respawnAtRound > currentRound && (
+        <>
+          <DeathCounterOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          />
+          <DeathCounterBadge title={`Respawns at round ${piece.respawnAtRound}`}>
+            {piece.respawnAtRound - currentRound}
+          </DeathCounterBadge>
+        </>
+      )}
+
+      {/* Item Icons (Left Side) - Only for champions */}
+      {isChampion && (piece as any).items && (piece as any).items.length > 0 && (
+        <ItemIconsContainer style={{ top: '2px' }}>
+          {(piece as any).items.map((item: any, index: number) => {
+            const itemData = allItems.find((allItem: ItemData) => allItem.id === item.id)
+            const isOnCooldown = item.currentCooldown > 0
+            return (
+              <ItemIcon
+                key={index}
+                title={`${item.name}${isOnCooldown ? ` (CD: ${Math.ceil(item.currentCooldown)})` : ''}`}
+                $onCooldown={isOnCooldown}
+                $currentCooldown={item.currentCooldown}
+              >
+                {itemData?.icon ? (
+                  <img
+                    src={itemData.icon}
+                    alt={item.name}
                     onError={(e) => {
-                        // Fallback if image doesn't exist
-                        e.currentTarget.style.display = 'none'
+                      e.currentTarget.style.display = 'none'
+                      const parent = e.currentTarget.parentElement
+                      if (parent) {
+                        const fallback = document.createElement('div')
+                        fallback.className = 'item-fallback'
+                        fallback.textContent = item.name.substring(0, 2).toUpperCase()
+                        parent.appendChild(fallback)
+                      }
                     }}
-                />
+                  />
+                ) : (
+                  <div className="item-fallback">{item.name.substring(0, 2).toUpperCase()}</div>
+                )}
+              </ItemIcon>
+            )
+          })}
+        </ItemIconsContainer>
+      )}
+
+      {/* Shield Bar (next to HP bar, League of Legends style) */}
+      {piece.shields && piece.shields.length > 0 && (() => {
+        const shieldAmount = piece.shields.reduce((sum, s) => sum + s.amount, 0)
+        const shieldPercentage = (shieldAmount / piece.stats.maxHp) * 100
+        const totalPercentage = hpPercentage + shieldPercentage
+
+        // Shield starts where HP ends
+        // If total > 100%, the entire shield is shown from the right side
+        const hasOverflow = totalPercentage > 100
+
+        if (hasOverflow) {
+          // When overflowing, show entire shield from right side
+          return (
+            <div className="shield-bar">
+              <div
+                className="shield-fill"
+                style={{
+                  right: '0%',
+                  left: 'auto',
+                  width: `${shieldPercentage}%`
+                }}
+              />
             </div>
-            <div className="piece-name">{piece.name}</div>
+          )
+        }
 
-            {/* Crown Icon for Poro (King) */}
-            {piece.name === "Poro" && (
-                <CrownIcon title="King">
-                    <Crown />
-                </CrownIcon>
-            )}
+        // Normal case: shield starts where HP ends
+        return (
+          <div className="shield-bar">
+            <div
+              className="shield-fill"
+              style={{
+                left: `${hpPercentage}%`,
+                width: `${shieldPercentage}%`
+              }}
+            />
+          </div>
+        )
+      })()}
 
-            {/* Transform Indicator - Show when piece has transformation debuff */}
-            {(piece as any).debuffs?.some((d: any) => d.isTransformation) && (
-                <TransformIndicator title="Transformed">
-                    <span className="transform-icon">🔥</span>
-                </TransformIndicator>
-            )}
+      <div className="hp-bar">
+        <div
+          className="hp-fill"
+          style={{ width: `${hpPercentage}%` }}
+        />
+      </div>
 
-            {/* Item Icons (Left Side) - Only for champions */}
-            {isChampion && (piece as any).items && (piece as any).items.length > 0 && (
-                <ItemIconsContainer style={{ top: '2px' }}>
-                    {(piece as any).items.map((item: any, index: number) => {
-                        const itemData = allItems.find((allItem: ItemData) => allItem.id === item.id)
-                        const isOnCooldown = item.currentCooldown > 0
-                        return (
-                            <ItemIcon
-                                key={index}
-                                title={`${item.name}${isOnCooldown ? ` (CD: ${Math.ceil(item.currentCooldown)})` : ''}`}
-                                $onCooldown={isOnCooldown}
-                                $currentCooldown={item.currentCooldown}
-                            >
-                                {itemData?.icon ? (
-                                    <img
-                                        src={itemData.icon}
-                                        alt={item.name}
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none'
-                                            const parent = e.currentTarget.parentElement
-                                            if (parent) {
-                                                const fallback = document.createElement('div')
-                                                fallback.className = 'item-fallback'
-                                                fallback.textContent = item.name.substring(0, 2).toUpperCase()
-                                                parent.appendChild(fallback)
-                                            }
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="item-fallback">{item.name.substring(0, 2).toUpperCase()}</div>
-                                )}
-                            </ItemIcon>
-                        )
-                    })}
-                </ItemIconsContainer>
-            )}
-
-            {/* Shield Bar (next to HP bar, League of Legends style) */}
-            {piece.shields && piece.shields.length > 0 && (() => {
-                const shieldAmount = piece.shields.reduce((sum, s) => sum + s.amount, 0)
-                const shieldPercentage = (shieldAmount / piece.stats.maxHp) * 100
-                const totalPercentage = hpPercentage + shieldPercentage
-
-                // Shield starts where HP ends
-                // If total > 100%, the entire shield is shown from the right side
-                const hasOverflow = totalPercentage > 100
-
-                if (hasOverflow) {
-                    // When overflowing, show entire shield from right side
-                    return (
-                        <div className="shield-bar">
-                            <div
-                                className="shield-fill"
-                                style={{
-                                    right: '0%',
-                                    left: 'auto',
-                                    width: `${shieldPercentage}%`
-                                }}
-                            />
-                        </div>
-                    )
-                }
-
-                // Normal case: shield starts where HP ends
-                return (
-                    <div className="shield-bar">
-                        <div
-                            className="shield-fill"
-                            style={{
-                                left: `${hpPercentage}%`,
-                                width: `${shieldPercentage}%`
-                            }}
-                        />
-                    </div>
-                )
-            })()}
-
-            <div className="hp-bar">
-                <div
-                    className="hp-fill"
-                    style={{ width: `${hpPercentage}%` }}
-                />
+      {/* Skill Icon Overlay */}
+      {piece.skill && (
+        <SkillIcon
+          isActive={piece.skill.type === 'active'}
+          onCooldown={piece.skill.currentCooldown > 0}
+          currentCooldown={Math.ceil(piece.skill.currentCooldown)}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (piece.skill && piece.skill.type === 'active' && piece.skill.currentCooldown === 0 && onSkillClick) {
+              onSkillClick()
+            }
+          }}
+          title={`${piece.skill.name}${piece.skill.type === 'active' && piece.skill.currentCooldown > 0 ? ` (CD: ${Math.ceil(piece.skill.currentCooldown)})` : ''}`}
+        >
+          <img
+            src={`/icons/${piece.name.toLowerCase()}_skill.webp`}
+            alt={piece.skill.name}
+            onError={(e) => {
+              // Fallback - show first letter of skill name
+              e.currentTarget.style.display = 'none'
+              const parent = e.currentTarget.parentElement
+              if (parent && piece.skill) {
+                parent.innerHTML = piece.skill.name?.charAt(0).toUpperCase() || '?'
+                parent.style.fontSize = '14px'
+                parent.style.fontWeight = 'bold'
+                parent.style.color = piece.skill.type === 'active' ? '#ffd700' : '#9333ea'
+              }
+            }}
+          />
+          {piece.skill.currentCooldown > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: '#fff',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              textShadow: '0 0 4px rgba(0, 0, 0, 1)',
+              pointerEvents: 'none'
+            }}>
+              {Math.ceil(piece.skill.currentCooldown)}
             </div>
+          )}
+        </SkillIcon>
+      )}
 
-            {/* Skill Icon Overlay */}
-            {piece.skill && (
-                <SkillIcon
-                    isActive={piece.skill.type === 'active'}
-                    onCooldown={piece.skill.currentCooldown > 0}
-                    currentCooldown={Math.ceil(piece.skill.currentCooldown)}
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        if (piece.skill && piece.skill.type === 'active' && piece.skill.currentCooldown === 0 && onSkillClick) {
-                            onSkillClick()
-                        }
+      {isBeingAttacked && (
+        <AttackEffect
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: [0, 1.5, 0], opacity: [0, 1, 0] }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        />
+      )}
+
+      {/* Damage Numbers on this piece */}
+      <AnimatePresence>
+        {pieceEffects.map((effect) => (
+          <DamageNumber
+            key={effect.id}
+            isDamage={effect.isDamage}
+            initial={{ opacity: 0, y: 0, scale: 0.5 }}
+            animate={{
+              opacity: [0, 1, 1, 0],
+              y: [0, -30, -40, -50],
+              scale: [0.5, 1.2, 1, 0.8]
+            }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+          >
+            {effect.isDamage ? `-${effect.damage}` : `+${effect.damage}`}
+          </DamageNumber>
+        ))}
+      </AnimatePresence>
+
+      {/* Item Purchase Animations */}
+      <AnimatePresence>
+        {piecePurchaseAnimations.map((purchaseAnim) => {
+          const itemData = allItems.find(item => item.id === purchaseAnim.itemId)
+          return (
+            <ItemPurchaseEffect key={purchaseAnim.id}>
+              <ItemIconAnimation
+                initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                animate={{
+                  scale: [0, 1.5, 1.2, 0],
+                  rotate: [-180, 0, 0, 180],
+                  opacity: [0, 1, 1, 0]
+                }}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                {purchaseAnim.itemIcon ? (
+                  <img
+                    src={purchaseAnim.itemIcon}
+                    alt={itemData?.name || 'Item'}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
                     }}
-                    title={`${piece.skill.name}${piece.skill.type === 'active' && piece.skill.currentCooldown > 0 ? ` (CD: ${Math.ceil(piece.skill.currentCooldown)})` : ''}`}
+                  />
+                ) : (
+                  <div className="item-fallback">
+                    {itemData?.name?.substring(0, 2).toUpperCase() || '?'}
+                  </div>
+                )}
+              </ItemIconAnimation>
+              {itemData && (
+                <GoldSpentText
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{
+                    opacity: [0, 1, 1, 0],
+                    y: [10, -10, -20, -30]
+                  }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
                 >
-                    <img
-                        src={`/icons/${piece.name.toLowerCase()}_skill.webp`}
-                        alt={piece.skill.name}
-                        onError={(e) => {
-                            // Fallback - show first letter of skill name
-                            e.currentTarget.style.display = 'none'
-                            const parent = e.currentTarget.parentElement
-                            if (parent && piece.skill) {
-                                parent.innerHTML = piece.skill.name?.charAt(0).toUpperCase() || '?'
-                                parent.style.fontSize = '14px'
-                                parent.style.fontWeight = 'bold'
-                                parent.style.color = piece.skill.type === 'active' ? '#ffd700' : '#9333ea'
-                            }
-                        }}
-                    />
-                    {piece.skill.currentCooldown > 0 && (
-                        <div style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            color: '#fff',
-                            fontSize: '11px',
-                            fontWeight: 'bold',
-                            textShadow: '0 0 4px rgba(0, 0, 0, 1)',
-                            pointerEvents: 'none'
-                        }}>
-                            {Math.ceil(piece.skill.currentCooldown)}
-                        </div>
-                    )}
-                </SkillIcon>
-            )}
+                  <img src="/icons/dollar.png" alt="Gold" width={12} height={12} />
+                  -{itemData.cost}
+                </GoldSpentText>
+              )}
+            </ItemPurchaseEffect>
+          )
+        })}
+      </AnimatePresence>
 
-            {isBeingAttacked && (
-                <AttackEffect
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: [0, 1.5, 0], opacity: [0, 1, 0] }}
-                    transition={{ duration: 0.3, delay: 0.3 }}
-                />
-            )}
-
-            {/* Damage Numbers on this piece */}
-            <AnimatePresence>
-                {pieceEffects.map((effect) => (
-                    <DamageNumber
-                        key={effect.id}
-                        isDamage={effect.isDamage}
-                        initial={{ opacity: 0, y: 0, scale: 0.5 }}
-                        animate={{
-                            opacity: [0, 1, 1, 0],
-                            y: [0, -30, -40, -50],
-                            scale: [0.5, 1.2, 1, 0.8]
-                        }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 1.2, ease: "easeOut" }}
-                    >
-                        {effect.isDamage ? `-${effect.damage}` : `+${effect.damage}`}
-                    </DamageNumber>
-                ))}
-            </AnimatePresence>
-
-            {/* Item Purchase Animations */}
-            <AnimatePresence>
-                {piecePurchaseAnimations.map((purchaseAnim) => {
-                    const itemData = allItems.find(item => item.id === purchaseAnim.itemId)
-                    return (
-                        <ItemPurchaseEffect key={purchaseAnim.id}>
-                            <ItemIconAnimation
-                                initial={{ scale: 0, rotate: -180, opacity: 0 }}
-                                animate={{
-                                    scale: [0, 1.5, 1.2, 0],
-                                    rotate: [-180, 0, 0, 180],
-                                    opacity: [0, 1, 1, 0]
-                                }}
-                                exit={{ opacity: 0, scale: 0 }}
-                                transition={{ duration: 0.5, ease: "easeOut" }}
-                            >
-                                {purchaseAnim.itemIcon ? (
-                                    <img
-                                        src={purchaseAnim.itemIcon}
-                                        alt={itemData?.name || 'Item'}
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none'
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="item-fallback">
-                                        {itemData?.name?.substring(0, 2).toUpperCase() || '?'}
-                                    </div>
-                                )}
-                            </ItemIconAnimation>
-                            {itemData && (
-                                <GoldSpentText
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{
-                                        opacity: [0, 1, 1, 0],
-                                        y: [10, -10, -20, -30]
-                                    }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.5, ease: "easeOut" }}
-                                >
-                                    <img src="/icons/dollar.png" alt="Gold" width={12} height={12} />
-                                    -{itemData.cost}
-                                </GoldSpentText>
-                            )}
-                        </ItemPurchaseEffect>
-                    )
-                })}
-            </AnimatePresence>
-
-            {/* Guinsoo's Rageblade Afterimage Effect */}
-            {isAttacking && attackAnimation?.guinsooProc && (
-                <AfterimageEffect
-                    initial={{ x: -5, y: -5, scale: 0.9, opacity: 0 }}
-                    animate={getAfterimageAnimation()}
-                >
-                    <div className="piece-icon">
-                        <img
-                            src={imageUrl}
-                            alt={`${piece.name} afterimage`}
-                        />
-                    </div>
-                </AfterimageEffect>
-            )}
-        </ChessPieceComponent>
-    )
+      {/* Guinsoo's Rageblade Afterimage Effect */}
+      {isAttacking && attackAnimation?.guinsooProc && (
+        <AfterimageEffect
+          initial={{ x: -5, y: -5, scale: 0.9, opacity: 0 }}
+          animate={getAfterimageAnimation()}
+        >
+          <div className="piece-icon">
+            <img
+              src={imageUrl}
+              alt={`${piece.name} afterimage`}
+            />
+          </div>
+        </AfterimageEffect>
+      )}
+    </ChessPieceComponent>
+  )
 }

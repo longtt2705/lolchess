@@ -26,5 +26,6 @@ export interface Chess {
   shields: Shield[];
   attackProjectile?: AttackProjectile;
   deadAtRound?: number; // Track which round the piece died
+  respawnAtRound?: number; // Round when this piece should respawn (if dead)
 }
 

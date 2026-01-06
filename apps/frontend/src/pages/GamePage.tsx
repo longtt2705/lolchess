@@ -1106,6 +1106,7 @@ const GamePage: React.FC = () => {
                 isDead={deadPieces.has(piece.id)}
                 boardRef={boardRef}
                 allItems={allItems}
+                currentRound={displayState?.currentRound || gameState?.currentRound || 0}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent square click
 

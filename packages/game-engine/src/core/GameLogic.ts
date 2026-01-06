@@ -503,6 +503,9 @@ export class GameLogic {
     // Now increment the round for the next player
     game.currentRound++;
 
+    // Process champion respawns at the start of the new turn
+    this.processChampionRespawns(game);
+
     if (game.currentRound % 20 === 0) {
       game.players[0].gold += 50;
       game.players[1].gold += 50;
@@ -1917,6 +1920,117 @@ export class GameLogic {
         } as Debuff);
       }
     });
+  }
+
+  /**
+   * Check if a piece is a champion (not minion, poro, or neutral monster)
+   */
+  private static isChampion(chess: Chess): boolean {
+    const nonChampions = [
+      "Poro",
+      "Melee Minion",
+      "Caster Minion",
+      "Siege Minion",
+      "Super Minion",
+      "Sand Soldier",
+    ];
+    const drakeNames = [
+      "Infernal Drake",
+      "Cloud Drake",
+      "Mountain Drake",
+      "Hextech Drake",
+      "Ocean Drake",
+      "Chemtech Drake",
+      "Elder Dragon",
+    ];
+    return (
+      !nonChampions.includes(chess.name) &&
+      !drakeNames.includes(chess.name) &&
+      chess.name !== "Baron Nashor"
+    );
+  }
+
+  /**
+   * Find the nearest empty square to the team's Poro
+   * Uses BFS to find the closest available position
+   */
+  private static findNearestEmptySquareToPoro(
+    game: Game,
+    isBlue: boolean
+  ): Square | null {
+    // Find the team's Poro
+    const poro = game.board.find(
+      (chess) =>
+        chess.name === "Poro" && chess.blue === isBlue && chess.stats.hp > 0
+    );
+    if (!poro) return null;
+
+    // BFS to find nearest empty square
+    const visited = new Set<string>();
+    const queue: Square[] = [poro.position];
+    visited.add(`${poro.position.x},${poro.position.y}`);
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+
+      // Check if this square is empty (no living piece)
+      const isOccupied = game.board.some(
+        (chess) =>
+          chess.position.x === current.x &&
+          chess.position.y === current.y &&
+          chess.stats.hp > 0
+      );
+
+      if (!isOccupied) {
+        return current;
+      }
+
+      // Add adjacent squares to queue
+      const adjacentSquares = getAdjacentSquaresHelper(current);
+      for (const square of adjacentSquares) {
+        const key = `${square.x},${square.y}`;
+        if (!visited.has(key)) {
+          visited.add(key);
+          queue.push(square);
+        }
+      }
+    }
+
+    return null; // No empty square found
+  }
+
+  /**
+   * Process champion respawns at the start of each turn
+   * Champions respawn at the nearest empty square to their team's Poro
+   */
+  private static processChampionRespawns(game: Game): void {
+    const currentPlayerId = this.isBlueTurn(game)
+      ? game.bluePlayer
+      : game.redPlayer;
+    const isBlue = currentPlayerId === game.bluePlayer;
+
+    // Find dead champions ready to respawn for the current player
+    game.board
+      .filter(
+        (chess) =>
+          chess.ownerId === currentPlayerId &&
+          chess.stats.hp <= 0 &&
+          chess.respawnAtRound !== undefined &&
+          chess.respawnAtRound <= game.currentRound &&
+          this.isChampion(chess)
+      )
+      .forEach((chess) => {
+        const respawnPosition = this.findNearestEmptySquareToPoro(game, isBlue);
+        if (respawnPosition) {
+          // Respawn the champion with full HP
+          chess.stats.hp = chess.stats.maxHp;
+          chess.position = respawnPosition;
+          chess.respawnAtRound = undefined;
+          chess.deadAtRound = undefined;
+          // Reset movement state for respawned champion
+          chess.hasMovedBefore = false;
+        }
+      });
   }
 
   // Enhanced game over detection with stalemate
