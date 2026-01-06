@@ -150,6 +150,13 @@ export const getIconConfig = (debuff: any) => {
       src: "/icons/nasus_skill.webp",
       alt: "Sands of Ruin",
     },
+    infernal_drake_buff: { src: "/icons/InfernalDragonSoul.png", alt: "Infernal Dragon Soul" },
+    cloud_drake_buff: { src: "/icons/CloudDragonSoul.png", alt: "Cloud Dragon Soul" },
+    mountain_drake_buff: { src: "/icons/MountainDragonSoul.png", alt: "Mountain Dragon Soul" },
+    hextech_drake_buff: { src: "/icons/HextechDragonSoul.png", alt: "Hextech Dragon Soul" },
+    ocean_drake_buff: { src: "/icons/OceanDragonSoul.png", alt: "Ocean Dragon Soul" },
+    chemtech_drake_buff: { src: "/icons/ChemtechDragonSoul.png", alt: "Chemtech Dragon Soul" },
+    elder_drake_buff: { src: "/icons/elder dragon.webp", alt: "Elder Dragon Buff" },
   };
 
   let iconConfig = debuffIconMap[debuff.id];

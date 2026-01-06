@@ -200,7 +200,7 @@ export class ChessObject {
     }
     chess.postTakenDamage(this, finalDamage, damageType, fromAttack);
 
-    // Elder Drake execute: if attacker has Elder buff debuff and target is below 15% HP, execute
+    // Elder Dragon execute: if attacker has Elder buff debuff and target is below 15% HP, execute
     const hasElderBuff = this.chess.debuffs?.some(
       (debuff) => debuff.id === "elder_drake_buff"
     );
@@ -227,13 +227,8 @@ export class ChessObject {
           this.isDrake(chess.chess.name) ||
           chess.chess.name === "Baron Nashor"
         ) {
-          // Import GameLogic to award monster kill rewards
-          const { GameLogic } = require("../game.logic");
-          GameLogic.awardMonsterKillReward(
-            this.game,
-            this.chess.ownerId,
-            chess.chess.name
-          );
+          // Award monster kill rewards (gold and buffs)
+          this.awardMonsterKillReward(this.chess.ownerId, chess.chess.name);
         }
       }
     }
@@ -589,7 +584,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -600,7 +595,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -1750,11 +1745,263 @@ export class ChessObject {
       name === "Hextech Drake" ||
       name === "Ocean Drake" ||
       name === "Chemtech Drake" ||
-      name === "Elder Drake"
+      name === "Elder Dragon"
     );
   }
 
   protected hasBaronBuff(): boolean {
     return this.chess.debuffs?.some((debuff) => debuff.id === "baron_buff");
+  }
+
+  /**
+   * Award gold and apply buffs for killing neutral monsters (Drakes, Baron)
+   * This method handles monster kill rewards without depending on GameLogic
+   */
+  protected awardMonsterKillReward(
+    killerPlayerId: string,
+    monsterName: string
+  ): void {
+    const playerIndex = this.game.players.findIndex(
+      (p) => p.userId === killerPlayerId
+    );
+    if (playerIndex === -1) return;
+
+    // Check if it's any type of drake
+    if (this.isDrake(monsterName)) {
+      this.game.players[playerIndex].gold += 50;
+      this.game.drakesKilled += 1;
+      this.applyDrakeSoulBuff(killerPlayerId, monsterName);
+    } else if (monsterName === "Baron Nashor") {
+      this.game.players[playerIndex].gold += 100;
+      this.applyHandOfBaronBuff(killerPlayerId);
+    }
+  }
+
+  /**
+   * Apply drake soul buffs to all player's pieces
+   */
+  private applyDrakeSoulBuff(playerId: string, drakeName: string): void {
+    const isMinion = (name: string) =>
+      name === "Melee Minion" ||
+      name === "Caster Minion" ||
+      name === "Siege Minion" ||
+      name === "Super Minion";
+
+    const playerPieces = this.game.board.filter(
+      (chess) => chess.ownerId === playerId && !isMinion(chess.name)
+    );
+
+    playerPieces.forEach((chess) => {
+      const chessObject = ChessFactory.createChess(chess, this.game);
+      let debuff: Debuff | null = null;
+
+      switch (drakeName) {
+        case "Infernal Drake":
+          // +15% AD and AP (as percentage multiplier)
+          debuff = {
+            id: "infernal_drake_buff",
+            name: "Infernal Dragon Soul",
+            description: "+15% AD and AP",
+            duration: -1, // Permanent
+            maxDuration: -1,
+            effects: [
+              { stat: "ad", modifier: 15, type: "percentAdd" },
+              { stat: "ap", modifier: 15, type: "percentAdd" },
+            ],
+            damagePerTurn: 0,
+            damageType: "physical",
+            healPerTurn: 0,
+            unique: true,
+            appliedAt: Date.now(),
+            casterPlayerId: playerId,
+            casterName: "Infernal Drake",
+          } as Debuff;
+          break;
+
+        case "Cloud Drake":
+          // +1 move speed
+          debuff = {
+            id: "cloud_drake_buff",
+            name: "Cloud Dragon Soul",
+            description: "+1 move speed",
+            duration: -1, // Permanent
+            maxDuration: -1,
+            effects: [{ stat: "speed", modifier: 1, type: "add" }],
+            damagePerTurn: 0,
+            damageType: "physical",
+            healPerTurn: 0,
+            unique: true,
+            appliedAt: Date.now(),
+            casterPlayerId: playerId,
+            casterName: "Cloud Drake",
+          } as Debuff;
+          break;
+
+        case "Mountain Drake":
+          // +25 physical and magic resistance
+          debuff = {
+            id: "mountain_drake_buff",
+            name: "Mountain Dragon Soul",
+            description: "+25 physical and magic resistance",
+            duration: -1, // Permanent
+            maxDuration: -1,
+            effects: [
+              { stat: "physicalResistance", modifier: 25, type: "add" },
+              { stat: "magicResistance", modifier: 25, type: "add" },
+            ],
+            damagePerTurn: 0,
+            damageType: "physical",
+            healPerTurn: 0,
+            unique: true,
+            appliedAt: Date.now(),
+            casterPlayerId: playerId,
+            casterName: "Mountain Drake",
+          } as Debuff;
+          break;
+
+        case "Hextech Drake":
+          // +10 cooldown reduction
+          debuff = {
+            id: "hextech_drake_buff",
+            name: "Hextech Dragon Soul",
+            description: "+10 cooldown reduction",
+            duration: -1, // Permanent
+            maxDuration: -1,
+            effects: [{ stat: "cooldownReduction", modifier: 10, type: "add" }],
+            damagePerTurn: 0,
+            damageType: "physical",
+            healPerTurn: 0,
+            unique: true,
+            appliedAt: Date.now(),
+            casterPlayerId: playerId,
+            casterName: "Hextech Drake",
+          } as Debuff;
+          break;
+
+        case "Ocean Drake":
+          // +5 HP regen
+          debuff = {
+            id: "ocean_drake_buff",
+            name: "Ocean Dragon Soul",
+            description: "+5 HP regen per turn",
+            duration: -1, // Permanent
+            maxDuration: -1,
+            effects: [{ stat: "hpRegen", modifier: 5, type: "add" }],
+            damagePerTurn: 0,
+            damageType: "physical",
+            healPerTurn: 0,
+            unique: true,
+            appliedAt: Date.now(),
+            casterPlayerId: playerId,
+            casterName: "Ocean Drake",
+          } as Debuff;
+          break;
+
+        case "Chemtech Drake":
+          // +10 durability
+          debuff = {
+            id: "chemtech_drake_buff",
+            name: "Chemtech Dragon Soul",
+            description: "+10 durability",
+            duration: -1, // Permanent
+            maxDuration: -1,
+            effects: [{ stat: "durability", modifier: 10, type: "add" }],
+            damagePerTurn: 0,
+            damageType: "physical",
+            healPerTurn: 0,
+            unique: true,
+            appliedAt: Date.now(),
+            casterPlayerId: playerId,
+            casterName: "Chemtech Drake",
+          } as Debuff;
+          break;
+
+        case "Elder Dragon":
+          // Grant Elder buff - execute enemies below 15% HP (6 turns)
+          debuff = {
+            id: "elder_drake_buff",
+            name: "Elder Dragon Buff",
+            description: "Execute enemies below 15% HP",
+            duration: 6,
+            maxDuration: 6,
+            effects: [], // No stat effects, execution is handled in damage logic
+            damagePerTurn: 0,
+            damageType: "physical",
+            healPerTurn: 0,
+            unique: true,
+            appliedAt: Date.now(),
+            casterPlayerId: playerId,
+            casterName: "Elder Dragon",
+          } as Debuff;
+          break;
+      }
+
+      if (debuff) {
+        chessObject.applyDebuff(chessObject, debuff);
+      }
+    });
+  }
+
+  /**
+   * Apply Hand of Baron buff to all player's pieces
+   */
+  private applyHandOfBaronBuff(playerId: string): void {
+    // Hand of Baron Buff:
+    // - Minions and Siege Minions: +40 AD and +40 Physical Resistance
+    // - Champions: +20 AP, +20 AD, +20 Physical Resistance, +20 Magic Resistance
+    const playerPieces = this.game.board.filter(
+      (chess) => chess.ownerId === playerId
+    );
+
+    playerPieces.forEach((chess) => {
+      const chessObject = ChessFactory.createChess(chess, this.game);
+      const isMinion = chessObject.isMinion();
+      const isChampion = chessObject.isChampion();
+
+      if (isMinion) {
+        chessObject.applyDebuff(chessObject, {
+          id: "baron_buff",
+          name: "Baron Buff",
+          description:
+            "Gain +20 AD and +20 AP, and +20 Physical and Magic Resistance. Minions cannot be affected by diagonal execution.",
+          duration: 8,
+          maxDuration: 8,
+          effects: [
+            { stat: "ad", modifier: 20, type: "add" },
+            { stat: "ap", modifier: 20, type: "add" },
+            { stat: "physicalResistance", modifier: 20, type: "add" },
+            { stat: "magicResistance", modifier: 20, type: "add" },
+          ],
+          damagePerTurn: 0,
+          damageType: "physical",
+          healPerTurn: 0,
+          unique: true,
+          appliedAt: Date.now(),
+          casterPlayerId: playerId,
+          casterName: "Baron",
+        } as Debuff);
+      } else if (isChampion) {
+        chessObject.applyDebuff(chessObject, {
+          id: "baron_buff",
+          name: "Baron Buff",
+          description: "Gain +20 AP, +20 AD, +20 Physical and Magic Resistance.",
+          duration: 8,
+          maxDuration: 8,
+          effects: [
+            { stat: "ap", modifier: 20, type: "add" },
+            { stat: "ad", modifier: 20, type: "add" },
+            { stat: "physicalResistance", modifier: 20, type: "add" },
+            { stat: "magicResistance", modifier: 20, type: "add" },
+          ],
+          damagePerTurn: 0,
+          damageType: "physical",
+          healPerTurn: 0,
+          unique: true,
+          appliedAt: Date.now(),
+          casterPlayerId: playerId,
+          casterName: "Baron",
+        } as Debuff);
+      }
+    });
   }
 }

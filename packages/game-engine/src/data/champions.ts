@@ -142,7 +142,7 @@ export const champions: ChampionData[] = [
       },
     },
     aura: {
-      id: "janna_tailwind",
+      id: "aura_janna_tailwind",
       name: "Tailwind",
       description: "Grants +1 to adjacent allied chess pieces",
       range: 1,

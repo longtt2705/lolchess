@@ -1226,7 +1226,8 @@ export const ChessDetailPanelRenderer: React.FC<{
                         </div>
                         {(detailViewPiece as any).debuffs && (detailViewPiece as any).debuffs.length > 0 ? (
                             (detailViewPiece as any).debuffs.map((debuff: any, index: number) => {
-                                const isAura = debuff.duration === -1;
+                                const isAura = debuff.id.startsWith('aura_');
+                                const isInfinite = debuff.duration === -1;
                                 const isTransformation = debuff.isTransformation === true;
                                 const isBuff = debuff.effects?.some((e: any) => e.modifier > 0) || false;
                                 const debuffClass = isTransformation ? 'transform-debuff' : (isAura ? 'aura-debuff' : (isBuff ? 'buff-debuff' : ''));
@@ -1245,21 +1246,46 @@ export const ChessDetailPanelRenderer: React.FC<{
                                                 {debuff.casterName && (
                                                     <div className="debuff-source">From: {debuff.casterName}</div>
                                                 )}
-                                                <div className={`card-duration ${isAura ? 'active' : debuff.duration <= 1 ? 'cooling' : 'ready'}`}>
-                                                    {isAura
-                                                        ? "🌟 Active (Aura)"
-                                                        : `⏱ ${debuff.duration} turn${debuff.duration !== 1 ? 's' : ''} left`}
-                                                </div>
+                                                {isAura && <div className={`card-duration ${isAura ? 'active' : debuff.duration <= 1 ? 'cooling' : 'ready'}`}>
+                                                    Active (Aura)
+                                                </div>}
+                                                {!isInfinite &&
+                                                    <div className={`card-duration ${isAura ? 'active' : debuff.duration <= 1 ? 'cooling' : 'ready'}`}>
+                                                        {`⏱ ${debuff.duration} turn${debuff.duration !== 1 ? 's' : ''} left`}
+                                                    </div>}
                                             </div>
                                         </div>
                                         <div className="card-description">
                                             {debuff.description || 'No description available'}
                                         </div>
                                         {debuff.effects && debuff.effects.length > 0 && (
-                                            <div className="debuff-effects">
+                                            <div style={{
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                gap: '6px',
+                                                marginTop: '8px'
+                                            }}>
                                                 {debuff.effects.filter((effect: any) => effect.modifier !== 0).map((effect: any, idx: number) => (
-                                                    <div key={idx} className={`effect-tag ${effect.modifier > 0 ? 'positive' : 'negative'}`}>
-                                                        {effect.stat.toUpperCase()} {effect.modifier > 0 ? '+' : ''}{effect.modifier}
+                                                    <div key={idx} style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        background: effect.modifier > 0 ? 'rgba(200, 155, 60, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                                        border: effect.modifier > 0 ? '1px solid rgba(200, 155, 60, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                                                        borderRadius: '4px',
+                                                        padding: '3px 6px',
+                                                        fontSize: '11px',
+                                                        color: 'var(--primary-text)',
+                                                        fontWeight: 600,
+                                                    }}>
+                                                        <img
+                                                            src={getStatIcon(effect.stat)}
+                                                            alt={effect.stat}
+                                                            style={{ width: '14px', height: '14px' }}
+                                                        />
+                                                        <span style={{ color: effect.modifier > 0 ? 'var(--gold)' : '#ef4444' }}>
+                                                            {effect.modifier > 0 ? '+' : ''}{effect.type === 'percentAdd' ? effect.modifier : effect.modifier}{effect.type === 'percentAdd' ? '%' : ''}
+                                                        </span>
                                                     </div>
                                                 ))}
                                             </div>

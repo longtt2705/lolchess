@@ -1115,20 +1115,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-            type: championData.skill.type,
-            name: championData.skill.name,
-            description: championData.skill.description,
-            cooldown: championData.skill.cooldown,
-            currentCooldown: championData.skill.currentCooldown || 0,
-            attackRange: championData.skill.attackRange ||
-              championData.stats.attackRange || {
-                range: 1,
-                diagonal: true,
-                horizontal: true,
-                vertical: true,
-              },
-            targetTypes: championData.skill.targetTypes || "none",
-          }
+          type: championData.skill.type,
+          name: championData.skill.name,
+          description: championData.skill.description,
+          cooldown: championData.skill.cooldown,
+          currentCooldown: championData.skill.currentCooldown || 0,
+          attackRange: championData.skill.attackRange ||
+            championData.stats.attackRange || {
+            range: 1,
+            diagonal: true,
+            horizontal: true,
+            vertical: true,
+          },
+          targetTypes: championData.skill.targetTypes || "none",
+        }
         : undefined,
       items: [],
       debuffs: [],
@@ -1171,7 +1171,7 @@ export class GameLogic {
   // Spawn neutral monsters according to RULE.md
   private static spawnNeutralMonsters(game: Game): Game {
     // Drake spawns at i4 at end of Red's 5th turn (round 10)
-    if (game.currentRound === 10) {
+    if (game.currentRound === 5) {
       this.spawnDrake(game);
     }
 
@@ -1194,7 +1194,7 @@ export class GameLogic {
     "Hextech Drake",
     "Ocean Drake",
     "Chemtech Drake",
-    "Elder Drake",
+    "Elder Dragon",
   ];
 
   private static spawnDrake(game: Game): void {
@@ -1224,8 +1224,8 @@ export class GameLogic {
     let drakeResistance: number;
 
     if (game.drakesKilled >= 4) {
-      // After 4 drakes killed, only Elder Drake spawns
-      drakeName = "Elder Drake";
+      // After 4 drakes killed, only Elder Dragon spawns
+      drakeName = "Elder Dragon";
       drakeHp = 250;
       drakeResistance = 30;
     } else {
@@ -1352,8 +1352,8 @@ export class GameLogic {
     // This would need to be implemented with a death tracking system
     // For now, we'll implement basic respawn logic
 
-    // Check for Drake respawn (every 10 turns after initial spawn if dead)
-    if (game.currentRound > 10 && (game.currentRound - 10) % 10 === 0) {
+    // Check for Drake respawn (every 5 turns after initial spawn if dead)
+    if (game.currentRound > 5 && (game.currentRound - 5) % 5 === 0) {
       // Check if any drake type exists on the board
       const drake = game.board.find((chess) =>
         this.DRAKE_TYPES.includes(chess.name)
@@ -1662,6 +1662,12 @@ export class GameLogic {
   }
 
   // Award buffs for killing neutral monsters
+  /**
+   * Award gold and apply buffs for killing neutral monsters (Drakes, Baron)
+   * @deprecated This method is kept for backward compatibility.
+   * The logic is now handled in ChessObject.awardMonsterKillReward to avoid circular dependencies.
+   * ChessObject calls it internally when a monster is killed.
+   */
   public static awardMonsterKillReward(
     game: Game,
     killerPlayerId: string,
@@ -1826,11 +1832,11 @@ export class GameLogic {
           } as Debuff;
           break;
 
-        case "Elder Drake":
+        case "Elder Dragon":
           // Grant Elder buff - execute enemies below 15% HP (6 turns)
           debuff = {
             id: "elder_drake_buff",
-            name: "Elder Drake",
+            name: "Elder Dragon",
             description: "Execute enemies below 15% HP",
             duration: 6,
             maxDuration: 6,
@@ -1841,7 +1847,7 @@ export class GameLogic {
             unique: true,
             appliedAt: Date.now(),
             casterPlayerId: playerId,
-            casterName: "Elder Drake",
+            casterName: "Elder Dragon",
           } as Debuff;
           break;
       }
