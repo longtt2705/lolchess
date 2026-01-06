@@ -179,6 +179,10 @@ export function createEmptyGame(seed: number): Game {
       roundTime: 60,
       startingGold: 0,
     },
+    // Dragon Soul System - 6 drake types, only 4 will spawn per game
+    drakePool: ["Infernal", "Cloud", "Mountain", "Hextech", "Ocean", "Chemtech"],
+    drakesKilled: 0,
+    elderDrakeKillerTeam: null,
   };
 }
 

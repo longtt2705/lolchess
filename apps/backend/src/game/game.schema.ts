@@ -661,6 +661,19 @@ export class GameSchema implements GameType {
 
   @Prop({ required: true, default: () => Date.now() })
   rngState: number; // Current RNG state (for save/load)
+
+  // Dragon Soul System
+  @Prop({
+    type: [String],
+    default: ["Infernal", "Cloud", "Mountain", "Hextech", "Ocean", "Chemtech"],
+  })
+  drakePool: string[]; // Available drake types to spawn (starts with 6, removes on spawn)
+
+  @Prop({ default: 0 })
+  drakesKilled: number; // Total drakes killed in game
+
+  @Prop({ type: String, default: null })
+  elderDrakeKillerTeam: string | null; // Player ID who has Elder buff (execute below 15% HP)
 }
 
 // Export Mongoose schema factories (only for document classes with @Schema decorator)

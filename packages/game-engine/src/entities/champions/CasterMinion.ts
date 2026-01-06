@@ -34,6 +34,10 @@ export class CasterMinion extends ChessObject {
    * Conditions: diagonal attack at range 1, target is a basic minion
    */
   protected isCriticalFlank(target: ChessObject): boolean {
+    if (this.hasBaronBuff()) {
+      return false;
+    }
+
     const deltaX = Math.abs(target.chess.position.x - this.chess.position.x);
     const deltaY = Math.abs(target.chess.position.y - this.chess.position.y);
     const isDiagonalRangeOne = deltaX === 1 && deltaY === 1;

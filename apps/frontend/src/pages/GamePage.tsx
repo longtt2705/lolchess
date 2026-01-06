@@ -1076,7 +1076,7 @@ const GamePage: React.FC = () => {
 
         // Prioritize living pieces over recently dead ones at the same position
         // This is important for Critical Flank where attacker moves to dead target's position
-        const piece = displayState?.board.find(p => p.position.x === x && p.position.y === y && p.stats.hp > 0) 
+        const piece = displayState?.board.find(p => p.position.x === x && p.position.y === y && p.stats.hp > 0)
           || displayState?.board.find(p => p.position.x === x && p.position.y === y && p.stats.hp <= 0 && p.deadAtRound === displayState?.currentRound - 1)
 
         let squareClass = 'square'

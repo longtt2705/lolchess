@@ -28,5 +28,9 @@ export interface Game {
   shopRefreshRound: number; // Track when shop was last refreshed
   rngSeed: number; // Initial seed for this game (for replays)
   rngState: number; // Current RNG state (for save/load)
+  // Dragon Soul System
+  drakePool: string[]; // Available drake types to spawn (starts with 6, removes on spawn)
+  drakesKilled: number; // Total drakes killed in game
+  elderDrakeKillerTeam: string | null; // Player ID who has Elder buff (execute below 15% HP)
 }
 

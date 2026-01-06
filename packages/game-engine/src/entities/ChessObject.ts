@@ -200,6 +200,19 @@ export class ChessObject {
     }
     chess.postTakenDamage(this, finalDamage, damageType, fromAttack);
 
+    // Elder Drake execute: if attacker has Elder buff debuff and target is below 15% HP, execute
+    const hasElderBuff = this.chess.debuffs?.some(
+      (debuff) => debuff.id === "elder_drake_buff"
+    );
+    if (
+      hasElderBuff &&
+      chess.chess.stats.hp > 0 &&
+      chess.chess.stats.hp < chess.chess.stats.maxHp * 0.15 &&
+      damageType !== "non-lethal"
+    ) {
+      chess.chess.stats.hp = 0;
+    }
+
     if (chess.chess.stats.hp <= 0) {
       chess.chess.stats.hp = 0;
 
@@ -211,7 +224,7 @@ export class ChessObject {
 
         // Check if killed monster was neutral for special rewards
         if (
-          chess.chess.name === "Drake" ||
+          this.isDrake(chess.chess.name) ||
           chess.chess.name === "Baron Nashor"
         ) {
           // Import GameLogic to award monster kill rewards
@@ -576,7 +589,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -587,7 +600,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -886,8 +899,13 @@ export class ChessObject {
       });
     });
 
-    // Sort modifiers: "add" first, then "multiply", then "set"
-    const sortOrder = { add: 0, multiply: 1, set: 2 };
+    // Sort modifiers: "add" first, then "percentAdd", then "multiply", then "set"
+    const sortOrder: Record<string, number> = {
+      add: 0,
+      percentAdd: 1,
+      multiply: 2,
+      set: 3,
+    };
     modifiers.sort((a, b) => {
       const orderA = sortOrder[a.type] ?? 999;
       const orderB = sortOrder[b.type] ?? 999;
@@ -913,6 +931,9 @@ export class ChessObject {
   ): number {
     if (type === "add") {
       return Math.round(currentValue + modifier);
+    } else if (type === "percentAdd") {
+      // Percentage increase: +15 means multiply by 1.15
+      return Math.round(currentValue * (1 + modifier / 100));
     } else if (type === "multiply") {
       return Math.round(currentValue * modifier);
     } else if (type === "set") {
@@ -1234,7 +1255,10 @@ export class ChessObject {
     damageMultiplier: number = 1,
     ignoreValidation: boolean = false
   ): void {
-    if (!ignoreValidation && !this.validateAttack(chess.chess.position, this.attackRange)) {
+    if (
+      !ignoreValidation &&
+      !this.validateAttack(chess.chess.position, this.attackRange)
+    ) {
       throw new Error("Invalid attack");
     }
     if (chess.chess.items.some((item) => item.id === "bramble_vest")) {
@@ -1316,7 +1340,6 @@ export class ChessObject {
     forceCritical: boolean = false,
     damageMultiplier: number = 1
   ): number {
-
     // Critical strike system from RULE.md: 20% chance, 125% damage
     this.willCrit = this.isCriticalStrike(forceCritical);
     let damage = this.ad;
@@ -1703,5 +1726,35 @@ export class ChessObject {
     }
 
     return true;
+  }
+
+  public isMinion(): boolean {
+    return (
+      this.chess.name === "Melee Minion" ||
+      this.chess.name === "Caster Minion" ||
+      this.chess.name === "Siege Minion" ||
+      this.chess.name === "Super Minion"
+    );
+  }
+
+  public isChampion(): boolean {
+    return !this.isMinion() && this.chess.name !== "Poro";
+  }
+
+  // Check if a chess piece is any type of drake
+  protected isDrake(name: string): boolean {
+    return (
+      name === "Infernal Drake" ||
+      name === "Cloud Drake" ||
+      name === "Mountain Drake" ||
+      name === "Hextech Drake" ||
+      name === "Ocean Drake" ||
+      name === "Chemtech Drake" ||
+      name === "Elder Drake"
+    );
+  }
+
+  protected hasBaronBuff(): boolean {
+    return this.chess.debuffs?.some((debuff) => debuff.id === "baron_buff");
   }
 }
