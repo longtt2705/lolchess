@@ -85,12 +85,12 @@ export interface ChessPiece {
       lShape?: boolean;
     };
     targetTypes?:
-    | "square"
-    | "squareInRange"
-    | "ally"
-    | "allyMinion"
-    | "enemy"
-    | "none";
+      | "square"
+      | "squareInRange"
+      | "ally"
+      | "allyMinion"
+      | "enemy"
+      | "none";
     payload?: {
       currentModuleIndex?: number;
       cumulativeDamage?: number;
@@ -101,6 +101,31 @@ export interface ChessPiece {
   shields?: Array<{
     amount: number;
     duration: number;
+  }>;
+  debuffs?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    duration: number;
+    maxDuration: number;
+    effects: Array<{
+      stat: string;
+      modifier: number;
+      type: string;
+    }>;
+    damagePerTurn: number;
+    damageType: "physical" | "magic" | "true" | "non-lethal";
+    stun?: boolean;
+    healPerTurn: number;
+    unique: boolean;
+    currentStacks?: number;
+    maximumStacks?: number;
+    appliedAt: number;
+    casterPlayerId: string;
+    casterName?: string;
+    payload?: any;
+    isTransformation?: boolean;
+    onExpireId?: string;
   }>;
   items?: Array<{
     id: string;
@@ -885,7 +910,7 @@ export const useGame = (gameId: string) => {
   const isMyTurn =
     gameState && currentUser
       ? gameState.currentRound % 2 ===
-      (gameState.bluePlayer === currentUser.id ? 1 : 0)
+        (gameState.bluePlayer === currentUser.id ? 1 : 0)
       : false;
 
   // Get current player data

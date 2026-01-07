@@ -989,6 +989,7 @@ export class GameService implements OnModuleInit {
           lifesteal: piece.stats.lifesteal || 0,
           damageAmplification: piece.stats.damageAmplification || 0,
           hpRegen: piece.stats.hpRegen || 0,
+          durability: piece.stats.durability || 0,
         },
         blue: piece.blue,
         items: piece.items
@@ -1024,6 +1025,8 @@ export class GameService implements OnModuleInit {
               casterPlayerId: debuff.casterPlayerId,
               casterName: debuff.casterName,
               payload: debuff.payload || {},
+              isTransformation: debuff.isTransformation || false,
+              onExpireId: debuff.onExpireId,
             }))
           : [],
         auras: piece.auras
@@ -1079,6 +1082,7 @@ export class GameService implements OnModuleInit {
             }
           : undefined,
         deadAtRound: piece.deadAtRound,
+        respawnAtRound: piece.respawnAtRound,
         attackProjectile: piece.attackProjectile,
       };
 

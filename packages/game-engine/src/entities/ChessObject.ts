@@ -386,6 +386,9 @@ export class ChessObject {
     if (!this.chess.shields) {
       this.chess.shields = [];
     }
+    if (this.chess.debuffs.some((debuff) => debuff.id === "venom")) {
+      amount = Math.floor(amount * 0.5);
+    }
     if (id && this.chess.shields.some((shield) => shield.id === id)) {
       this.chess.shields.forEach((shield) => {
         if (shield.id === id) {
@@ -589,7 +592,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -600,7 +603,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -2020,7 +2023,8 @@ export class ChessObject {
         chessObject.applyDebuff(chessObject, {
           id: "baron_buff",
           name: "Baron Buff",
-          description: "Gain +20 AP, +20 AD, +20 Physical and Magic Resistance.",
+          description:
+            "Gain +20 AP, +20 AD, +20 Physical and Magic Resistance.",
           duration: 8,
           maxDuration: 8,
           effects: [

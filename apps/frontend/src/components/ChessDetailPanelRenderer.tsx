@@ -1222,10 +1222,10 @@ export const ChessDetailPanelRenderer: React.FC<{
                     <div className="debuff-section">
                         <div className="section-header">
                             <Shield size={16} />
-                            Status Effects ({(detailViewPiece as any).debuffs?.length || 0})
+                            Status Effects ({(detailViewPiece.debuffs?.length || 0)})
                         </div>
-                        {(detailViewPiece as any).debuffs && (detailViewPiece as any).debuffs.length > 0 ? (
-                            (detailViewPiece as any).debuffs.map((debuff: any, index: number) => {
+                        {detailViewPiece.debuffs && detailViewPiece.debuffs.length > 0 ? (
+                            detailViewPiece.debuffs.map((debuff: any, index: number) => {
                                 const isAura = debuff.id.startsWith('aura_');
                                 const isInfinite = debuff.duration === -1;
                                 const isTransformation = debuff.isTransformation === true;

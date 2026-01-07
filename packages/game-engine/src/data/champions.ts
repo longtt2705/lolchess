@@ -101,7 +101,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Judgment",
       description:
-        "Garen spins his sword, dealing 100% AD as physical damage to all adjacent enemies each turn and gaining a shield of 20 + 100% AP for 2 turns.",
+        "Garen spins his sword, dealing 100% AD as physical damage to all adjacent enemies each turn and gaining a shield of 20 + 60% AP for 2 turns.",
       cooldown: 4,
       currentCooldown: 0,
       targetTypes: "none",

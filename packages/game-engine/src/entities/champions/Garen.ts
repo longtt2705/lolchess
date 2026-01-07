@@ -11,7 +11,7 @@ export class Garen extends ChessObject {
    */
   skill(position?: Square): void {
     // Apply shield: 20 base + 100% AP for 2 turns
-    const shieldAmount = 20 + this.ap * 1;
+    const shieldAmount = 20 + this.ap * 0.6;
     this.applyShield(shieldAmount, 2, "garen_judgment_shield");
 
     // Deal immediate damage to all adjacent enemies on activation

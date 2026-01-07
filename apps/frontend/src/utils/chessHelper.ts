@@ -3,6 +3,13 @@ import { ChessPiece } from "@/hooks/useGame";
 // Damage thresholds for unlocking Viktor modules
 export const VIKTOR_DAMAGE_THRESHOLDS = [50, 150, 300];
 
+const getTransformationIcon = (piece: ChessPiece) => {
+  if (piece.name === "Nasus") {
+    return "/icons/nasus_skill.webp";
+  }
+  return "/icons/transformation.webp";
+};
+
 export const getImageUrl = (piece: ChessPiece) => {
   if (piece.name === "Poro") {
     return "/icons/poro.png";
@@ -32,6 +39,11 @@ export const getImageUrl = (piece: ChessPiece) => {
   }
   if (piece.name === "Baron Nashor") {
     return "/icons/baron.webp";
+  }
+  if (piece.debuffs && piece.debuffs.length > 0) {
+    if (piece.debuffs.some((debuff) => debuff.isTransformation)) {
+      return getTransformationIcon(piece);
+    }
   }
   return `/icons/${piece.name.toLowerCase()}.webp`;
 };
@@ -151,13 +163,34 @@ export const getIconConfig = (debuff: any) => {
       src: "/icons/nasus_skill.webp",
       alt: "Sands of Ruin",
     },
-    infernal_drake_buff: { src: "/icons/InfernalDragonSoul.png", alt: "Infernal Dragon Soul" },
-    cloud_drake_buff: { src: "/icons/CloudDragonSoul.png", alt: "Cloud Dragon Soul" },
-    mountain_drake_buff: { src: "/icons/MountainDragonSoul.png", alt: "Mountain Dragon Soul" },
-    hextech_drake_buff: { src: "/icons/HextechDragonSoul.png", alt: "Hextech Dragon Soul" },
-    ocean_drake_buff: { src: "/icons/OceanDragonSoul.png", alt: "Ocean Dragon Soul" },
-    chemtech_drake_buff: { src: "/icons/ChemtechDragonSoul.png", alt: "Chemtech Dragon Soul" },
-    elder_drake_buff: { src: "/icons/elder dragon.webp", alt: "Elder Dragon Buff" },
+    infernal_drake_buff: {
+      src: "/icons/InfernalDragonSoul.png",
+      alt: "Infernal Dragon Soul",
+    },
+    cloud_drake_buff: {
+      src: "/icons/CloudDragonSoul.png",
+      alt: "Cloud Dragon Soul",
+    },
+    mountain_drake_buff: {
+      src: "/icons/MountainDragonSoul.png",
+      alt: "Mountain Dragon Soul",
+    },
+    hextech_drake_buff: {
+      src: "/icons/HextechDragonSoul.png",
+      alt: "Hextech Dragon Soul",
+    },
+    ocean_drake_buff: {
+      src: "/icons/OceanDragonSoul.png",
+      alt: "Ocean Dragon Soul",
+    },
+    chemtech_drake_buff: {
+      src: "/icons/ChemtechDragonSoul.png",
+      alt: "Chemtech Dragon Soul",
+    },
+    elder_drake_buff: {
+      src: "/icons/elder dragon.webp",
+      alt: "Elder Dragon Buff",
+    },
   };
 
   let iconConfig = debuffIconMap[debuff.id];

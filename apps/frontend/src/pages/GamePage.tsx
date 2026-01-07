@@ -122,6 +122,48 @@ const PlayerItem = styled.div`
   }
 `
 
+const DeadChampionsSection = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(200, 155, 60, 0.2);
+`
+
+const DeadChampionBadge = styled.div`
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 2px solid #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+  overflow: hidden;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(80%);
+    opacity: 0.7;
+  }
+`
+
+const RespawnTimer = styled.div`
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 4px;
+  min-width: 14px;
+  text-align: center;
+`
+
 const GameBoard = styled.div<{ isTargeting?: boolean }>`
   grid-area: game-board;
   background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(20, 25, 45, 0.95) 100%);
@@ -1309,6 +1351,30 @@ const GamePage: React.FC = () => {
               </div>
             </div>
           </PlayerItem>
+          {/* Dead champions section for current player */}
+          {(() => {
+            const deadPiecesForPlayer = displayState?.board.filter(
+              p => p.ownerId === currentPlayer?.userId && 
+                   p.stats.hp <= 0 && 
+                   p.respawnAtRound !== undefined && 
+                   p.respawnAtRound > (displayState?.currentRound || 0)
+            ) || []
+            
+            if (deadPiecesForPlayer.length === 0) return null
+            
+            return (
+              <DeadChampionsSection>
+                {deadPiecesForPlayer.map(piece => (
+                  <DeadChampionBadge key={piece.id} title={`${piece.name} - Respawns in ${piece.respawnAtRound! - (displayState?.currentRound || 0)} rounds`}>
+                    <img src={getImageUrl(piece)} alt={piece.name} />
+                    <RespawnTimer>
+                      {piece.respawnAtRound! - (displayState?.currentRound || 0)}
+                    </RespawnTimer>
+                  </DeadChampionBadge>
+                ))}
+              </DeadChampionsSection>
+            )
+          })()}
 
           {opponent && (
             <PlayerItem>
@@ -1325,6 +1391,30 @@ const GamePage: React.FC = () => {
               </div>
             </PlayerItem>
           )}
+          {/* Dead champions section for opponent */}
+          {opponent && (() => {
+            const deadPiecesForOpponent = displayState?.board.filter(
+              p => p.ownerId === opponent?.userId && 
+                   p.stats.hp <= 0 && 
+                   p.respawnAtRound !== undefined && 
+                   p.respawnAtRound > (displayState?.currentRound || 0)
+            ) || []
+            
+            if (deadPiecesForOpponent.length === 0) return null
+            
+            return (
+              <DeadChampionsSection>
+                {deadPiecesForOpponent.map(piece => (
+                  <DeadChampionBadge key={piece.id} title={`${piece.name} - Respawns in ${piece.respawnAtRound! - (displayState?.currentRound || 0)} rounds`}>
+                    <img src={getImageUrl(piece)} alt={piece.name} />
+                    <RespawnTimer>
+                      {piece.respawnAtRound! - (displayState?.currentRound || 0)}
+                    </RespawnTimer>
+                  </DeadChampionBadge>
+                ))}
+              </DeadChampionsSection>
+            )
+          })()}
         </PlayersPanel>
 
         <ChessDetailPanelRenderer

@@ -202,53 +202,6 @@ const CrownIcon = styled.div`
     }
   }
 `
-
-const TransformIndicator = styled.div`
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.95) 0%, rgba(255, 165, 0, 0.95) 100%);
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 12;
-  box-shadow: 
-    0 0 12px rgba(255, 215, 0, 0.8),
-    0 0 24px rgba(255, 165, 0, 0.4),
-    inset 0 0 8px rgba(255, 255, 255, 0.3);
-  animation: transformPulse 1.5s ease-in-out infinite;
-  
-  img {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-  }
-  
-  .transform-icon {
-    font-size: 14px;
-    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
-  }
-  
-  @keyframes transformPulse {
-    0%, 100% {
-      transform: scale(1);
-      box-shadow: 
-        0 0 12px rgba(255, 215, 0, 0.8),
-        0 0 24px rgba(255, 165, 0, 0.4);
-    }
-    50% {
-      transform: scale(1.1);
-      box-shadow: 
-        0 0 18px rgba(255, 215, 0, 1),
-        0 0 36px rgba(255, 165, 0, 0.6);
-    }
-  }
-`
-
 const ItemIconsContainer = styled.div`
   position: absolute;
   left: 2px;
@@ -420,41 +373,6 @@ const GoldSpentText = styled(motion.div)`
   display: flex;
   align-items: center;
   gap: 4px;
-`
-
-const DeathCounterOverlay = styled(motion.div)`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  pointer-events: none;
-`
-
-const DeathCounterBadge = styled.div`
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  min-width: 20px;
-  height: 20px;
-  background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
-  border: 2px solid #888;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  z-index: 15;
 `
 
 export const ChessPieceRenderer: React.FC<{
@@ -686,27 +604,6 @@ export const ChessPieceRenderer: React.FC<{
         <CrownIcon title="King">
           <Crown />
         </CrownIcon>
-      )}
-
-      {/* Transform Indicator - Show when piece has transformation debuff */}
-      {(piece as any).debuffs?.some((d: any) => d.isTransformation) && (
-        <TransformIndicator title="Transformed">
-          <span className="transform-icon">🔥</span>
-        </TransformIndicator>
-      )}
-
-      {/* Death Counter - Show respawn timer for dead champions */}
-      {isDead && isChampion && piece.respawnAtRound !== undefined && piece.respawnAtRound > currentRound && (
-        <>
-          <DeathCounterOverlay
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          />
-          <DeathCounterBadge title={`Respawns at round ${piece.respawnAtRound}`}>
-            {piece.respawnAtRound - currentRound}
-          </DeathCounterBadge>
-        </>
       )}
 
       {/* Item Icons (Left Side) - Only for champions */}
