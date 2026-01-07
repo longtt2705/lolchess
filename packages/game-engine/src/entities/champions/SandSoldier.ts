@@ -106,7 +106,7 @@ export class SandSoldier extends ChessObject {
 
   /**
    * Override attack to deal bonus magic damage based on Azir's AP
-   * Bonus damage: 5 + 25% of Azir's AP
+   * Bonus damage: 15 + 35% of Azir's AP
    */
   protected attack(
     chess: ChessObject,
@@ -116,10 +116,10 @@ export class SandSoldier extends ChessObject {
     const baseDamage = super.attack(chess, forceCritical, damageMultiplier);
 
     let bonusDamage = 0;
-    // Calculate and deal bonus magic damage: 15 + 30% of Azir's AP
+    // Calculate and deal bonus magic damage: 15 + 35% of Azir's AP
     const azir = this.getAzirChess();
     if (azir) {
-      bonusDamage = 15 + azir.ap * 0.3;
+      bonusDamage = 15 + azir.ap * 0.35;
       if (bonusDamage > 0) {
         azir.dealDamage(
           chess,
@@ -161,7 +161,7 @@ export class SandSoldier extends ChessObject {
           guinsooRageblade.currentCooldown =
             azir.getItemCooldown(guinsooRageblade);
           // Trigger Sand Soldier's additional attack (not Azir's)
-          this.executeAttack(chess, false, 0.5);
+          this.executeAttack(chess, false, 0.6);
         }
       }
 
