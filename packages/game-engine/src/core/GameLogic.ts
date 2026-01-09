@@ -23,6 +23,8 @@ import {
   GameEvent,
   Player,
   Square,
+  SummonerSpellType,
+  createSummonerSpell,
 } from "../types";
 
 // Shop rotation constants
@@ -671,7 +673,9 @@ export class GameLogic {
   public static initGame(
     game: Game,
     blueChampions?: string[],
-    redChampions?: string[]
+    redChampions?: string[],
+    blueSummonerSpells?: Record<string, SummonerSpellType>,
+    redSummonerSpells?: Record<string, SummonerSpellType>
   ): Game {
     if (!game.bluePlayer || !game.redPlayer) {
       throw new Error("Both players must be assigned before initializing game");
@@ -680,10 +684,10 @@ export class GameLogic {
     game.board = [];
 
     // Initialize Blue side (ranks 1 and 2)
-    this.initBluePieces(game, blueChampions);
+    this.initBluePieces(game, blueChampions, blueSummonerSpells);
 
     // Initialize Red side (ranks 7 and 8)
-    this.initRedPieces(game, redChampions);
+    this.initRedPieces(game, redChampions, redSummonerSpells);
 
     // Set initial game state
     game.status = "in_progress";
@@ -717,7 +721,11 @@ export class GameLogic {
     return game;
   }
 
-  private static initBluePieces(game: Game, champions?: string[]): void {
+  private static initBluePieces(
+    game: Game,
+    champions?: string[],
+    summonerSpells?: Record<string, SummonerSpellType>
+  ): void {
     const bluePlayerId = game.bluePlayer!;
 
     // Rank 1 (y=0): Back rank pieces
@@ -739,11 +747,13 @@ export class GameLogic {
     championPositions.forEach((x, index) => {
       const championName =
         champions && champions[index] ? champions[index] : "Garen"; // Default champion
+      const spellType = summonerSpells?.[championName];
       const champion = this.createChampionPiece(
         championName,
         { x, y: 0 },
         bluePlayerId,
-        true
+        true,
+        spellType
       );
       game.board.push(champion);
     });
@@ -765,7 +775,11 @@ export class GameLogic {
     }
   }
 
-  private static initRedPieces(game: Game, champions?: string[]): void {
+  private static initRedPieces(
+    game: Game,
+    champions?: string[],
+    summonerSpells?: Record<string, SummonerSpellType>
+  ): void {
     const redPlayerId = game.redPlayer!;
 
     // Rank 8 (y=7): Back rank pieces
@@ -787,8 +801,15 @@ export class GameLogic {
     championPositions.forEach((x, index) => {
       const championName =
         champions && champions[index] ? champions[index] : "Aatrox"; // Default champion
+      const spellType = summonerSpells?.[championName];
       game.board.push(
-        this.createChampionPiece(championName, { x, y: 7 }, redPlayerId, false)
+        this.createChampionPiece(
+          championName,
+          { x, y: 7 },
+          redPlayerId,
+          false,
+          spellType
+        )
       );
     });
 
@@ -1066,7 +1087,8 @@ export class GameLogic {
     championName: string,
     position: Square,
     ownerId: string,
-    isBlue: boolean
+    isBlue: boolean,
+    summonerSpellType?: SummonerSpellType
   ): Chess {
     // Import champion data to get accurate stats
     const championData = champions.find(
@@ -1137,6 +1159,9 @@ export class GameLogic {
       debuffs: [],
       auras: championData.aura ? [championData.aura] : [],
       shields: [],
+      summonerSpell: summonerSpellType
+        ? createSummonerSpell(summonerSpellType)
+        : undefined,
     } as Chess;
 
     // Initialize Viktor's module data in skill.payload if this is Viktor

@@ -441,6 +441,44 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage("setSummonerSpells")
+  async handleSetSummonerSpells(
+    @MessageBody()
+    data: {
+      gameId: string;
+      playerId: string;
+      spellAssignments: Record<string, string>;
+    },
+    @ConnectedSocket() client: Socket
+  ) {
+    try {
+      const { gameId, playerId, spellAssignments } = data;
+
+      // Process the summoner spell assignment
+      const result = await this.gameService.setSummonerSpells(
+        gameId,
+        playerId,
+        spellAssignments as Record<string, any>
+      );
+
+      if (result) {
+        // Broadcast updated state to all players in the room
+        this.server.to(gameId).emit("banPickStateUpdate", {
+          game: result,
+          banPickState: result.banPickState,
+          lastAction: {
+            type: "setSummonerSpells",
+            playerId,
+            timestamp: Date.now(),
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error setting summoner spells:", error);
+      client.emit("error", { message: error.message });
+    }
+  }
+
   @SubscribeMessage("setReady")
   async handleSetReady(
     @MessageBody()
@@ -653,6 +691,66 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
           });
 
           game = reorderResult; // Update game reference
+        }
+      }
+
+      // Add another small delay before setting summoner spells
+      await new Promise((resolve) =>
+        setTimeout(resolve, BOT_ACTION_DELAY_MS / 2)
+      );
+
+      // Set bot summoner spells
+      if (isBotBlue && banPickState.blueChampionOrder.length > 0) {
+        const spellAssignments = this.simpleBotService.getBotSpellAssignments(
+          banPickState.blueChampionOrder
+        );
+
+        const spellResult = await this.gameService.setSummonerSpells(
+          gameId,
+          game.bluePlayer,
+          spellAssignments
+        );
+
+        if (spellResult) {
+          this.server.to(gameId).emit("banPickStateUpdate", {
+            game: spellResult,
+            banPickState: spellResult.banPickState,
+            lastAction: {
+              type: "setSummonerSpells",
+              playerId: game.bluePlayer,
+              timestamp: Date.now(),
+              isBot: true,
+            },
+          });
+
+          game = spellResult; // Update game reference
+        }
+      }
+
+      if (isBotRed && banPickState.redChampionOrder.length > 0) {
+        const spellAssignments = this.simpleBotService.getBotSpellAssignments(
+          banPickState.redChampionOrder
+        );
+
+        const spellResult = await this.gameService.setSummonerSpells(
+          gameId,
+          game.redPlayer,
+          spellAssignments
+        );
+
+        if (spellResult) {
+          this.server.to(gameId).emit("banPickStateUpdate", {
+            game: spellResult,
+            banPickState: spellResult.banPickState,
+            lastAction: {
+              type: "setSummonerSpells",
+              playerId: game.redPlayer,
+              timestamp: Date.now(),
+              isBot: true,
+            },
+          });
+
+          game = spellResult; // Update game reference
         }
       }
 

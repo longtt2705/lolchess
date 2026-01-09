@@ -6,6 +6,7 @@ import { Debuff } from "./Debuff";
 import { Aura } from "./Aura";
 import { Shield } from "./Shield";
 import { AttackProjectile } from "./AttackProjectile";
+import { SummonerSpell } from "./SummonerSpell";
 
 export interface Chess {
   id: string;
@@ -27,5 +28,6 @@ export interface Chess {
   attackProjectile?: AttackProjectile;
   deadAtRound?: number; // Track which round the piece died
   respawnAtRound?: number; // Round when this piece should respawn (if dead)
+  summonerSpell?: SummonerSpell; // Summoner spell assigned during order phase
 }
 

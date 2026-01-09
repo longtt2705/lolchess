@@ -1,3 +1,5 @@
+import { SummonerSpellType } from "./SummonerSpell";
+
 export interface BanPickState {
   phase: string;
   currentTurn: string;
@@ -12,6 +14,8 @@ export interface BanPickState {
   redChampionOrder: string[]; // Final champion order after reordering
   blueReady: boolean; // Blue player confirmed their order
   redReady: boolean; // Red player confirmed their order
+  blueSummonerSpells: Record<string, SummonerSpellType>; // Champion name -> spell type
+  redSummonerSpells: Record<string, SummonerSpellType>; // Champion name -> spell type
   turnStartTime: number;
   turnTimeLimit: number;
 }

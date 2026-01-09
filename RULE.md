@@ -102,6 +102,15 @@ This encourages maintaining formation and protecting the Poro with surrounding m
 ## 5. GAMEPLAY & TURN STRUCTURE
 Blue Side always moves first. On your turn:
 
+### Optional: Use Summoner Spell
+At the **start of your turn**, you may use **one** summoner spell. Once you use a summoner spell or perform any board action, you cannot use more summoner spells until your next turn.
+* **Summoner Spells:**
+    * **Flash:** Teleport the caster to a target square. (Cooldown: 20 turns)
+    * **Ghost:** Increase the speed of the caster by 1 and become ghost (do not block the ally attack) for 3 turns. (Cooldown: 10 turns)
+    * **Heal:** Heal the caster and the local ally with the lowest HP. (Cooldown: 15 turns)
+    * **Barrier:** Create a barrier around your pieces to block incoming damage. (Cooldown: 15 turns)
+    * **Smite:** Deal 50 true damage to minions or neutral monsters. (Cooldown: 10 turns)
+
 ### Optional: Buy Item (Before Board Action)
 At the **start of your turn**, you may purchase **one** item from the shop for a champion. Once you buy an item or perform any board action, you cannot buy more items until your next turn.
 

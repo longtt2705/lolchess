@@ -6,6 +6,17 @@ import { useAppDispatch, useAppSelector } from "./redux";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
+// Summoner spell types
+export type SummonerSpellType = "Flash" | "Ghost" | "Heal" | "Barrier" | "Smite";
+
+export const SUMMONER_SPELL_TYPES: SummonerSpellType[] = [
+  "Flash",
+  "Ghost",
+  "Heal",
+  "Barrier",
+  "Smite",
+];
+
 interface BanPickState {
   phase: "ban" | "pick" | "reorder" | "complete";
   currentTurn: "blue" | "red";
@@ -27,13 +38,17 @@ interface BanPickState {
   blueReady?: boolean; // Blue player confirmed their order
   redReady?: boolean; // Red player confirmed their order
 
+  // Summoner spell assignments
+  blueSummonerSpells?: Record<string, SummonerSpellType>; // Champion name -> spell type
+  redSummonerSpells?: Record<string, SummonerSpellType>; // Champion name -> spell type
+
   // Timing
   turnStartTime: number;
   turnTimeLimit: number; // seconds
 }
 
 interface BanPickAction {
-  type: "ban" | "pick" | "skip_ban" | "reorder" | "setReady";
+  type: "ban" | "pick" | "skip_ban" | "reorder" | "setReady" | "setSummonerSpells";
   championId?: string;
   playerId: string;
   ready?: boolean;
@@ -351,8 +366,32 @@ export const useBanPick = (gameId: string) => {
     });
   };
 
+  const setSummonerSpells = (spellAssignments: Record<string, SummonerSpellType>) => {
+    if (!socketRef.current || !user || !gameId) {
+      toast.error("Not connected to ban/pick server");
+      return;
+    }
+
+    if (!banPickState || banPickState.phase !== "reorder") {
+      toast.error("Not in reorder phase");
+      return;
+    }
+
+    console.log("🔮 Setting summoner spells:", spellAssignments);
+    socketRef.current.emit("setSummonerSpells", {
+      gameId,
+      playerId: user.id,
+      spellAssignments,
+    });
+  };
+
   const isMyTurn = banPickState?.currentTurn === playerSide;
   const currentAction = banPickState?.phase === "ban" ? "ban" : "pick";
+
+  // Get current player's summoner spell assignments
+  const mySummonerSpells = playerSide === "blue" 
+    ? banPickState?.blueSummonerSpells 
+    : banPickState?.redSummonerSpells;
 
   return {
     isConnected,
@@ -369,5 +408,7 @@ export const useBanPick = (gameId: string) => {
     getBanPickState,
     reorderChampions,
     setReady,
+    setSummonerSpells,
+    mySummonerSpells,
   };
 };

@@ -15,6 +15,8 @@ import {
   ChessObject,
   ChessFactory,
   getCurrentPlayerId,
+  SummonerSpellType,
+  SUMMONER_SPELL_TYPES,
 } from "@lolchess/game-engine";
 import { SimpleBotService } from "./simple-bot.service";
 
@@ -329,6 +331,8 @@ export class GameService implements OnModuleInit {
       redChampionOrder: [],
       blueReady: false,
       redReady: false,
+      blueSummonerSpells: {},
+      redSummonerSpells: {},
       turnStartTime: Date.now(),
       turnTimeLimit: 30, // 30 seconds per turn
     };
@@ -587,6 +591,79 @@ export class GameService implements OnModuleInit {
     return gameObject;
   }
 
+  async setSummonerSpells(
+    gameId: string,
+    playerId: string,
+    spellAssignments: Record<string, SummonerSpellType>
+  ) {
+    const game = await this.gameModel.findById(gameId).exec();
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    const banPickState = game.banPickState;
+    if (!banPickState) {
+      throw new Error("Ban/pick state not found");
+    }
+
+    if (banPickState.phase !== "reorder") {
+      throw new Error("Cannot set summoner spells - not in reorder phase");
+    }
+
+    // Find player's side
+    const player = game.players.find((p) => p.userId === playerId);
+    if (!player || !player.side) {
+      throw new Error("Player not found or side not assigned");
+    }
+
+    // Validate spell assignments
+    const championOrder =
+      player.side === "blue"
+        ? banPickState.blueChampionOrder
+        : banPickState.redChampionOrder;
+
+    // Check that all assigned champions are in the player's champion list
+    for (const championName of Object.keys(spellAssignments)) {
+      if (!championOrder.includes(championName)) {
+        throw new Error(
+          `Champion ${championName} is not in player's champion list`
+        );
+      }
+    }
+
+    // Check that all spells are valid
+    const assignedSpells = Object.values(spellAssignments);
+    for (const spell of assignedSpells) {
+      if (!SUMMONER_SPELL_TYPES.includes(spell)) {
+        throw new Error(`Invalid summoner spell: ${spell}`);
+      }
+    }
+
+    // Check for duplicate spells
+    const uniqueSpells = new Set(assignedSpells);
+    if (uniqueSpells.size !== assignedSpells.length) {
+      throw new Error("Each summoner spell can only be assigned once");
+    }
+
+    // Update spell assignments
+    if (player.side === "blue") {
+      banPickState.blueSummonerSpells = spellAssignments;
+    } else {
+      banPickState.redSummonerSpells = spellAssignments;
+    }
+
+    // Save to MongoDB
+    const savedGame = await game.save();
+
+    // Convert Mongoose document to plain object
+    const gameObject = savedGame.toObject();
+
+    // Save to Redis cache
+    await this.saveGameState(gameId, gameObject, 7);
+
+    return gameObject;
+  }
+
   async setPlayerReady(
     gameId: string,
     playerId: string,
@@ -611,6 +688,41 @@ export class GameService implements OnModuleInit {
     const player = game.players.find((p) => p.userId === playerId);
     if (!player || !player.side) {
       throw new Error("Player not found or side not assigned");
+    }
+
+    // If setting ready to true, validate summoner spells
+    if (ready) {
+      const championOrder =
+        player.side === "blue"
+          ? banPickState.blueChampionOrder
+          : banPickState.redChampionOrder;
+      const spellAssignments =
+        player.side === "blue"
+          ? banPickState.blueSummonerSpells
+          : banPickState.redSummonerSpells;
+
+      // Check that all 5 champions have spells assigned
+      if (!spellAssignments || Object.keys(spellAssignments).length !== 5) {
+        throw new Error(
+          "All 5 champions must have summoner spells assigned before ready"
+        );
+      }
+
+      // Check that all champions in the order have spells
+      for (const championName of championOrder) {
+        if (!spellAssignments[championName]) {
+          throw new Error(
+            `Champion ${championName} must have a summoner spell assigned`
+          );
+        }
+      }
+
+      // Check that all 5 spells are unique
+      const assignedSpells = Object.values(spellAssignments);
+      const uniqueSpells = new Set(assignedSpells);
+      if (uniqueSpells.size !== 5) {
+        throw new Error("Each of the 5 summoner spells must be used exactly once");
+      }
     }
 
     // Update ready status
@@ -825,16 +937,24 @@ export class GameService implements OnModuleInit {
       const blueChampions = bluePlayer?.selectedChampions || [];
       const redChampions = redPlayer?.selectedChampions || [];
 
+      // Extract summoner spell assignments
+      const blueSummonerSpells = game.banPickState?.blueSummonerSpells || {};
+      const redSummonerSpells = game.banPickState?.redSummonerSpells || {};
+
       this.logger.log("Initializing with champions:", {
         blueChampions,
         redChampions,
+        blueSummonerSpells,
+        redSummonerSpells,
       });
 
       // Import GameLogic and initialize the game board
       const initializedGame = GameLogic.initGame(
         game,
         blueChampions,
-        redChampions
+        redChampions,
+        blueSummonerSpells,
+        redSummonerSpells
       );
 
       this.logger.log(
@@ -1211,6 +1331,8 @@ export class GameService implements OnModuleInit {
       redChampionOrder: [],
       blueReady: false,
       redReady: false,
+      blueSummonerSpells: {},
+      redSummonerSpells: {},
       banHistory: [],
     };
 

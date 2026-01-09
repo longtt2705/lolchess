@@ -8,6 +8,7 @@ export * from "./Item";
 export * from "./Skill";
 export * from "./Shield";
 export * from "./AttackProjectile";
+export * from "./SummonerSpell";
 export * from "./Chess";
 export * from "./Player";
 export * from "./BanPickState";

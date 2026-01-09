@@ -14,6 +14,8 @@ import {
   Skill as SkillType,
   Shield as ShieldType,
   AttackProjectile as AttackProjectileType,
+  SummonerSpell as SummonerSpellType,
+  SummonerSpellType as SummonerSpellTypeEnum,
   Chess as ChessType,
   EventPayload as EventPayloadType,
   ActionDetails as ActionDetailsType,
@@ -37,6 +39,8 @@ export type {
   SkillType as Skill,
   ShieldType as Shield,
   AttackProjectileType as AttackProjectile,
+  SummonerSpellType as SummonerSpell,
+  SummonerSpellTypeEnum as SummonerSpellTypeEnum,
   ChessType as Chess,
   EventPayloadType as EventPayload,
   ActionDetailsType as ActionDetails,
@@ -308,6 +312,21 @@ export class ShieldSchema implements ShieldType {
   duration: number;
 }
 
+@Schema()
+export class SummonerSpellSchema implements SummonerSpellType {
+  @Prop({
+    required: true,
+    enum: ["Flash", "Ghost", "Heal", "Barrier", "Smite"],
+  })
+  type: SummonerSpellTypeEnum;
+
+  @Prop({ required: true })
+  cooldown: number;
+
+  @Prop({ required: true, default: 0 })
+  currentCooldown: number;
+}
+
 export class AttackProjectileSchema implements AttackProjectileType {
   @Prop({ required: true })
   shape: string; // "bullet" | "arrow" | "orb" | "bolt" | "missile"
@@ -380,6 +399,9 @@ export class ChessSchema implements ChessType {
 
   @Prop({ type: AttackProjectileSchema })
   attackProjectile?: AttackProjectileType;
+
+  @Prop({ type: SummonerSpellSchema })
+  summonerSpell?: SummonerSpellType;
 
   @Prop()
   deadAtRound?: number; // Track which round the piece died
@@ -531,6 +553,12 @@ export class BanPickStateSchema implements BanPickStateType {
 
   @Prop({ default: false })
   redReady: boolean; // Red player confirmed their order
+
+  @Prop({ type: Object, default: {} })
+  blueSummonerSpells: Record<string, SummonerSpellTypeEnum>; // Champion name -> spell type
+
+  @Prop({ type: Object, default: {} })
+  redSummonerSpells: Record<string, SummonerSpellTypeEnum>; // Champion name -> spell type
 
   @Prop({ required: true })
   turnStartTime: number;

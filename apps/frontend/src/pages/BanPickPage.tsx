@@ -22,9 +22,18 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { useBanPick } from '../hooks/useBanPick'
+import { useBanPick, SummonerSpellType, SUMMONER_SPELL_TYPES } from '../hooks/useBanPick'
 import { useChampions, ChampionData } from '../hooks/useChampions'
 import { resetBanPick } from '../store/gameSlice'
+
+// Summoner spell icons and colors
+const SUMMONER_SPELL_INFO: Record<SummonerSpellType, { icon: string; color: string; description: string }> = {
+  Flash: { icon: '/icons/Flash.png', color: '#FFD700', description: 'Teleport to target square (CD: 20)' },
+  Ghost: { icon: '/icons/Ghost.png', color: '#87CEEB', description: '+1 speed, ghost for 3 turns (CD: 10)' },
+  Heal: { icon: '/icons/Heal.png', color: '#90EE90', description: 'Heal caster and lowest HP ally (CD: 15)' },
+  Barrier: { icon: '/icons/Barrier.png', color: '#DDA0DD', description: 'Shield to block damage (CD: 15)' },
+  Smite: { icon: '/icons/Smite.png', color: '#FF6347', description: '50 true damage to minions/monsters (CD: 10)' },
+}
 
 const BanPickContainer = styled.div`
   height: 100vh;
@@ -789,7 +798,7 @@ const ReorderContainer = styled.div`
   padding: 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   
   &::before {
     content: '';
@@ -829,6 +838,8 @@ const ChampionOrderList = styled.div`
   flex-direction: column;
   gap: 12px;
   margin-bottom: 20px;
+  position: relative;
+  overflow: visible;
 `
 
 const SortableChampionCard = styled(motion.div) <{ isDragging?: boolean; isReady?: boolean }>`
@@ -839,13 +850,13 @@ const SortableChampionCard = styled(motion.div) <{ isDragging?: boolean; isReady
   display: flex;
   align-items: center;
   gap: 16px;
-  cursor: ${props => props.isReady ? 'default' : 'grab'};
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: visible;
   
   ${props => props.isDragging && `
     opacity: 0.5;
-    cursor: grabbing;
     transform: scale(1.05);
     z-index: 1000;
   `}
@@ -853,7 +864,6 @@ const SortableChampionCard = styled(motion.div) <{ isDragging?: boolean; isReady
   ${props => !props.isReady && `
     &:hover {
       border-color: var(--gold);
-      transform: translateX(4px);
       box-shadow: 0 6px 20px rgba(200, 155, 60, 0.4);
     }
   `}
@@ -902,12 +912,141 @@ const SortableChampionCard = styled(motion.div) <{ isDragging?: boolean; isReady
     color: var(--secondary-text);
     opacity: ${props => props.isReady ? '0.3' : '0.6'};
     transition: opacity 0.3s ease;
+    cursor: ${props => props.isReady ? 'default' : 'grab'};
+    
+    &:active {
+      cursor: ${props => props.isReady ? 'default' : 'grabbing'};
+    }
     
     ${props => !props.isReady && `
       &:hover {
         opacity: 1;
       }
     `}
+  }
+
+  .spell-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    padding-right: 16px;
+  }
+`
+
+const SpellDropdown = styled.div<{ isReady?: boolean }>`
+  position: relative;
+`
+
+const SpellButton = styled.button<{ hasSpell?: boolean; spellColor?: string; isReady?: boolean }>`
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  border: 2px solid ${props => props.hasSpell ? props.spellColor || 'var(--gold)' : 'var(--border)'};
+  background: ${props => props.hasSpell
+    ? `linear-gradient(135deg, ${props.spellColor}33 0%, ${props.spellColor}11 100%)`
+    : 'var(--secondary-bg)'};
+  cursor: ${props => props.isReady ? 'default' : 'pointer'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.2s ease;
+  padding: 4px;
+  overflow: hidden;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  ${props => !props.isReady && !props.hasSpell && `
+    &:hover {
+      border-color: var(--gold);
+      background: linear-gradient(135deg, rgba(200, 155, 60, 0.2) 0%, rgba(200, 155, 60, 0.1) 100%);
+    }
+  `}
+  
+  ${props => !props.isReady && props.hasSpell && `
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 12px ${props.spellColor}66;
+    }
+  `}
+`
+
+const SpellMenu = styled(motion.div) <{ openUpward?: boolean }>`
+  position: absolute;
+  ${props => props.openUpward ? `
+    bottom: 100%;
+    margin-bottom: 8px;
+  ` : `
+    top: 100%;
+    margin-top: 8px;
+  `}
+  right: 0;
+  background: var(--secondary-bg);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  z-index: 2000;
+  min-width: 200px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  max-height: 360px;
+  overflow-y: auto;
+`
+
+const SpellOption = styled.button<{ spellColor: string; isSelected?: boolean; isDisabled?: boolean }>`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: ${props => props.isSelected
+    ? `linear-gradient(135deg, ${props.spellColor}44 0%, ${props.spellColor}22 100%)`
+    : 'transparent'};
+  cursor: ${props => props.isDisabled ? 'not-allowed' : 'pointer'};
+  opacity: ${props => props.isDisabled ? 0.4 : 1};
+  transition: all 0.2s ease;
+  
+  ${props => !props.isDisabled && `
+    &:hover {
+      background: linear-gradient(135deg, ${props.spellColor}33 0%, ${props.spellColor}11 100%);
+    }
+  `}
+  
+  .spell-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+  
+  .spell-info {
+    text-align: left;
+    flex: 1;
+    
+    .spell-name {
+      font-size: 14px;
+      font-weight: bold;
+      color: ${props => props.isDisabled ? 'var(--secondary-text)' : 'var(--primary-text)'};
+    }
+    
+    .spell-desc {
+      font-size: 11px;
+      color: var(--secondary-text);
+    }
   }
 `
 
@@ -1001,9 +1140,25 @@ interface SortableItemProps {
   index: number
   championName: string
   isReady: boolean
+  currentSpell?: SummonerSpellType
+  availableSpells: SummonerSpellType[]
+  onSpellChange: (championName: string, spell: SummonerSpellType) => void
 }
 
-const SortableItem: React.FC<SortableItemProps> = ({ id, index, championName, isReady }) => {
+const SortableItem: React.FC<SortableItemProps> = ({
+  id,
+  index,
+  championName,
+  isReady,
+  currentSpell,
+  availableSpells,
+  onSpellChange,
+}) => {
+  const [showSpellMenu, setShowSpellMenu] = useState(false)
+  const [openUpward, setOpenUpward] = useState(false)
+  const menuRef = React.useRef<HTMLDivElement>(null)
+  const buttonRef = React.useRef<HTMLButtonElement>(null)
+
   const {
     attributes,
     listeners,
@@ -1013,10 +1168,38 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, index, championName, is
     isDragging,
   } = useSortable({ id, disabled: isReady })
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowSpellMenu(false)
+      }
+    }
+
+    if (showSpellMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showSpellMenu])
+
+  // Determine if menu should open upward or downward
+  useEffect(() => {
+    if (showSpellMenu && buttonRef.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - buttonRect.bottom
+      const spaceAbove = buttonRect.top
+
+      // Open upward if more space above and not enough below
+      setOpenUpward(spaceAbove > spaceBelow && spaceBelow < 360)
+    }
+  }, [showSpellMenu])
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   }
+
+  const spellInfo = currentSpell ? SUMMONER_SPELL_INFO[currentSpell] : null
 
   return (
     <SortableChampionCard
@@ -1024,7 +1207,6 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, index, championName, is
       style={style}
       isDragging={isDragging}
       isReady={isReady}
-      {...(isReady ? {} : { ...attributes, ...listeners })}
     >
       <div className="position-number">{index + 1}</div>
       <img
@@ -1045,8 +1227,87 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, index, championName, is
           {index === 4 && "Front Row - Flex"}
         </div>
       </div>
+
+      {/* Summoner Spell Selection */}
+      <div className="spell-section" ref={menuRef}>
+        <SpellDropdown isReady={isReady}>
+          <SpellButton
+            ref={buttonRef}
+            hasSpell={!!currentSpell}
+            spellColor={spellInfo?.color}
+            isReady={isReady}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (!isReady) setShowSpellMenu(!showSpellMenu)
+            }}
+            title={spellInfo?.description || 'Select a summoner spell'}
+          >
+            {currentSpell ? (
+              <img
+                src={spellInfo?.icon}
+                alt={currentSpell}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  e.currentTarget.parentElement!.textContent = '❓'
+                }}
+              />
+            ) : (
+              '❓'
+            )}
+          </SpellButton>
+
+          <AnimatePresence>
+            {showSpellMenu && !isReady && (
+              <SpellMenu
+                openUpward={openUpward}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+              >
+                {SUMMONER_SPELL_TYPES.map((spell) => {
+                  const info = SUMMONER_SPELL_INFO[spell]
+                  const isAvailable = availableSpells.includes(spell)
+                  const isSelected = currentSpell === spell
+
+                  return (
+                    <SpellOption
+                      key={spell}
+                      spellColor={info.color}
+                      isSelected={isSelected}
+                      isDisabled={!isAvailable && !isSelected}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (isAvailable || isSelected) {
+                          onSpellChange(championName, spell)
+                          setShowSpellMenu(false)
+                        }
+                      }}
+                    >
+                      <span className="spell-icon">
+                        <img
+                          src={info.icon}
+                          alt={spell}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                          }}
+                        />
+                      </span>
+                      <div className="spell-info">
+                        <div className="spell-name">{spell}</div>
+                        <div className="spell-desc">{info.description}</div>
+                      </div>
+                    </SpellOption>
+                  )
+                })}
+              </SpellMenu>
+            )}
+          </AnimatePresence>
+        </SpellDropdown>
+      </div>
+
       {!isReady && (
-        <div className="drag-handle">
+        <div className="drag-handle" {...attributes} {...listeners}>
           <Shuffle size={24} />
         </div>
       )}
@@ -1081,10 +1342,15 @@ const BanPickPage: React.FC = () => {
     skipBan,
     reorderChampions,
     setReady,
+    setSummonerSpells,
+    mySummonerSpells,
   } = useBanPick(gameId || '')
 
   // Local state for champion order during reorder phase
   const [localChampionOrder, setLocalChampionOrder] = useState<string[]>([])
+
+  // Local state for summoner spell assignments during reorder phase
+  const [localSpellAssignments, setLocalSpellAssignments] = useState<Record<string, SummonerSpellType>>({})
 
   const currentPhase = banPickState?.phase === 'ban' ? 'Ban Phase' :
     banPickState?.phase === 'pick' ? 'Pick Phase' :
@@ -1149,6 +1415,13 @@ const BanPickPage: React.FC = () => {
     }
   }, [banPickState?.phase, banPickState?.blueChampionOrder, banPickState?.redChampionOrder, playerSide])
 
+  // Sync local spell assignments with server state
+  useEffect(() => {
+    if (mySummonerSpells && Object.keys(mySummonerSpells).length > 0) {
+      setLocalSpellAssignments(mySummonerSpells)
+    }
+  }, [mySummonerSpells])
+
   // Handle drag and drop reordering
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -1177,12 +1450,56 @@ const BanPickPage: React.FC = () => {
     })
   }
 
+  // Handle summoner spell change for a champion
+  const handleSpellChange = (championName: string, spell: SummonerSpellType) => {
+    const isReady = playerSide === 'blue' ? banPickState?.blueReady : banPickState?.redReady
+    if (isReady) return // Don't allow changes when ready
+
+    setLocalSpellAssignments((prev) => {
+      const newAssignments = { ...prev }
+
+      // Remove the spell from any other champion that has it
+      for (const [champ, assignedSpell] of Object.entries(newAssignments)) {
+        if (assignedSpell === spell && champ !== championName) {
+          delete newAssignments[champ]
+        }
+      }
+
+      // Assign the spell to this champion
+      newAssignments[championName] = spell
+
+      // Send to server
+      setSummonerSpells(newAssignments)
+
+      return newAssignments
+    })
+  }
+
+  // Get available spells (not assigned to other champions)
+  const getAvailableSpells = (championName: string): SummonerSpellType[] => {
+    const usedSpells = Object.entries(localSpellAssignments)
+      .filter(([champ]) => champ !== championName)
+      .map(([, spell]) => spell)
+
+    return SUMMONER_SPELL_TYPES.filter(spell => !usedSpells.includes(spell))
+  }
+
+  // Check if all champions have spells assigned
+  const allSpellsAssigned = localChampionOrder.length === 5 &&
+    localChampionOrder.every(champ => localSpellAssignments[champ])
+
   const handleReadyToggle = () => {
     if (!banPickState || banPickState.phase !== 'reorder') return
 
     const isCurrentlyReady = playerSide === 'blue'
       ? banPickState.blueReady
       : banPickState.redReady
+
+    // If trying to ready up, validate spells are assigned
+    if (!isCurrentlyReady && !allSpellsAssigned) {
+      toast.error('Please assign a summoner spell to each champion!')
+      return
+    }
 
     setReady(!isCurrentlyReady)
   }
@@ -1438,6 +1755,9 @@ const BanPickPage: React.FC = () => {
                   index={index}
                   championName={championName}
                   isReady={playerSide === 'blue' ? !!banPickState?.blueReady : !!banPickState?.redReady}
+                  currentSpell={localSpellAssignments[championName]}
+                  availableSpells={getAvailableSpells(championName)}
+                  onSpellChange={handleSpellChange}
                 />
               ))}
             </ChampionOrderList>
@@ -1490,6 +1810,21 @@ const BanPickPage: React.FC = () => {
               </>
             )}
           </ReadyButton>
+        )}
+
+        {/* Spell assignment status hint */}
+        {!(playerSide === 'blue' ? banPickState?.blueReady : banPickState?.redReady) && (
+          <div style={{
+            textAlign: 'center',
+            color: allSpellsAssigned ? 'var(--green)' : 'var(--secondary-text)',
+            fontSize: '12px',
+            marginTop: '8px',
+          }}>
+            {allSpellsAssigned
+              ? '✓ All summoner spells assigned'
+              : `Summoner spells: ${Object.keys(localSpellAssignments).length}/5 assigned`
+            }
+          </div>
         )}
       </ReadySection>
     </ReorderContainer>

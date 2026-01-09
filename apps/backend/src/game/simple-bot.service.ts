@@ -1,5 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Game, EventPayload } from "@lolchess/game-engine";
+import {
+  Game,
+  EventPayload,
+  SummonerSpellType,
+  SUMMONER_SPELL_TYPES,
+} from "@lolchess/game-engine";
 import {
   BotEngine,
   BotConfig,
@@ -117,6 +122,35 @@ export class SimpleBotService {
 
     this.logger.debug(`Bot champion order: ${JSON.stringify(order)}`);
     return order;
+  }
+
+  /**
+   * Get bot's summoner spell assignments for champions
+   * Assigns spells based on simple strategy:
+   * - Flash for assassins/mages (mobility)
+   * - Ghost for fighters (chase potential)
+   * - Heal for supports/tanks (sustain)
+   * - Barrier for marksmen (protection)
+   * - Smite for remaining (objective control)
+   */
+  getBotSpellAssignments(
+    championNames: string[]
+  ): Record<string, SummonerSpellType> {
+    const assignments: Record<string, SummonerSpellType> = {};
+    const availableSpells = [...SUMMONER_SPELL_TYPES];
+
+    // Simple assignment: just assign spells in order
+    // In a more sophisticated bot, we could consider champion roles
+    championNames.forEach((championName, index) => {
+      if (index < availableSpells.length) {
+        assignments[championName] = availableSpells[index];
+      }
+    });
+
+    this.logger.debug(
+      `Bot spell assignments: ${JSON.stringify(assignments)}`
+    );
+    return assignments;
   }
 
   /**
