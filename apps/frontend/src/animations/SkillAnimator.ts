@@ -14,6 +14,11 @@ import { ariseRenderer } from "./skills/arise";
 import { siphonPowerRenderer } from "./skills/siphonPower";
 import { furyOfTheSandsRenderer } from "./skills/furyOfTheSands";
 import { criticalFlankRenderer } from "./skills/criticalFlank";
+import { flashRenderer } from "./skills/flash";
+import { ghostRenderer } from "./skills/ghost";
+import { healRenderer } from "./skills/heal";
+import { barrierRenderer } from "./skills/barrier";
+import { smiteRenderer } from "./skills/smite";
 
 /**
  * Registry mapping skill names to their animation renderers
@@ -61,6 +66,13 @@ const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
 
   // Minions (Melee Minion and Caster Minion)
   "The Critical Flank": criticalFlankRenderer,
+
+  // Summoner Spells
+  "Flash": flashRenderer,
+  "Ghost": ghostRenderer,
+  "Heal": healRenderer,
+  "Barrier": barrierRenderer,
+  "Smite": smiteRenderer,
 
   // Add more skills here as they're implemented
   // 'Skill Name': skillRenderer,
