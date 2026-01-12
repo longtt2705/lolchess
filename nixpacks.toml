@@ -13,8 +13,10 @@ cmds = [
 ]
 
 [phases.build]
-# Build based on APP_TYPE environment variable
+# Build packages first (game-engine, bot-engine), then apps based on APP_TYPE
 cmds = [
+    "npm run build --workspace=packages/game-engine",
+    "npm run build --workspace=packages/bot-engine",
     "if [ \"$APP_TYPE\" = \"frontend\" ]; then npm run build --workspace=apps/frontend; elif [ \"$APP_TYPE\" = \"backend\" ]; then npm run build --workspace=apps/backend; else npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend; fi"
 ]
 
