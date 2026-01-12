@@ -172,6 +172,83 @@ const SkillIcon = styled.div<{ isActive: boolean; onCooldown: boolean, currentCo
   `}
 `
 
+// Summoner spell color mapping
+const SUMMONER_SPELL_COLORS: Record<string, string> = {
+  Flash: '#FFD700',
+  Ghost: '#87CEEB',
+  Heal: '#90EE90',
+  Barrier: '#DDA0DD',
+  Smite: '#FF6347',
+}
+
+const SummonerSpellIcon = styled.div<{ $spellType: string; $onCooldown: boolean; $currentCooldown: number; $isActive: boolean }>`
+  position: absolute;
+  top: 28px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid ${props => props.$onCooldown ? '#666' : SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'};
+  background: ${props => props.$onCooldown
+    ? 'rgba(0, 0, 0, 0.7)'
+    : `linear-gradient(135deg, ${SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'}40 0%, ${SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'}20 100%)`};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ${props => props.$isActive && !props.$onCooldown ? 'pointer' : 'default'};
+  z-index: 5;
+  box-shadow: ${props => props.$onCooldown
+    ? 'none'
+    : `0 0 6px ${SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'}80, inset 0 0 4px ${SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'}40`};
+  transition: all 0.2s ease;
+  filter: ${props => props.$onCooldown ? 'grayscale(1)' : 'none'};
+  opacity: ${props => props.$onCooldown ? 0.5 : 1};
+  pointer-events: ${props => props.$isActive && !props.$onCooldown ? 'auto' : 'none'};
+  
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  &:hover {
+    ${props => props.$isActive && !props.$onCooldown && `
+      transform: scale(1.2);
+      border-width: 2px;
+      box-shadow: 0 0 10px ${SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'}, inset 0 0 8px ${SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'}60;
+    `}
+  }
+  
+  /* Cooldown overlay */
+  &::after {
+    content: ${props => props.$onCooldown && props.$currentCooldown > 0 ? `'${Math.ceil(props.$currentCooldown)}'` : '""'};
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 8px;
+    font-weight: bold;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 1);
+    pointer-events: none;
+  }
+  
+  /* Ready pulse animation */
+  ${props => props.$isActive && !props.$onCooldown && `
+    animation: summonerSpellPulse 2.5s ease-in-out infinite;
+    
+    @keyframes summonerSpellPulse {
+      0%, 100% {
+        box-shadow: 0 0 6px ${SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'}80, inset 0 0 4px ${SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'}40;
+      }
+      50% {
+        box-shadow: 0 0 12px ${SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'}, inset 0 0 8px ${SUMMONER_SPELL_COLORS[props.$spellType] || '#87CEEB'}60;
+      }
+    }
+  `}
+`
+
 
 const CrownIcon = styled.div`
   position: absolute;
@@ -387,12 +464,14 @@ export const ChessPieceRenderer: React.FC<{
   isRedPlayer?: boolean
   isDead?: boolean
   onSkillClick?: () => void
+  onSummonerSpellClick?: () => void
   imageUrl: string
   isChampion: boolean
   boardRef: React.RefObject<HTMLDivElement>
+  hasUsedSummonerSpellThisTurn?: boolean
   allItems?: ItemData[]
   currentRound?: number
-}> = ({ piece, canSelect, onClick, attackAnimation, moveAnimation, isAnimating = false, damageEffects = [], itemPurchaseAnimations = [], isRedPlayer = false, isDead = false, onSkillClick, boardRef, allItems = [], isChampion, imageUrl, currentRound = 0 }) => {
+}> = ({ piece, canSelect, onClick, attackAnimation, moveAnimation, isAnimating = false, damageEffects = [], itemPurchaseAnimations = [], isRedPlayer = false, isDead = false, onSkillClick, onSummonerSpellClick, boardRef, hasUsedSummonerSpellThisTurn = false, allItems = [], isChampion, imageUrl, currentRound = 0 }) => {
   const hpPercentage = (piece.stats.hp / piece.stats.maxHp) * 100
   const isNeutral = piece.ownerId === "neutral"
   const isAttacking = attackAnimation?.attackerId === piece.id
@@ -735,6 +814,39 @@ export const ChessPieceRenderer: React.FC<{
             </div>
           )}
         </SkillIcon>
+      )}
+      {/* Summoner Spell Icon Overlay - Only for Champions */}
+      {isChampion && (piece).summonerSpell && (
+        <SummonerSpellIcon
+          $spellType={(piece).summonerSpell.type}
+          $isActive={canSelect && !hasUsedSummonerSpellThisTurn}
+          $onCooldown={(piece).summonerSpell.currentCooldown > 0 || hasUsedSummonerSpellThisTurn}
+          $currentCooldown={Math.ceil((piece).summonerSpell.currentCooldown)}
+          onClick={(e) => {
+            e.stopPropagation()
+            if ((piece).summonerSpell && (piece).summonerSpell.currentCooldown === 0 && onSummonerSpellClick) {
+              onSummonerSpellClick()
+            }
+          }}
+          title={`${(piece).summonerSpell.type}${(piece).summonerSpell.currentCooldown > 0 ? ` (CD: ${Math.ceil((piece).summonerSpell.currentCooldown)})` : ' - Ready'}`}
+        >
+          <img
+            src={`/icons/${(piece).summonerSpell.type}.png`}
+            alt={(piece).summonerSpell.type}
+            onError={(e) => {
+              // Fallback - show first letter of spell name
+              e.currentTarget.style.display = 'none'
+              const parent = e.currentTarget.parentElement
+              if (parent && (piece).summonerSpell) {
+                const spellType = (piece).summonerSpell.type
+                parent.innerHTML = typeof spellType === 'string' ? spellType.charAt(0).toUpperCase() : '?'
+                parent.style.fontSize = '10px'
+                parent.style.fontWeight = 'bold'
+                parent.style.color = SUMMONER_SPELL_COLORS[spellType] || '#87CEEB'
+              }
+            }}
+          />
+        </SummonerSpellIcon>
       )}
 
       {isBeingAttacked && (

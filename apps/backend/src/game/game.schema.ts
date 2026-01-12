@@ -219,6 +219,9 @@ export class DebuffSchema implements DebuffType {
 
   @Prop()
   onExpireId?: string; // identifier for custom expire logic
+
+  @Prop()
+  cause?: string; // cause of the debuff
 }
 
 export class AuraEffectSchema implements AuraEffectType {
@@ -312,7 +315,6 @@ export class ShieldSchema implements ShieldType {
   duration: number;
 }
 
-@Schema()
 export class SummonerSpellSchema implements SummonerSpellType {
   @Prop({
     required: true,
@@ -674,6 +676,9 @@ export class GameSchema implements GameType {
 
   @Prop({ default: false })
   hasBoughtItemThisTurn: boolean;
+
+  @Prop({ default: false })
+  hasUsedSummonerSpellThisTurn: boolean;
 
   @Prop({ default: false })
   hasPerformedActionThisTurn: boolean;

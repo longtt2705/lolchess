@@ -24,4 +24,5 @@ export interface Debuff {
   payload?: any; // flexible payload for custom debuff data
   isTransformation?: boolean; // whether this is a transformation debuff (affects HP management)
   onExpireId?: string; // identifier for custom expire logic (e.g., 'nasus_transform')
+  cause?: string; // cause of the debuff
 }

@@ -174,6 +174,7 @@ export function createEmptyGame(seed: number): Game {
     shopItems: [],
     shopRefreshRound: 0,
     hasBoughtItemThisTurn: false,
+    hasUsedSummonerSpellThisTurn: false,
     hasPerformedActionThisTurn: false,
     gameSettings: {
       roundTime: 60,

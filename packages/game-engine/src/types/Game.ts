@@ -23,6 +23,7 @@ export interface Game {
   board: Chess[];
   lastAction?: ActionDetails;
   hasBoughtItemThisTurn: boolean;
+  hasUsedSummonerSpellThisTurn: boolean;
   hasPerformedActionThisTurn: boolean;
   shopItems: string[]; // Current available shop item IDs
   shopRefreshRound: number; // Track when shop was last refreshed

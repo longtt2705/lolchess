@@ -171,12 +171,64 @@ export class GameService implements OnModuleInit {
   private async saveGameState(
     gameId: string,
     game: any, // Using any to handle cleaned board data
-    priority: number = 5
+    priority: number = 5,
+    waitForPersistence: boolean = false
   ): Promise<void> {
     this.logger.debug(
       `Saving game ${gameId} to Redis with priority ${priority}`
     );
     await this.redisCache.setGameState(gameId, game as Game, { priority });
+
+    // For critical game states (like initialization), wait for MongoDB persistence
+    if (waitForPersistence) {
+      this.logger.debug(`Waiting for MongoDB persistence of game ${gameId}`);
+      await this.persistToMongoDBNow(gameId, game);
+    }
+  }
+
+  /**
+   * Immediately persist game state to MongoDB (synchronous)
+   */
+  private async persistToMongoDBNow(gameId: string, game: any): Promise<void> {
+    try {
+      await this.gameModel
+        .findByIdAndUpdate(
+          gameId,
+          {
+            $set: {
+              name: game.name,
+              status: game.status,
+              players: game.players,
+              maxPlayers: game.maxPlayers,
+              currentRound: game.currentRound,
+              gameSettings: game.gameSettings,
+              winner: game.winner,
+              phase: game.phase,
+              banPickState: game.banPickState,
+              bluePlayer: game.bluePlayer,
+              redPlayer: game.redPlayer,
+              board: game.board,
+              lastAction: game.lastAction,
+              hasBoughtItemThisTurn: game.hasBoughtItemThisTurn,
+              hasUsedSummonerSpellThisTurn: game.hasUsedSummonerSpellThisTurn,
+              hasPerformedActionThisTurn: game.hasPerformedActionThisTurn,
+              shopItems: game.shopItems,
+              shopRefreshRound: game.shopRefreshRound,
+              rngSeed: game.rngSeed,
+              rngState: game.rngState,
+              drakePool: game.drakePool,
+              drakesKilled: game.drakesKilled,
+              elderDrakeKillerTeam: game.elderDrakeKillerTeam,
+            },
+          },
+          { new: true }
+        )
+        .exec();
+      this.logger.debug(`Game ${gameId} persisted to MongoDB immediately`);
+    } catch (error) {
+      this.logger.error(`Error persisting game ${gameId} to MongoDB:`, error);
+      throw error;
+    }
   }
 
   async findAll() {
@@ -721,7 +773,9 @@ export class GameService implements OnModuleInit {
       const assignedSpells = Object.values(spellAssignments);
       const uniqueSpells = new Set(assignedSpells);
       if (uniqueSpells.size !== 5) {
-        throw new Error("Each of the 5 summoner spells must be used exactly once");
+        throw new Error(
+          "Each of the 5 summoner spells must be used exactly once"
+        );
       }
     }
 
@@ -963,9 +1017,10 @@ export class GameService implements OnModuleInit {
         "pieces"
       );
 
-      // Save to Redis cache and queue MongoDB persistence
-      // High priority (8) since this is a critical game state transition
-      await this.saveGameState(gameId, initializedGame, 8);
+      // Save to Redis cache and MongoDB immediately (wait for persistence)
+      // This is critical - we need MongoDB to have the initialized state
+      // High priority (8) and wait for persistence to complete
+      await this.saveGameState(gameId, initializedGame, 8, true);
 
       return {
         game: initializedGame,
@@ -1204,6 +1259,7 @@ export class GameService implements OnModuleInit {
         deadAtRound: piece.deadAtRound,
         respawnAtRound: piece.respawnAtRound,
         attackProjectile: piece.attackProjectile,
+        summonerSpell: piece.summonerSpell,
       };
 
       return cleanedPiece;
@@ -1233,15 +1289,28 @@ export class GameService implements OnModuleInit {
     const redChampions =
       customRedChampions || redPlayer?.selectedChampions || [];
 
-    // Initialize the game board
+    // Extract summoner spell assignments from banPickState
+    const blueSummonerSpells = game.banPickState?.blueSummonerSpells || {};
+    const redSummonerSpells = game.banPickState?.redSummonerSpells || {};
+
+    this.logger.log("Resetting gameplay with champions and summoner spells:", {
+      blueChampions,
+      redChampions,
+      blueSummonerSpells,
+      redSummonerSpells,
+    });
+
+    // Initialize the game board with summoner spells
     const initializedGame = GameLogic.initGame(
       game,
       blueChampions,
-      redChampions
+      redChampions,
+      blueSummonerSpells,
+      redSummonerSpells
     );
-    // Save to Redis cache and queue MongoDB persistence
+    // Save to Redis cache and MongoDB immediately (wait for persistence)
     // High priority (8) for gameplay reset
-    await this.saveGameState(gameId, initializedGame, 8);
+    await this.saveGameState(gameId, initializedGame, 8, true);
 
     return {
       game: initializedGame,
@@ -1260,7 +1329,7 @@ export class GameService implements OnModuleInit {
       ...piece,
       stats: {
         ...piece.stats,
-        hp: piece.stats.maxHp,
+        hp: ChessFactory.createChess(piece, game).maxHp,
       },
     }));
 
@@ -1296,6 +1365,12 @@ export class GameService implements OnModuleInit {
             currentCooldown: 0,
           }))
         : piece.items,
+      summonerSpell: piece.summonerSpell
+        ? {
+            ...piece.summonerSpell,
+            currentCooldown: 0,
+          }
+        : piece.summonerSpell,
     }));
 
     // Save to Redis cache and queue MongoDB persistence

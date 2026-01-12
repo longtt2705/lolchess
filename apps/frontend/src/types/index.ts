@@ -21,6 +21,7 @@ export interface Game {
   currentRound: number;
   gameSettings: GameSettings;
   hasBoughtItemThisTurn: boolean;
+  hasUsedSummonerSpellThisTurn: boolean;
   hasPerformedActionThisTurn: boolean;
 }
 

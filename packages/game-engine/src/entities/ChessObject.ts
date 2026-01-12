@@ -10,6 +10,7 @@ import {
   Shield,
   Skill,
   Square,
+  SummonerSpellType,
 } from "../types";
 import { ChessFactory } from "./ChessFactory";
 import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
@@ -128,7 +129,8 @@ export class ChessObject {
     damageType: "physical" | "magic" | "true" | "non-lethal",
     attacker: ChessObject,
     sunder: number = 0,
-    fromAttack: boolean = false
+    fromAttack: boolean = false,
+    dontApplyDebuff: boolean = false
   ): number {
     let damageAmplification = this.damageAmplification;
     if (
@@ -163,42 +165,15 @@ export class ChessObject {
       }
     }
 
-    let finalDamage = Math.floor(
-      chess.preTakenDamage(this, calDamage, fromAttack)
+    const finalDamage = Math.floor(
+      chess.preTakenDamage(this, calDamage, damageType, fromAttack)
     );
-    if (
-      chess.chess.items.some((item) => item.id === "deaths_dance") &&
-      damageType !== "non-lethal" &&
-      damageType !== "true"
-    ) {
-      finalDamage = Math.floor(finalDamage * 0.5);
-      const duration = 2;
-      const damagePerTurn = finalDamage / duration;
-      const rng = getGameRng();
-      this.applyDebuff(chess, {
-        id: `deaths_dance_${Date.now()}_${rng.nextId(9)}`,
-        name: "Death's Dance",
-        description:
-          "50% of the damage the holder receives is instead dealt over 2 turns as non-lethal damage.",
-        duration,
-        maxDuration: duration,
-        effects: [],
-        damagePerTurn: damagePerTurn,
-        damageType: "non-lethal",
-        healPerTurn: 0,
-        unique: false,
-        appliedAt: Date.now(),
-        casterPlayerId: this.chess.ownerId,
-        casterName: this.chess.name,
-        currentStacks: 1,
-        maximumStacks: 1,
-      } as Debuff);
-    }
+    
     chess.chess.stats.hp -= finalDamage;
     if (damageType === "non-lethal") {
       chess.chess.stats.hp = Math.max(chess.chess.stats.hp, 1);
     }
-    chess.postTakenDamage(this, finalDamage, damageType, fromAttack);
+    chess.postTakenDamage(this, finalDamage, damageType, fromAttack, dontApplyDebuff);
 
     // Elder Dragon execute: if attacker has Elder buff debuff and target is below 15% HP, execute
     const hasElderBuff = this.chess.debuffs?.some(
@@ -269,20 +244,54 @@ export class ChessObject {
   protected preTakenDamage(
     attacker: ChessObject,
     damage: number,
+    damageType: "physical" | "magic" | "true" | "non-lethal",
     fromAttack: boolean = false
   ): number {
     const durability = this.durability;
+    let finalDamage = damage;
     if (durability > 0) {
-      return damage * ((100 - durability) / 100);
+      finalDamage = damage * ((100 - durability) / 100);
     }
-    return damage;
+
+    if (
+      this.chess.items.some((item) => item.id === "deaths_dance") &&
+      damageType !== "non-lethal" &&
+      damageType !== "true"
+    ) {
+      finalDamage = Math.floor(finalDamage * 0.5);
+      const duration = 2;
+      const damagePerTurn = finalDamage / duration;
+      const rng = getGameRng();
+      this.applyDebuff(this, {
+        id: `deaths_dance_${Date.now()}_${rng.nextId(9)}`,
+        name: "Death's Dance",
+        description:
+          "50% of the damage the holder receives is instead dealt over 2 turns as non-lethal damage.",
+        duration,
+        maxDuration: duration,
+        effects: [],
+        damagePerTurn: damagePerTurn,
+        damageType: "non-lethal",
+        healPerTurn: 0,
+        unique: false,
+        appliedAt: Date.now(),
+        casterPlayerId: this.chess.ownerId,
+        casterName: this.chess.name,
+        currentStacks: 1,
+        maximumStacks: 1,
+        cause: "deaths_dance",
+      } as Debuff);
+    }
+  
+    return finalDamage;
   }
 
   protected postTakenDamage(
     attacker: ChessObject,
     damage: number,
     damageType: "physical" | "magic" | "true" | "non-lethal",
-    fromAttack: boolean = false
+    fromAttack: boolean = false,
+    dontApplyDebuff: boolean = false
   ): void {
     if (this.chess.items.some((item) => item.id === "titans_resolve")) {
       const damageToConvert = Math.floor(damage * 0.25);
@@ -336,14 +345,18 @@ export class ChessObject {
     }
     if (
       attacker.chess.items.some(
-        (item) => item.id === "red_buff" || item.id === "morellonomicon"
-      )
+        (item) => item.id === "morellonomicon"
+      ) && !dontApplyDebuff
     ) {
-      this.applyDebuff(this, this.createBurnedDebuff(3, attacker));
-      this.applyDebuff(this, this.createWoundedDebuff(3, attacker));
+      if (attacker.chess.blue !== this.chess.blue) {
+        attacker.applyDebuff(this, this.createBurnedDebuff(3, attacker, "morellonomicon"));
+        attacker.applyDebuff(this, this.createWoundedDebuff(3, attacker, "morellonomicon"));
+      }
     }
     if (attacker.chess.items.some((item) => item.id === "serpents_fang")) {
-      this.applyDebuff(this, this.createVenomDebuff(3, attacker));
+      if (attacker.chess.blue !== this.chess.blue) {
+        attacker.applyDebuff(this, this.createVenomDebuff(3, attacker, "serpents_fang"));
+      }
     }
     if (this.chess.items.some((item) => item.id === "adaptive_helm")) {
       if (damageType === "physical") {
@@ -451,7 +464,7 @@ export class ChessObject {
     }
   }
 
-  private createWoundedDebuff(turn: number, owner: ChessObject): Debuff {
+  private createWoundedDebuff(turn: number, owner: ChessObject, cause: string): Debuff {
     return {
       id: "wounded",
       name: "Wounded",
@@ -466,10 +479,11 @@ export class ChessObject {
       appliedAt: Date.now(),
       casterPlayerId: owner.chess.ownerId,
       casterName: owner.chess.name,
+      cause,
     } as Debuff;
   }
 
-  private createBurnedDebuff(turn: number, owner: ChessObject): Debuff {
+  private createBurnedDebuff(turn: number, owner: ChessObject, cause: string): Debuff {
     return {
       id: "burned",
       name: "Burned",
@@ -484,10 +498,11 @@ export class ChessObject {
       appliedAt: Date.now(),
       casterPlayerId: owner.chess.ownerId,
       casterName: owner.chess.name,
+      cause,
     } as Debuff;
   }
 
-  private createVenomDebuff(turn: number, owner: ChessObject): Debuff {
+  private createVenomDebuff(turn: number, owner: ChessObject, cause: string): Debuff {
     return {
       id: "venom",
       name: "Venom",
@@ -502,6 +517,7 @@ export class ChessObject {
       appliedAt: Date.now(),
       casterPlayerId: owner.chess.ownerId,
       casterName: owner.chess.name,
+      cause,
     } as Debuff;
   }
 
@@ -580,8 +596,8 @@ export class ChessObject {
           );
           if (targetChess) {
             const targetObj = ChessFactory.createChess(targetChess, this.game);
-            targetObj.applyDebuff(targetObj, this.createBurnedDebuff(3, this));
-            targetObj.applyDebuff(targetObj, this.createWoundedDebuff(3, this));
+            targetObj.applyDebuff(targetObj, this.createBurnedDebuff(3, this, "sunfire_cape"));
+            targetObj.applyDebuff(targetObj, this.createWoundedDebuff(3, this, "sunfire_cape"));
           }
         });
       }
@@ -616,6 +632,14 @@ export class ChessObject {
       chess.chess.skill.currentCooldown -= 1;
       if (chess.chess.skill.currentCooldown < 0) {
         chess.chess.skill.currentCooldown = 0;
+      }
+    }
+
+    // Refresh summoner spell cooldown
+    if (chess.chess.summonerSpell) {
+      chess.chess.summonerSpell.currentCooldown -= 1;
+      if (chess.chess.summonerSpell.currentCooldown < 0) {
+        chess.chess.summonerSpell.currentCooldown = 0;
       }
     }
 
@@ -724,18 +748,21 @@ export class ChessObject {
       const debuff = chess.chess.debuffs[i];
 
       // Skip aura debuffs - they are managed by cleanupExpiredAuraDebuffs()
-      if (debuff.id.startsWith("aura_")) {
+      if (debuff.id.startsWith("aura_") || debuff.duration === -1) {
         continue;
       }
 
       // Apply damage per turn
       if (debuff.damagePerTurn > 0) {
+        const isMorellonomicon = debuff.cause === "morellonomicon";
         this.damage(
           chess,
           debuff.damagePerTurn * debuff.currentStacks,
           debuff.damageType,
           this,
-          0
+          this.sunder,
+          false,
+          isMorellonomicon
         );
       }
 
@@ -1638,6 +1665,7 @@ export class ChessObject {
 
   /**
    * Check if the path between two positions is clear of pieces
+   * Only ally pieces with Ghost debuff do not block the path
    */
   private isPathClear(from: Square, to: Square): boolean {
     const deltaX = to.x - from.x;
@@ -1661,7 +1689,17 @@ export class ChessObject {
       );
 
       if (blockingPiece) {
-        return false; // Path is blocked
+        // Check if it's an ally with Ghost debuff - only ally Ghost pieces don't block
+        const isAlly = blockingPiece.ownerId === this.chess.ownerId;
+        const hasGhost = blockingPiece.debuffs?.some(
+          (d) => d.payload?.isGhost === true
+        );
+
+        if (!isAlly || !hasGhost) {
+          // Enemy piece OR ally without Ghost - path is blocked
+          return false;
+        }
+        // Ally with Ghost - continue checking (doesn't block)
       }
 
       currentX += stepX;
@@ -2043,5 +2081,287 @@ export class ChessObject {
         } as Debuff);
       }
     });
+  }
+
+  public useSummonerSpell(
+    spell: SummonerSpellType,
+    targetPosition?: Square,
+    actionDetails?: {
+      summonerSpellTargets?: Array<{
+        targetId: string;
+        targetPosition: Square;
+      }>;
+      fromPosition?: Square;
+      targetPosition?: Square;
+      damage?: number;
+      targetId?: string;
+      killedPieceIds?: string[];
+    }
+  ): void {
+    switch (spell) {
+      case "Heal":
+        this.useHeal(actionDetails);
+        break;
+      case "Ghost":
+        this.useGhost(actionDetails);
+        break;
+      case "Barrier":
+        this.useBarrier(actionDetails);
+        break;
+      case "Smite":
+        this.useSmite(targetPosition!, actionDetails);
+        break;
+      case "Flash":
+        this.useFlash(targetPosition!, actionDetails);
+        break;
+      default:
+        throw new Error(`Unknown summoner spell type: ${spell}`);
+    }
+  }
+
+  private useHeal(actionDetails?: {
+    summonerSpellTargets?: Array<{ targetId: string; targetPosition: Square }>;
+  }): void {
+    // Heal: Heal caster and nearby ally with lowest HP
+    const healAmount = 30;
+
+    // Heal the caster first
+    this.heal(this, healAmount);
+
+    if (actionDetails?.summonerSpellTargets) {
+      actionDetails.summonerSpellTargets.push({
+        targetId: this.chess.id,
+        targetPosition: this.chess.position,
+      });
+    }
+
+    // Find nearby ally with lowest HP (adjacent squares)
+    const adjacentSquares = getAdjacentSquares(this.chess.position);
+    const nearbyAllies = this.game.board.filter(
+      (p) =>
+        p.ownerId === this.chess.ownerId &&
+        p.id !== this.chess.id &&
+        p.stats.hp > 0 &&
+        p.stats.hp < p.stats.maxHp &&
+        adjacentSquares.some(
+          (sq) => sq.x === p.position.x && sq.y === p.position.y
+        )
+    );
+
+    if (nearbyAllies.length > 0) {
+      // Find ally with lowest HP
+      const lowestHpAlly = nearbyAllies.reduce((lowest, ally) =>
+        ally.stats.hp < lowest.stats.hp ? ally : lowest
+      );
+
+      this.heal(ChessFactory.createChess(lowestHpAlly, this.game), healAmount);
+
+      if (actionDetails?.summonerSpellTargets) {
+        actionDetails.summonerSpellTargets.push({
+          targetId: lowestHpAlly.id,
+          targetPosition: lowestHpAlly.position,
+        });
+      }
+    }
+  }
+
+  private useGhost(actionDetails?: {
+    summonerSpellTargets?: Array<{ targetId: string; targetPosition: Square }>;
+  }): void {
+    // Ghost: +1 speed and become ghost for 3 turns
+    const rng = getGameRng();
+    const ghostDebuff: Debuff = {
+      id: `ghost_${this.chess.id}_${Date.now()}_${rng.nextId(9)}`,
+      name: "Ghost",
+      description: "Increased speed and does not block ally attacks",
+      duration: 3,
+      maxDuration: 3,
+      effects: [
+        {
+          stat: "speed",
+          modifier: 1,
+          type: "add",
+        },
+      ],
+      damagePerTurn: 0,
+      damageType: "true",
+      healPerTurn: 0,
+      unique: true,
+      appliedAt: Date.now(),
+      casterPlayerId: this.chess.ownerId,
+      casterName: this.chess.name,
+      payload: { isGhost: true }, // Mark as ghost for ally attack checks
+    };
+
+    // Remove existing ghost debuff if any
+    this.applyDebuff(this, ghostDebuff);
+
+    if (actionDetails?.summonerSpellTargets) {
+      actionDetails.summonerSpellTargets.push({
+        targetId: this.chess.id,
+        targetPosition: this.chess.position,
+      });
+    }
+  }
+
+  private useBarrier(actionDetails?: {
+    summonerSpellTargets?: Array<{ targetId: string; targetPosition: Square }>;
+  }): void {
+    // Barrier: Create a shield only on the caster
+    const shieldAmount = 50;
+    const shieldDuration = 2;
+
+    // Add shield only to caster
+    this.applyShield(shieldAmount, shieldDuration, `barrier_${this.chess.id}}`);
+
+    if (actionDetails?.summonerSpellTargets) {
+      actionDetails.summonerSpellTargets.push({
+        targetId: this.chess.id,
+        targetPosition: this.chess.position,
+      });
+    }
+  }
+
+  private useSmite(
+    targetPosition: Square,
+    actionDetails?: {
+      summonerSpellTargets?: Array<{
+        targetId: string;
+        targetPosition: Square;
+      }>;
+      damage?: number;
+      targetId?: string;
+      targetPosition?: Square;
+      killedPieceIds?: string[];
+    }
+  ): void {
+    // Smite: Deal 50 true damage to target minion or monster (max range 2)
+    if (!targetPosition) {
+      throw new Error("Smite requires a target");
+    }
+
+    // Check if target is within range 2
+    const deltaX = Math.abs(targetPosition.x - this.chess.position.x);
+    const deltaY = Math.abs(targetPosition.y - this.chess.position.y);
+    const distance = Math.max(deltaX, deltaY);
+
+    if (distance > 2) {
+      throw new Error("Smite has a maximum range of 2");
+    }
+
+    const target = this.game.board.find(
+      (p) =>
+        p.position.x === targetPosition.x &&
+        p.position.y === targetPosition.y &&
+        p.stats.hp > 0
+    );
+
+    if (!target) {
+      throw new Error("No target found at position");
+    }
+
+    // Check if target is a minion or neutral monster
+    const isMinion =
+      target.name.includes("Minion") || target.name === "Super Minion";
+    const isNeutralMonster =
+      target.ownerId === "neutral" ||
+      target.name.includes("Drake") ||
+      target.name === "Baron Nashor" ||
+      target.name === "Elder Dragon";
+
+    // Smite can only target enemy minions (not ally minions) or neutral monsters
+    const isEnemyMinion = isMinion && target.ownerId !== this.chess.ownerId;
+
+    if (!isEnemyMinion && !isNeutralMonster) {
+      throw new Error(
+        "Smite can only target enemy minions or neutral monsters"
+      );
+    }
+
+    // Deal 35-65 true damage
+    const rng = getGameRng();
+    const smiteDamage = rng.nextInt(35, 65);
+    this.damage(
+      ChessFactory.createChess(target, this.game),
+      smiteDamage,
+      "true",
+      this
+    );
+
+    if (actionDetails) {
+      actionDetails.damage = smiteDamage;
+      actionDetails.targetId = target.id;
+      actionDetails.targetPosition = targetPosition;
+
+      if (actionDetails.summonerSpellTargets) {
+        actionDetails.summonerSpellTargets.push({
+          targetId: target.id,
+          targetPosition: targetPosition,
+        });
+      }
+    }
+
+    // Remove if dead
+    if (ChessFactory.createChess(target, this.game).chess.stats.hp <= 0) {
+      if (actionDetails?.killedPieceIds) {
+        actionDetails.killedPieceIds = actionDetails.killedPieceIds || [];
+        actionDetails.killedPieceIds.push(target.id);
+      }
+    }
+  }
+
+  private useFlash(
+    targetPosition: Square,
+    actionDetails?: {
+      fromPosition?: Square;
+      targetPosition?: Square;
+    }
+  ): void {
+    // Flash: Teleport to target square (max range 2)
+    if (!targetPosition) {
+      throw new Error("Flash requires a target position");
+    }
+
+    // Check if target is within range 2
+    const deltaX = Math.abs(targetPosition.x - this.chess.position.x);
+    const deltaY = Math.abs(targetPosition.y - this.chess.position.y);
+    const distance = Math.max(deltaX, deltaY);
+
+    if (distance > 2) {
+      throw new Error("Flash has a maximum range of 2");
+    }
+
+    // Check if target square is empty
+    const occupant = this.game.board.find(
+      (p) =>
+        p.position.x === targetPosition.x &&
+        p.position.y === targetPosition.y &&
+        p.stats.hp > 0
+    );
+    if (occupant) {
+      throw new Error("Target square is occupied");
+    }
+
+    // Check if target is within board bounds
+    if (
+      targetPosition.x < -1 ||
+      targetPosition.x > 8 ||
+      targetPosition.y < 0 ||
+      targetPosition.y > 7
+    ) {
+      throw new Error("Target square is out of bounds");
+    }
+
+    // Store original position for animation
+    if (actionDetails) {
+      actionDetails.fromPosition = {
+        x: this.chess.position.x,
+        y: this.chess.position.y,
+      };
+      actionDetails.targetPosition = targetPosition;
+    }
+
+    // Teleport the caster
+    this.chess.position = { x: targetPosition.x, y: targetPosition.y };
   }
 }

@@ -803,6 +803,30 @@ const damageReductionPercentage = (protectionFactor: number) => {
     return Math.round(100 * protectionFactor / (protectionFactor + 50));
 }
 
+// Summoner spell color mapping
+const SUMMONER_SPELL_COLORS: Record<string, string> = {
+    Flash: '#FFD700',
+    Ghost: '#87CEEB',
+    Heal: '#90EE90',
+    Barrier: '#DDA0DD',
+    Smite: '#FF6347',
+};
+
+const getSummonerSpellColor = (type: string): string => {
+    return SUMMONER_SPELL_COLORS[type] || '#87CEEB';
+};
+
+const getSummonerSpellDescription = (type: string): string => {
+    const descriptions: Record<string, string> = {
+        Flash: 'Teleport to an empty square within range 2.',
+        Ghost: 'Gain +1 speed and become ghost (do not block ally attacks) for 3 turns.',
+        Heal: 'Heal the caster and the nearby ally with the lowest HP.',
+        Barrier: 'Create a shield on the caster to block incoming damage.',
+        Smite: 'Deal 50 true damage to an enemy minion or neutral monster within range 2.',
+    };
+    return descriptions[type] || 'Unknown spell';
+};
+
 export const ChessDetailPanelRenderer: React.FC<{
     detailViewPiece: ChessPiece | null,
     currentPlayer: any,
@@ -1218,6 +1242,57 @@ export const ChessDetailPanelRenderer: React.FC<{
                             <div className="no-items">No special ability</div>
                         )}
                     </div>
+
+                    {(detailViewPiece).summonerSpell && (
+                        <div className="skill-section" style={{ borderTop: '1px solid var(--border)', marginTop: '16px', paddingTop: '16px' }}>
+                            <div className="section-header" style={{ color: getSummonerSpellColor((detailViewPiece).summonerSpell.type) }}>
+                                <span style={{ fontSize: '16px' }}>✦</span>
+                                Summoner Spell
+                            </div>
+                            <div className="skill-card" style={{
+                                borderColor: `${getSummonerSpellColor((detailViewPiece).summonerSpell.type)}50`,
+                                background: `linear-gradient(135deg, ${getSummonerSpellColor((detailViewPiece as any).summonerSpell.type)}15 0%, ${getSummonerSpellColor((detailViewPiece as any).summonerSpell.type)}05 100%)`
+                            }}>
+                                <div className="skill-card-header">
+                                    <div style={{ position: 'relative' }}>
+                                        <img
+                                            src={`/icons/${(detailViewPiece).summonerSpell.type}.png`}
+                                            alt={(detailViewPiece as any).summonerSpell.type}
+                                            className="skill-icon"
+                                            style={{
+                                                borderRadius: '50%',
+                                                border: `2px solid ${getSummonerSpellColor((detailViewPiece).summonerSpell.type)}`
+                                            }}
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none'
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="skill-info">
+                                        <div className="card-name" style={{ color: getSummonerSpellColor((detailViewPiece).summonerSpell.type) }}>
+                                            {(detailViewPiece).summonerSpell.type}
+                                        </div>
+                                        <div className="skill-type">SUMMONER SPELL</div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div>
+                                                <img src={getStatIcon("cooldownReduction")} alt="Cooldown" width={14} height={14} />
+                                                <span style={{ color: 'var(--gold)', marginLeft: '4px' }}>{(detailViewPiece).summonerSpell.cooldown}</span>
+                                            </div>
+                                        </div>
+                                        <div className={`card-cooldown ${(detailViewPiece).summonerSpell?.currentCooldown > 0 ? 'cooling' : 'ready'}`}>
+                                            {(detailViewPiece).summonerSpell.currentCooldown > 0
+                                                ? `Cooldown: ${Math.ceil((detailViewPiece).summonerSpell?.currentCooldown)} turns`
+                                                : 'Ready to use'
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="card-description">
+                                    {getSummonerSpellDescription((detailViewPiece).summonerSpell.type)}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="debuff-section">
                         <div className="section-header">

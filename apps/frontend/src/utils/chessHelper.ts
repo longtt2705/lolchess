@@ -196,6 +196,8 @@ export const getIconConfig = (debuff: any) => {
   let iconConfig = debuffIconMap[debuff.id];
   if (debuff.id.startsWith("deaths_dance_")) {
     iconConfig = { src: "/icons/DeathsDance.png", alt: "Deaths Dance" };
+  } else if (debuff.id.startsWith("ghost_")) {
+    iconConfig = { src: "/icons/Ghost.png", alt: "Ghost" };
   }
   return iconConfig;
 };

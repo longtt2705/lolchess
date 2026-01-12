@@ -5,6 +5,7 @@ export enum GameEvent {
   ATTACK_CHESS = "attack_chess",
   BUY_ITEM = "buy_item",
   SKILL = "skill",
+  USE_SUMMONER_SPELL = "use_summoner_spell",
 }
 
 export interface EventPayload {
@@ -53,5 +54,10 @@ export interface ActionDetails {
   }>; // For Tristana: adjacent enemies hit by 4th shot explosion
   criticalFlankProc?: boolean; // For Minions: indicates The Critical Flank passive triggered (diagonal execution)
   criticalFlankAdvancePosition?: Square; // For Minions: position the attacker advanced to after Critical Flank
+  summonerSpellType?: string; // For USE_SUMMONER_SPELL: the type of spell used (Flash, Ghost, etc.)
+  summonerSpellTargets?: Array<{
+    targetId: string;
+    targetPosition: Square;
+  }>; // For summoner spells that affect multiple targets (Heal, Barrier)
 }
 

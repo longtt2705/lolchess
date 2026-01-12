@@ -25,6 +25,7 @@ import {
   Square,
   SummonerSpellType,
   createSummonerSpell,
+  SUMMONER_SPELLS,
 } from "../types";
 
 // Shop rotation constants
@@ -176,6 +177,20 @@ export class GameLogic {
         );
         break;
       }
+      case GameEvent.USE_SUMMONER_SPELL: {
+        if (isStunned) {
+          throw new Error("Stunned unit cannot use summoner spells");
+        }
+        this.processUseSummonerSpell(
+          game,
+          isBlue,
+          casterChess,
+          event.targetPosition,
+          actionDetails
+        );
+        // Summoner spells do NOT count as a board action - can still move/attack/skill after
+        break;
+      }
       default:
         break;
     }
@@ -221,9 +236,12 @@ export class GameLogic {
 
     this.applyAuraDebuffs(game);
 
-    // Only post-process (end turn) for non-buy-item actions
-    // Buy item does not end the turn
-    if (event.event !== GameEvent.BUY_ITEM) {
+    // Only post-process (end turn) for board actions (move, attack, skill)
+    // Buy item and summoner spells do not end the turn
+    if (
+      event.event !== GameEvent.BUY_ITEM &&
+      event.event !== GameEvent.USE_SUMMONER_SPELL
+    ) {
       this.postProcessGame(game);
     }
     return game;
@@ -529,6 +547,7 @@ export class GameLogic {
 
     // Reset turn action flags for the new turn
     game.hasBoughtItemThisTurn = false;
+    game.hasUsedSummonerSpellThisTurn = false;
     game.hasPerformedActionThisTurn = false;
 
     // Find the player by index to ensure proper mutation
@@ -1140,20 +1159,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-          type: championData.skill.type,
-          name: championData.skill.name,
-          description: championData.skill.description,
-          cooldown: championData.skill.cooldown,
-          currentCooldown: championData.skill.currentCooldown || 0,
-          attackRange: championData.skill.attackRange ||
-            championData.stats.attackRange || {
-            range: 1,
-            diagonal: true,
-            horizontal: true,
-            vertical: true,
-          },
-          targetTypes: championData.skill.targetTypes || "none",
-        }
+            type: championData.skill.type,
+            name: championData.skill.name,
+            description: championData.skill.description,
+            cooldown: championData.skill.cooldown,
+            currentCooldown: championData.skill.currentCooldown || 0,
+            attackRange: championData.skill.attackRange ||
+              championData.stats.attackRange || {
+                range: 1,
+                diagonal: true,
+                horizontal: true,
+                vertical: true,
+              },
+            targetTypes: championData.skill.targetTypes || "none",
+          }
         : undefined,
       items: [],
       debuffs: [],
@@ -1398,6 +1417,53 @@ export class GameLogic {
         this.spawnBaron(game);
       }
     }
+  }
+
+  // Process USE_SUMMONER_SPELL event
+  private static processUseSummonerSpell(
+    game: Game,
+    isBlue: boolean,
+    caster: Chess,
+    targetPosition: Square | undefined,
+    actionDetails: ActionDetails
+  ): Game {
+    // Check if caster has a summoner spell
+    if (!caster.summonerSpell) {
+      throw new Error("This champion does not have a summoner spell");
+    }
+
+    if (game.hasUsedSummonerSpellThisTurn) {
+      throw new Error("Cannot use a summoner spell after using another one");
+    }
+
+    const spell = caster.summonerSpell;
+
+    // Check if spell is on cooldown
+    if (spell.currentCooldown > 0) {
+      throw new Error(
+        `Summoner spell ${spell.type} is on cooldown (${spell.currentCooldown} turns remaining)`
+      );
+    }
+
+    // Track spell info in action details
+    actionDetails.summonerSpellType = spell.type;
+    actionDetails.summonerSpellTargets = [];
+
+    // Create ChessObject and delegate to its methods
+    const casterObject = ChessFactory.createChess(caster, game);
+    casterObject.useSummonerSpell(spell.type, targetPosition, actionDetails);
+
+    // Put spell on cooldown
+    spell.currentCooldown = SUMMONER_SPELLS[spell.type].cooldown;
+
+    // Add caster to affected pieces
+    if (!actionDetails.affectedPieceIds.includes(caster.id)) {
+      actionDetails.affectedPieceIds.push(caster.id);
+    }
+
+    game.hasUsedSummonerSpellThisTurn = true;
+
+    return game;
   }
 
   // Process BUY_ITEM event
@@ -1689,34 +1755,6 @@ export class GameLogic {
     }
   }
 
-  // Award buffs for killing neutral monsters
-  /**
-   * Award gold and apply buffs for killing neutral monsters (Drakes, Baron)
-   * @deprecated This method is kept for backward compatibility.
-   * The logic is now handled in ChessObject.awardMonsterKillReward to avoid circular dependencies.
-   * ChessObject calls it internally when a monster is killed.
-   */
-  public static awardMonsterKillReward(
-    game: Game,
-    killerPlayerId: string,
-    monsterName: string
-  ): void {
-    const playerIndex = game.players.findIndex(
-      (p) => p.userId === killerPlayerId
-    );
-    if (playerIndex === -1) return;
-
-    // Check if it's any type of drake
-    if (this.DRAKE_TYPES.includes(monsterName)) {
-      game.players[playerIndex].gold += 50;
-      game.drakesKilled += 1;
-      this.applyDrakeSoulBuff(game, killerPlayerId, monsterName);
-    } else if (monsterName === "Baron Nashor") {
-      game.players[playerIndex].gold += 100;
-      this.applyHandOfBaronBuff(game, killerPlayerId);
-    }
-  }
-
   private static isMinion(name: string): boolean {
     return (
       name === "Melee Minion" ||
@@ -1759,6 +1797,7 @@ export class GameLogic {
             appliedAt: Date.now(),
             casterPlayerId: playerId,
             casterName: "Infernal Drake",
+            cause: "infernal_drake_buff",
           } as Debuff;
           break;
 
@@ -1778,6 +1817,7 @@ export class GameLogic {
             appliedAt: Date.now(),
             casterPlayerId: playerId,
             casterName: "Cloud Drake",
+            cause: "cloud_drake_buff",
           } as Debuff;
           break;
 
@@ -1800,6 +1840,7 @@ export class GameLogic {
             appliedAt: Date.now(),
             casterPlayerId: playerId,
             casterName: "Mountain Drake",
+            cause: "mountain_drake_buff",
           } as Debuff;
           break;
 
@@ -1819,6 +1860,7 @@ export class GameLogic {
             appliedAt: Date.now(),
             casterPlayerId: playerId,
             casterName: "Hextech Drake",
+            cause: "hextech_drake_buff",
           } as Debuff;
           break;
 
@@ -1838,6 +1880,7 @@ export class GameLogic {
             appliedAt: Date.now(),
             casterPlayerId: playerId,
             casterName: "Ocean Drake",
+            cause: "ocean_drake_buff",
           } as Debuff;
           break;
 
@@ -1857,6 +1900,7 @@ export class GameLogic {
             appliedAt: Date.now(),
             casterPlayerId: playerId,
             casterName: "Chemtech Drake",
+            cause: "chemtech_drake_buff",
           } as Debuff;
           break;
 
@@ -1876,6 +1920,7 @@ export class GameLogic {
             appliedAt: Date.now(),
             casterPlayerId: playerId,
             casterName: "Elder Dragon",
+            cause: "elder_drake_buff",
           } as Debuff;
           break;
       }
@@ -1920,6 +1965,7 @@ export class GameLogic {
           appliedAt: Date.now(),
           casterPlayerId: playerId,
           casterName: "Baron",
+          cause: "baron_buff",
         } as Debuff);
       } else if (isChampion) {
         chessObject.applyDebuff(chessObject, {
@@ -1942,6 +1988,7 @@ export class GameLogic {
           appliedAt: Date.now(),
           casterPlayerId: playerId,
           casterName: "Baron",
+          cause: "baron_buff",
         } as Debuff);
       }
     });

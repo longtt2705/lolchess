@@ -1,6 +1,11 @@
 // Summoner Spell Types for LOL Chess
 
-export type SummonerSpellType = "Flash" | "Ghost" | "Heal" | "Barrier" | "Smite";
+export type SummonerSpellType =
+  | "Flash"
+  | "Ghost"
+  | "Heal"
+  | "Barrier"
+  | "Smite";
 
 export interface SummonerSpell {
   type: SummonerSpellType;
@@ -15,7 +20,7 @@ export const SUMMONER_SPELLS: Record<
 > = {
   Flash: {
     cooldown: 20,
-    description: "Teleport the caster to a target square.",
+    description: "Teleport the caster to a target square within range 2.",
   },
   Ghost: {
     cooldown: 10,
@@ -28,11 +33,12 @@ export const SUMMONER_SPELLS: Record<
   },
   Barrier: {
     cooldown: 15,
-    description: "Create a barrier around your pieces to block incoming damage.",
+    description: "Create a shield on the caster to block incoming damage.",
   },
   Smite: {
     cooldown: 10,
-    description: "Deal 50 true damage to minions or neutral monsters.",
+    description:
+      "Deal 50 true damage to enemy minions or neutral monsters within range 2.",
   },
 };
 

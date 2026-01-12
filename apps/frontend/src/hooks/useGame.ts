@@ -141,11 +141,21 @@ export interface ChessPiece {
   cannotAttack: boolean;
   deadAtRound?: number;
   respawnAtRound?: number;
+  summonerSpell?: {
+    type: "Flash" | "Ghost" | "Heal" | "Barrier" | "Smite";
+    cooldown: number;
+    currentCooldown: number;
+  };
 }
 
 export interface ActionDetails {
   timestamp: number;
-  actionType: "move_chess" | "attack_chess" | "skill" | "buy_item";
+  actionType:
+    | "move_chess"
+    | "attack_chess"
+    | "skill"
+    | "buy_item"
+    | "use_summoner_spell";
   casterId: string;
   casterPosition: ChessPosition;
   targetId?: string;
@@ -165,6 +175,11 @@ export interface ActionDetails {
     targetId: string;
     targetPosition: ChessPosition;
   }>; // For Yasuo: targets hit by the whirlwind on critical strike
+  summonerSpellType?: string; // For USE_SUMMONER_SPELL: the type of spell used
+  summonerSpellTargets?: Array<{
+    targetId: string;
+    targetPosition: ChessPosition;
+  }>; // For summoner spells that affect multiple targets
   additionalAttacks?: Array<{
     attackerId: string;
     attackerPosition: ChessPosition;
@@ -200,12 +215,19 @@ export interface GameState {
   winner?: string;
   lastAction?: ActionDetails;
   hasBoughtItemThisTurn: boolean;
+  hasUsedSummonerSpellThisTurn: boolean;
   hasPerformedActionThisTurn: boolean;
   shopItems?: string[]; // Current available shop item IDs (rotates periodically)
 }
 
 export interface GameAction {
-  type: "move" | "attack" | "skill" | "buy_item" | "buy_viktor_module";
+  type:
+    | "move"
+    | "attack"
+    | "skill"
+    | "buy_item"
+    | "buy_viktor_module"
+    | "summoner_spell";
   casterPosition?: ChessPosition;
   targetPosition?: ChessPosition;
   itemId?: string;
@@ -250,6 +272,10 @@ export const useGame = (gameId: string) => {
     []
   );
   const [isSkillMode, setIsSkillMode] = useState(false);
+  const [isSummonerSpellMode, setIsSummonerSpellMode] = useState(false);
+  const [validSummonerSpellTargets, setValidSummonerSpellTargets] = useState<
+    ChessPosition[]
+  >([]);
 
   // Update game state from WebSocket - add to queue for sequential processing
   useEffect(() => {
@@ -273,13 +299,7 @@ export const useGame = (gameId: string) => {
         });
       } else {
         // No animations needed - show new state immediately
-        // But only if queue is empty and not animating
-        setGameStateQueue((prevQueue) => {
-          if (prevQueue.length === 0 && !isAnimatingRef.current) {
-            setDisplayState(wsGameState);
-          }
-          return prevQueue;
-        });
+        setDisplayState(wsGameState);
       }
 
       setLoading(false);
@@ -321,6 +341,7 @@ export const useGame = (gameId: string) => {
 
         if (response.data.game) {
           setGameState(response.data.game);
+          setDisplayState(response.data.game); // Initialize displayState
         }
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to fetch game state");
@@ -372,18 +393,29 @@ export const useGame = (gameId: string) => {
       setValidAttacks([]);
       setValidSkillTargets([]);
       setIsSkillMode(false);
+      setIsSummonerSpellMode(false);
+      setValidSummonerSpellTargets([]);
+
+      // Map action type to event string
+      const getEventString = (type: string) => {
+        switch (type) {
+          case "move":
+            return "move_chess";
+          case "attack":
+            return "attack_chess";
+          case "skill":
+            return "skill";
+          case "summoner_spell":
+            return "use_summoner_spell";
+          default:
+            return "buy_item";
+        }
+      };
 
       // Use WebSocket if connected, otherwise fall back to HTTP
       if (wsConnected) {
         const actionData = {
-          event:
-            action.type === "move"
-              ? "move_chess"
-              : action.type === "attack"
-                ? "attack_chess"
-                : action.type === "skill"
-                  ? "skill"
-                  : "buy_item",
+          event: getEventString(action.type),
           casterPosition: action.casterPosition,
           targetPosition: action.targetPosition,
           itemId: action.itemId,
@@ -396,14 +428,7 @@ export const useGame = (gameId: string) => {
           const token = localStorage.getItem("token");
           const payload = {
             playerId: currentUser.id,
-            event:
-              action.type === "move"
-                ? "move_chess"
-                : action.type === "attack"
-                  ? "attack_chess"
-                  : action.type === "skill"
-                    ? "skill"
-                    : "buy_item",
+            event: getEventString(action.type),
             casterPosition: action.casterPosition,
             targetPosition: action.targetPosition,
             itemId: action.itemId,
@@ -552,9 +577,19 @@ export const useGame = (gameId: string) => {
             if (occupiedBy.ownerId !== piece.ownerId) {
               // Enemy piece - can attack
               attacks.push(targetPosition);
+              // Path is blocked for further attacks
+              break;
+            } else {
+              // Ally piece - check if it has Ghost debuff
+              const hasGhost = (occupiedBy as any).debuffs?.some(
+                (d: any) => d.payload?.isGhost === true
+              );
+              if (!hasGhost) {
+                // Ally without Ghost blocks the path
+                break;
+              }
+              // Ally with Ghost - continue through them
             }
-            // Either way, path is blocked for further attacks
-            break;
           }
           // Empty square - continue checking further along this direction
         }
@@ -727,6 +762,8 @@ export const useGame = (gameId: string) => {
     setValidAttacks([]);
     setValidSkillTargets([]);
     setIsSkillMode(false);
+    setIsSummonerSpellMode(false);
+    setValidSummonerSpellTargets([]);
   }, []);
 
   // Activate skill targeting mode
@@ -850,13 +887,27 @@ export const useGame = (gameId: string) => {
                 p.position.x === newX && p.position.y === newY && p.stats.hp > 0
             );
 
+            // Check if occupied piece has Ghost debuff
+            const hasGhost = occupiedBy
+              ? (occupiedBy as any).debuffs?.some(
+                  (d: any) => d.payload?.isGhost === true
+                )
+              : false;
+
             // Handle different target types
             if (skill.targetTypes === "square") {
               // Can target empty squares within range (path must be clear)
               if (occupiedBy) {
-                break; // Stop at any piece - path blocked
+                // Check if it's an ally with Ghost - can pass through
+                if (occupiedBy.ownerId === piece.ownerId && hasGhost) {
+                  // Continue through Ghost ally
+                } else {
+                  // Stop at any other piece - path blocked
+                  break;
+                }
+              } else {
+                skillTargets.push(targetPosition);
               }
-              skillTargets.push(targetPosition);
             } else if (skill.targetTypes === "squareInRange") {
               // Can target empty squares within range (ignoring obstacles)
               if (!occupiedBy) {
@@ -869,7 +920,11 @@ export const useGame = (gameId: string) => {
                 skillTargets.push(targetPosition);
                 break; // Stop at first enemy
               } else if (occupiedBy) {
-                break; // Stop at ally
+                // Ally piece - check if it has Ghost
+                if (!hasGhost) {
+                  break; // Stop at ally without Ghost
+                }
+                // Continue through Ghost ally
               }
             } else if (skill.targetTypes === "ally") {
               // Can only target ally pieces
@@ -877,7 +932,11 @@ export const useGame = (gameId: string) => {
                 skillTargets.push(targetPosition);
                 break; // Stop at first ally
               } else if (occupiedBy) {
-                break; // Stop at enemy
+                // Enemy piece - check if it has Ghost (edge case)
+                if (!hasGhost) {
+                  break; // Stop at enemy without Ghost
+                }
+                // Continue through Ghost enemy (unlikely but consistent)
               }
             } else if (skill.targetTypes === "allyMinion") {
               // Can only target ally minions (Melee Minion or Caster Minion)
@@ -890,7 +949,11 @@ export const useGame = (gameId: string) => {
                 skillTargets.push(targetPosition);
                 break; // Stop at first ally minion
               } else if (occupiedBy) {
-                break; // Stop at any piece
+                // Any other piece - check if it has Ghost
+                if (!hasGhost) {
+                  break; // Stop at piece without Ghost
+                }
+                // Continue through Ghost piece
               }
             }
           }
@@ -904,6 +967,105 @@ export const useGame = (gameId: string) => {
       setValidAttacks([]);
     },
     [gameState]
+  );
+
+  // Activate summoner spell targeting mode
+  const activateSummonerSpellMode = useCallback(
+    (piece: ChessPiece) => {
+      if (!gameState || !piece.summonerSpell) return;
+
+      const spell = piece.summonerSpell;
+      const spellTargets: ChessPosition[] = [];
+
+      // Check if spell is on cooldown
+      if (spell.currentCooldown > 0) return;
+
+      // Calculate valid targets based on spell type
+      switch (spell.type) {
+        case "Flash": {
+          // Flash: Can teleport to any empty square within range 2
+          for (let x = -1; x <= 8; x++) {
+            for (let y = 0; y <= 7; y++) {
+              // Skip current position
+              if (x === piece.position.x && y === piece.position.y) continue;
+
+              // Check if within range 2
+              const deltaX = Math.abs(x - piece.position.x);
+              const deltaY = Math.abs(y - piece.position.y);
+              const distance = Math.max(deltaX, deltaY);
+
+              if (distance > 2) continue;
+
+              // Check if square is empty
+              const occupiedBy = gameState.board.find(
+                (p) =>
+                  p.position.x === x && p.position.y === y && p.stats.hp > 0
+              );
+
+              if (!occupiedBy) {
+                spellTargets.push({ x, y });
+              }
+            }
+          }
+          break;
+        }
+
+        case "Ghost":
+        case "Heal":
+        case "Barrier": {
+          // These spells are self-cast or auto-targeting - execute immediately
+          setIsSummonerSpellMode(false);
+          setValidSummonerSpellTargets([]);
+          // Execute the spell immediately
+          executeAction({
+            type: "summoner_spell",
+            casterPosition: piece.position,
+            targetPosition: piece.position, // Self-target
+          });
+          return;
+        }
+
+        case "Smite": {
+          // Smite: Can only target enemy minions or neutral monsters within range 2
+          gameState.board.forEach((p) => {
+            if (p.stats.hp <= 0) return;
+
+            // Check if within range 2
+            const deltaX = Math.abs(p.position.x - piece.position.x);
+            const deltaY = Math.abs(p.position.y - piece.position.y);
+            const distance = Math.max(deltaX, deltaY);
+
+            if (distance > 2) return;
+
+            // Check if it's a neutral monster
+            const isNeutralMonster =
+              p.ownerId === "neutral" ||
+              p.name.includes("Drake") ||
+              p.name === "Baron Nashor" ||
+              p.name === "Elder Dragon";
+
+            // Check if it's an ENEMY minion (not ally minion)
+            const isEnemyMinion =
+              (p.name.includes("Minion") || p.name === "Super Minion") &&
+              p.ownerId !== piece.ownerId;
+
+            if (isEnemyMinion || isNeutralMonster) {
+              spellTargets.push({ x: p.position.x, y: p.position.y });
+            }
+          });
+          break;
+        }
+      }
+
+      setValidSummonerSpellTargets(spellTargets);
+      setIsSummonerSpellMode(true);
+      // Clear other highlights
+      setValidMoves([]);
+      setValidAttacks([]);
+      setValidSkillTargets([]);
+      setIsSkillMode(false);
+    },
+    [gameState, executeAction]
   );
 
   // Check if it's current user's turn
@@ -991,6 +1153,8 @@ export const useGame = (gameId: string) => {
     validAttacks,
     validSkillTargets,
     isSkillMode,
+    validSummonerSpellTargets,
+    isSummonerSpellMode,
     isMyTurn,
     currentPlayer,
     opponent,
@@ -999,6 +1163,7 @@ export const useGame = (gameId: string) => {
     executeAction,
     initializeGameplay,
     activateSkillMode,
+    activateSummonerSpellMode,
     resign,
     offerDraw,
     respondToDraw,

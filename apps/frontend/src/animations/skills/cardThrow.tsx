@@ -222,8 +222,8 @@ export const cardThrowRenderer: SkillAnimationRenderer = {
     // Total duration: (cardCount * stagger) + flight time + buffer
     duration: (config: SkillAnimationConfig) => {
         const cardCount = config.totalCardCount || 1
-        const flightTime = 100 // Card flight time in ms
-        const buffer = 0 // Extra buffer time in ms
+        const flightTime = 500 // Card flight time in ms
+        const buffer = 100 // Extra buffer time in ms
         return cardCount * CARD_STAGGER_DELAY + flightTime + buffer
     }
 }

@@ -87,8 +87,15 @@ export function getAnyChessAtPosition(game: Game, square: Square): Chess | null 
 /**
  * Check if a path between two squares is clear of pieces
  * Used for ranged attacks and moves
+ * Only ally pieces with Ghost debuff do not block the path
+ * @param attackerOwnerId - Optional owner ID to determine allies (if not provided, all Ghost pieces pass through)
  */
-export function isPathClear(game: Game, from: Square, to: Square): boolean {
+export function isPathClear(
+  game: Game,
+  from: Square,
+  to: Square,
+  attackerOwnerId?: string
+): boolean {
   const deltaX = to.x - from.x;
   const deltaY = to.y - from.y;
 
@@ -110,7 +117,25 @@ export function isPathClear(game: Game, from: Square, to: Square): boolean {
     );
 
     if (blockingPiece) {
-      return false; // Path is blocked
+      // Check if the piece has Ghost debuff
+      const hasGhost = blockingPiece.debuffs?.some(
+        (d) => d.payload?.isGhost === true
+      );
+
+      if (attackerOwnerId) {
+        // If attackerOwnerId is provided, only ally Ghost pieces don't block
+        const isAlly = blockingPiece.ownerId === attackerOwnerId;
+        if (!isAlly || !hasGhost) {
+          // Enemy piece OR ally without Ghost - path is blocked
+          return false;
+        }
+      } else {
+        // Legacy behavior: any non-Ghost piece blocks
+        if (!hasGhost) {
+          return false;
+        }
+      }
+      // Ally with Ghost (or any Ghost in legacy mode) - continue checking
     }
 
     currentX += stepX;

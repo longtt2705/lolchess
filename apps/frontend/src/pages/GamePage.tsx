@@ -343,6 +343,43 @@ const Board = styled.div<{ isTargeting?: boolean }>`
       }
     }
     
+    &.valid-summoner-spell {
+      background: rgba(135, 206, 235, 0.35);
+      border-color: #87CEEB;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 0 12px rgba(135, 206, 235, 0.5);
+      animation: summonerSpellPulse 1.5s ease-in-out infinite;
+      
+      &:after {
+        content: '✦';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #87CEEB;
+        font-size: 20px;
+        font-weight: bold;
+        text-shadow: 0 0 8px rgba(135, 206, 235, 0.8);
+        filter: drop-shadow(0 0 4px rgba(135, 206, 235, 1));
+      }
+      
+      &:hover {
+        background: rgba(135, 206, 235, 0.5);
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(135, 206, 235, 0.8);
+      }
+      
+      @keyframes summonerSpellPulse {
+        0%, 100% {
+          box-shadow: 0 0 12px rgba(135, 206, 235, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(135, 206, 235, 0.9);
+        }
+      }
+    }
+    
     &.selected {
       background: rgba(200, 155, 60, 0.3);
       border-color: var(--gold);
@@ -600,6 +637,8 @@ const GamePage: React.FC = () => {
     validAttacks,
     validSkillTargets,
     isSkillMode,
+    validSummonerSpellTargets,
+    isSummonerSpellMode,
     isMyTurn,
     currentPlayer,
     opponent,
@@ -608,6 +647,7 @@ const GamePage: React.FC = () => {
     executeAction,
     initializeGameplay,
     activateSkillMode,
+    activateSummonerSpellMode,
     resign,
     offerDraw,
     respondToDraw,
@@ -1017,6 +1057,24 @@ const GamePage: React.FC = () => {
       return
     }
 
+    // If in summoner spell mode, check for valid spell target
+    if (isSummonerSpellMode && selectedPiece) {
+      const isValidSpellTarget = validSummonerSpellTargets.some(target => target.x === x && target.y === y)
+
+      if (isValidSpellTarget) {
+        executeAction({
+          type: 'summoner_spell',
+          casterPosition: selectedPiece.position,
+          targetPosition: clickedPosition,
+        })
+        clearSelection()
+      } else {
+        // Cancel summoner spell mode if clicking invalid target
+        clearSelection()
+      }
+      return
+    }
+
     if (clickedPiece && clickedPiece.ownerId === currentPlayer?.userId) {
       // Only select own pieces for actions
       selectPiece(clickedPiece)
@@ -1053,6 +1111,21 @@ const GamePage: React.FC = () => {
       // Enter skill targeting mode
       activateSkillMode(selectedPiece)
     }
+  }
+
+  // Use summoner spell action - enter targeting mode or execute immediately for self-cast spells
+  const handleSummonerSpell = (piece: ChessPiece) => {
+    if (!piece || !isMyTurn || !(piece as any).summonerSpell) return
+
+    const spell = (piece as any).summonerSpell
+
+    // Check if spell is on cooldown
+    if (spell.currentCooldown > 0) return
+
+    // For self-cast spells (Ghost, Heal, Barrier), activateSummonerSpellMode will execute immediately
+    // For targeted spells (Flash, Smite), it will enter targeting mode
+    selectPiece(piece) // Select the piece first
+    activateSummonerSpellMode(piece)
   }
 
   // Handle dev tools reset completion
@@ -1115,6 +1188,7 @@ const GamePage: React.FC = () => {
         const isValidMove = validMoves.some(move => move.x === x && move.y === y)
         const isValidAttack = validAttacks.some(attack => attack.x === x && attack.y === y)
         const isValidSkill = validSkillTargets.some(target => target.x === x && target.y === y)
+        const isValidSummonerSpell = validSummonerSpellTargets.some(target => target.x === x && target.y === y)
 
         // Prioritize living pieces over recently dead ones at the same position
         // This is important for Critical Flank where attacker moves to dead target's position
@@ -1124,6 +1198,7 @@ const GamePage: React.FC = () => {
         let squareClass = 'square'
         if (isSelected) squareClass += ' selected'
         if (isSkillMode && isValidSkill) squareClass += ' valid-skill'
+        else if (isSummonerSpellMode && isValidSummonerSpell) squareClass += ' valid-summoner-spell'
         else if (isValidMove) squareClass += ' valid-move'
         else if (isValidAttack) squareClass += ' valid-attack'
 
@@ -1149,6 +1224,7 @@ const GamePage: React.FC = () => {
                 boardRef={boardRef}
                 allItems={allItems}
                 currentRound={displayState?.currentRound || gameState?.currentRound || 0}
+                hasUsedSummonerSpellThisTurn={gameState?.hasUsedSummonerSpellThisTurn || false}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent square click
 
@@ -1157,6 +1233,10 @@ const GamePage: React.FC = () => {
 
                   // If in skill mode and this is a valid target, execute skill
                   if (isSkillMode && isValidSkill) {
+                    handleSquareClick(x, y);
+                  }
+                  // If in summoner spell mode and this is a valid target, execute summoner spell
+                  else if (isSummonerSpellMode && isValidSummonerSpell) {
                     handleSquareClick(x, y);
                   }
                   // Action selection logic (only for own pieces during turn)
@@ -1186,6 +1266,24 @@ const GamePage: React.FC = () => {
                         // Not in skill mode, just select and activate
                         selectPiece(piece);
                         handleSkill();
+                      }
+                    }
+                  }
+                }}
+                onSummonerSpellClick={() => {
+                  if (isMyTurn && piece.ownerId === currentPlayer?.userId && (piece as any).summonerSpell) {
+                    // If already in summoner spell mode for the SAME piece, cancel it
+                    if (isSummonerSpellMode && selectedPiece?.id === piece.id) {
+                      clearSelection();
+                    } else {
+                      // Clear any existing mode and activate summoner spell mode
+                      if (isSkillMode || isSummonerSpellMode) {
+                        clearSelection();
+                        setTimeout(() => {
+                          handleSummonerSpell(piece);
+                        }, 0);
+                      } else {
+                        handleSummonerSpell(piece);
                       }
                     }
                   }
@@ -1354,14 +1452,14 @@ const GamePage: React.FC = () => {
           {/* Dead champions section for current player */}
           {(() => {
             const deadPiecesForPlayer = displayState?.board.filter(
-              p => p.ownerId === currentPlayer?.userId && 
-                   p.stats.hp <= 0 && 
-                   p.respawnAtRound !== undefined && 
-                   p.respawnAtRound > (displayState?.currentRound || 0)
+              p => p.ownerId === currentPlayer?.userId &&
+                p.stats.hp <= 0 &&
+                p.respawnAtRound !== undefined &&
+                p.respawnAtRound > (displayState?.currentRound || 0)
             ) || []
-            
+
             if (deadPiecesForPlayer.length === 0) return null
-            
+
             return (
               <DeadChampionsSection>
                 {deadPiecesForPlayer.map(piece => (
@@ -1394,14 +1492,14 @@ const GamePage: React.FC = () => {
           {/* Dead champions section for opponent */}
           {opponent && (() => {
             const deadPiecesForOpponent = displayState?.board.filter(
-              p => p.ownerId === opponent?.userId && 
-                   p.stats.hp <= 0 && 
-                   p.respawnAtRound !== undefined && 
-                   p.respawnAtRound > (displayState?.currentRound || 0)
+              p => p.ownerId === opponent?.userId &&
+                p.stats.hp <= 0 &&
+                p.respawnAtRound !== undefined &&
+                p.respawnAtRound > (displayState?.currentRound || 0)
             ) || []
-            
+
             if (deadPiecesForOpponent.length === 0) return null
-            
+
             return (
               <DeadChampionsSection>
                 {deadPiecesForOpponent.map(piece => (

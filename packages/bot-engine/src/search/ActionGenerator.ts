@@ -50,6 +50,11 @@ export class ActionGenerator {
           this.generateSkillActions(game, piece, playerId, actions);
         }
       }
+
+      // Generate summoner spell actions (can be used anytime, doesn't consume turn)
+      if (piece.summonerSpell && piece.summonerSpell.currentCooldown === 0) {
+        this.generateSummonerSpellActions(game, piece, playerId, actions);
+      }
     }
 
     // Generate item purchase actions
@@ -130,6 +135,105 @@ export class ActionGenerator {
           casterPosition: { x: piece.position.x, y: piece.position.y },
           targetPosition: target,
         });
+      }
+    }
+  }
+
+  /**
+   * Generate summoner spell actions for a piece
+   */
+  private generateSummonerSpellActions(
+    game: Game,
+    piece: Chess,
+    playerId: string,
+    actions: EventPayload[]
+  ): void {
+    const spell = piece.summonerSpell;
+    if (!spell || spell.currentCooldown > 0) return;
+
+    switch (spell.type) {
+      case "Flash": {
+        // Flash: Can target any empty square within range 2
+        for (let x = -1; x <= 8; x++) {
+          for (let y = 0; y <= 7; y++) {
+            // Skip current position
+            if (x === piece.position.x && y === piece.position.y) continue;
+
+            // Check if within range 2
+            const deltaX = Math.abs(x - piece.position.x);
+            const deltaY = Math.abs(y - piece.position.y);
+            const distance = Math.max(deltaX, deltaY);
+            
+            if (distance > 2) continue;
+
+            // Check if square is empty
+            const occupiedBy = game.board.find(
+              (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0
+            );
+
+            if (!occupiedBy) {
+              actions.push({
+                playerId,
+                event: GameEvent.USE_SUMMONER_SPELL,
+                casterPosition: { x: piece.position.x, y: piece.position.y },
+                targetPosition: { x, y },
+              });
+            }
+          }
+        }
+        break;
+      }
+
+      case "Ghost":
+      case "Heal":
+      case "Barrier": {
+        // Self-cast spells
+        actions.push({
+          playerId,
+          event: GameEvent.USE_SUMMONER_SPELL,
+          casterPosition: { x: piece.position.x, y: piece.position.y },
+          targetPosition: { x: piece.position.x, y: piece.position.y },
+        });
+        break;
+      }
+
+      case "Smite": {
+        // Smite: Target enemy minions or neutral monsters within range 2
+        for (const target of game.board) {
+          if (target.stats.hp <= 0) continue;
+
+          // Check if within range 2
+          const deltaX = Math.abs(target.position.x - piece.position.x);
+          const deltaY = Math.abs(target.position.y - piece.position.y);
+          const distance = Math.max(deltaX, deltaY);
+          
+          if (distance > 2) continue;
+
+          // Check if it's a neutral monster
+          const isNeutralMonster =
+            target.ownerId === "neutral" ||
+            target.name.includes("Drake") ||
+            target.name === "Baron Nashor" ||
+            target.name === "Elder Dragon";
+
+          // Check if it's an ENEMY minion (not ally minion)
+          const isEnemyMinion =
+            (target.name.includes("Minion") || target.name === "Super Minion") &&
+            target.ownerId !== piece.ownerId;
+
+          if (isEnemyMinion || isNeutralMonster) {
+            actions.push({
+              playerId,
+              event: GameEvent.USE_SUMMONER_SPELL,
+              casterPosition: { x: piece.position.x, y: piece.position.y },
+              targetPosition: {
+                x: target.position.x,
+                y: target.position.y,
+              },
+            });
+          }
+        }
+        break;
       }
     }
   }
@@ -235,6 +339,25 @@ export class ActionGenerator {
       if (!game.hasPerformedActionThisTurn) {
         this.generateSkillActions(game, piece, playerId, actions);
       }
+    }
+
+    return actions;
+  }
+
+  /**
+   * Generate only summoner spell actions
+   */
+  generateSummonerSpells(game: Game, playerId: string): EventPayload[] {
+    const actions: EventPayload[] = [];
+    const playerPieces = getPlayerPieces(game, playerId);
+
+    for (const piece of playerPieces) {
+      if (piece.stats.hp <= 0) continue;
+      if (!piece.summonerSpell || piece.summonerSpell.currentCooldown !== 0) continue;
+      const isStunned = piece.debuffs?.some((d) => d.stun) ?? false;
+      if (isStunned) continue;
+
+      this.generateSummonerSpellActions(game, piece, playerId, actions);
     }
 
     return actions;
