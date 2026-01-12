@@ -7,6 +7,7 @@ export interface AnimationAction {
     | "move"
     | "attack"
     | "skill"
+    | "summoner_spell"
     | "damage"
     | "stat_change"
     | "death"
@@ -288,7 +289,42 @@ export class AnimationEngine {
       }
     }
 
-    // 4. Handle self-damage (e.g., Dr. Mundo's sacrifice)
+    // 4. Handle summoner spell animation
+    if (lastAction.actionType === "use_summoner_spell" && lastAction.summonerSpellType) {
+      const caster = gameState.board.find((p) => p.id === lastAction.casterId);
+
+      if (caster) {
+        // Get summoner spell animation renderer to use its duration
+        const spellRenderer = getSkillAnimationRenderer(lastAction.summonerSpellType);
+
+        // Prepare the summoner spell animation config data
+        const spellAnimationData = {
+          casterId: lastAction.casterId,
+          casterPosition: lastAction.casterPosition,
+          skillName: lastAction.summonerSpellType,
+          targetPosition: lastAction.targetPosition,
+          targetId: lastAction.targetId,
+        } as SkillAnimationData;
+
+        // Calculate duration - support both static and dynamic duration
+        const calculatedDuration =
+          typeof spellRenderer.duration === "function"
+            ? spellRenderer.duration(spellAnimationData)
+            : spellRenderer.duration;
+
+        animations.push({
+          id: `summoner_spell_${lastAction.timestamp}`,
+          type: "summoner_spell",
+          timestamp: lastAction.timestamp,
+          delay: currentDelay,
+          duration: calculatedDuration,
+          data: spellAnimationData,
+        });
+        currentDelay += calculatedDuration;
+      }
+    }
+
+    // 5. Handle self-damage (e.g., Dr. Mundo's sacrifice)
     // This needs to be shown BEFORE stat changes so it doesn't get hidden by heals
     if (lastAction.selfDamage) {
       Object.entries(lastAction.selfDamage).forEach(([pieceId, damage]) => {
@@ -316,7 +352,7 @@ export class AnimationEngine {
       }
     }
 
-    // 5. Handle stat changes (with floating text)
+    // 6. Handle stat changes (with floating text)
     if (lastAction.statChanges) {
       Object.entries(lastAction.statChanges).forEach(([key, change]) => {
         const [pieceId, stat] = key.split(".");
@@ -371,7 +407,7 @@ export class AnimationEngine {
       }
     }
 
-    // 6. Handle death animations
+    // 7. Handle death animations
     if (lastAction.killedPieceIds && lastAction.killedPieceIds.length > 0) {
       lastAction.killedPieceIds.forEach((pieceId) => {
         // Try to get the piece's last known position from previousGameState
@@ -413,7 +449,7 @@ export class AnimationEngine {
       }
     }
 
-    // 6. Handle item purchase
+    // 8. Handle item purchase
     if (lastAction.actionType === "buy_item" && lastAction.itemId) {
       animations.push({
         id: `buy_item_${lastAction.timestamp}`,

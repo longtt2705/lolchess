@@ -903,6 +903,35 @@ const GamePage: React.FC = () => {
         break
       }
 
+      case 'summoner_spell': {
+        const { casterId, casterPosition, skillName, targetPosition, targetId } = animation.data
+        const spellRenderer = getSkillAnimationRenderer(skillName)
+
+        // Determine if current player is red (for coordinate transformation)
+        const isRedPlayer = !!(gameState && currentUser && gameState.redPlayer === currentUser.id)
+
+        // Store summoner spell animation component in state to render
+        setActiveSkillAnimation({
+          id: animation.id,
+          component: spellRenderer.render({
+            casterId,
+            casterPosition,
+            targetPosition,
+            targetId,
+            skillName,
+            boardRef,
+            isRedPlayer,
+          })
+        })
+
+        // Wait for the full animation duration
+        await new Promise(resolve => setTimeout(resolve, animation.duration))
+
+        // Clean up animation after it completes
+        setActiveSkillAnimation(null)
+        break
+      }
+
       case 'death': {
         // Death animation is handled by the CSS fade-out based on deadPieces set
         await new Promise(resolve => setTimeout(resolve, animation.duration))
