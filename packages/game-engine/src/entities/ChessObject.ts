@@ -94,7 +94,7 @@ export class ChessObject {
     return protectionFactor / (protectionFactor + 30);
   }
 
-  private calculateDamage(
+  protected calculateDamage(
     target: ChessObject,
     damage: number,
     damageType: "physical" | "magic" | "true" | "non-lethal",
@@ -176,15 +176,7 @@ export class ChessObject {
     chess.postTakenDamage(this, finalDamage, damageType, fromAttack, dontApplyDebuff);
 
     // Elder Dragon execute: if attacker has Elder buff debuff and target is below 15% HP, execute
-    const hasElderBuff = this.chess.debuffs?.some(
-      (debuff) => debuff.id === "elder_drake_buff"
-    );
-    if (
-      hasElderBuff &&
-      chess.chess.stats.hp > 0 &&
-      chess.chess.stats.hp < chess.chess.stats.maxHp * 0.15 &&
-      damageType !== "non-lethal"
-    ) {
+    if (this.hasDebuff("elder_drake_buff") && chess.chess.stats.hp > 0 && chess.chess.stats.hp < chess.chess.stats.maxHp * 0.15 && damageType !== "non-lethal") {
       chess.chess.stats.hp = 0;
     }
 
@@ -890,6 +882,10 @@ export class ChessObject {
 
   get damageAmplification(): number {
     return this.getEffectiveStat(this.chess, "damageAmplification");
+  }
+
+  get isStunned(): boolean {
+    return this.chess.debuffs.some((debuff) => debuff.stun);
   }
 
   getEffectiveStat(chess: Chess, stat: string): number {

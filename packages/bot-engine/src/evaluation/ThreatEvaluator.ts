@@ -2,58 +2,19 @@ import {
   Chess,
   Game,
   GameEngine,
-  getPlayerPieces,
   getPieceAtPosition,
-  Square,
+  getPlayerPieces,
+  Square
 } from "@lolchess/game-engine";
+import { ChessEvalFactory } from "../champion/ChessEvalFactory";
 import { ThreatInfo } from "../types";
+import { MaterialEvaluator } from "./MaterialEvaluator";
 
 /**
  * Evaluates threats and attack opportunities
  */
 export class ThreatEvaluator {
-  constructor(private gameEngine: GameEngine) {}
-
-  /**
-   * Calculate damage considering armor/resistance
-   */
-  calculateDamage(
-    attacker: Chess,
-    target: Chess,
-    damageType: "physical" | "magic" = "physical"
-  ): number {
-    const baseDamage =
-      damageType === "physical"
-        ? attacker.stats.ad || 0
-        : attacker.stats.ap || 0;
-
-    const resistance =
-      damageType === "physical"
-        ? target.stats.physicalResistance || 0
-        : target.stats.magicResistance || 0;
-
-    // Apply sunder (armor penetration)
-    const effectiveResistance = Math.max(
-      0,
-      resistance - (attacker.stats.sunder || 0)
-    );
-
-    // Damage reduction formula
-    const damageMultiplier = 100 / (100 + effectiveResistance);
-    let damage = baseDamage * damageMultiplier;
-
-    // Apply damage amplification
-    damage *= 1 + (attacker.stats.damageAmplification || 0) / 100;
-
-    // Expected critical damage
-    const critChance = attacker.stats.criticalChance || 0;
-    const critDamage = attacker.stats.criticalDamage || 125;
-    const expectedCritBonus = (critChance / 100) * ((critDamage - 100) / 100);
-    damage *= 1 + expectedCritBonus;
-
-    return Math.floor(damage);
-  }
-
+  constructor(private gameEngine: GameEngine, private materialEvaluator: MaterialEvaluator) { }
   /**
    * Get all threats a player can make
    */
@@ -62,29 +23,55 @@ export class ThreatEvaluator {
     const pieces = getPlayerPieces(game, playerId);
 
     for (const piece of pieces) {
-      if (piece.cannotAttack || piece.stats.hp <= 0) continue;
+      const chessObjectEval = ChessEvalFactory.createChess(piece, game);
+      if (piece.cannotAttack || chessObjectEval.isStunned || piece.stats.hp <= 0) continue;
 
       const attackTargets = this.gameEngine.getValidAttacks(game, piece.id);
       for (const targetPos of attackTargets) {
         const target = getPieceAtPosition(game, targetPos);
         if (!target) continue;
-
-        const damage = this.calculateDamage(piece, target, "physical");
-        const canKill = target.stats.hp <= damage;
+        const targetChessObject = ChessEvalFactory.createChess(target, game);
+        const potentialDamage = chessObjectEval.calculateDamageAttack(targetChessObject);
+        const canKill = targetChessObject.chess.stats.hp <= potentialDamage;
 
         // Calculate priority
-        let priority = damage;
+        let priority = potentialDamage;
         if (canKill) priority += 100;
         if (target.name === "Poro") priority += 500;
-        priority += (target.stats.goldValue || 0) * 0.5;
+        priority += this.materialEvaluator.evaluatePiece(target);
 
         threats.push({
           attacker: piece,
           target,
-          damage,
+          damage: potentialDamage,
           canKill,
           priority,
         });
+      }
+
+      if (piece.skill?.type === "active" && piece.skill?.currentCooldown === 0) {
+        const skillTargets = this.gameEngine.getValidSkillTargets(game, piece.id);
+        for (const targetPos of skillTargets) {
+          const target = getPieceAtPosition(game, targetPos);
+          if (!target) continue;
+          const targetChessObject = ChessEvalFactory.createChess(target, game);
+          const potentialDamage = chessObjectEval.calculateDamageActiveSkill(targetChessObject);
+          const canKill = targetChessObject.chess.stats.hp <= potentialDamage;
+
+          // Calculate priority
+          let priority = potentialDamage;
+          if (canKill) priority += 100;
+          if (target.name === "Poro") priority += 500;
+          priority += this.materialEvaluator.evaluatePiece(target);
+
+          threats.push({
+            attacker: piece,
+            target,
+            damage: potentialDamage,
+            canKill,
+            priority,
+          });
+        }
       }
     }
 
