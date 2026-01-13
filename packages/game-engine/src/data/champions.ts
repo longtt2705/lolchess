@@ -676,7 +676,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Wild Cards",
       description:
-        "Throws (10 + 20% of AP) cards to a target and his adjacent enemies, the first card deals (1 + 5% AP + 5% AD) magic damage to the target. Subsequent cards deal 50% of the first card's damage to the target and his adjacent enemies.",
+        "Throws (10 + 20% of AP) cards to a target and his adjacent enemies, the first card deals (1 + 5% AP + 5% AD) magic damage to the target. Subsequent cards deal 60% of the first card's damage to the target and his adjacent enemies.",
       cooldown: 6,
       attackRange: {
         range: 3,
@@ -832,10 +832,10 @@ export const champions: ChampionData[] = [
       },
     },
     skill: {
-      type: "active", 
+      type: "active",
       name: "Solar Flare",
       description:
-        "Call down sun beams on the 3 nearest enemies (lowest HP prioritise) within 2 range, slow 50% their Move Speed for 2 turns and dealing (10 + 10% of AP + 10% of AD) magic damage, also afflict Sunlight to them for 3 turns. If an ally deals damage to those target, they consume the Sunlight, deals additional (10 + 25% Physical Resistance + 25% Magic Resistance) magic damage.",
+        "Call down sun beams on the 5 nearest enemies (lowest HP prioritised) within 2 range, slow Move Speed by 1 for 2 turns and dealing (15 + 20% of AP + 20% of AD) magic damage, also afflict Sunlight to them for 3 turns. If an ally deals damage to those target, they consume the Sunlight, deals additional (10 + 25% Physical Resistance + 25% Magic Resistance) magic damage.",
       cooldown: 6,
       targetTypes: "none",
     },

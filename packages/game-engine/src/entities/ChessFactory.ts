@@ -27,6 +27,7 @@ import { MeleeMinion } from "./champions/MeleeMinion";
 import { CasterMinion } from "./champions/CasterMinion";
 import { SandSoldier } from "./champions/SandSoldier";
 import { DrMundo } from "./champions/DrMundo";
+import { Leona } from "./champions/Leona";
 
 export interface IChessFactory {
   createChess(chess: Chess, game: Game): ChessObject;
@@ -89,6 +90,8 @@ export class ChessFactory implements IChessFactory {
         return new SandSoldier(chess, game);
       case "Dr.Mundo":
         return new DrMundo(chess, game);
+      case "Leona":
+        return new Leona(chess, game);
       default:
         return new ChessObject(chess, game);
     }

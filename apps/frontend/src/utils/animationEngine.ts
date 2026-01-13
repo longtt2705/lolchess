@@ -57,6 +57,10 @@ export interface SkillAnimationData {
     targetPosition: ChessPosition;
   }>; // For Yasuo: targets hit by the whirlwind on critical strike
   criticalFlankAdvancePosition?: ChessPosition; // For Minions: position the attacker advanced to after Critical Flank
+  sunlightTargets?: Array<{
+    targetId: string;
+    targetPosition: ChessPosition;
+  }>; // For Leona: enemies hit by Solar Flare sun beams
 }
 
 export interface DamageAnimationData {
@@ -269,6 +273,7 @@ export class AnimationEngine {
           cardTargets: (lastAction as any).cardTargets, // Add cardTargets for Twisted Fate
           totalCardCount: (lastAction as any).totalCardCount, // Add totalCardCount for Twisted Fate
           viktorModules: (lastAction as any).viktorModules, // Add viktorModules for Viktor
+          sunlightTargets: (lastAction as any).sunlightTargets, // Add sunlightTargets for Leona
         } as SkillAnimationData;
 
         // Calculate duration - support both static and dynamic duration

@@ -7,7 +7,7 @@ import {
   getItemById,
   findCombinedItem,
 } from "../data/items";
-import { getAdjacentSquares as getAdjacentSquaresHelper } from "../utils/helpers";
+import { getAdjacentSquares as getAdjacentSquaresHelper, getPieceById } from "../utils/helpers";
 import {
   SeededRandom,
   clearGameRng,
@@ -346,20 +346,13 @@ export class GameLogic {
       casterChess.skill?.payload?.azirId
     ) {
       // Find Azir on the board
-      const azir = game.board.find(
-        (chess) =>
-          chess.id === casterChess.skill.payload.azirId && chess.stats.hp > 0
-      );
+      const azir = getPieceById(game, casterChess.skill.payload.azirId);
       if (azir) {
-        guinsooRageblade = azir.items.find(
-          (item) => item.id === "guinsoo_rageblade"
-        );
+        guinsooRageblade = ChessFactory.createChess(azir, game).getItem("guinsoo_rageblade");
       }
     } else {
       // Normal chess pieces - check their own items
-      guinsooRageblade = casterChess.items.find(
-        (item) => item.id === "guinsoo_rageblade"
-      );
+      guinsooRageblade = ChessFactory.createChess(casterChess, game).getItem("guinsoo_rageblade");
     }
 
     if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
@@ -498,6 +491,12 @@ export class GameLogic {
       if (casterChess.skill.payload.viktorModules) {
         (actionDetails as any).viktorModules =
           casterChess.skill.payload.viktorModules;
+      }
+
+      // Leona's Solar Flare: sunlightTargets
+      if (casterChess.skill.payload.sunlightTargets) {
+        (actionDetails as any).sunlightTargets =
+          casterChess.skill.payload.sunlightTargets;
       }
     }
 
@@ -1159,20 +1158,20 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-            type: championData.skill.type,
-            name: championData.skill.name,
-            description: championData.skill.description,
-            cooldown: championData.skill.cooldown,
-            currentCooldown: championData.skill.currentCooldown || 0,
-            attackRange: championData.skill.attackRange ||
-              championData.stats.attackRange || {
-                range: 1,
-                diagonal: true,
-                horizontal: true,
-                vertical: true,
-              },
-            targetTypes: championData.skill.targetTypes || "none",
-          }
+          type: championData.skill.type,
+          name: championData.skill.name,
+          description: championData.skill.description,
+          cooldown: championData.skill.cooldown,
+          currentCooldown: championData.skill.currentCooldown || 0,
+          attackRange: championData.skill.attackRange ||
+            championData.stats.attackRange || {
+            range: 1,
+            diagonal: true,
+            horizontal: true,
+            vertical: true,
+          },
+          targetTypes: championData.skill.targetTypes || "none",
+        }
         : undefined,
       items: [],
       debuffs: [],

@@ -44,7 +44,7 @@ export class Ashe extends ChessObject {
     let baseDamage = super.attack(chess);
 
     // Apply Frost Shot debuff
-    if (this.chess.debuffs.some((debuff) => debuff.id === "frost_shot")) {
+    if (this.hasDebuff("frost_shot")) {
       const damageBonus = Math.floor(
         chess.maxHp * (0.15 + (this.ap * 0.1) / 100)
       );

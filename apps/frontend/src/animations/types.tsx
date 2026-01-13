@@ -33,6 +33,10 @@ export interface SkillAnimationConfig {
     }>;
   } // For Viktor: module effect states
   criticalFlankAdvancePosition?: ChessPosition // For Minions: position the attacker advanced to after Critical Flank
+  sunlightTargets?: Array<{
+    targetId: string;
+    targetPosition: ChessPosition;
+  }> // For Leona: enemies hit by Solar Flare sun beams
 }
 
 export interface SkillAnimationRenderer {

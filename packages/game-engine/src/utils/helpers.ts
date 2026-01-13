@@ -3,7 +3,7 @@
  * These functions have no side effects and are framework-agnostic
  */
 
-import { Square, Chess, Game } from "../types";
+import { Square, Chess, Game, Item } from "../types";
 
 /**
  * Get all adjacent squares (8-directional) from a given position
@@ -236,3 +236,23 @@ export function getPiecesInLine(
   return pieces;
 }
 
+/**
+ * Find a piece by its name
+ * @param game - Current game state
+ * @param ownerId - Owner ID of the piece
+ * @param name - Name of the piece
+ * @returns The chess piece or undefined
+ */
+export function getChessByName(game: Game, ownerId: string, name: string): Chess | undefined {
+  return game.board.find((chess) => chess.ownerId === ownerId && chess.name === name);
+}
+
+/**
+ * Find an item by its id
+ * @param game - Current game state
+ * @param id - ID of the item
+ * @returns The item or undefined
+ */
+export function getPieceById(game: Game, id: string): Chess | undefined {
+  return game.board.find((chess) => chess.id === id);
+}

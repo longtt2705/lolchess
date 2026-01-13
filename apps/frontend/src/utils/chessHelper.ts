@@ -191,6 +191,14 @@ export const getIconConfig = (debuff: any) => {
       src: "/icons/elder dragon.webp",
       alt: "Elder Dragon Buff",
     },
+    sunlight: {
+      src: "/icons/LeonaSunlight.png",
+      alt: "Sunlight Mark",
+    },
+    "leona-slow": {
+      src: "/icons/leona_skill.webp",
+      alt: "Solar Flare Slow",
+    }
   };
 
   let iconConfig = debuffIconMap[debuff.id];

@@ -22,7 +22,7 @@ export class Tryndamere extends ChessObject {
 
   protected postTakenDamage(attacker: ChessObject, damage: number, damageType: "physical" | "magic" | "true"): void {
     super.postTakenDamage(attacker, damage, damageType);
-    if (this.chess.debuffs.some((debuff) => debuff.id === "undying_rage")) {
+    if (this.hasDebuff("undying_rage")) {
       if (this.chess.stats.hp <= 0) {
         this.chess.stats.hp = 1;
       }

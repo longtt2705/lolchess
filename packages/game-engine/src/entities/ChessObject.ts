@@ -13,7 +13,7 @@ import {
   SummonerSpellType,
 } from "../types";
 import { ChessFactory } from "./ChessFactory";
-import { getAdjacentSquares, getChessAtPosition } from "../utils/helpers";
+import { getAdjacentSquares, getChessAtPosition, getChessByName } from "../utils/helpers";
 import { getGameRng } from "../utils/SeededRandom";
 
 export class ChessObject {
@@ -30,7 +30,7 @@ export class ChessObject {
   }
 
   protected postCritDamage(chess: ChessObject, damage: number): void {
-    if (chess.chess.items.some((item) => item.id === "strikers_flail")) {
+    if (chess.hasItem("strikers_flail")) {
       chess.applyDebuff(chess, {
         id: "strikers_flail",
         name: "Strikers Flail",
@@ -67,7 +67,7 @@ export class ChessObject {
     sunder: number = 0
   ): number {
     let updatedDamage = damage;
-    if (this.chess.items.some((item) => item.id === "jeweled_gauntlet")) {
+    if (this.hasItem("jeweled_gauntlet")) {
       const rng = getGameRng();
       this.willCrit = rng.chance(this.criticalChance);
 
@@ -102,7 +102,7 @@ export class ChessObject {
   ): number {
     if (damageType === "physical") {
       let physicalResistance = target.physicalResistance;
-      if (this.chess.items.some((item) => item.id === "last_whisper")) {
+      if (this.hasItem("last_whisper")) {
         physicalResistance *= 0.7;
       }
       const reducePercentage = ChessObject.damageReductionPercentage(
@@ -111,7 +111,7 @@ export class ChessObject {
       return damage * (1 - reducePercentage);
     } else if (damageType === "magic") {
       let magicResistance = target.magicResistance;
-      if (this.chess.items.some((item) => item.id === "void_staff")) {
+      if (this.hasItem("void_staff")) {
         magicResistance *= 0.7;
       }
       const reducePercentage = ChessObject.damageReductionPercentage(
@@ -135,7 +135,7 @@ export class ChessObject {
     let damageAmplification = this.damageAmplification;
     if (
       chess.chess.stats.hp > 200 &&
-      this.chess.items.some((item) => item.id === "giant_slayer")
+      this.hasItem("giant_slayer")
     ) {
       damageAmplification += 15;
     }
@@ -145,7 +145,7 @@ export class ChessObject {
 
     // Check if the target has a shield
     const shields = chess.chess.shields || [];
-    if (this.chess.items.some((item) => item.id === "serpents_fang")) {
+    if (this.hasItem("serpents_fang")) {
       shields.forEach((shield) => {
         shield.amount = Math.floor(shield.amount * 0.5);
       });
@@ -168,7 +168,7 @@ export class ChessObject {
     const finalDamage = Math.floor(
       chess.preTakenDamage(this, calDamage, damageType, fromAttack)
     );
-    
+
     chess.chess.stats.hp -= finalDamage;
     if (damageType === "non-lethal") {
       chess.chess.stats.hp = Math.max(chess.chess.stats.hp, 1);
@@ -214,10 +214,7 @@ export class ChessObject {
     }
 
     if (
-      this.chess.items.some(
-        (item) =>
-          item.id === "hextech_gunblade" || item.id === "hand_of_justice"
-      )
+      this.hasItem("hextech_gunblade", "hand_of_justice")
     ) {
       this.heal(this, damage * 0.15);
     }
@@ -254,7 +251,7 @@ export class ChessObject {
     }
 
     if (
-      this.chess.items.some((item) => item.id === "deaths_dance") &&
+      this.hasItem("deaths_dance") &&
       damageType !== "non-lethal" &&
       damageType !== "true"
     ) {
@@ -282,7 +279,7 @@ export class ChessObject {
         cause: "deaths_dance",
       } as Debuff);
     }
-  
+
     return finalDamage;
   }
 
@@ -293,7 +290,7 @@ export class ChessObject {
     fromAttack: boolean = false,
     dontApplyDebuff: boolean = false
   ): void {
-    if (this.chess.items.some((item) => item.id === "titans_resolve")) {
+    if (this.hasItem("titans_resolve")) {
       const damageToConvert = Math.floor(damage * 0.25);
       this.applyDebuff(this, {
         id: "titans_resolve",
@@ -317,12 +314,10 @@ export class ChessObject {
       } as Debuff);
     }
     if (
-      this.chess.items.some((item) => item.id === "sterak_gage") &&
+      this.hasItem("sterak_gage") &&
       this.chess.stats.hp <= this.maxHp * 0.6
     ) {
-      const sterakGage = this.chess.items.find(
-        (item) => item.id === "sterak_gage"
-      );
+      const sterakGage = this.getItem("sterak_gage");
       if (sterakGage && sterakGage.currentCooldown <= 0) {
         this.applyShield(this.maxHp * 0.5, 5);
         this.applyDebuff(this, {
@@ -344,21 +339,20 @@ export class ChessObject {
       }
     }
     if (
-      attacker.chess.items.some(
-        (item) => item.id === "morellonomicon"
-      ) && !dontApplyDebuff
+      attacker.hasItem("morellonomicon") &&
+      !dontApplyDebuff
     ) {
       if (attacker.chess.blue !== this.chess.blue) {
         attacker.applyDebuff(this, this.createBurnedDebuff(3, attacker, "morellonomicon"));
         attacker.applyDebuff(this, this.createWoundedDebuff(3, attacker, "morellonomicon"));
       }
     }
-    if (attacker.chess.items.some((item) => item.id === "serpents_fang")) {
+    if (attacker.hasItem("serpents_fang")) {
       if (attacker.chess.blue !== this.chess.blue) {
         attacker.applyDebuff(this, this.createVenomDebuff(3, attacker, "serpents_fang"));
       }
     }
-    if (this.chess.items.some((item) => item.id === "adaptive_helm")) {
+    if (this.hasItem("adaptive_helm")) {
       if (damageType === "physical") {
         this.applyDebuff(this, {
           id: "adaptive_helm_armor",
@@ -393,13 +387,43 @@ export class ChessObject {
         } as Debuff);
       }
     }
+
+    this.handleSunlightDebuff(attacker);
+  }
+
+  private handleSunlightDebuff(attacker: ChessObject): void {
+    const sunlightDebuff = this.getDebuff("sunlight");
+    if (sunlightDebuff) {
+      const debuffOwner = getChessByName(this.game, sunlightDebuff.casterPlayerId, sunlightDebuff.casterName)
+      if (debuffOwner) {
+        const debuffOwnerObj = ChessFactory.createChess(debuffOwner, this.game);
+        attacker.damage(debuffOwnerObj, 10 + debuffOwnerObj.physicalResistance * 0.25 + debuffOwnerObj.magicResistance * 0.25, "magic", attacker, this.sunder);
+      }
+      this.removeDebuff(this, "sunlight");
+    }
+  }
+
+  protected getDebuff(id: string): Debuff | undefined {
+    return this.chess.debuffs.find((debuff) => debuff.id === id);
+  }
+
+  protected hasDebuff(id: string): boolean {
+    return this.getDebuff(id) !== undefined;
+  }
+
+  public getItem(...ids: string[]): Item | undefined {
+    return this.chess.items.find((item) => ids.includes(item.id));
+  }
+
+  public hasItem(...ids: string[]): boolean {
+    return this.chess.items.some((item) => ids.includes(item.id));
   }
 
   public applyShield(amount: number, duration: number, id?: string): void {
     if (!this.chess.shields) {
       this.chess.shields = [];
     }
-    if (this.chess.debuffs.some((debuff) => debuff.id === "venom")) {
+    if (this.hasDebuff("venom")) {
       amount = Math.floor(amount * 0.5);
     }
     if (id && this.chess.shields.some((shield) => shield.id === id)) {
@@ -436,31 +460,6 @@ export class ChessObject {
       }
 
       this.game.players[killerPlayerIndex].gold += totalGold;
-    }
-  }
-
-  // Return 50% of item values to the owner when the champion dies
-  protected refundItemValues(deadChess: ChessObject): void {
-    // Find the player who owns the dead chess piece
-    const ownerPlayerIndex = this.game.players.findIndex(
-      (player) => player.userId === deadChess.chess.ownerId
-    );
-
-    if (ownerPlayerIndex !== -1) {
-      // Calculate total item value
-      let totalItemValue = 0;
-      deadChess.chess.items.forEach((item) => {
-        const itemData = getItemById(item.id);
-        if (itemData) {
-          totalItemValue += itemData.cost;
-        }
-      });
-
-      // Refund 50% of total item value
-      const refundAmount = Math.floor(totalItemValue * 0.5);
-      if (refundAmount > 0) {
-        this.game.players[ownerPlayerIndex].gold += refundAmount;
-      }
     }
   }
 
@@ -556,7 +555,7 @@ export class ChessObject {
     if (chess.chess.debuffs.some((debuff) => debuff.id === "wounded")) {
       healFactor -= 0.5;
     }
-    if (chess.chess.items.some((item) => item.id === "spirit_visage")) {
+    if (chess.hasItem("spirit_visage")) {
       healFactor += 0.3;
     }
     healAmount = Math.floor(heal * healFactor);
@@ -581,13 +580,13 @@ export class ChessObject {
         this.heal(this, hpRegen);
       }
 
-      if (this.chess.items.some((item) => item.id === "spirit_visage")) {
+      if (this.hasItem("spirit_visage")) {
         const missingHp = this.maxHp - this.chess.stats.hp;
         this.heal(this, missingHp * 0.05);
       }
 
       // Apply Sunfire Cape effect
-      if (this.chess.items.some((item) => item.id === "sunfire_cape")) {
+      if (this.hasItem("sunfire_cape")) {
         getAdjacentSquares(this.chess.position).forEach((square) => {
           const targetChess = getChessAtPosition(
             this.game,
@@ -608,7 +607,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -619,7 +618,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -657,9 +656,7 @@ export class ChessObject {
   // Debuff Management
   applyDebuff(chess: ChessObject, debuff: Debuff): boolean {
     // Implement quicksilver item
-    const quicksilver = chess.chess.items.find(
-      (item) => item.id === "quicksilver"
-    );
+    const quicksilver = chess.getItem("quicksilver");
     if (quicksilver && quicksilver.currentCooldown <= 0) {
       chess.chess.debuffs.push({
         id: "quicksilver",
@@ -853,7 +850,7 @@ export class ChessObject {
   }
 
   get range(): number {
-    if (this.chess.items.some((item) => item.id === "rapid_firecannon")) {
+    if (this.hasItem("rapid_firecannon")) {
       return this.chess.stats.attackRange.range + 1;
     }
     return this.chess.stats.attackRange.range;
@@ -1291,7 +1288,7 @@ export class ChessObject {
     ) {
       throw new Error("Invalid attack");
     }
-    if (chess.chess.items.some((item) => item.id === "bramble_vest")) {
+    if (chess.hasItem("bramble_vest")) {
       damageMultiplier -= 0.08;
     }
     const damage = this.attack(chess, forceCritical, damageMultiplier);
@@ -1299,25 +1296,18 @@ export class ChessObject {
   }
 
   public postAttack(chess: ChessObject, damage: number): void {
-    if (this.chess.items.some((item) => item.id === "spear_of_shojin")) {
-      const numberOfShojin = this.chess.items.filter(
-        (item) => item.id === "spear_of_shojin"
-      ).length;
-      if (this.chess.skill?.currentCooldown > 0) {
-        this.chess.skill.currentCooldown -= numberOfShojin;
-        if (this.chess.skill.currentCooldown < 0) {
-          this.chess.skill.currentCooldown = 0;
-        }
+    if (this.hasItem("spear_of_shojin")) {
+      this.chess.skill.currentCooldown -= this.chess.items.filter(item => item.id === "spear_of_shojin").length;
+      if (this.chess.skill.currentCooldown < 0) {
+        this.chess.skill.currentCooldown = 0;
       }
     }
 
-    if (this.chess.items.some((item) => item.id === "nashors_tooth")) {
+    if (this.hasItem("nashors_tooth")) {
       this.damage(chess, 10 + this.ap * 0.2, "magic", this, this.sunder);
     }
-    if (this.chess.items.some((item) => item.id === "guinsoo_rageblade")) {
-      const guinsooRageblade = this.chess.items.find(
-        (item) => item.id === "guinsoo_rageblade"
-      );
+    if (this.hasItem("guinsoo_rageblade")) {
+      const guinsooRageblade = this.getItem("guinsoo_rageblade");
       if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
         guinsooRageblade.currentCooldown =
           this.getItemCooldown(guinsooRageblade);
@@ -1325,13 +1315,13 @@ export class ChessObject {
       }
     }
 
-    if (this.chess.items.some((item) => item.id === "wit_s_end")) {
+    if (this.hasItem("wit_s_end")) {
       const bonusAd = this.ad - this.chess.stats.ad;
       this.damage(chess, 5 + bonusAd * 0.25, "magic", this, this.sunder);
     }
 
     if (
-      chess.chess.items.some((item) => item.id === "bramble_vest") &&
+      chess.hasItem("bramble_vest") &&
       chess.chess.stats.hp > 0
     ) {
       getAdjacentSquares(chess.chess.position).forEach((square) => {
@@ -1392,19 +1382,19 @@ export class ChessObject {
   protected postSkill(chess: ChessObject): void {
     // Set skill on cooldown
     this.chess.skill.currentCooldown = this.skillCooldown;
-    if (this.chess.items.some((item) => item.id === "blue_buff")) {
+    if (this.hasItem("blue_buff")) {
       this.chess.skill.currentCooldown -= Math.round(this.skillCooldown * 0.25);
       if (this.chess.skill.currentCooldown < 0) {
         this.chess.skill.currentCooldown = 0;
       }
     }
-    if (this.chess.items.some((item) => item.id === "archangel_staff")) {
+    if (this.hasItem("archangel_staff")) {
       this.chess.stats.ap += 5;
     }
-    if (this.chess.items.some((item) => item.id === "nashors_tooth")) {
+    if (this.hasItem("nashors_tooth")) {
       this.applyDebuff(this, this.createDamageAmplificationDebuff(2, this));
     }
-    if (this.chess.items.some((item) => item.id === "protectors_vow")) {
+    if (this.hasItem("protectors_vow")) {
       this.applyShield(this.maxHp * 0.15, 2);
     }
   }

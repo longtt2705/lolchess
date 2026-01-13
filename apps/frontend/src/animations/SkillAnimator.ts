@@ -19,6 +19,7 @@ import { ghostRenderer } from "./skills/ghost";
 import { healRenderer } from "./skills/heal";
 import { barrierRenderer } from "./skills/barrier";
 import { smiteRenderer } from "./skills/smite";
+import { solarFlareRenderer } from "./skills/solarFlare";
 
 /**
  * Registry mapping skill names to their animation renderers
@@ -73,6 +74,9 @@ const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
   "Heal": healRenderer,
   "Barrier": barrierRenderer,
   "Smite": smiteRenderer,
+
+  // Leona
+  "Solar Flare": solarFlareRenderer,
 
   // Add more skills here as they're implemented
   // 'Skill Name': skillRenderer,

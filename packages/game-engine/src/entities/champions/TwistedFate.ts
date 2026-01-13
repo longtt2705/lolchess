@@ -42,7 +42,7 @@ export class TwistedFate extends ChessObject {
       if (isFirstCard.has(target.chess.id)) {
         this.activeSkillDamage(
           target,
-          (1 + this.ap * 0.05 + this.ad * 0.05) * 0.5,
+          (1 + this.ap * 0.05 + this.ad * 0.05) * 0.6,
           "magic",
           this,
           this.sunder
