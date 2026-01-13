@@ -101,7 +101,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Judgment",
       description:
-        "Garen spins his sword, dealing 100% AD as physical damage to all adjacent enemies each turn and gaining a shield of 20 + 60% AP for 2 turns.",
+        "Garen spins his sword, dealing (100% AD) as physical damage to all adjacent enemies each turn and gaining a shield of (20 + 60%) AP for 2 turns.",
       cooldown: 4,
       currentCooldown: 0,
       targetTypes: "none",
@@ -130,7 +130,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Tailwind",
       description:
-        "Janna's allies gain +1 if adjacent to her. You can activate this skill to increase 2 Move Speed and give a shield of (20 + 100% AP) to nearby allies for 2 turns.",
+        "Janna's allies gain +1 Move Speed if adjacent to her. You can activate this skill to increase 2 Move Speed and give a shield of (20 + 100% AP) to nearby allies for 2 turns.",
       cooldown: 5,
       targetTypes: "none",
       attackRange: {
@@ -812,6 +812,32 @@ export const champions: ChampionData[] = [
         lShape: false,
       },
       targetTypes: "enemy",
+    },
+  },
+  {
+    name: "Leona",
+    role: "support",
+    stats: {
+      maxHp: 120,
+      ad: 10,
+      ap: 30,
+      physicalResistance: 30,
+      magicResistance: 20,
+      attackRange: {
+        range: 1,
+        diagonal: true,
+        horizontal: true,
+        vertical: true,
+        lShape: false,
+      },
+    },
+    skill: {
+      type: "active", 
+      name: "Solar Flare",
+      description:
+        "Call down sun beams on the 3 nearest enemies (lowest HP prioritise) within 2 range, slow 50% their Move Speed for 2 turns and dealing (10 + 10% of AP + 10% of AD) magic damage, also afflict Sunlight to them for 3 turns. If an ally deals damage to those target, they consume the Sunlight, deals additional (10 + 25% Physical Resistance + 25% Magic Resistance) magic damage.",
+      cooldown: 6,
+      targetTypes: "none",
     },
   },
 ];

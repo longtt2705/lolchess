@@ -5,6 +5,7 @@ import { AttackRangeIndicator } from '../components/AttackRangeIndicator';
 import { ChessPiece } from "../hooks/useGame";
 import { ItemData } from '../store/itemsSlice';
 import { formatNumber, getIconConfig, getImageUrl, getSkillStateDisplay, getStatIcon, isChampion, VIKTOR_DAMAGE_THRESHOLDS } from "../utils/chessHelper";
+import { formatAbilityDescription } from "../utils/formatAbilityDescription";
 
 const ChessDetailPanel = styled.div`
   grid-area: player-info;
@@ -1235,7 +1236,10 @@ export const ChessDetailPanelRenderer: React.FC<{
                                     </div>
                                 </div>
                                 <div className="card-description">
-                                    {detailViewPiece.skill.description || 'No description available'}
+                                    {formatAbilityDescription(
+                                        detailViewPiece.skill.description || 'No description available',
+                                        detailViewPiece.stats
+                                    )}
                                 </div>
                             </div>
                         ) : (
