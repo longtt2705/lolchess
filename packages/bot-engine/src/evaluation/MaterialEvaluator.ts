@@ -1,4 +1,9 @@
-import { Chess, Game, getPlayerPieces } from "@lolchess/game-engine";
+import {
+  Chess,
+  ChessFactory,
+  Game,
+  getPlayerPieces,
+} from "@lolchess/game-engine";
 
 /**
  * Evaluates material (piece) value on the board
@@ -13,8 +18,14 @@ export class MaterialEvaluator {
     "Melee Minion": 20,
     "Caster Minion": 25,
     "Sand Soldier": 35,
-    Drake: 100, // Neutral objectives
     "Baron Nashor": 200,
+    "Infernal Drake": 100,
+    "Mountain Drake": 100,
+    "Ocean Drake": 100,
+    "Chemtech Drake": 100,
+    "Hextech Drake": 100,
+    "Cloud Drake": 100,
+    "Elder Dragon": 250,
   };
 
   // Minion types for identification
@@ -32,25 +43,21 @@ export class MaterialEvaluator {
   evaluate(game: Game, playerId: string): number {
     const pieces = getPlayerPieces(game, playerId);
     return pieces.reduce((total, piece) => {
-      return total + this.evaluatePiece(piece);
+      return total + this.evaluatePiece(piece, game);
     }, 0);
   }
 
   /**
    * Calculate material difference between two players
    */
-  evaluateDifference(
-    game: Game,
-    playerId: string,
-    opponentId: string
-  ): number {
+  evaluateDifference(game: Game, playerId: string, opponentId: string): number {
     return this.evaluate(game, playerId) - this.evaluate(game, opponentId);
   }
 
   /**
    * Evaluate a single piece's material value
    */
-  evaluatePiece(piece: Chess): number {
+  evaluatePiece(piece: Chess, game: Game): number {
     let value = 0;
 
     // Base gold value
@@ -68,29 +75,11 @@ export class MaterialEvaluator {
 
     // Stat-based value for champions
     if (!this.isMinion(piece.name)) {
-      // AD contribution
-      value += (piece.stats.ad || 0) * 0.4;
-      // AP contribution
-      value += (piece.stats.ap || 0) * 0.4;
-      // Tankiness contribution
-      value += (piece.stats.physicalResistance || 0) * 0.15;
-      value += (piece.stats.magicResistance || 0) * 0.1;
-    }
-
-    // Skill availability bonus
-    if (piece.skill && piece.skill.currentCooldown === 0) {
-      value += 15;
-    }
-
-    // Item value
-    if (piece.items && piece.items.length > 0) {
-      value += piece.items.length * 20;
-    }
-
-    // Shield value
-    if (piece.shields && piece.shields.length > 0) {
-      const totalShield = piece.shields.reduce((sum, s) => sum + s.amount, 0);
-      value += totalShield * 0.3;
+      const materialValue = ChessFactory.createChess(
+        piece,
+        game
+      ).getMaterialValue();
+      value += materialValue;
     }
 
     return Math.floor(value);
@@ -108,6 +97,10 @@ export class MaterialEvaluator {
    */
   getPiecesByValue(game: Game, playerId: string): Chess[] {
     const pieces = getPlayerPieces(game, playerId);
-    return pieces.sort((a, b) => this.evaluatePiece(b) - this.evaluatePiece(a));
+    return pieces.sort(
+      (a, b) =>
+        this.evaluatePiece(b, game) - this.evaluatePiece(a, game) ||
+        a.name.localeCompare(b.name)
+    );
   }
 }

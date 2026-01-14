@@ -1,292 +1,120 @@
-import {
-  Game,
-  GameEngine,
-  EventPayload,
-  cloneGameState,
-} from "@lolchess/game-engine";
-import { SearchResult, ScoredAction } from "../types";
+import { EventPayload, Game, GameEngine } from "@lolchess/game-engine";
 import { PositionEvaluator } from "../evaluation/PositionEvaluator";
+import { ScoredAction, SearchResult } from "../types";
 import { ActionGenerator } from "./ActionGenerator";
-import { MoveOrdering } from "./MoveOrdering";
-import { ThreatEvaluator } from "../evaluation/ThreatEvaluator";
 
-/**
- * Minimax search with alpha-beta pruning
- * Finds the best move by looking ahead
- */
-export class Minimax {
-  private moveOrdering: MoveOrdering;
+interface SearchNode {
+  game: Game;
+  rootAction: EventPayload | null; // The action that started this chain
+  depth: number;
+}
+
+export class BestMoveSearch {
   private nodesSearched: number = 0;
   private startTime: number = 0;
-  private timeLimit: number = 5000; // Default 5 second limit
+  private timeLimit: number = 5000;
 
   constructor(
     private gameEngine: GameEngine,
     private evaluator: PositionEvaluator,
     private actionGenerator: ActionGenerator
-  ) {
-    const threatEvaluator = new ThreatEvaluator(gameEngine);
-    this.moveOrdering = new MoveOrdering(threatEvaluator);
-  }
+  ) {}
 
   /**
-   * Search for the best move
+   * BFS Search to find the sequence of actions within ONE turn
+   * that results in the highest board evaluation.
    */
-  search(
-    game: Game,
-    playerId: string,
-    depth: number,
-    timeLimit?: number
-  ): SearchResult {
+  search(game: Game, playerId: string, timeLimit: number = 5000): SearchResult {
     this.nodesSearched = 0;
     this.startTime = Date.now();
-    this.timeLimit = timeLimit || 5000;
+    this.timeLimit = timeLimit;
 
-    const actions = this.actionGenerator.generateAll(game, playerId);
-    if (actions.length === 0) {
-      return {
-        bestAction: null,
-        score: 0,
-        nodesSearched: 0,
-        depth: 0,
-        timeMs: 0,
-      };
-    }
+    // 1. Setup BFS Queue
+    const queue: SearchNode[] = [];
 
-    // Order moves for better pruning
-    const orderedActions = this.moveOrdering.orderActions(
-      game,
-      actions,
-      playerId
-    );
+    // Push initial state
+    queue.push({
+      game: game,
+      rootAction: null,
+      depth: 0,
+    });
 
-    let bestAction = orderedActions[0].action;
-    let bestScore = -Infinity;
-    const alpha = -Infinity;
-    const beta = Infinity;
+    let bestAction: EventPayload | null = null;
+    let maxScore = -Infinity;
 
-    for (const { action } of orderedActions) {
-      // Time check
+    // 2. BFS Loop
+    while (queue.length > 0) {
+      // Time Check
       if (this.isTimeUp()) break;
 
-      // Simulate the action
-      const result = this.gameEngine.processAction(game, action);
-      if (!result.success) continue;
+      const currentNode = queue.shift()!;
+      const { game: currentGame, rootAction, depth } = currentNode;
 
-      // Evaluate resulting position
-      const score = this.minimax(
-        result.game,
-        depth - 1,
-        alpha,
-        beta,
-        false, // Next move is opponent's
-        playerId
-      );
+      // 3. Generate all possible actions for this state
+      const actions = this.actionGenerator.generateAll(currentGame, playerId);
 
-      if (score > bestScore) {
-        bestScore = score;
-        bestAction = action;
+      // If no actions (stuck/stunned), evaluate what we have
+      if (actions.length === 0 && rootAction) {
+        const score = this.evaluator.evaluate(currentGame, playerId);
+        if (score > maxScore) {
+          maxScore = score;
+          bestAction = rootAction;
+        }
+        continue;
+      }
+
+      // 4. Process all actions
+      for (const scoredAction of actions) {
+        // Optimization: Skip obviously bad moves if needed
+        // if (scoredAction.score < -1000) continue;
+
+        const action = scoredAction;
+        const processResult = this.gameEngine.processAction(
+          currentGame,
+          action
+        );
+
+        if (!processResult.success) continue;
+
+        const nextGame = processResult.game;
+        this.nodesSearched++;
+
+        // Calculate Score immediately for this state
+        // We use evaluate(bot) - evaluate(player) inside the evaluator
+        const score = this.evaluator.evaluate(nextGame, playerId);
+
+        // Keep track if this is the best state seen so far
+        // The action to return is the ROOT action that started this chain
+        const currentRootAction = rootAction || action;
+
+        if (score > maxScore) {
+          maxScore = score;
+          bestAction = currentRootAction;
+        }
+
+        // 5. Handling "Free" Actions (Flash, Buffs)
+        // If it is STILL our turn in the next state, we must enqueue it
+        // to see what we can do *after* this free action.
+        if (this.gameEngine.getCurrentPlayer(nextGame) === playerId) {
+          queue.push({
+            game: nextGame,
+            rootAction: currentRootAction,
+            depth: depth + 1,
+          });
+        }
+        // If turn ended, we stop this branch (we don't predict opponent moves in this BFS)
       }
     }
 
     return {
-      bestAction,
-      score: bestScore,
+      bestAction: bestAction,
+      score: maxScore,
       nodesSearched: this.nodesSearched,
-      depth,
+      depth: 1, // Conceptually depth 1 (our turn), though technically variable steps
       timeMs: Date.now() - this.startTime,
     };
   }
 
-  /**
-   * Minimax with alpha-beta pruning
-   */
-  private minimax(
-    game: Game,
-    depth: number,
-    alpha: number,
-    beta: number,
-    isMaximizing: boolean,
-    originalPlayerId: string
-  ): number {
-    this.nodesSearched++;
-
-    // Check for terminal state
-    const terminalScore = this.evaluator.getTerminalScore(
-      game,
-      originalPlayerId
-    );
-    if (terminalScore !== null) {
-      return terminalScore;
-    }
-
-    // Depth limit or time limit reached
-    if (depth <= 0 || this.isTimeUp()) {
-      return this.evaluator.quickEvaluate(game, originalPlayerId);
-    }
-
-    // Determine current player
-    const currentPlayerId = this.getCurrentPlayer(game);
-    if (!currentPlayerId) {
-      return this.evaluator.quickEvaluate(game, originalPlayerId);
-    }
-
-    const actions = this.actionGenerator.generateAll(game, currentPlayerId);
-    if (actions.length === 0) {
-      return this.evaluator.quickEvaluate(game, originalPlayerId);
-    }
-
-    // Order moves for better pruning
-    const orderedActions = this.moveOrdering.orderActions(
-      game,
-      actions,
-      currentPlayerId
-    );
-
-    if (isMaximizing) {
-      let maxEval = -Infinity;
-
-      for (const { action } of orderedActions) {
-        if (this.isTimeUp()) break;
-
-        const result = this.gameEngine.processAction(game, action);
-        if (!result.success) continue;
-
-        const evaluation = this.minimax(
-          result.game,
-          depth - 1,
-          alpha,
-          beta,
-          false,
-          originalPlayerId
-        );
-
-        maxEval = Math.max(maxEval, evaluation);
-        alpha = Math.max(alpha, evaluation);
-
-        if (beta <= alpha) break; // Beta cutoff
-      }
-
-      return maxEval;
-    } else {
-      let minEval = Infinity;
-
-      for (const { action } of orderedActions) {
-        if (this.isTimeUp()) break;
-
-        const result = this.gameEngine.processAction(game, action);
-        if (!result.success) continue;
-
-        const evaluation = this.minimax(
-          result.game,
-          depth - 1,
-          alpha,
-          beta,
-          true,
-          originalPlayerId
-        );
-
-        minEval = Math.min(minEval, evaluation);
-        beta = Math.min(beta, evaluation);
-
-        if (beta <= alpha) break; // Alpha cutoff
-      }
-
-      return minEval;
-    }
-  }
-
-  /**
-   * Iterative deepening search
-   * Searches deeper progressively until time runs out
-   */
-  iterativeDeepening(
-    game: Game,
-    playerId: string,
-    maxDepth: number,
-    timeLimit: number
-  ): SearchResult {
-    this.startTime = Date.now();
-    this.timeLimit = timeLimit;
-
-    let bestResult: SearchResult = {
-      bestAction: null,
-      score: 0,
-      nodesSearched: 0,
-      depth: 0,
-      timeMs: 0,
-    };
-
-    for (let depth = 1; depth <= maxDepth; depth++) {
-      if (this.isTimeUp()) break;
-
-      const result = this.search(game, playerId, depth, timeLimit);
-
-      // Only use result if search completed or found something
-      if (result.bestAction) {
-        bestResult = result;
-      }
-
-      // If we found a winning move, stop searching
-      if (result.score > 50000) break;
-    }
-
-    return bestResult;
-  }
-
-  /**
-   * Quiescence search - extend search for tactical positions
-   * Only considers captures to avoid horizon effect
-   */
-  quiescenceSearch(
-    game: Game,
-    alpha: number,
-    beta: number,
-    playerId: string
-  ): number {
-    this.nodesSearched++;
-
-    // Stand-pat evaluation
-    const standPat = this.evaluator.quickEvaluate(game, playerId);
-
-    if (standPat >= beta) return beta;
-    if (alpha < standPat) alpha = standPat;
-
-    // Only consider captures
-    const captures = this.actionGenerator.generateAttacks(game, playerId);
-    if (captures.length === 0) return standPat;
-
-    const orderedCaptures = this.moveOrdering.getCaptureMoves(
-      game,
-      captures,
-      playerId
-    );
-
-    for (const { action } of orderedCaptures) {
-      if (this.isTimeUp()) break;
-
-      const result = this.gameEngine.processAction(game, action);
-      if (!result.success) continue;
-
-      const score = -this.quiescenceSearch(result.game, -beta, -alpha, playerId);
-
-      if (score >= beta) return beta;
-      if (score > alpha) alpha = score;
-    }
-
-    return alpha;
-  }
-
-  /**
-   * Get current player from game state
-   */
-  private getCurrentPlayer(game: Game): string | undefined {
-    return this.gameEngine.getCurrentPlayer(game);
-  }
-
-  /**
-   * Check if time limit exceeded
-   */
   private isTimeUp(): boolean {
     return Date.now() - this.startTime > this.timeLimit;
   }

@@ -369,11 +369,4 @@ export class LoSEvaluator {
     const analysis = this.analyzeLoS(game, playerId);
     return analysis.totalScore;
   }
-
-  /**
-   * Check if this is early game (turns 1-5) where LoS matters most
-   */
-  isOpeningPhase(game: Game): boolean {
-    return game.currentRound <= 20;
-  }
 }

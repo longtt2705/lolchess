@@ -181,7 +181,14 @@ export function createEmptyGame(seed: number): Game {
       startingGold: 0,
     },
     // Dragon Soul System - 6 drake types, only 4 will spawn per game
-    drakePool: ["Infernal", "Cloud", "Mountain", "Hextech", "Ocean", "Chemtech"],
+    drakePool: [
+      "Infernal",
+      "Cloud",
+      "Mountain",
+      "Hextech",
+      "Ocean",
+      "Chemtech",
+    ],
     drakesKilled: 0,
     elderDrakeKillerTeam: null,
   };
@@ -425,29 +432,10 @@ export class GameEngine implements IGameEngine {
     // Basic implementation: return empty squares within movement range
     // Full implementation would check piece-specific movement rules
     const validMoves: Square[] = [];
-    const speed = piece.stats.speed || 1;
+    const speed = piece.stats.speed ?? 1;
 
-    for (let dx = -speed; dx <= speed; dx++) {
-      for (let dy = -speed; dy <= speed; dy++) {
-        if (dx === 0 && dy === 0) continue;
-
-        const targetX = piece.position.x + dx;
-        const targetY = piece.position.y + dy;
-
-        // Basic bounds check
-        if (targetX < 0 || targetX > 7 || targetY < 0 || targetY > 7) continue;
-
-        // Check if square is empty
-        const occupied = game.board.find(
-          (p) =>
-            p.position.x === targetX &&
-            p.position.y === targetY &&
-            p.stats.hp > 0
-        );
-        if (!occupied) {
-          validMoves.push({ x: targetX, y: targetY });
-        }
-      }
+    if (speed === 0) {
+      return [];
     }
 
     return validMoves;

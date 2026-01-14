@@ -29,10 +29,6 @@ export interface EvaluationBreakdown {
   position: number;
   /** Threat potential (pieces that can attack) */
   threats: number;
-  /** King (Poro) safety */
-  safety: number;
-  /** Mobility (number of valid moves) */
-  mobility: number;
   /** Line of Sight score for ranged carries (optional for backward compatibility) */
   lineOfSight?: number;
 }

@@ -52,7 +52,11 @@ export class ActionGenerator {
       }
 
       // Generate summoner spell actions (can be used anytime, doesn't consume turn)
-      if (piece.summonerSpell && piece.summonerSpell.currentCooldown === 0) {
+      if (
+        piece.summonerSpell &&
+        !game.hasPerformedActionThisTurn &&
+        piece.summonerSpell.currentCooldown === 0
+      ) {
         this.generateSummonerSpellActions(game, piece, playerId, actions);
       }
     }
@@ -163,7 +167,7 @@ export class ActionGenerator {
             const deltaX = Math.abs(x - piece.position.x);
             const deltaY = Math.abs(y - piece.position.y);
             const distance = Math.max(deltaX, deltaY);
-            
+
             if (distance > 2) continue;
 
             // Check if square is empty
@@ -206,7 +210,7 @@ export class ActionGenerator {
           const deltaX = Math.abs(target.position.x - piece.position.x);
           const deltaY = Math.abs(target.position.y - piece.position.y);
           const distance = Math.max(deltaX, deltaY);
-          
+
           if (distance > 2) continue;
 
           // Check if it's a neutral monster
@@ -218,7 +222,8 @@ export class ActionGenerator {
 
           // Check if it's an ENEMY minion (not ally minion)
           const isEnemyMinion =
-            (target.name.includes("Minion") || target.name === "Super Minion") &&
+            (target.name.includes("Minion") ||
+              target.name === "Super Minion") &&
             target.ownerId !== piece.ownerId;
 
           if (isEnemyMinion || isNeutralMonster) {
@@ -353,7 +358,8 @@ export class ActionGenerator {
 
     for (const piece of playerPieces) {
       if (piece.stats.hp <= 0) continue;
-      if (!piece.summonerSpell || piece.summonerSpell.currentCooldown !== 0) continue;
+      if (!piece.summonerSpell || piece.summonerSpell.currentCooldown !== 0)
+        continue;
       const isStunned = piece.debuffs?.some((d) => d.stun) ?? false;
       if (isStunned) continue;
 
@@ -394,7 +400,7 @@ export class ActionGenerator {
 
     for (const clearingMove of clearingMoves) {
       const blocker = clearingMove.blocker;
-      
+
       // Check if blocker is stunned
       const isStunned = blocker.debuffs?.some((d) => d.stun) ?? false;
       if (isStunned) continue;
@@ -424,12 +430,5 @@ export class ActionGenerator {
       return [];
     }
     return this.losEvaluator.getLoSClearingMoves(game, playerId);
-  }
-
-  /**
-   * Check if it's the opening phase (first 5 turns) where LoS clearing is most important
-   */
-  isOpeningPhase(game: Game): boolean {
-    return this.losEvaluator.isOpeningPhase(game);
   }
 }
