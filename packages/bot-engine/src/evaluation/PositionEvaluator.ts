@@ -228,6 +228,54 @@ export class PositionEvaluator {
   }
 
   /**
+   * Evaluate position and return detailed breakdown
+   */
+  evaluateWithBreakdown(game: Game, playerId: string): EvaluationResult {
+    const opponentId = this.getOpponentId(game, playerId);
+    const isBlue = game.bluePlayer === playerId;
+
+    // Calculate individual components
+    const material = this.evaluateMaterial(game, playerId, opponentId);
+    const position = this.evaluatePosition(game, playerId, opponentId, isBlue);
+    const threats = this.evaluateThreats(game, playerId, opponentId);
+    const lineOfSight = this.evaluateLineOfSight(game, playerId, opponentId);
+
+    // Create breakdown
+    const breakdown: EvaluationBreakdown = {
+      material,
+      position,
+      threats,
+      lineOfSight,
+    };
+
+    // Calculate weighted total score
+    const score =
+      material * PositionEvaluator.WEIGHTS.material +
+      position * PositionEvaluator.WEIGHTS.position +
+      threats * PositionEvaluator.WEIGHTS.threats +
+      lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight;
+
+    return { score, breakdown };
+  }
+
+  /**
+   * Quick evaluation for search (simplified, faster)
+   */
+  quickEvaluate(game: Game, playerId: string): number {
+    const opponentId = this.getOpponentId(game, playerId);
+    const isBlue = game.bluePlayer === playerId;
+
+    // Only calculate material and threats for speed
+    const material = this.evaluateMaterial(game, playerId, opponentId);
+    const threats = this.evaluateThreats(game, playerId, opponentId);
+
+    return (
+      material * PositionEvaluator.WEIGHTS.material +
+      threats * PositionEvaluator.WEIGHTS.threats
+    );
+  }
+
+  /**
    * Get opponent player ID
    */
   private getOpponentId(game: Game, playerId: string): string {

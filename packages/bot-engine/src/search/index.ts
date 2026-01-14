@@ -1,3 +1,3 @@
 export { ActionGenerator } from "./ActionGenerator";
-export { Minimax } from "./Minimax";
+export { BestMoveSearch } from "./BestMoveSearch";
 export { MoveOrdering } from "./MoveOrdering";

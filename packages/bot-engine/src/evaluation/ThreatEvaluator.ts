@@ -1,11 +1,13 @@
 import {
+  Chess,
   ChessFactory,
   Game,
   GameEngine,
   getPieceAtPosition,
   getPlayerPieces,
+  Square,
 } from "@lolchess/game-engine";
-import { ThreatInfo } from "../types";
+import { ThreatInfo, PositionThreatScore } from "../types";
 import { MaterialEvaluator } from "./MaterialEvaluator";
 
 /**
@@ -15,7 +17,7 @@ export class ThreatEvaluator {
   constructor(
     private gameEngine: GameEngine,
     private materialEvaluator: MaterialEvaluator
-  ) {}
+  ) { }
   /**
    * Get all threats a player can make
    */
@@ -101,5 +103,213 @@ export class ThreatEvaluator {
   evaluateThreatScore(game: Game, playerId: string): number {
     const threats = this.getPlayerThreats(game, playerId);
     return threats.reduce((acc, threat) => acc + threat.priority, 0);
+  }
+
+  /**
+   * Calculate damage between two pieces
+   */
+  calculateDamage(attacker: Chess, target: Chess): number {
+    // Create a temporary game-like context for ChessFactory
+    const tempGame = { board: [attacker, target] } as Game;
+    const attackerObject = ChessFactory.createChess(attacker, tempGame);
+    const targetObject = ChessFactory.createChess(target, tempGame);
+    return attackerObject.calculateDamageAttack(targetObject);
+  }
+
+  // ============================================
+  // Two-Phase Search: Potential Threat Evaluation
+  // ============================================
+
+  /**
+   * Evaluate the threat potential if a piece moves to a target position
+   * This is used in Phase 1 of two-phase search to find the optimal position
+   */
+  evaluatePotentialThreats(
+    game: Game,
+    piece: Chess,
+    targetPosition: Square,
+    playerId: string
+  ): PositionThreatScore {
+    // Temporarily move the piece to the target position
+    const originalPosition = { ...piece.position };
+    piece.position = { ...targetPosition };
+
+    // Get all potential attack targets from this position
+    const attackTargets = this.gameEngine.getValidAttacks(game, piece.id);
+    const skillTargets =
+      piece.skill?.currentCooldown === 0
+        ? this.gameEngine.getValidSkillTargets(game, piece.id)
+        : [];
+
+    let attackableTargets = 0;
+    let bestTargetValue = 0;
+    let totalThreatValue = 0;
+
+    // Evaluate attack targets
+    for (const targetPos of attackTargets) {
+      const target = getPieceAtPosition(game, targetPos);
+      if (!target) continue;
+
+      attackableTargets++;
+
+      const targetValue = this.evaluateTargetValue(game, piece, target);
+      totalThreatValue += targetValue;
+
+      if (targetValue > bestTargetValue) {
+        bestTargetValue = targetValue;
+      }
+    }
+
+    // Evaluate skill targets (only for damage skills)
+    if (
+      piece.skill?.type === "active" &&
+      piece.skill?.targetTypes !== "squareInRange"
+    ) {
+      for (const targetPos of skillTargets) {
+        const target = getPieceAtPosition(game, targetPos);
+        if (!target) continue;
+
+        // Avoid double counting if also in attack range
+        const alreadyCounted = attackTargets.some(
+          (at) => at.x === targetPos.x && at.y === targetPos.y
+        );
+        if (!alreadyCounted) {
+          attackableTargets++;
+          const targetValue = this.evaluateTargetValue(game, piece, target);
+          totalThreatValue += targetValue;
+
+          if (targetValue > bestTargetValue) {
+            bestTargetValue = targetValue;
+          }
+        }
+      }
+    }
+
+    // Evaluate position safety
+    const safety = this.evaluatePositionSafety(game, piece, playerId);
+
+    // Restore original position
+    piece.position = originalPosition;
+
+    // Calculate total score
+    const total =
+      totalThreatValue * 1.0 + // Threat potential weight
+      bestTargetValue * 0.5 + // Bonus for having good targets
+      safety * 0.3; // Safety factor
+
+    return {
+      position: targetPosition,
+      attackableTargets,
+      bestTargetValue,
+      safety,
+      total,
+    };
+  }
+
+  /**
+   * Evaluate the value of attacking a specific target
+   */
+  private evaluateTargetValue(
+    game: Game,
+    attacker: Chess,
+    target: Chess
+  ): number {
+    let value = 0;
+
+    // Poro is extremely high value
+    if (target.name === "Poro") {
+      value += 1000;
+    }
+
+    // Material value
+    value += this.materialEvaluator.evaluatePiece(target, game);
+
+    // Low HP targets are more valuable (easier to kill)
+    const hpPercent = target.stats.hp / target.stats.maxHp;
+    value += (1 - hpPercent) * 50;
+
+    // Check if we can kill
+    const damage = this.calculateDamage(attacker, target);
+    if (target.stats.hp <= damage) {
+      value += 200; // Kill bonus
+    }
+
+    return value;
+  }
+
+  /**
+   * Evaluate how safe a position is from enemy attacks
+   * Returns negative value if threatened
+   */
+  evaluatePositionSafety(
+    game: Game,
+    piece: Chess,
+    playerId: string
+  ): number {
+    let safety = 0;
+    const isBlue = game.bluePlayer === playerId;
+
+    // Find all enemy pieces that can attack this position
+    for (const enemy of game.board) {
+      if (enemy.stats.hp <= 0) continue;
+      if (enemy.blue === isBlue) continue; // Skip allies
+      if (enemy.cannotAttack) continue;
+
+      const enemyAttacks = this.gameEngine.getValidAttacks(game, enemy.id);
+      const canAttackUs = enemyAttacks.some(
+        (pos) => pos.x === piece.position.x && pos.y === piece.position.y
+      );
+
+      if (canAttackUs) {
+        const potentialDamage = this.calculateDamage(enemy, piece);
+        safety -= potentialDamage;
+
+        // Extra penalty if enemy can kill us
+        if (piece.stats.hp <= potentialDamage) {
+          safety -= 200;
+        }
+      }
+    }
+
+    return safety;
+  }
+
+  /**
+   * Evaluate threat score for a player from a specific game state
+   * This is a faster version for use in search
+   */
+  quickThreatScore(game: Game, playerId: string): number {
+    let score = 0;
+    const pieces = getPlayerPieces(game, playerId);
+    const isBlue = game.bluePlayer === playerId;
+
+    for (const piece of pieces) {
+      if (piece.stats.hp <= 0 || piece.cannotAttack) continue;
+      const isStunned = piece.debuffs?.some((d) => d.stun) ?? false;
+      if (isStunned) continue;
+
+      const attackTargets = this.gameEngine.getValidAttacks(game, piece.id);
+
+      for (const targetPos of attackTargets) {
+        const target = getPieceAtPosition(game, targetPos);
+        if (!target) continue;
+
+        // Check target is enemy
+        if (target.blue === isBlue) continue;
+
+        // Add value based on target
+        if (target.name === "Poro") {
+          score += 500;
+        }
+
+        score += this.materialEvaluator.evaluatePiece(target, game) * 0.5;
+
+        // Low HP bonus
+        const hpPercent = target.stats.hp / target.stats.maxHp;
+        score += (1 - hpPercent) * 30;
+      }
+    }
+
+    return score;
   }
 }

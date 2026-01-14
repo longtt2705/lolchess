@@ -15,8 +15,9 @@ import {
 import { PositionEvaluator } from "./evaluation/PositionEvaluator";
 import { ChampionEvaluator } from "./evaluation/ChampionEvaluator";
 import { ThreatEvaluator } from "./evaluation/ThreatEvaluator";
+import { MaterialEvaluator } from "./evaluation/MaterialEvaluator";
 import { ActionGenerator } from "./search/ActionGenerator";
-import { Minimax } from "./search/Minimax";
+import { Minimax } from "./search/BestMoveSearch";
 import { MoveOrdering } from "./search/MoveOrdering";
 import { BanPickStrategy } from "./strategy/BanPickStrategy";
 import { ItemStrategy } from "./strategy/ItemStrategy";
@@ -67,7 +68,8 @@ export class BotEngine {
     this.gameEngine = new GameEngine();
     this.positionEvaluator = new PositionEvaluator(this.gameEngine);
     this.championEvaluator = new ChampionEvaluator();
-    this.threatEvaluator = new ThreatEvaluator(this.gameEngine);
+    const materialEvaluator = new MaterialEvaluator();
+    this.threatEvaluator = new ThreatEvaluator(this.gameEngine, materialEvaluator);
     this.actionGenerator = new ActionGenerator(this.gameEngine);
     this.minimax = new Minimax(
       this.gameEngine,
@@ -89,12 +91,11 @@ export class BotEngine {
       return null;
     }
 
-    // Use search if depth > 0
+    // Use search if depth > 0 (two-phase search uses time limit)
     if (this.config.searchDepth > 0) {
       const searchResult = this.minimax.search(
         game,
         botPlayerId,
-        this.config.searchDepth,
         this.config.timeLimit
       );
 
@@ -203,14 +204,14 @@ export class BotEngine {
     allActions: EventPayload[]
   ): EventPayload | null {
     const clearingDetails = this.actionGenerator.getLoSClearingDetails(game, botPlayerId);
-    
+
     if (clearingDetails.length === 0) {
       return null;
     }
 
     // Get the highest value clearing move (already sorted by targetValue)
     const bestClearing = clearingDetails[0];
-    
+
     // Find the corresponding action in the action list
     const matchingAction = allActions.find(
       (a) =>
@@ -385,10 +386,10 @@ export class BotEngine {
   // ============================================
 
   /**
-   * Evaluate current position
+   * Evaluate current position with detailed breakdown
    */
   evaluatePosition(game: Game, playerId: string): EvaluationResult {
-    return this.positionEvaluator.evaluate(game, playerId);
+    return this.positionEvaluator.evaluateWithBreakdown(game, playerId);
   }
 
   /**
@@ -400,17 +401,17 @@ export class BotEngine {
 
   /**
    * Search for best move with look-ahead
+   * Note: The two-phase search uses time-based limits instead of depth
    */
   search(
     game: Game,
     playerId: string,
-    depth?: number,
+    _depth?: number,
     timeLimit?: number
   ): SearchResult {
     return this.minimax.search(
       game,
       playerId,
-      depth ?? this.config.searchDepth,
       timeLimit ?? this.config.timeLimit
     );
   }

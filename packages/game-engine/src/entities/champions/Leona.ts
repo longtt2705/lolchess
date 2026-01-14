@@ -78,4 +78,12 @@ export class Leona extends ChessObject {
         enemies.sort((a, b) => a.stats.hp - b.stats.hp);
         return enemies.slice(0, 5).map((enemy) => ChessFactory.createChess(enemy, this.game));
     }
+
+    protected getActiveSkillDamage(target: ChessObject): number {
+        return 15 + this.ap * 0.2 + this.ad * 0.2;
+    }
+
+    protected getActiveSkillDamageType(): "physical" | "magic" {
+        return "magic";
+    }
 }

@@ -412,8 +412,8 @@ export class ChessObject {
         attacker.damage(
           debuffOwnerObj,
           10 +
-            debuffOwnerObj.physicalResistance * 0.25 +
-            debuffOwnerObj.magicResistance * 0.25,
+          debuffOwnerObj.physicalResistance * 0.25 +
+          debuffOwnerObj.magicResistance * 0.25,
           "magic",
           attacker,
           this.sunder
@@ -645,7 +645,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -656,7 +656,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -2404,8 +2404,6 @@ export class ChessObject {
     return this.validateSkill(this.chess.skill, target.chess.position);
   }
 
-  protected getActiveSkillDamage?(target: ChessObject): number;
-
   public calculateDamageAttack(target: ChessObject): number {
     const totalShield =
       target.chess.shields?.reduce((acc, shield) => acc + shield.amount, 0) ||
@@ -2419,15 +2417,24 @@ export class ChessObject {
       target,
       Math.floor(
         this.ad *
-          damageAmplificationFactor *
-          criticalDamageFactor *
-          durabilityFactor
+        damageAmplificationFactor *
+        criticalDamageFactor *
+        durabilityFactor
       ),
       "physical",
       this.sunder
     );
 
     return Math.max(damage - totalShield, 0);
+  }
+
+
+  protected getActiveSkillDamage?(target: ChessObject): number {
+    return this.ap;
+  }
+
+  protected getActiveSkillDamageType?(target: ChessObject): "physical" | "magic" | "true" | "non-lethal" {
+    return "physical";
   }
 
   public calculateDamageActiveSkill(target: ChessObject): number {
@@ -2445,11 +2452,11 @@ export class ChessObject {
       target,
       Math.floor(
         this.getActiveSkillDamage(target) *
-          damageAmplificationFactor *
-          criticalDamageFactor *
-          durabilityFactor
+        damageAmplificationFactor *
+        criticalDamageFactor *
+        durabilityFactor
       ),
-      "physical",
+      this.getActiveSkillDamageType(target),
       this.sunder
     );
     return Math.max(damage - totalShield, 0);
@@ -2494,5 +2501,208 @@ export class ChessObject {
     }
     value += rangeFactor * 3;
     return Math.floor(value);
+  }
+
+  public getValidAttackTargets(): ChessObject[] {
+    if (this.chess.stats.hp <= 0 || this.isStunned) {
+      return [];
+    }
+    return this.game.board.filter((p) => p.stats.hp > 0 && p.blue !== this.chess.blue && this.validateAttack(p.position, this.attackRange)).map((p) => ChessFactory.createChess(p, this.game));
+  }
+
+  public getValidSkillTargets(): Square[] {
+    if (!this.chess.skill || this.chess.skill.type !== "active") {
+      return [];
+    }
+    if (this.chess.stats.hp <= 0 || this.isStunned) {
+      return [];
+    }
+
+    const skill = this.chess.skill;
+    const skillTargets: Square[] = [];
+
+    // If skill has no targetTypes or is "none", return empty
+    if (!skill.targetTypes || skill.targetTypes === "none") {
+      return [];
+    }
+
+    // Get skill range (default to 1 if not specified)
+    const skillRange = skill.attackRange || {
+      range: 1,
+      diagonal: true,
+      horizontal: true,
+      vertical: true,
+      lShape: false,
+    };
+
+    // Handle L-shape movement (like knight in chess)
+    if (skillRange.lShape) {
+      // L-shape offsets: 2 squares in one direction + 1 square perpendicular
+      const lShapeOffsets = [
+        { dx: 2, dy: 1 },
+        { dx: 2, dy: -1 },
+        { dx: -2, dy: 1 },
+        { dx: -2, dy: -1 },
+        { dx: 1, dy: 2 },
+        { dx: 1, dy: -2 },
+        { dx: -1, dy: 2 },
+        { dx: -1, dy: -2 },
+      ];
+
+      for (const { dx, dy } of lShapeOffsets) {
+        const newX = this.chess.position.x + dx;
+        const newY = this.chess.position.y + dy;
+
+        // Check board bounds
+        if (newX < -1 || newX > 8 || newY < 0 || newY > 7) continue;
+
+        const targetPosition = { x: newX, y: newY };
+        const occupiedBy = this.game.board.find(
+          (p) => p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+        );
+
+        // Handle different target types for L-shape
+        if (skill.targetTypes === "square") {
+          // Can target empty squares
+          if (!occupiedBy) {
+            skillTargets.push(targetPosition);
+          }
+        } else if (skill.targetTypes === "squareInRange") {
+          // Can target empty squares within range
+          if (!occupiedBy) {
+            skillTargets.push(targetPosition);
+          }
+        } else if (skill.targetTypes === "enemy") {
+          // Can only target enemy pieces
+          if (occupiedBy && occupiedBy.ownerId !== this.chess.ownerId) {
+            skillTargets.push(targetPosition);
+          }
+        } else if (skill.targetTypes === "ally") {
+          // Can only target ally pieces
+          if (occupiedBy && occupiedBy.ownerId === this.chess.ownerId) {
+            skillTargets.push(targetPosition);
+          }
+        } else if (skill.targetTypes === "allyMinion") {
+          // Can only target ally minions
+          if (
+            occupiedBy &&
+            occupiedBy.ownerId === this.chess.ownerId &&
+            (occupiedBy.name === "Melee Minion" ||
+              occupiedBy.name === "Caster Minion")
+          ) {
+            skillTargets.push(targetPosition);
+          }
+        }
+      }
+    } else {
+      // Standard directional movement (not L-shape)
+      // Define 8 directions
+      const directions = [
+        { dx: 0, dy: 1 }, // North
+        { dx: 0, dy: -1 }, // South
+        { dx: 1, dy: 0 }, // East
+        { dx: -1, dy: 0 }, // West
+        { dx: 1, dy: 1 }, // Northeast
+        { dx: 1, dy: -1 }, // Southeast
+        { dx: -1, dy: 1 }, // Northwest
+        { dx: -1, dy: -1 }, // Southwest
+      ];
+
+      // Calculate valid skill targets based on skill range and target type
+      for (const { dx, dy } of directions) {
+        // Check if this direction is allowed
+        const isHorizontal = dy === 0;
+        const isVertical = dx === 0;
+        const isDiagonal = Math.abs(dx) === Math.abs(dy);
+
+        if (isHorizontal && !skillRange.horizontal) continue;
+        if (isVertical && !skillRange.vertical) continue;
+        if (isDiagonal && !skillRange.diagonal) continue;
+
+        for (let step = 1; step <= skillRange.range; step++) {
+          const newX = this.chess.position.x + dx * step;
+          const newY = this.chess.position.y + dy * step;
+
+          // Check board bounds
+          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) break;
+
+          const targetPosition = { x: newX, y: newY };
+          const occupiedBy = this.game.board.find(
+            (p) =>
+              p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+          );
+
+          // Check if occupied piece has Ghost debuff
+          const hasGhost = occupiedBy
+            ? occupiedBy.debuffs?.some((d) => d.payload?.isGhost === true)
+            : false;
+
+          // Handle different target types
+          if (skill.targetTypes === "square") {
+            // Can target empty squares within range (path must be clear)
+            if (occupiedBy) {
+              // Check if it's an ally with Ghost - can pass through
+              if (occupiedBy.ownerId === this.chess.ownerId && hasGhost) {
+                // Continue through Ghost ally
+              } else {
+                // Stop at any other piece - path blocked
+                break;
+              }
+            } else {
+              skillTargets.push(targetPosition);
+            }
+          } else if (skill.targetTypes === "squareInRange") {
+            // Can target empty squares within range (ignoring obstacles)
+            if (!occupiedBy) {
+              skillTargets.push(targetPosition);
+            }
+            // Don't break - continue checking full range even if square is occupied
+          } else if (skill.targetTypes === "enemy") {
+            // Can only target enemy pieces
+            if (occupiedBy && occupiedBy.ownerId !== this.chess.ownerId) {
+              skillTargets.push(targetPosition);
+              break; // Stop at first enemy
+            } else if (occupiedBy) {
+              // Ally piece - check if it has Ghost
+              if (!hasGhost) {
+                break; // Stop at ally without Ghost
+              }
+              // Continue through Ghost ally
+            }
+          } else if (skill.targetTypes === "ally") {
+            // Can only target ally pieces
+            if (occupiedBy && occupiedBy.ownerId === this.chess.ownerId) {
+              skillTargets.push(targetPosition);
+              break; // Stop at first ally
+            } else if (occupiedBy) {
+              // Enemy piece - check if it has Ghost (edge case)
+              if (!hasGhost) {
+                break; // Stop at enemy without Ghost
+              }
+              // Continue through Ghost enemy (unlikely but consistent)
+            }
+          } else if (skill.targetTypes === "allyMinion") {
+            // Can only target ally minions (Melee Minion or Caster Minion)
+            if (
+              occupiedBy &&
+              occupiedBy.ownerId === this.chess.ownerId &&
+              (occupiedBy.name === "Melee Minion" ||
+                occupiedBy.name === "Caster Minion")
+            ) {
+              skillTargets.push(targetPosition);
+              break; // Stop at first ally minion
+            } else if (occupiedBy) {
+              // Any other piece - check if it has Ghost
+              if (!hasGhost) {
+                break; // Stop at piece without Ghost
+              }
+              // Continue through Ghost piece
+            }
+          }
+        }
+      }
+    }
+
+    return skillTargets;
   }
 }

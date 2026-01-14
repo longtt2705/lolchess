@@ -43,7 +43,7 @@ export { ThreatEvaluator } from "./evaluation/ThreatEvaluator";
 
 // Search
 export { ActionGenerator } from "./search/ActionGenerator";
-export { Minimax } from "./search/Minimax";
+export { Minimax } from "./search/BestMoveSearch";
 export { MoveOrdering } from "./search/MoveOrdering";
 
 // Strategy

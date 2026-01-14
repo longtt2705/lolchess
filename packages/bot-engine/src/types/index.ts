@@ -174,3 +174,25 @@ export interface LoSAnalysis {
   /** Net LoS score (clear - blocked) */
   totalScore: number;
 }
+
+/**
+ * Threat score evaluation for a position
+ * Used in two-phase search to evaluate positioning actions
+ */
+export interface PositionThreatScore {
+  /** The position being evaluated */
+  position: Square;
+  /** Number of enemy targets attackable from this position */
+  attackableTargets: number;
+  /** Value of the best target attackable from this position */
+  bestTargetValue: number;
+  /** Safety score (negative if threatened by enemies) */
+  safety: number;
+  /** Total combined position score */
+  total: number;
+}
+
+/**
+ * Action category for two-phase search
+ */
+export type ActionCategory = "positioning" | "combat" | "utility";
