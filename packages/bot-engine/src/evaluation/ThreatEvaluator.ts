@@ -1,6 +1,7 @@
 import {
   Chess,
   ChessFactory,
+  ChessObject,
   Game,
   GameEngine,
   getPieceAtPosition,
@@ -17,57 +18,55 @@ export class ThreatEvaluator {
   constructor(
     private gameEngine: GameEngine,
     private materialEvaluator: MaterialEvaluator
-  ) { }
+  ) {}
   /**
    * Get all threats a player can make
    */
   getPlayerThreats(game: Game, playerId: string): ThreatInfo[] {
     const threats: ThreatInfo[] = [];
     const pieces = getPlayerPieces(game, playerId);
+    const listActions: {
+      attacker: ChessObject;
+      priority: number;
+      isAttack: boolean;
+    }[] = [];
 
     for (const piece of pieces) {
       const chessObject = ChessFactory.createChess(piece, game);
-      if (piece.cannotAttack || chessObject.isStunned || piece.stats.hp <= 0)
-        continue;
 
-      const attackTargets = this.gameEngine.getValidAttacks(game, piece.id);
-      for (const targetPos of attackTargets) {
-        const target = getPieceAtPosition(game, targetPos);
-        if (!target) continue;
-        const targetChessObject = ChessFactory.createChess(target, game);
-        const potentialDamage =
-          chessObject.calculateDamageAttack(targetChessObject);
-        const canKill = targetChessObject.chess.stats.hp <= potentialDamage;
-
-        // Calculate priority
-        let priority = potentialDamage;
-        if (canKill) priority += 100;
-        if (target.name === "Poro") priority += 500;
-        priority += this.materialEvaluator.evaluatePiece(target, game);
-
-        threats.push({
-          attacker: piece,
-          target,
-          damage: potentialDamage,
-          canKill,
-          priority,
+      const attackScore = chessObject.getAttackScore();
+      if (attackScore > 0) {
+        listActions.push({
+          attacker: chessObject,
+          priority: attackScore,
+          isAttack: true,
         });
       }
 
-      if (
-        piece.skill?.type === "active" &&
-        piece.skill?.currentCooldown === 0
-      ) {
-        const skillTargets = this.gameEngine.getValidSkillTargets(
-          game,
-          piece.id
-        );
-        for (const targetPos of skillTargets) {
+      const skillScore = chessObject.getActiveSkillScore();
+      if (skillScore > 0) {
+        listActions.push({
+          attacker: chessObject,
+          priority: skillScore,
+          isAttack: false,
+        });
+      }
+    }
+
+    // Get top 40% of actions
+    listActions.sort((a, b) => b.priority - a.priority);
+    const topActions = listActions.slice(0, Math.floor(listActions.length * 0.4));
+    
+
+    for (const action of topActions) {
+      if (action.isAttack) {
+        const attackTargets = this.gameEngine.getValidAttacks(game, action.attacker.chess.id);
+        for (const targetPos of attackTargets) {
           const target = getPieceAtPosition(game, targetPos);
           if (!target) continue;
           const targetChessObject = ChessFactory.createChess(target, game);
           const potentialDamage =
-            chessObject.calculateDamageActiveSkill(targetChessObject);
+            action.attacker.calculateDamageAttack(targetChessObject);
           const canKill = targetChessObject.chess.stats.hp <= potentialDamage;
 
           // Calculate priority
@@ -77,7 +76,31 @@ export class ThreatEvaluator {
           priority += this.materialEvaluator.evaluatePiece(target, game);
 
           threats.push({
-            attacker: piece,
+            attacker: action.attacker.chess,
+            target,
+            damage: potentialDamage,
+            canKill,
+            priority,
+          });
+        }
+      } else {
+        const skillTargets = this.gameEngine.getValidSkillTargets(game, action.attacker.chess.id);
+        for (const targetPos of skillTargets) {
+          const target = getPieceAtPosition(game, targetPos);
+          if (!target) continue;
+          const targetChessObject = ChessFactory.createChess(target, game);
+          const potentialDamage =
+            action.attacker.calculateDamageActiveSkill(targetChessObject);
+          const canKill = targetChessObject.chess.stats.hp <= potentialDamage;
+
+          // Calculate priority
+          let priority = potentialDamage;
+          if (canKill) priority += 100;
+          if (target.name === "Poro") priority += 500;
+          priority += this.materialEvaluator.evaluatePiece(target, game);
+
+          threats.push({
+            attacker: action.attacker.chess,
             target,
             damage: potentialDamage,
             canKill,
@@ -241,11 +264,7 @@ export class ThreatEvaluator {
    * Evaluate how safe a position is from enemy attacks
    * Returns negative value if threatened
    */
-  evaluatePositionSafety(
-    game: Game,
-    piece: Chess,
-    playerId: string
-  ): number {
+  evaluatePositionSafety(game: Game, piece: Chess, playerId: string): number {
     let safety = 0;
     const isBlue = game.bluePlayer === playerId;
 

@@ -285,4 +285,11 @@ export class Viktor extends ChessObject {
     }
     return baseDamage;
   }
+
+  protected getAttackPotential(): number {
+    if (this.hasDebuff("viktor_empowered")) {
+      return super.getAttackPotential() + 10 + this.ap * 0.5;
+    }
+    return super.getAttackPotential();
+  }
 }

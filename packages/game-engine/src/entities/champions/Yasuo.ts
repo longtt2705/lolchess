@@ -101,4 +101,11 @@ export class Yasuo extends ChessObject {
     }
     this.chess.skill.payload.whirlwindTargets = whirlwindTargets;
   }
+
+  protected getAttackPotential(): number {
+    if (this.criticalChance > 50) {
+      return super.getAttackPotential() + 10 + this.ad * 0.3 + this.ap * 0.2;
+    }
+    return super.getAttackPotential();
+  }
 }

@@ -132,36 +132,4 @@ export class Azir extends ChessObject {
     }
     minion.skill.payload.azirId = this.chess.id;
   }
-
-  /**
-   * When Azir dies, all Sand Soldiers created by him should die
-   */
-  protected postTakenDamage(
-    attacker: ChessObject,
-    damage: number,
-    damageType: "physical" | "magic" | "true"
-  ): void {
-    super.postTakenDamage(attacker, damage, damageType);
-
-    // If Azir dies, kill all Sand Soldiers linked to him
-    if (this.chess.stats.hp <= 0) {
-      this.killLinkedSandSoldiers();
-    }
-  }
-
-  /**
-   * Kill all Sand Soldiers that were created by this Azir
-   */
-  private killLinkedSandSoldiers(): void {
-    this.game.board.forEach((chess) => {
-      if (
-        chess.name === "Sand Soldier" &&
-        chess.skill?.payload?.azirId === this.chess.id &&
-        chess.stats.hp > 0
-      ) {
-        // Kill the Sand Soldier
-        chess.stats.hp = 0;
-      }
-    });
-  }
 }

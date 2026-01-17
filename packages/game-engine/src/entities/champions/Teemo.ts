@@ -38,4 +38,8 @@ export class Teemo extends ChessObject {
     this.damage(chess, 5 + this.ap * 0.4, "magic", this, this.sunder);
     return baseDamage;
   }
+
+  protected getAttackPotential(): number {
+    return super.getAttackPotential() + 5 + this.ap * 0.4;
+  }
 }

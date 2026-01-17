@@ -321,7 +321,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Death Mark",
       description:
-        "Zed marks a target with a Death Mark in 3 turns. Zed can attack the marked target from any direction without range limit and blocking pieces. And if he does, he will teleport to the nearest adjacent square of the target (if there is no empty adjacent square, he will not teleport), and deal bonus (10 + 10% of AD + 30% of AP) physical damage to the target. The mark will be removed if Zed attacks the target.",
+        "Zed marks a target with a Death Mark in 3 turns. Zed can attack the marked target from any direction without range limit and blocking pieces. And if he does, he will teleport to the nearest adjacent square of the target (if there is no empty adjacent square, he will not teleport), and deal bonus (10 + 15% of AD + 30% of AP) physical damage to the target. The mark will be removed if Zed attacks the target.",
       cooldown: 3,
       attackRange: {
         range: 4,
@@ -761,7 +761,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Arise",
       description:
-        "Azir can promote a Minion to a Sand Soldier. You can only control at most 3 Sand Soldiers at a time. When Azir attacks, the Sand Soldiers within 2 squares of the target will also attack the target (ignoring the attack direction) but deal less than 40% of the Sand Soldier's damage. If Azir is dead, the Sand Soldier will die with him.",
+        "Azir can promote a Minion to a Sand Soldier. You can only control at most 3 Sand Soldiers at a time. When Azir attacks, the Sand Soldiers within 2 squares of the target will also attack the target (ignoring the attack direction) but deal less than 40% of the Sand Soldier's damage.",
       cooldown: 6,
       attackRange: {
         range: 2,

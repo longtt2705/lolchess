@@ -61,4 +61,9 @@ export class Ashe extends ChessObject {
     }
     return baseDamage;
   }
+
+  protected getAttackPotential(): number {
+    const bonusDamage = 15;
+    return super.getAttackPotential() + bonusDamage;
+  }
 }

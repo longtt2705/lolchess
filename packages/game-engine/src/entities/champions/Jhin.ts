@@ -37,12 +37,20 @@ export class Jhin extends ChessObject {
     // Every 4th attack is critical
     const isCritical = this.chess.skill.payload.attackCount % 4 === 0;
     const baseDamage = super.attack(chess, isCritical);
-    const bonusDamage = 4 + this.ap * 0.44 + (this.ad - this.chess.stats.ad) * 0.44;
+    const bonusDamage =
+      4 + this.ap * 0.44 + (this.ad - this.chess.stats.ad) * 0.44;
     this.damage(chess, bonusDamage, "physical", this, this.sunder);
     if (this.willCrit) {
       const speedBoost = this.createSpeedBoostDebuff();
       this.applyDebuff(this, speedBoost);
     }
     return baseDamage;
+  }
+
+  protected getAttackPotential(): number {
+    if ((this.chess.skill.payload.attackCount + 1) % 4 === 0) {
+      return super.getAttackPotential(true) + 15;
+    }
+    return super.getAttackPotential();
   }
 }

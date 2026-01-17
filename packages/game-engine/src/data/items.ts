@@ -369,7 +369,7 @@ export const combinedItems: ItemData[] = [
     id: "crownguard",
     name: "Crownguard",
     description:
-      "Immidiate gain a 30% of max Health Shield. If the shield is broken, gain 10 AP.",
+      "If HP is below 50%, gain a 20% of max Health Shield for 2 turns. If the shield is broken, gain 10 AP.",
     cost: 0,
     icon: "/icons/Crownguard.png",
     effects: [
@@ -379,6 +379,7 @@ export const combinedItems: ItemData[] = [
     ],
     isBasic: false,
     recipe: ["needlessly_rod", "chain_vest"],
+    cooldown: 8,
   },
   {
     id: "ionic_spark",

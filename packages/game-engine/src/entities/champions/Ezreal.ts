@@ -104,4 +104,11 @@ export class Ezreal extends ChessObject {
       this.chess.skill.payload.affectedEnemies = affectedEnemies;
     }
   }
+
+  protected getAttackPotential(): number {
+    if (this.hasDebuff("arcane_shift_sunder")) {
+      return super.getAttackPotential() + 10;
+    }
+    return super.getAttackPotential();
+  }
 }

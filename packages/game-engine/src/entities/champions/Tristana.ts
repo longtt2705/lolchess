@@ -25,9 +25,7 @@ export class Tristana extends ChessObject {
       this.damage(chess, bonusDamage, "physical", this, this.sunder);
 
       // Get adjacent squares and damage enemies in them
-      const adjacentSquares = getAdjacentSquares(
-        chess.chess.position
-      );
+      const adjacentSquares = getAdjacentSquares(chess.chess.position);
       for (const square of adjacentSquares) {
         const adjacentEnemy = getChessAtPosition(
           this.game,
@@ -50,5 +48,12 @@ export class Tristana extends ChessObject {
       }
     }
     return baseDamage;
+  }
+
+  protected getAttackPotential(): number {
+    if ((this.chess.skill.payload.attackCount + 1) % 4 === 0) {
+      return super.getAttackPotential() + 10 + this.ap * 0.5 + this.ad * 0.25;
+    }
+    return super.getAttackPotential();
   }
 }

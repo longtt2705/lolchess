@@ -20,7 +20,11 @@ export class Tryndamere extends ChessObject {
     } as Debuff;
   }
 
-  protected postTakenDamage(attacker: ChessObject, damage: number, damageType: "physical" | "magic" | "true"): void {
+  protected postTakenDamage(
+    attacker: ChessObject,
+    damage: number,
+    damageType: "physical" | "magic" | "true"
+  ): void {
     super.postTakenDamage(attacker, damage, damageType);
     if (this.hasDebuff("undying_rage")) {
       if (this.chess.stats.hp <= 0) {
@@ -39,6 +43,9 @@ export class Tryndamere extends ChessObject {
   }
 
   get ad(): number {
-    return super.ad + Math.floor((this.maxHp - this.chess.stats.hp) / 5) * (1 + this.ap * 0.05);
+    return (
+      super.ad +
+      Math.floor((this.maxHp - this.chess.stats.hp) / 5) * (1 + this.ap * 0.05)
+    );
   }
 }

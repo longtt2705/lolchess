@@ -118,7 +118,7 @@ export class SandSoldier extends ChessObject {
     let bonusDamage = 0;
     // Calculate and deal bonus magic damage: 15 + 35% of Azir's AP
     const azir = this.getAzirChess();
-    if (azir) {
+    if (azir || azir.chess.stats.hp <= 0) {
       bonusDamage = 15 + azir.ap * 0.35;
       if (bonusDamage > 0) {
         azir.dealDamage(
@@ -141,7 +141,7 @@ export class SandSoldier extends ChessObject {
     super.postAttack(chess, damage);
 
     const azir = this.getAzirChess();
-    if (!azir) {
+    if (!azir || azir.chess.stats.hp <= 0) {
       return;
     }
 
@@ -170,5 +170,23 @@ export class SandSoldier extends ChessObject {
       // so it won't double-trigger when azir.postAttack is called
       azir.postAttack(chess, damage);
     }
+  }
+
+  protected getAttackPotential(): number {
+    const azir = this.getAzirChess();
+    if (azir) {
+      const guinsooRageblade = azir.chess.items.find(
+        (item) => item.id === "guinsoo_rageblade"
+      );
+      const numberOfSandSoldiers = this.findNearbySandSoldiers(
+        this.chess.position
+      ).length;
+      const damage = super.getAttackPotential() + 15 + azir.ap * 0.35;
+      if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
+        return damage * 1.5 + damage * numberOfSandSoldiers * 0.6;
+      }
+      return damage + numberOfSandSoldiers * damage * 0.6;
+    }
+    return super.getAttackPotential();
   }
 }

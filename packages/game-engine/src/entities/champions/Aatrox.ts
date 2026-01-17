@@ -26,4 +26,10 @@ export class Aatrox extends ChessObject {
 
     return super.range + 1;
   }
+
+  protected getAttackPotential(): number {
+    const bonusDamage = 10;
+    const lostHp = this.maxHp - this.chess.stats.hp;
+    return super.getAttackPotential() + bonusDamage + lostHp * 0.1;
+  }
 }

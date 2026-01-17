@@ -136,8 +136,8 @@ export class Zed extends ChessObject {
 
     // If target has Death Mark, trigger special effects
     if (hasDeathMark) {
-      // Deal bonus physical damage: 10 + 10% AD + 30% AP
-      const bonusDamage = 10 + this.ad * 0.1 + this.ap * 0.3;
+      // Deal bonus physical damage: 10 + 15% AD + 30% AP
+      const bonusDamage = 10 + this.ad * 0.15 + this.ap * 0.3;
       this.damage(chess, bonusDamage, "physical", this, this.sunder);
 
       // Find nearest adjacent empty square to target
@@ -155,5 +155,12 @@ export class Zed extends ChessObject {
     }
 
     return baseDamage;
+  }
+
+  protected getAttackPotential(): number {
+    if (this.chess.skill.currentCooldown > 0) {
+      return super.getAttackPotential() + +10 + this.ad * 0.15 + this.ap * 0.3;
+    }
+    return super.getAttackPotential();
   }
 }

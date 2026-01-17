@@ -160,7 +160,7 @@ export class ChessObject {
         calDamage -= shield.amount;
         shield.amount = 0;
         if (shield.id === "crownguard") {
-          this.chess.stats.ap += 10;
+          chess.chess.stats.ap += 10;
         }
         shields.shift();
       }
@@ -315,6 +315,17 @@ export class ChessObject {
         maximumStacks: 1,
       } as Debuff);
     }
+    if (this.hasItem("crownguard")) {
+      const crownguard = this.getItem("crownguard");
+      if (
+        crownguard &&
+        crownguard.currentCooldown <= 0 &&
+        this.chess.stats.hp <= this.maxHp * 0.5
+      ) {
+        this.applyShield(this.maxHp * 0.2, 2, "crownguard");
+        crownguard.currentCooldown = this.getItemCooldown(crownguard);
+      }
+    }
     if (
       this.hasItem("sterak_gage") &&
       this.chess.stats.hp <= this.maxHp * 0.6
@@ -412,8 +423,8 @@ export class ChessObject {
         attacker.damage(
           debuffOwnerObj,
           10 +
-          debuffOwnerObj.physicalResistance * 0.25 +
-          debuffOwnerObj.magicResistance * 0.25,
+            debuffOwnerObj.physicalResistance * 0.25 +
+            debuffOwnerObj.magicResistance * 0.25,
           "magic",
           attacker,
           this.sunder
@@ -645,7 +656,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -656,7 +667,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -1581,13 +1592,6 @@ export class ChessObject {
 
   acquireItem(item: Item): void {
     this.chess.items.push(item);
-    if (item.id === "crownguard") {
-      this.applyShield(
-        this.maxHp * 0.3,
-        Number.MAX_SAFE_INTEGER,
-        "crownguard_shield"
-      );
-    }
     if (item.id === "evenshroud") {
       // Create aura that reduces enemy armor and magic resistance
       const evenshroudAura = this.createAura(
@@ -2413,28 +2417,80 @@ export class ChessObject {
       this.criticalChance > 50 ? this.criticalDamage / 100 : 1; // 50% chance to crit
     const durabilityFactor =
       this.durability > 0 ? (100 - this.durability) / 100 : 1;
+    const hasGuinsooRageblade = this.hasItem("guinsoo_rageblade");
+    const hasWitsEnd = this.hasItem("wit_s_end");
+    const hasSpearOfShojin = this.hasItem("spear_of_shojin");
+    const currentCooldown = this.chess.skill?.currentCooldown || 0;
+    let bonusPoint = 0;
+    if (hasSpearOfShojin && currentCooldown > 0) {
+      bonusPoint += 10 * currentCooldown;
+    }
     const damage = this.calculateDamage(
       target,
       Math.floor(
-        this.ad *
-        damageAmplificationFactor *
-        criticalDamageFactor *
-        durabilityFactor
+        this.ad +
+          (hasWitsEnd ? (this.ad - this.chess.stats.ad) * 0.25 + 5 : 0) *
+            damageAmplificationFactor *
+            criticalDamageFactor *
+            durabilityFactor *
+            (hasGuinsooRageblade ? 1.5 : 1)
       ),
       "physical",
       this.sunder
     );
 
-    return Math.max(damage - totalShield, 0);
+    return Math.max(damage - totalShield, 0) + bonusPoint;
   }
-
 
   protected getActiveSkillDamage?(target: ChessObject): number {
     return this.ap;
   }
 
-  protected getActiveSkillDamageType?(target: ChessObject): "physical" | "magic" | "true" | "non-lethal" {
+  protected getActiveSkillDamageType?(
+    target: ChessObject
+  ): "physical" | "magic" | "true" | "non-lethal" {
     return "physical";
+  }
+
+  public getAttackScore(): number {
+    return Math.floor(this.getAttackPotential());
+  }
+
+  public getActiveSkillScore(): number {
+    return Math.floor(this.getActiveSkillPotential());
+  }
+
+  protected getAttackPotential(willCrit: boolean = false): number {
+    if (this.chess.stats.hp <= 0 || this.isStunned || this.chess.cannotAttack) {
+      return 0;
+    }
+    const critChance = willCrit || this.criticalChance > 50;
+    const critDamage = this.criticalDamage / 100;
+    const hasGuinsooRageblade = this.hasItem("guinsoo_rageblade");
+    const hasWitsEnd = this.hasItem("wit_s_end");
+    const hasSpearOfShojin = this.hasItem("spear_of_shojin");
+    const currentCooldown = this.chess.skill?.currentCooldown || 0;
+    let bonusPoint = 0;
+    if (hasSpearOfShojin && currentCooldown > 0) {
+      bonusPoint += 10 * currentCooldown;
+    }
+    const damageAmplificationFactor = (this.damageAmplification + 100) / 100;
+    return (
+      ((this.ad + this.sunder) *
+        (critChance ? critDamage : 1) *
+        (hasGuinsooRageblade ? 1.5 : 1) +
+        (hasWitsEnd ? (this.ad - this.chess.stats.ad) * 0.25 + 5 : 0) +
+        bonusPoint) *
+      damageAmplificationFactor
+    );
+  }
+
+  protected getActiveSkillPotential(): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+    return 10; // Average score for active skills
   }
 
   public calculateDamageActiveSkill(target: ChessObject): number {
@@ -2452,9 +2508,9 @@ export class ChessObject {
       target,
       Math.floor(
         this.getActiveSkillDamage(target) *
-        damageAmplificationFactor *
-        criticalDamageFactor *
-        durabilityFactor
+          damageAmplificationFactor *
+          criticalDamageFactor *
+          durabilityFactor
       ),
       this.getActiveSkillDamageType(target),
       this.sunder
@@ -2507,7 +2563,14 @@ export class ChessObject {
     if (this.chess.stats.hp <= 0 || this.isStunned) {
       return [];
     }
-    return this.game.board.filter((p) => p.stats.hp > 0 && p.blue !== this.chess.blue && this.validateAttack(p.position, this.attackRange)).map((p) => ChessFactory.createChess(p, this.game));
+    return this.game.board
+      .filter(
+        (p) =>
+          p.stats.hp > 0 &&
+          p.blue !== this.chess.blue &&
+          this.validateAttack(p.position, this.attackRange)
+      )
+      .map((p) => ChessFactory.createChess(p, this.game));
   }
 
   public getValidSkillTargets(): Square[] {
@@ -2558,7 +2621,8 @@ export class ChessObject {
 
         const targetPosition = { x: newX, y: newY };
         const occupiedBy = this.game.board.find(
-          (p) => p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+          (p) =>
+            p.position.x === newX && p.position.y === newY && p.stats.hp > 0
         );
 
         // Handle different target types for L-shape

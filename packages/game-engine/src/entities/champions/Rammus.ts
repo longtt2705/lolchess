@@ -31,4 +31,8 @@ export class Rammus extends ChessObject {
     }
     return baseDamage;
   }
+
+  protected getAttackPotential(): number {
+    return super.getAttackPotential() + this.physicalResistance * 0.2;
+  }
 }
