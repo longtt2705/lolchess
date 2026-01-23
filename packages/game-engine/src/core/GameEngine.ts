@@ -419,6 +419,15 @@ export class GameEngine implements IGameEngine {
     }
   }
 
+  getValidAttacks(game: Game, pieceId: string): Square[] {
+    const piece = getPieceById(game, pieceId);
+    if (!piece || piece.stats.hp <= 0) {
+      return [];
+    }
+    const validAttacks = ChessFactory.createChess(piece, game).getValidAttackTargets();
+    return validAttacks.map((p) => p.chess.position);
+  }
+
   /**
    * Get all valid move positions for a piece
    * TODO: Implement full move validation logic
@@ -429,46 +438,8 @@ export class GameEngine implements IGameEngine {
       return [];
     }
 
-    // Basic implementation: return empty squares within movement range
-    // Full implementation would check piece-specific movement rules
-    const validMoves: Square[] = [];
-    const speed = piece.stats.speed ?? 1;
-
-    if (speed === 0) {
-      return [];
-    }
-
+    const validMoves = ChessFactory.createChess(piece, game).getValidMoveTargets();
     return validMoves;
-  }
-
-  /**
-   * Get all valid attack targets for a piece
-   * TODO: Implement full attack range validation logic
-   */
-  getValidAttacks(game: Game, pieceId: string): Square[] {
-    const piece = getPieceById(game, pieceId);
-    if (!piece || piece.stats.hp <= 0 || piece.cannotAttack) {
-      return [];
-    }
-
-    // Basic implementation: return enemy pieces within attack range
-    const validAttacks: Square[] = [];
-    const range = piece.stats.attackRange?.range || 1;
-
-    for (const target of game.board) {
-      if (target.stats.hp <= 0) continue;
-      if (target.blue === piece.blue && target.ownerId !== "neutral") continue; // Same team
-
-      const dx = Math.abs(target.position.x - piece.position.x);
-      const dy = Math.abs(target.position.y - piece.position.y);
-      const distance = Math.max(dx, dy);
-
-      if (distance <= range && distance > 0) {
-        validAttacks.push({ x: target.position.x, y: target.position.y });
-      }
-    }
-
-    return validAttacks;
   }
 
   /**

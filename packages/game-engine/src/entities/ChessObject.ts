@@ -423,8 +423,8 @@ export class ChessObject {
         attacker.damage(
           debuffOwnerObj,
           10 +
-            debuffOwnerObj.physicalResistance * 0.25 +
-            debuffOwnerObj.magicResistance * 0.25,
+          debuffOwnerObj.physicalResistance * 0.25 +
+          debuffOwnerObj.magicResistance * 0.25,
           "magic",
           attacker,
           this.sunder
@@ -656,7 +656,7 @@ export class ChessObject {
     if (this.chess.skill) {
       return Math.max(
         this.chess.skill.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -667,7 +667,7 @@ export class ChessObject {
     if (item.cooldown) {
       return Math.max(
         item.cooldown -
-          this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
+        this.getEffectiveStat(this.chess, "cooldownReduction") / 10,
         0
       );
     }
@@ -1532,7 +1532,7 @@ export class ChessObject {
     }
 
     // Check if target is within board bounds
-    if (position.x < -1 || position.x > 8 || position.y < 0 || position.y > 7) {
+    if (position.x < 0 || position.x > 7 || position.y < 0 || position.y > 7) {
       return false;
     }
 
@@ -2429,11 +2429,11 @@ export class ChessObject {
       target,
       Math.floor(
         this.ad +
-          (hasWitsEnd ? (this.ad - this.chess.stats.ad) * 0.25 + 5 : 0) *
-            damageAmplificationFactor *
-            criticalDamageFactor *
-            durabilityFactor *
-            (hasGuinsooRageblade ? 1.5 : 1)
+        (hasWitsEnd ? (this.ad - this.chess.stats.ad) * 0.25 + 5 : 0) *
+        damageAmplificationFactor *
+        criticalDamageFactor *
+        durabilityFactor *
+        (hasGuinsooRageblade ? 1.5 : 1)
       ),
       "physical",
       this.sunder
@@ -2493,7 +2493,11 @@ export class ChessObject {
     return 10; // Average score for active skills
   }
 
-  public calculateDamageActiveSkill(target: ChessObject): number {
+  /**
+   * Calculate actual damage dealt by active skill (for damage-dealing skills)
+   * This is a helper method for champions to use in their getActiveSkillValue override
+   */
+  protected calculateActiveSkillDamage(target: ChessObject): number {
     const totalShield =
       target.chess.shields?.reduce((acc, shield) => acc + shield.amount, 0) ||
       0;
@@ -2508,14 +2512,44 @@ export class ChessObject {
       target,
       Math.floor(
         this.getActiveSkillDamage(target) *
-          damageAmplificationFactor *
-          criticalDamageFactor *
-          durabilityFactor
+        damageAmplificationFactor *
+        criticalDamageFactor *
+        durabilityFactor
       ),
       this.getActiveSkillDamageType(target),
       this.sunder
     );
     return Math.max(damage - totalShield, 0);
+  }
+
+  /**
+   * Get the tactical value of using active skill on a specific target
+   * This includes damage, utility (healing, shields, buffs), and strategic value
+   * Override in champion classes for accurate skill evaluation
+   * @param targetPosition - Optional target position (Square). Null for self-cast/no-target skills
+   */
+  public getActiveSkillValue(targetPosition?: Square | null): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // If skill has no target (self-cast), return base utility value
+    if (!targetPosition || skill.targetTypes === "none") {
+      return 10; // Base value for utility skills
+    }
+
+    // Get the target at the position
+    const targetPiece = getChessAtPosition(this.game, this.chess.blue, targetPosition);
+    if (!targetPiece) {
+      return 0; // No piece at target position
+    }
+
+    const target = ChessFactory.createChess(targetPiece, this.game);
+
+    // Default: return damage if skill deals damage, otherwise 0
+    // Champions should override this for accurate evaluation
+    return this.calculateActiveSkillDamage(target);
   }
 
   public getMaterialValue(): number {
@@ -2559,7 +2593,7 @@ export class ChessObject {
     return Math.floor(value);
   }
 
-  public getValidAttackTargets(): ChessObject[] {
+  public getValidAttackTargets(attackRange: AttackRange = this.attackRange): ChessObject[] {
     if (this.chess.stats.hp <= 0 || this.isStunned) {
       return [];
     }
@@ -2568,7 +2602,7 @@ export class ChessObject {
         (p) =>
           p.stats.hp > 0 &&
           p.blue !== this.chess.blue &&
-          this.validateAttack(p.position, this.attackRange)
+          this.validateAttack(p.position, attackRange)
       )
       .map((p) => ChessFactory.createChess(p, this.game));
   }
@@ -2617,7 +2651,7 @@ export class ChessObject {
         const newY = this.chess.position.y + dy;
 
         // Check board bounds
-        if (newX < -1 || newX > 8 || newY < 0 || newY > 7) continue;
+        if (newX < 0 || newX > 7 || newY < 0 || newY > 7) continue;
 
         const targetPosition = { x: newX, y: newY };
         const occupiedBy = this.game.board.find(
@@ -2688,7 +2722,7 @@ export class ChessObject {
           const newY = this.chess.position.y + dy * step;
 
           // Check board bounds
-          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) break;
+          if (newX < 0 || newX > 7 || newY < 0 || newY > 7) break;
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = this.game.board.find(
@@ -2768,5 +2802,178 @@ export class ChessObject {
     }
 
     return skillTargets;
+  }
+
+  public getValidMoveTargets(): Square[] {
+    // Return empty array if piece is dead or stunned
+    if (this.chess.stats.hp <= 0 || this.isStunned) {
+      return [];
+    }
+
+    const moves: Square[] = [];
+
+    // Calculate effective speed with first move bonus for minions
+    let effectiveSpeed = this.chess.stats.speed;
+
+    // First move bonus: Minions get +1 speed on their first move
+    if (
+      !this.chess.hasMovedBefore &&
+      (this.chess.name === "Melee Minion" || this.chess.name === "Caster Minion")
+    ) {
+      effectiveSpeed += 1;
+    }
+
+    const speed = effectiveSpeed;
+
+    // Define 8 directions for movement (horizontal, vertical, diagonal)
+    const directions = [
+      { dx: 0, dy: 1 }, // North
+      { dx: 0, dy: -1 }, // South
+      { dx: 1, dy: 0 }, // East
+      { dx: -1, dy: 0 }, // West
+      { dx: 1, dy: 1 }, // Northeast
+      { dx: 1, dy: -1 }, // Southeast
+      { dx: -1, dy: 1 }, // Northwest
+      { dx: -1, dy: -1 }, // Southwest
+    ];
+
+    // Calculate MOVEMENT (uses speed)
+    directions.forEach(({ dx, dy }) => {
+      for (let step = 1; step <= speed; step++) {
+        const newX = this.chess.position.x + dx * step;
+        const newY = this.chess.position.y + dy * step;
+
+        // Check board bounds
+        if (newX < 0 || newX > 7 || newY < 0 || newY > 7) break;
+
+        // Check backward movement restriction
+        if (this.chess.cannotMoveBackward) {
+          // For blue pieces (bottom team), can't move to lower Y positions (backward)
+          if (this.chess.blue && newY < this.chess.position.y) break;
+          // For red pieces (top team), can't move to higher Y positions (backward)
+          if (!this.chess.blue && newY > this.chess.position.y) break;
+        }
+
+        // Check vertical-only movement restriction
+        if (this.chess.canOnlyMoveVertically) {
+          // Vertical-only pieces can only move in Y direction (forward/backward)
+          // They cannot move horizontally (X position must stay the same)
+          if (newX !== this.chess.position.x) break;
+        }
+
+        const targetPosition = { x: newX, y: newY };
+        const occupiedBy = this.game.board.find(
+          (p) =>
+            p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+        );
+
+        if (!occupiedBy) {
+          // Empty square - can move here
+          moves.push(targetPosition);
+        } else {
+          // Square is occupied - can't move through it
+          break;
+        }
+      }
+    });
+
+    // Check for CASTLING (Poro with Siege Minion/Rook)
+    if (this.chess.name === "Poro" && !this.chess.hasMovedBefore) {
+      // Check kingside castling (right/east)
+      const kingsideRook = this.game.board.find(
+        (p) =>
+          p.position.x === 7 &&
+          p.position.y === this.chess.position.y &&
+          p.name === "Siege Minion" &&
+          p.blue === this.chess.blue &&
+          p.stats.hp > 0 &&
+          !p.hasMovedBefore
+      );
+
+      if (kingsideRook) {
+        // Check if path is clear between king and rook
+        const pathClear = ![5, 6].some((x) =>
+          this.game.board.find(
+            (p) =>
+              p.position.x === x &&
+              p.position.y === this.chess.position.y &&
+              p.stats.hp > 0
+          )
+        );
+
+        if (pathClear) {
+          moves.push({ x: this.chess.position.x + 2, y: this.chess.position.y });
+        }
+      }
+
+      // Check queenside castling (left/west)
+      const queensideRook = this.game.board.find(
+        (p) =>
+          p.position.x === 0 &&
+          p.position.y === this.chess.position.y &&
+          p.name === "Siege Minion" &&
+          p.blue === this.chess.blue &&
+          p.stats.hp > 0 &&
+          !p.hasMovedBefore
+      );
+
+      if (queensideRook) {
+        // Check if path is clear between king and rook
+        const pathClear = ![1, 2, 3].some((x) =>
+          this.game.board.find(
+            (p) =>
+              p.position.x === x &&
+              p.position.y === this.chess.position.y &&
+              p.stats.hp > 0
+          )
+        );
+
+        if (pathClear) {
+          moves.push({ x: this.chess.position.x - 2, y: this.chess.position.y });
+        }
+      }
+    }
+
+    // Check for KNIGHT MOVE (Champions in slots 1 and 6 on first move)
+    const isKnightSlot =
+      this.chess.startingPosition &&
+      (this.chess.startingPosition.y === 0 || this.chess.startingPosition.y === 7) &&
+      (this.chess.startingPosition.x === 1 || this.chess.startingPosition.x === 6);
+
+    if (!this.chess.hasMovedBefore && isKnightSlot) {
+      // Knight moves: L-shaped pattern (2+1 or 1+2)
+      const knightMoves = [
+        { dx: 2, dy: 1 }, // 2 right, 1 up
+        { dx: 2, dy: -1 }, // 2 right, 1 down
+        { dx: -2, dy: 1 }, // 2 left, 1 up
+        { dx: -2, dy: -1 }, // 2 left, 1 down
+        { dx: 1, dy: 2 }, // 1 right, 2 up
+        { dx: 1, dy: -2 }, // 1 right, 2 down
+        { dx: -1, dy: 2 }, // 1 left, 2 up
+        { dx: -1, dy: -2 }, // 1 left, 2 down
+      ];
+
+      knightMoves.forEach(({ dx, dy }) => {
+        const newX = this.chess.position.x + dx;
+        const newY = this.chess.position.y + dy;
+
+        // Check board bounds
+        if (newX < 0 || newX > 7 || newY < 0 || newY > 7) return;
+
+        const targetPosition = { x: newX, y: newY };
+        const occupiedBy = this.game.board.find(
+          (p) =>
+            p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+        );
+
+        if (!occupiedBy) {
+          // Empty square - can move here (knight can jump over pieces)
+          moves.push(targetPosition);
+        }
+        // If occupied by any piece (friendly or enemy), can't move there for knight moves
+      });
+    }
+
+    return moves;
   }
 }

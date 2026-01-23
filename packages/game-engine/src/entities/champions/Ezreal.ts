@@ -111,4 +111,76 @@ export class Ezreal extends ChessObject {
     }
     return super.getAttackPotential();
   }
+
+  protected getActiveSkillPotential(): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Base damage: 10 + 40% AP + 10% AD (to lowest HP adjacent enemy)
+    const baseDamage = 10 + this.ap * 0.4 + this.ad * 0.1;
+
+    // Sunder buff: (5 + 10% of AP) for 3 turns
+    const sunderBonus = 5 + this.ap * 0.1;
+    // This increases future attack damage, assume 2-3 attacks during buff duration
+    const sunderValue = sunderBonus * 2.5; 
+
+    // Repositioning/mobility value
+    const mobilityValue = 12;
+
+    // Position safety improvement (escaping or repositioning to better spot)
+    const safetyValue = 8;
+
+    return baseDamage + sunderValue + mobilityValue + safetyValue;
+  }
+
+  public getActiveSkillValue(targetPosition?: Square | null): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Ezreal teleports to a square - targetPosition is the destination
+    if (!targetPosition) {
+      return 0; // Requires target position
+    }
+    
+    let totalValue = 0;
+
+    // Sunder buff: (5 + 10% of AP) for 3 turns
+    const sunderBonus = 5 + this.ap * 0.1;
+    // Assume 2-3 future attacks benefit from this
+    const sunderValue = sunderBonus * 2.5;
+    totalValue += sunderValue;
+
+    // Repositioning value - always gained
+    const mobilityValue = 12;
+    totalValue += mobilityValue;
+
+    // Check if there are enemies near the destination to deal damage to
+    const adjacentSquares = getAdjacentSquares(targetPosition);
+    for (const adjPos of adjacentSquares) {
+      const targetPiece = getChessAtPosition(this.game, this.chess.blue, adjPos);
+      if (!targetPiece || targetPiece.blue === this.chess.blue) continue;
+      
+      const target = ChessFactory.createChess(targetPiece, this.game);
+      // Base damage: 10 + 40% AP + 10% AD
+      const damage = this.calculateActiveSkillDamage(target);
+      totalValue += damage;
+
+      // Bonus if target is low HP (skill targets lowest HP adjacent)
+      const targetHpPercent = target.chess.stats.hp / target.chess.stats.maxHp;
+      if (targetHpPercent < 0.5) {
+        totalValue += 10; // Bonus for likely being the lowest HP target
+      }
+    }
+
+    // Safety value - escaping danger or repositioning strategically
+    // This would ideally check if current position is under threat
+    const safetyValue = 8;
+    totalValue += safetyValue;
+
+    return totalValue;
+  }
 }

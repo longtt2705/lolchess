@@ -67,4 +67,77 @@ export class Ahri extends ChessObject {
       }
     });
   }
+
+  protected getActiveSkillPotential(): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Base damage: 10 + 25% AP to target and adjacent enemies
+    const baseDamage = 10 + this.ap * 0.25;
+
+    // Assume 2-3 enemies hit (target + adjacent)
+    const avgEnemiesHit = 2.5;
+    const totalDamage = baseDamage * avgEnemiesHit;
+
+    // DoT: (5 + 10% AP) magic damage per turn for 2 turns
+    const dotDamage = (5 + this.ap * 0.1) * 2; // Total DoT over 2 turns
+    const totalDotDamage = dotDamage * avgEnemiesHit;
+
+    // Dash/repositioning value
+    const mobilityValue = 10;
+
+    // Slow debuff adds control value
+    const slowValue = 5 * avgEnemiesHit;
+
+    return totalDamage + totalDotDamage + mobilityValue + slowValue;
+  }
+
+  public getActiveSkillValue(targetPosition?: Square | null): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Ahri dashes to a square - targetPosition is the destination
+    if (!targetPosition) {
+      return 0; // Requires target position
+    }
+    
+    let totalValue = 0;
+    
+    // Mobility value for repositioning
+    totalValue += 15;
+    
+    // Check for enemies at/adjacent to destination for damage value
+    const adjacentSquares = getAdjacentSquares(targetPosition);
+    const positionsToCheck = [targetPosition, ...adjacentSquares];
+    
+    for (const pos of positionsToCheck) {
+      const targetPiece = getChessAtPosition(this.game, this.chess.blue, pos);
+      if (!targetPiece || targetPiece.blue === this.chess.blue) continue;
+      
+      const target = ChessFactory.createChess(targetPiece, this.game);
+      // Base damage: 10 + 25% AP
+      const directDamage = this.calculateActiveSkillDamage(target);
+
+      // DoT: (5 + 10% AP) per turn for 2 turns
+      const dotDamage = (5 + this.ap * 0.1) * 2;
+
+      // Slow debuff value
+      const slowValue = 5;
+
+      // Mobility/repositioning value
+      const mobilityValue = 10;
+
+      // Assume 1-2 other enemies will be hit at destination
+      const aoeBonus = directDamage * 1.5;
+
+      return directDamage + dotDamage + slowValue + mobilityValue + aoeBonus;
+    }
+
+    // For ally/self target, only mobility value
+    return 10; // Pure repositioning value
+  }
 }

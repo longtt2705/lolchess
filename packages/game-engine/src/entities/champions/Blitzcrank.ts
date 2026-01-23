@@ -84,4 +84,58 @@ export class Blitzcrank extends ChessObject {
       }
     }
   }
+
+  protected getActiveSkillPotential(): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Base damage: 15 + 80% AP
+    const baseDamage = 15 + this.ap * 0.8;
+
+    // Displacement is highly valuable (hook effect)
+    const displacementValue = 15;
+
+    return baseDamage + displacementValue;
+  }
+
+  public getActiveSkillValue(targetPosition?: Square | null): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    if (!targetPosition) {
+      return 0; // Blitzcrank's hook requires a target
+    }
+
+    const targetPiece = getChessAtPosition(this.game, this.chess.blue, targetPosition);
+    if (!targetPiece) {
+      return 0;
+    }
+    const target = ChessFactory.createChess(targetPiece, this.game);
+
+    // Only works on enemies
+    if (target.chess.blue === this.chess.blue) {
+      return 0;
+    }
+
+    // Base damage: 15 + 80% AP
+    const damage = this.calculateActiveSkillDamage(target);
+
+    // Displacement value - pulling enemy towards Blitzcrank
+    // Higher value if target is valuable (low HP, high material value)
+    const targetValue = target.getMaterialValue();
+    const displacementValue = 15 + targetValue * 0.1;
+
+    // Extra value if target is far away (hooks are more valuable for gap closing)
+    const distance = Math.max(
+      Math.abs(this.chess.position.x - target.chess.position.x),
+      Math.abs(this.chess.position.y - target.chess.position.y)
+    );
+    const distanceBonus = distance > 2 ? 10 : 0;
+
+    return damage + displacementValue + distanceBonus;
+  }
 }

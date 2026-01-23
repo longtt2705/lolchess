@@ -1,5 +1,6 @@
 import { Square } from "../../types";
 import { ChessObject } from "../ChessObject";
+import { ChessFactory } from "../ChessFactory";
 import { getChessAtPosition } from "../../utils/helpers";
 
 // We need to access getPieceBaseStats from GameLogic, but to avoid circular dependency,
@@ -131,5 +132,107 @@ export class Azir extends ChessObject {
       minion.skill.payload = {};
     }
     minion.skill.payload.azirId = this.chess.id;
+  }
+
+  protected getActiveSkillPotential(): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Check if we already have max Sand Soldiers
+    if (this.countSandSoldiers() >= Azir.MAX_SAND_SOLDIERS) {
+      return 0; // Can't create more
+    }
+
+    // Value of promoting a minion to Sand Soldier
+    // Sand Soldier gets significantly better stats and removes movement restrictions
+    
+    // Stat improvements:
+    // - HP: 30-40 -> 100 (+60-70 HP)
+    // - AD: 5-10 -> 10 (small increase)
+    // - Range: 1 -> 2 (better positioning)
+    // - Resistances: improved significantly
+    // - Can move freely (no backward restriction)
+
+    const hpGainValue = 65 * 0.4; // HP increase worth 40% as defensive value
+    const statImprovementValue = 15; // Better stats overall
+    const mobilityValue = 10; // Removes movement restrictions
+    const rangeValue = 8; // Increased attack range
+
+    // Strategic value: Sand Soldiers attack when Azir attacks (within 2 squares)
+    // This provides additional damage output
+    const synergyValue = 12;
+
+    return hpGainValue + statImprovementValue + mobilityValue + rangeValue + synergyValue;
+  }
+
+  public getActiveSkillValue(targetPosition?: Square | null): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Check if we already have max Sand Soldiers
+    if (this.countSandSoldiers() >= Azir.MAX_SAND_SOLDIERS) {
+      return 0;
+    }
+
+    if (!targetPosition) {
+      return 0; // Azir's skill requires a target
+    }
+
+    const targetPiece = getChessAtPosition(this.game, this.chess.blue, targetPosition);
+    if (!targetPiece) {
+      return 0;
+    }
+    const target = ChessFactory.createChess(targetPiece, this.game);
+
+    // Only works on ally minions
+    if (target.chess.blue !== this.chess.blue) {
+      return 0;
+    }
+
+    // Only works on Melee Minion or Caster Minion
+    if (target.chess.name !== "Melee Minion" && target.chess.name !== "Caster Minion") {
+      return 0;
+    }
+
+    // Value of promoting this specific minion to Sand Soldier
+    
+    // HP increase: Minions have 30-40 HP, Sand Soldiers have 100 HP
+    const hpGain = 100 - target.chess.stats.hp;
+    const hpGainValue = hpGain * 0.4;
+
+    // Stat improvements (better resistances, AD)
+    const statValue = 20;
+
+    // Mobility improvement (removes movement restrictions)
+    const mobilityValue = 12;
+
+    // Range improvement (1 -> 2)
+    const rangeValue = 10;
+
+    // Strategic synergy - Sand Soldier attacks when Azir attacks
+    // More valuable if Azir is positioned to use this synergy
+    const synergyValue = 15;
+
+    // Positional value - more valuable if minion is well-positioned
+    // Check if minion is near enemies (within 2-3 squares)
+    let positionalBonus = 0;
+    for (const enemy of this.game.board) {
+      if (enemy.blue !== this.chess.blue && enemy.stats.hp > 0) {
+        const distance = Math.max(
+          Math.abs(target.chess.position.x - enemy.position.x),
+          Math.abs(target.chess.position.y - enemy.position.y)
+        );
+        if (distance <= 3) {
+          positionalBonus = 10;
+          break;
+        }
+      }
+    }
+
+    return hpGainValue + statValue + mobilityValue + rangeValue + synergyValue + positionalBonus;
   }
 }

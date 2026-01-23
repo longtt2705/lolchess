@@ -23,6 +23,44 @@ export function getAdjacentSquares(square: Square): Square[] {
 }
 
 /**
+ * Get all squares in a range from a given position
+ * @param square - The center square
+ * @param range - The range to get squares from
+ * @returns An array of squares in the range
+ */
+export function getSquaresInRange(square: Square, range: number): Square[] {
+  const squares: Square[] = [];
+  for (let x = square.x - range; x <= square.x + range; x++) {
+    for (let y = square.y - range; y <= square.y + range; y++) {
+      if (isValidBoardPosition(x, y)) {
+        squares.push({ x, y });
+      }
+    }
+  }
+  return squares;
+}
+
+/**
+ * Get all enemies in a range from a given position
+ * @param game - The game state
+ * @param square - The center square
+ * @param range - The range to get enemies from
+ * @param isBlue - The team of the enemies
+ * @returns An array of enemies in the range
+ */
+export function getEnemiesInRange(game: Game, square: Square, range: number, isBlue: boolean): Chess[] {
+  const squares = getSquaresInRange(square, range);
+  const enemies: Chess[] = [];
+  for (const square of squares) {
+    const enemy = getChessAtPosition(game, !isBlue, square);
+    if (enemy && enemy.stats.hp > 0 && enemy.blue !== isBlue) {
+      enemies.push(enemy);
+    }
+  }
+  return enemies;
+}
+
+/**
  * Calculate Chebyshev distance between two squares
  * This is the maximum of horizontal and vertical distances
  * (diagonals count as 1 distance)

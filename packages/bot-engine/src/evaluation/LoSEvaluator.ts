@@ -195,7 +195,7 @@ export class LoSEvaluator {
       const y = from.y + dir.dy * dist;
 
       // Check board bounds
-      if (x < -1 || x > 8 || y < 0 || y > 7) break;
+      if (x < 0 || x > 7 || y < 0 || y > 7) break;
 
       const piece = pieces.find(
         (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0

@@ -512,7 +512,7 @@ export const useGame = (gameId: string) => {
           const newY = piece.position.y + dy * step;
 
           // Check board bounds
-          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) break;
+          if (newX < 0 || newX > 7 || newY < 0 || newY > 7) break;
 
           // Check backward movement restriction
           if (piece.cannotMoveBackward) {
@@ -564,7 +564,7 @@ export const useGame = (gameId: string) => {
           const newY = piece.position.y + dy * step;
 
           // Check board bounds
-          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) break;
+          if (newX < 0 || newX > 7 || newY < 0 || newY > 7) break;
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = gameState.board.find(
@@ -614,7 +614,7 @@ export const useGame = (gameId: string) => {
           const newY = piece.position.y + dy;
 
           // Check board bounds
-          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) return;
+          if (newX < 0 || newX > 7 || newY < 0 || newY > 7) return;
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = gameState.board.find(
@@ -730,7 +730,7 @@ export const useGame = (gameId: string) => {
           const newY = piece.position.y + dy;
 
           // Check board bounds
-          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) return;
+          if (newX < 0 || newX > 7 || newY < 0 || newY > 7) return;
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = gameState.board.find(
@@ -808,7 +808,7 @@ export const useGame = (gameId: string) => {
           const newY = piece.position.y + dy;
 
           // Check board bounds
-          if (newX < -1 || newX > 8 || newY < 0 || newY > 7) return;
+          if (newX < 0 || newX > 7 || newY < 0 || newY > 7) return;
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = gameState.board.find(

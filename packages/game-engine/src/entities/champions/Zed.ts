@@ -163,4 +163,84 @@ export class Zed extends ChessObject {
     }
     return super.getAttackPotential();
   }
+
+  protected getActiveSkillPotential(): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Death Mark is a setup ability with delayed payoff
+    // Low immediate value, but enables future attacks
+    // Mark lasts 3 turns and provides:
+    // 1. Attack from any position (no range limit, ignores blocking)
+    // 2. Bonus damage: 10 + 15% AD + 30% AP
+    // 3. Teleport to target
+
+    // Strategic value of being able to attack marked target from anywhere
+    const rangeBypassValue = 8;
+
+    // Bonus damage on the follow-up attack
+    const bonusDamage = 10 + this.ad * 0.15 + this.ap * 0.3;
+
+    // Teleport/mobility value
+    const mobilityValue = 8;
+
+    // Setup skill - lower value than immediate damage skills
+    // but still useful for positioning and guaranteed damage
+    return (bonusDamage + rangeBypassValue + mobilityValue) * 0.6; // 60% value as it requires follow-up
+  }
+
+  public getActiveSkillValue(targetPosition?: Square | null): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    if (!targetPosition) {
+      return 0; // Zed's skill requires a target
+    }
+
+    const targetPiece = getChessAtPosition(this.game, this.chess.blue, targetPosition);
+    if (!targetPiece) {
+      return 0;
+    }
+    const target = ChessFactory.createChess(targetPiece, this.game);
+
+    // Only works on enemies
+    if (target.chess.blue === this.chess.blue) {
+      return 0;
+    }
+
+    // Death Mark is a setup - it enables future attack with bonus damage and teleport
+    // Value depends on:
+    // 1. Target's value (higher for important targets)
+    // 2. Distance (more valuable for distant targets)
+    // 3. Blocking (more valuable if target is normally unreachable)
+
+    // Setup value - enables attack from anywhere
+    const rangeBypassValue = 10;
+
+    // Bonus damage on follow-up: 10 + 15% AD + 30% AP
+    const bonusDamage = 10 + this.ad * 0.15 + this.ap * 0.3;
+
+    // Teleport value
+    const mobilityValue = 10;
+
+    // Target value - prioritize high-value targets
+    const targetValue = target.getMaterialValue() * 0.1;
+
+    // Distance bonus - more valuable for far targets
+    const distance = Math.max(
+      Math.abs(this.chess.position.x - target.chess.position.x),
+      Math.abs(this.chess.position.y - target.chess.position.y)
+    );
+    const distanceBonus = distance > 3 ? 15 : 5;
+
+    // Low HP targets are high priority
+    const targetHpPercent = target.chess.stats.hp / target.chess.stats.maxHp;
+    const lowHpBonus = targetHpPercent < 0.4 ? 20 : 0;
+
+    return rangeBypassValue + bonusDamage + mobilityValue + targetValue + distanceBonus + lowHpBonus;
+  }
 }

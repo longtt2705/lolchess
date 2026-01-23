@@ -1,7 +1,7 @@
 import { Debuff, Square } from "../../types";
 import { ChessObject } from "../ChessObject";
 import { ChessFactory } from "../ChessFactory";
-import { getAdjacentEnemies } from "../../utils/helpers";
+import { getAdjacentEnemies, getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
 
 export class Nasus extends ChessObject {
   /**
@@ -161,5 +161,92 @@ export class Nasus extends ChessObject {
     }
 
     return baseDamage;
+  }
+
+  protected getActiveSkillPotential(): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Immediate AOE damage: (10 + 15% of AP)% of enemy's Max HP
+    const percentDamage = 10 + this.ap * 0.15;
+    const avgEnemyHp = 100; // Assume average enemy HP
+    const damagePerEnemy = avgEnemyHp * (percentDamage / 100);
+
+    // Assume 2-3 adjacent enemies on average
+    const avgAdjacentEnemies = 2.5;
+    const aoeDamage = damagePerEnemy * avgAdjacentEnemies;
+
+    // DoT: (5 + 10% AP) magic damage per turn for 2 turns
+    const dotDamage = (5 + this.ap * 0.1) * 2; // Total over 2 turns
+    const totalDotDamage = dotDamage * avgAdjacentEnemies;
+
+    // Slow debuff adds control value
+    const slowValue = 5 * avgAdjacentEnemies;
+
+    // Transformation bonuses for 3 turns
+    // +50 HP (immediate heal value)
+    const hpGainValue = 50 * 0.3; // Worth 30% as it increases survivability
+
+    // +20 Physical Resistance (defensive value)
+    const armorValue = 20 * 0.4;
+
+    // +1 Attack Range (positional value)
+    const rangeValue = 10;
+
+    // Bonus attack damage: (10 + 10% bonus AD)% of target's Max HP
+    // This applies for 3 turns, assume 2 attacks during transformation
+    const bonusAttackDamage = avgEnemyHp * 0.1 * 2; // Conservative estimate
+
+    return aoeDamage + totalDotDamage + slowValue + hpGainValue + armorValue + rangeValue + bonusAttackDamage;
+  }
+
+  public getActiveSkillValue(): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    let totalValue = 0;
+
+    const adjacentEnemies = getAdjacentEnemies(this.game, this.chess.position, this.chess.blue);
+    adjacentEnemies.forEach((enemy) => {
+      const enemyObject = ChessFactory.createChess(enemy, this.game);
+      // Immediate damage: (10 + 15% AP)% of target's Max HP
+      const percentDamage = 10 + this.ap * 0.15;
+      const aoeDamage = (percentDamage / 100) * enemyObject.chess.stats.maxHp;
+      totalValue += aoeDamage;
+
+      // DoT: (5 + 10% AP) per turn for 2 turns
+      const dotDamage = (5 + this.ap * 0.1) * 2;
+      totalValue += dotDamage;
+
+      // Slow value
+      totalValue += 8;
+
+      // Assume 1-2 other adjacent enemies
+      totalValue += aoeDamage * 1.5;
+    });
+
+
+    if (adjacentEnemies.length >= 1) {
+      // Transformation bonuses (always gained)
+      // +50 HP immediate
+      const missingHp = this.maxHp - this.chess.stats.hp;
+      const hpGainValue = Math.min(50, missingHp) * 0.4; // Worth 80% as it's immediate HP
+      totalValue += hpGainValue;
+
+      // +20 Physical Resistance for 3 turns
+      totalValue += 20 * 0.4;
+    }
+
+    this.getValidAttackTargets({ range: this.range + 1, diagonal: true, horizontal: true, vertical: true, lShape: false }).forEach((target) => {
+      const bonusAttackValue = target.chess.stats.maxHp * 0.1 * 2.5 + target.getMaterialValue() * 0.8;
+      totalValue += bonusAttackValue;
+    });
+
+    console.log("Nasus active skill value:", totalValue);
+    return totalValue;
   }
 }

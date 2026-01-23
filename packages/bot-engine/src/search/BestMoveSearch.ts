@@ -105,7 +105,7 @@ export class BestMoveSearch {
    */
   private searchPositioning(game: Game, playerId: string): SearchResult {
     // Get current threat score
-    const currentThreatScore = this.threatEvaluator.quickThreatScore(
+    const currentThreatScore = this.threatEvaluator.evaluateThreatScore(
       game,
       playerId
     );
@@ -130,7 +130,7 @@ export class BestMoveSearch {
       this.nodesSearched++;
 
       // Calculate threat score after positioning
-      const newThreatScore = this.threatEvaluator.quickThreatScore(
+      const newThreatScore = this.threatEvaluator.evaluateThreatScore(
         result.game,
         playerId
       );

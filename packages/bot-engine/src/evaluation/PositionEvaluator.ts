@@ -147,9 +147,9 @@ export class PositionEvaluator {
         const isWing = piece.position.x < 2 || piece.position.x > 5;
 
         if (isBackRank && isWing) {
-          score += 25; // Huge bonus for being "castled"
+          score += 100; // Huge bonus for being "castled" - strategic defensive position
         } else if (isBackRank) {
-          score += 5; // Small bonus for just being on back rank
+          score += 15; // Bonus for being on back rank (safer than advancing)
         } else {
           // Penalty for stepping out unless absolutely necessary
           score -= 15;

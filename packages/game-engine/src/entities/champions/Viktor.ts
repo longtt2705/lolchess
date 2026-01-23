@@ -292,4 +292,118 @@ export class Viktor extends ChessObject {
     }
     return super.getAttackPotential();
   }
+
+  protected getActiveSkillPotential(): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Base damage: 10 + 50% AP
+    let value = 10 + this.ap * 0.5;
+
+    // Module bonuses (assume some modules are equipped for higher value)
+    const moduleCount = this.chess.items.filter(item => 
+      item.id.startsWith("viktor_module_")
+    ).length;
+
+    // Each module adds significant value
+    value += moduleCount * 8;
+
+    // Module 1 (Neutralizing Bolt): bonus damage + potential stun
+    if (this.hasModule("viktor_module_1")) {
+      value += 10; // Stun value
+    }
+
+    // Module 2 (Superconductive Coil): empowered attack
+    if (this.hasModule("viktor_module_2")) {
+      value += 5;
+    }
+
+    // Module 3 (Energy Capacitor): shield + speed
+    if (this.hasModule("viktor_module_3")) {
+      value += 5;
+    }
+
+    // Module 4 (Disruptor): execute potential
+    if (this.hasModule("viktor_module_4")) {
+      value += 15; // High value for execute mechanic
+    }
+
+    // Module 5 (Electrical Overload): AOE damage
+    if (this.hasModule("viktor_module_5")) {
+      value += 10; // AOE damage to adjacent enemies
+    }
+
+    return value;
+  }
+
+  public getActiveSkillValue(targetPosition?: Square | null): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    if (!targetPosition) {
+      return 0; // Viktor's skill requires a target
+    }
+
+    const targetPiece = getChessAtPosition(this.game, this.chess.blue, targetPosition);
+    if (!targetPiece) {
+      return 0;
+    }
+    const target = ChessFactory.createChess(targetPiece, this.game);
+
+    // Only works on enemies
+    if (target.chess.blue === this.chess.blue) {
+      return 0;
+    }
+
+    let totalValue = 0;
+
+    // MODULE 4: Disruptor - Execute if target below 5% HP
+    if (this.hasModule("viktor_module_4")) {
+      const targetHpPercent = (target.chess.stats.hp / target.chess.stats.maxHp) * 100;
+      if (targetHpPercent < 5) {
+        // Execute is extremely valuable - instant kill
+        return target.chess.stats.hp + target.getMaterialValue() + 100;
+      }
+    }
+
+    // Base skill damage: (10 + 50% of AP)
+    let damage = this.calculateActiveSkillDamage(target);
+    totalValue += damage;
+
+    // MODULE 1: Neutralizing Bolt - bonus damage + 25% stun chance
+    if (this.hasModule("viktor_module_1")) {
+      const bonusDamagePercent = 15 + this.ap * 0.1;
+      const bonusDamage = (bonusDamagePercent / 100) * target.chess.stats.hp;
+      totalValue += bonusDamage;
+      
+      // Stun value (25% chance)
+      totalValue += 10; // Expected value of stun
+    }
+
+    // MODULE 2: Superconductive Coil - empowers next attack
+    if (this.hasModule("viktor_module_2")) {
+      const empowermentValue = 10 + this.ap * 0.5;
+      totalValue += empowermentValue * 0.5; // Worth ~50% since it buffs future attack
+    }
+
+    // MODULE 3: Energy Capacitor - shield + speed buff
+    if (this.hasModule("viktor_module_3")) {
+      const shieldAmount = 10 + this.ap * 0.3;
+      totalValue += shieldAmount * 0.5; // Shield value
+      totalValue += 5; // Speed buff value
+    }
+
+    // MODULE 5: Electrical Overload - AOE to adjacent enemies
+    if (this.hasModule("viktor_module_5")) {
+      // Assume 1-2 adjacent enemies get hit
+      const aoeDamage = (5 + this.ap * 0.25) * 1.5;
+      totalValue += aoeDamage;
+    }
+
+    return totalValue;
+  }
 }

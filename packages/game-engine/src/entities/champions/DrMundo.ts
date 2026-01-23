@@ -71,4 +71,79 @@ export class DrMundo extends ChessObject {
     // STEP 5: If MISS - nothing happens (health already sacrificed)
     // The skill will simply not deal damage or heal
   }
+
+  protected getActiveSkillPotential(): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    // Calculate hit chance: (50 + 50% of AP)%
+    const hitChance = Math.min(100, 50 + this.ap * 0.5) / 100;
+
+    // Base damage: 10 + 15% his maxHp + 10% AP + 15% target's maxHp
+    const avgTargetHp = 100; // Assume average target HP
+    const baseDamage = 10 + this.maxHp * 0.15 + this.ap * 0.1 + avgTargetHp * 0.15;
+
+    // Heal: (15 + 10% of AP)% of max health
+    const healPercent = 15 + this.ap * 0.1;
+    const healAmount = this.maxHp * (healPercent / 100);
+    const healValue = healAmount * 0.8; // Healing worth 80% of damage
+
+    // Cost: sacrifice 15% of max health
+    const sacrificeCost = this.maxHp * 0.15 * 0.5; // Cost worth 50% of its value
+
+    // Expected value accounting for hit chance
+    const expectedValue = (baseDamage + healValue - sacrificeCost) * hitChance;
+
+    return expectedValue;
+  }
+
+  public getActiveSkillValue(targetPosition?: Square | null): number {
+    const skill = this.chess.skill;
+    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+      return 0;
+    }
+
+    if (!targetPosition) {
+      return 0; // Dr. Mundo's skill requires a target
+    }
+
+    const targetPiece = getChessAtPosition(this.game, this.chess.blue, targetPosition);
+    if (!targetPiece) {
+      return 0;
+    }
+    const target = ChessFactory.createChess(targetPiece, this.game);
+
+    // Only works on enemies
+    if (target.chess.blue === this.chess.blue) {
+      return 0;
+    }
+
+    // Calculate hit chance: (50 + 50% of AP)%
+    const missChance = Math.min(50, Math.max(0, 50 - this.ap * 0.5));
+    const hitChance = (100 - missChance) / 100;
+
+    // Damage: 10 + 15% his maxHp + 10% AP + 15% target's maxHp
+    const baseDamage = 10 + this.maxHp * 0.15 + this.ap * 0.1 + target.chess.stats.maxHp * 0.15;
+    const damage = this.calculateActiveSkillDamage(target);
+
+    // Heal if hit: (15 + 10% of AP)% of max health
+    const healPercent = 15 + this.ap * 0.1;
+    const healAmount = this.maxHp * (healPercent / 100);
+    const healValue = healAmount * 0.8; // Worth 80% as self-sustain
+
+    // Cost: always sacrifice 15% of max health
+    const sacrificeCost = this.maxHp * 0.15 * 0.5;
+
+    // Expected value accounting for hit chance
+    const expectedValue = (damage + healValue) * hitChance - sacrificeCost;
+
+    // Don't use if Mundo is too low on HP
+    if (this.chess.stats.hp < this.maxHp * 0.25) {
+      return expectedValue * 0.3; // Much less valuable when low HP
+    }
+
+    return Math.max(0, expectedValue);
+  }
 }
