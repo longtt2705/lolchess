@@ -77,6 +77,9 @@ export class Sion extends ChessObject {
     }
 
     const adjacentEnemies = getAdjacentEnemies(this.game, this.chess.position, this.chess.blue);
+    if (adjacentEnemies.length === 0) {
+      return 0;
+    }
 
     let drainDamage = 0;
     let shieldValue = 0;

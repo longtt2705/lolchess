@@ -61,6 +61,25 @@ export function getEnemiesInRange(game: Game, square: Square, range: number, isB
 }
 
 /**
+ * Get all allies in a range from a given position
+ * @param game - The game state
+ * @param square - The center square
+ * @param range - The range to get allies from
+ * @param isBlue - The team of the allies
+ * @returns An array of allies in the range
+ */
+export function getAlliesInRange(game: Game, square: Square, range: number, isBlue: boolean): Chess[] {
+  const squares = getSquaresInRange(square, range);
+  const allies: Chess[] = [];
+  for (const square of squares) {
+    const ally = getChessAtPosition(game, isBlue, square);
+    if (ally && ally.stats.hp > 0 && ally.blue === isBlue) {
+      allies.push(ally);
+    }
+  }
+  return allies;
+}
+/**
  * Calculate Chebyshev distance between two squares
  * This is the maximum of horizontal and vertical distances
  * (diagonals count as 1 distance)

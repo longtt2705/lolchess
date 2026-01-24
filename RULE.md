@@ -79,16 +79,18 @@ This encourages maintaining formation and protecting the Poro with surrounding m
 
 #### **Melee Minion (Pawn)**
 * **Movement:** Can only move 1 square forward (towards the opponent's side). Speed of 1.
-* **First Move Bonus:** On their first move, Melee Minions gain +1 speed, allowing them to move up to 2 squares forward.
-* **Attacks:** Attack Range of 1. Can attack any of the 8 squares immediately surrounding it.
+* **First Move Bonus:** On their first move, Melee Minions gain +1 speed, allowing them to move up to 2 squares forward. Moving 2 squares forward on the first move grants a shield equal to 25% of max HP for 2 turns.
+* **Attack Restriction:** Cannot attack backward or diagonally backward. Can only attack horizontally, forward, and diagonally forward.
+* **Attacks:** Attack Range of 1. Can attack in allowed directions (horizontal, forward, and diagonally forward).
 * **Promotion:** If a Melee Minion reaches the opponent's back rank (rank 8 for Blue, rank 1 for Red), it is immediately promoted to a **Super Minion**.
 * **Stats:** 100 HP, 25 AD, 0 AP, 20 Physical Resistance, 5 Magic Resistance.
 * **Gold Value:** 20
 
 #### **Caster Minion (Pawn)**
 * **Movement:** Can only move 1 square forward (towards the opponent's side). Speed of 1.
-* **First Move Bonus:** On their first move, Caster Minions gain +1 speed, allowing them to move up to 2 squares forward.
-* **Attacks:** Attack Range of 2. Can attack any of the 8 squares immediately surrounding it.
+* **First Move Bonus:** On their first move, Caster Minions gain +1 speed, allowing them to move up to 2 squares forward. Moving 2 squares forward on the first move grants a shield equal to 25% of max HP for 2 turns.
+* **Attack Restriction:** Cannot attack backward or diagonally backward. Can only attack horizontally, forward, and diagonally forward.
+* **Attacks:** Attack Range of 2. Can attack in allowed directions (horizontal, forward, and diagonally forward) up to 2 squares away.
 * **Stats:** 50 HP, 35 AD, 0 AP, 15 Physical Resistance, 5 Magic Resistance.
 * **Gold Value:** 25
 

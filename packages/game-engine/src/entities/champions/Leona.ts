@@ -1,5 +1,5 @@
 import { Square } from "../../types/Square";
-import { getEnemiesInRange } from "../../utils/helpers";
+import { getAlliesInRange, getEnemiesInRange } from "../../utils/helpers";
 import { ChessFactory } from "../ChessFactory";
 import { ChessObject } from "../ChessObject";
 
@@ -81,7 +81,7 @@ export class Leona extends ChessObject {
     }
 
     protected getActiveSkillDamage(target: ChessObject): number {
-        return 15 + this.ap * 0.2 + this.ad * 0.2;
+        return 15 + this.ap * 0.2 + this.ad * 0.05;
     }
 
     protected getActiveSkillDamageType(): "physical" | "magic" {
@@ -112,30 +112,34 @@ export class Leona extends ChessObject {
         return totalDamage + sunlightValue + slowValue;
     }
 
-    public getActiveSkillValue(targetPosition?: Square | null): number {
+    public getActiveSkillValue(): number {
         const skill = this.chess.skill;
         if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
             return 0;
         }
 
         const adjacentEnemies = getEnemiesInRange(this.game, this.chess.position, 2, this.chess.blue);
+        if (adjacentEnemies.length === 0) {
+            return 0;
+        }
         let damage = 0;
         adjacentEnemies.forEach((enemy) => {
             const enemyObject = ChessFactory.createChess(enemy, this.game);
-            damage += this.getActiveSkillDamage(enemyObject);
+            damage += this.calculateActiveSkillDamage(enemyObject);
         });
 
         // Sunlight mark value - allies can consume for: (10 + 25% PR + 25% MR)
         const sunlightDamage = 10 + this.physicalResistance * 0.25 + this.magicResistance * 0.25;
-        const sunlightValue = sunlightDamage * 0.5; // 50% chance ally will consume it
+        const adjacentAllies = getAlliesInRange(this.game, this.chess.position, 2, this.chess.blue);
+        let sunlightValue = 0;
+        if (adjacentAllies.length > 0) {
+            sunlightValue = sunlightDamage * adjacentEnemies.length * 0.5;
+        }
 
         // Slow debuff (-1 Move Speed for 2 turns)
-        const slowValue = 8;
+        const slowValue = 6;
 
-        // Skill hits up to 5 targets, so add value for other potential targets
-        const multiTargetBonus = damage * adjacentEnemies.length * 0.5; // Assume 50% other targets get hit
-
-        console.log("Leona active skill value:", damage + sunlightValue + slowValue + multiTargetBonus);
-        return damage + sunlightValue + slowValue + multiTargetBonus;
+        console.log("Leona active skill value:", damage + sunlightValue + slowValue);
+        return damage * 0.5 + sunlightValue + slowValue;
     }
 }

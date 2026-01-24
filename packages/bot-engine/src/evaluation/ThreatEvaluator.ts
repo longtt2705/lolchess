@@ -18,7 +18,7 @@ export class ThreatEvaluator {
   constructor(
     private gameEngine: GameEngine,
     private materialEvaluator: MaterialEvaluator
-  ) {}
+  ) { }
   /**
    * Get all threats a player can make
    */
@@ -56,7 +56,7 @@ export class ThreatEvaluator {
     // Get top 40% of actions
     listActions.sort((a, b) => b.priority - a.priority);
     const topActions = listActions.slice(0, Math.floor(listActions.length * 0.4));
-    
+
 
     for (const action of topActions) {
       if (action.isAttack) {
@@ -73,67 +73,61 @@ export class ThreatEvaluator {
           let priority = potentialDamage;
           if (canKill) priority += 100;
           if (target.name === "Poro") priority += 500;
-          priority += this.materialEvaluator.evaluatePiece(target, game);
 
           threats.push({
             attacker: action.attacker.chess,
             target,
             damage: potentialDamage,
             canKill,
-            priority,
+            priority: priority * (targetChessObject.damageTargetPriorityFactor ?? 1),
           });
         }
       } else {
         if (action.attacker.chess.skill?.targetTypes === "none") {
           // Self-cast skill with no target
           const skillValue = action.attacker.getActiveSkillValue(null);
-          
+
           // For self-cast skills, add as a general utility threat
           threats.push({
             attacker: action.attacker.chess,
             target: action.attacker.chess, // Self-target
             damage: skillValue,
             canKill: false,
-            priority: skillValue,
+            priority: skillValue * (action.attacker.damageTargetPriorityFactor ?? 1),
           });
         } else {
           const skillTargets = this.gameEngine.getValidSkillTargets(game, action.attacker.chess.id);
-        for (const targetPos of skillTargets) {
-          // Get the actual tactical value of using skill on this target
-          // This includes damage, utility (healing, shields, buffs), and strategic value
-          const skillValue = action.attacker.getActiveSkillValue(targetPos);
-          
-          if (skillValue === 0) continue; // Skip if skill has no value for this target
-          
-          const target = getPieceAtPosition(game, targetPos);
-          if (!target) continue;
-          const targetChessObject = ChessFactory.createChess(target, game);
-          
-          // Estimate if skill can kill based on target HP and skill value
-          // For damage skills, high value + low target HP suggests kill potential
-          const isEnemy = target.blue !== action.attacker.chess.blue;
-          const lowHp = targetChessObject.chess.stats.hp < targetChessObject.chess.stats.maxHp * 0.3;
-          const canKill = isEnemy && lowHp && skillValue > 50; // Rough estimate
+          for (const targetPos of skillTargets) {
+            // Get the actual tactical value of using skill on this target
+            // This includes damage, utility (healing, shields, buffs), and strategic value
+            const skillValue = action.attacker.getActiveSkillValue(targetPos);
 
-          // Calculate priority based on skill value
-          let priority = skillValue;
-          if (canKill) priority += 100;
-          if (target.name === "Poro") priority += 500;
-          
-          // Add material value for enemy targets
-          if (isEnemy) {
-            priority += this.materialEvaluator.evaluatePiece(target, game);
+            if (skillValue === 0) continue; // Skip if skill has no value for this target
+
+            const target = getPieceAtPosition(game, targetPos);
+            if (!target) continue;
+            const targetChessObject = ChessFactory.createChess(target, game);
+
+            // Estimate if skill can kill based on target HP and skill value
+            // For damage skills, high value + low target HP suggests kill potential
+            const isEnemy = target.blue !== action.attacker.chess.blue;
+            const lowHp = targetChessObject.chess.stats.hp < targetChessObject.chess.stats.maxHp * 0.3;
+            const canKill = isEnemy && lowHp && skillValue > 50; // Rough estimate
+
+            // Calculate priority based on skill value
+            let priority = skillValue;
+            if (canKill) priority += 100;
+            if (target.name === "Poro") priority += 500;
+
+            threats.push({
+              attacker: action.attacker.chess,
+              target,
+              damage: skillValue, // Use skillValue as damage estimate
+              canKill,
+              priority: priority * (targetChessObject.damageTargetPriorityFactor ?? 1),
+            });
           }
-
-          threats.push({
-            attacker: action.attacker.chess,
-            target,
-            damage: skillValue, // Use skillValue as damage estimate
-            canKill,
-            priority,
-          });
         }
-      }
       }
     }
 

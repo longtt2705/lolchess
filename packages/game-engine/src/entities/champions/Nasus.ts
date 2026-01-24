@@ -202,6 +202,10 @@ export class Nasus extends ChessObject {
     return aoeDamage + totalDotDamage + slowValue + hpGainValue + armorValue + rangeValue + bonusAttackDamage;
   }
 
+  getActiveSkillDamageType(): "physical" | "magic" {
+    return "magic";
+  }
+
   public getActiveSkillValue(): number {
     const skill = this.chess.skill;
     if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
@@ -211,11 +215,12 @@ export class Nasus extends ChessObject {
     let totalValue = 0;
 
     const adjacentEnemies = getAdjacentEnemies(this.game, this.chess.position, this.chess.blue);
+
     adjacentEnemies.forEach((enemy) => {
       const enemyObject = ChessFactory.createChess(enemy, this.game);
       // Immediate damage: (10 + 15% AP)% of target's Max HP
       const percentDamage = 10 + this.ap * 0.15;
-      const aoeDamage = (percentDamage / 100) * enemyObject.chess.stats.maxHp;
+      const aoeDamage = this.calculateActiveSkillDamage(enemyObject) * (percentDamage / 100);
       totalValue += aoeDamage;
 
       // DoT: (5 + 10% AP) per turn for 2 turns
@@ -241,7 +246,10 @@ export class Nasus extends ChessObject {
       totalValue += 20 * 0.4;
     }
 
-    this.getValidAttackTargets({ range: this.range + 1, diagonal: true, horizontal: true, vertical: true, lShape: false }).forEach((target) => {
+    const rangeTargets = this.getValidAttackTargets({ range: this.range + 1, diagonal: true, horizontal: true, vertical: true, lShape: false });
+    console.log(`[Nasus] Targets in extended range: ${rangeTargets.length}`);
+
+    rangeTargets.forEach((target) => {
       const bonusAttackValue = target.chess.stats.maxHp * 0.1 * 2.5 + target.getMaterialValue() * 0.8;
       totalValue += bonusAttackValue;
     });

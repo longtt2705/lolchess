@@ -27,7 +27,7 @@ export class SimpleBotService {
   private botEngines: Map<string, BotEngine> = new Map();
 
   // Default difficulty for bots
-  private defaultDifficulty: BotDifficulty = "medium";
+  private defaultDifficulty: BotDifficulty = "expert";
 
   /**
    * Get or create a bot engine for a specific bot player

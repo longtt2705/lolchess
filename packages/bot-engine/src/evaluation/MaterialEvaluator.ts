@@ -70,19 +70,31 @@ export class MaterialEvaluator {
     value += typeValue;
 
     // HP percentage factor - damaged pieces are worth less
-    const hpPercent = piece.stats.hp / piece.stats.maxHp;
+    // Guard against division by zero or undefined maxHp
+    const maxHp = piece.stats.maxHp || 1;
+    const hp = piece.stats.hp || 0;
+    const hpPercent = Math.min(1, Math.max(0, hp / maxHp));
     value *= 0.5 + hpPercent * 0.5;
 
     // Stat-based value for champions
-    if (!this.isMinion(piece.name)) {
-      const materialValue = ChessFactory.createChess(
-        piece,
-        game
-      ).getMaterialValue();
-      value += materialValue;
+    if (!this.isMinion(piece.name) && piece.name !== "Poro") {
+      try {
+        const materialValue = ChessFactory.createChess(
+          piece,
+          game
+        ).getMaterialValue();
+        // Guard against NaN from getMaterialValue
+        if (!isNaN(materialValue) && isFinite(materialValue)) {
+          value += materialValue;
+        }
+      } catch {
+        // If getMaterialValue fails, just use base value
+      }
     }
 
-    return Math.floor(value);
+    // Ensure we never return NaN
+    const result = Math.floor(value);
+    return isNaN(result) ? 0 : result;
   }
 
   /**

@@ -550,6 +550,21 @@ export const useGame = (gameId: string) => {
         // Check if attackRange exists
         if (!attackRange) return;
 
+        // Check backward attack restriction for minions
+        if (piece.name === "Melee Minion" || piece.name === "Caster Minion") {
+          // Calculate target Y after one step in this direction
+          const targetY = piece.position.y + dy;
+          const deltaY = targetY - piece.position.y;
+          
+          if (piece.blue) {
+            // Blue minions cannot attack backward (negative Y direction)
+            if (deltaY < 0) return;
+          } else {
+            // Red minions cannot attack backward (positive Y direction)
+            if (deltaY > 0) return;
+          }
+        }
+
         // Check if this direction is allowed for attacks
         const isHorizontal = dy === 0;
         const isVertical = dx === 0;

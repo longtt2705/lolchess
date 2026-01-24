@@ -1275,6 +1275,19 @@ export class GameLogic {
       drakeHp = 250;
       drakeResistance = 30;
     } else {
+      // Ensure drake pool exists and is not empty
+      if (!game.drakePool || game.drakePool.length === 0) {
+        // Reinitialize pool if it's empty or undefined
+        game.drakePool = [
+          "Infernal",
+          "Cloud",
+          "Mountain",
+          "Hextech",
+          "Ocean",
+          "Chemtech",
+        ];
+      }
+
       // Pick a random drake type from the remaining pool
       const rng = getGameRng();
       const poolIndex = rng.nextInt(0, game.drakePool.length - 1);

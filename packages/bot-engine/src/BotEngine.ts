@@ -99,9 +99,7 @@ export class BotEngine {
         this.config.timeLimit
       );
 
-      if (searchResult.bestAction) {
-        return this.applyRandomness(searchResult.bestAction, actions);
-      }
+      return searchResult.bestAction;
     }
 
     // Fallback to heuristic-based selection

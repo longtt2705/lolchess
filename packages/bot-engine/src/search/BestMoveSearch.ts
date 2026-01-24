@@ -2,12 +2,13 @@ import {
   EventPayload,
   Game,
   GameEngine,
-  getPlayerPieces,
+  GameEvent,
+  getPieceAtPosition
 } from "@lolchess/game-engine";
+import { MaterialEvaluator } from "../evaluation/MaterialEvaluator";
 import { PositionEvaluator } from "../evaluation/PositionEvaluator";
 import { ThreatEvaluator } from "../evaluation/ThreatEvaluator";
-import { MaterialEvaluator } from "../evaluation/MaterialEvaluator";
-import { PositionThreatScore, SearchResult } from "../types";
+import { SearchResult } from "../types";
 import { ActionGenerator } from "./ActionGenerator";
 
 /**
@@ -135,12 +136,35 @@ export class BestMoveSearch {
         playerId
       );
 
+      // Bonus for first-move shield (25% max HP for 2 turns)
+      let shieldBonus = 0;
+      if (action.event === GameEvent.MOVE_CHESS && action.casterPosition) {
+        const piece = getPieceAtPosition(game, action.casterPosition);
+        if (
+          piece &&
+          !piece.hasMovedBefore &&
+          (piece.name === "Melee Minion" || piece.name === "Caster Minion") &&
+          action.targetPosition
+        ) {
+          const deltaY = Math.abs(action.targetPosition.y - piece.position.y);
+          const isForward = piece.blue
+            ? action.targetPosition.y > piece.position.y
+            : action.targetPosition.y < piece.position.y;
+
+          if (deltaY === 2 && isForward) {
+            // Shield value: 25% of max HP for 2 turns
+            // Worth 50% of shield amount as defensive value
+            shieldBonus = piece.stats.maxHp * 0.25 * 0.5;
+          }
+        }
+      }
+
       // Also consider full position evaluation for tie-breaking
       const positionScore = this.evaluator.evaluate(result.game, playerId);
       const threatImprovement = newThreatScore - currentThreatScore;
 
-      // Combine threat improvement with position evaluation
-      const combinedScore = positionScore + threatImprovement * 2;
+      // Combine threat improvement with position evaluation and shield bonus
+      const combinedScore = positionScore + threatImprovement * 2 + shieldBonus;
 
       if (
         threatImprovement > bestThreatImprovement ||
@@ -205,6 +229,12 @@ export class BestMoveSearch {
 
       // Evaluate the resulting position
       const score = this.evaluator.evaluate(result.game, playerId);
+
+      // Debug logging for skill actions
+      if (action.event === GameEvent.SKILL && action.casterPosition) {
+        const piece = getPieceAtPosition(game, action.casterPosition);
+        console.log(`[SearchCombat] ${piece?.name} skill -> Position score: ${score.toFixed(2)}, Previous best: ${bestScore.toFixed(2)}`);
+      }
 
       if (score > bestScore) {
         bestScore = score;

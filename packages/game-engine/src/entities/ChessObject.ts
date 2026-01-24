@@ -17,6 +17,7 @@ import {
   getAdjacentSquares,
   getChessAtPosition,
   getChessByName,
+  getEnemiesInRange,
 } from "../utils/helpers";
 import { getGameRng } from "../utils/SeededRandom";
 
@@ -1215,6 +1216,21 @@ export class ChessObject {
 
     if (!this.validateMove(position, effectiveSpeed)) {
       throw new Error("Invalid move");
+    }
+
+    // First move shield bonus: 25% max HP for 2 turns when moving 2 squares forward
+    if (
+      !this.chess.hasMovedBefore &&
+      (this.chess.name === "Melee Minion" || this.chess.name === "Caster Minion")
+    ) {
+      const deltaY = Math.abs(position.y - this.chess.position.y);
+      const isForward = this.chess.blue
+        ? position.y > this.chess.position.y
+        : position.y < this.chess.position.y;
+
+      if (deltaY === 2 && isForward) {
+        this.applyShield(this.maxHp * 0.25, 2, 'first_move_shield');
+      }
     }
 
     this.chess.position = position;
@@ -2554,42 +2570,78 @@ export class ChessObject {
 
   public getMaterialValue(): number {
     let value = 0;
-    value += this.chess.stats.goldValue || 0;
-    value += (this.ad || 0) * 0.4;
-    value += (this.ap || 0) * 0.4;
-    value += (this.physicalResistance || 0) * 0.15;
-    value += (this.magicResistance || 0) * 0.1;
-    value += this.sunder * 0.1;
-    value += this.criticalChance * 0.1;
-    value += this.criticalDamage * 0.1;
-    value += this.damageAmplification * 0.1;
-    value += this.lifesteal * 0.1;
-    value += this.hpRegen * 1;
-    value += this.maxHp * 0.05;
-    value += this.durability * 0.1;
-    value += this.cooldownReduction * 0.1;
-    value += this.chess.skill?.currentCooldown === 0 ? 10 : 0;
-    value += this.chess.items?.length || 0 * 10;
+
+    // Gold value
+    value += (this.chess.stats.goldValue || 0) * 0.5;
+
+    // offensive values
+    const validAttackTargets = this.getValidAttackTargets().length;
+    const validSkillTargets = this.getValidSkillTargets().length;
+    let offensiveValue = 0;
+    if (validAttackTargets > 0 || validSkillTargets > 0) {
+      offensiveValue += (this.ad || 0) * 0.4 * (this.isAssassin || this.isMarksman ? 2 : this.isFighter ? 1.25 : 1);
+      offensiveValue += (this.ap || 0) * 0.4 * (this.isMage || this.isSupport ? 2 : this.isFighter ? 1.25 : 1);
+      offensiveValue += this.sunder * 0.1 * (this.isAssassin || this.isMarksman ? 2 : this.isFighter ? 1.25 : 1);
+      offensiveValue += this.criticalChance * 0.1 * (this.isAssassin || this.isMarksman ? 2 : this.isFighter ? 1.25 : 1);
+      offensiveValue += this.criticalDamage * 0.1 * (this.isAssassin || this.isMarksman ? 2 : this.isFighter ? 1.25 : 1);
+      offensiveValue += this.damageAmplification * 0.1 * (this.isAssassin || this.isMarksman ? 2 : this.isFighter ? 1.25 : 1);
+      offensiveValue += this.lifesteal * 0.1 * (this.isFighter ? 1.25 : this.isMage ? 1.5 : 1);
+    }
+
+    value += offensiveValue * (validAttackTargets + validSkillTargets) * 0.25;
+
+    // Resistance values
+    let defensiveValue = 0;
+    value += (this.physicalResistance || 0) * 0.1 * (this.isTank ? 2 : this.isFighter ? 1.25 : 1);
+    defensiveValue += (this.magicResistance || 0) * 0.1 * (this.isTank ? 2 : this.isFighter ? 1.25 : 1);
+    defensiveValue += this.hpRegen * 0.5 * (this.isTank || this.isFighter ? 1.5 : 1);
+    defensiveValue += this.maxHp * 0.025 * (this.isTank ? 2 : this.isFighter ? 1.25 : 1);
+    defensiveValue += this.durability * 0.1 * (this.isTank ? 2 : this.isFighter ? 1.25 : 1);
+
+    const numberOfEnemiesInRange = getEnemiesInRange(this.game, this.chess.position, 2, this.chess.blue).length;
+    if (this.isTank) {
+      value += defensiveValue * numberOfEnemiesInRange * 0.5;
+    } else {
+      value += defensiveValue * numberOfEnemiesInRange * 0.125;
+    }
+
+    // Active skill values
+    let activeSkillValue = 0;
+    if (this.chess.skill?.type === "active") {
+      activeSkillValue += this.cooldownReduction * 0.1 * (this.isMage || this.isSupport ? 1.25 : 1);
+      activeSkillValue += this.chess.skill?.currentCooldown === 0 ? 10 : 0 * (this.isMage || this.isSupport ? 1.25 : 1);
+    }
+    value += activeSkillValue;
+
+    // Other values
+    value += (this.chess.items?.length || 0) * 8;
+
     // Speed value for positioning
     const speed = this.chess.stats.speed || 1;
-    value += speed * 3;
+    if (this.isFighter || this.isTank) {
+      value += speed * 2;
+    } else {
+      value += speed;
+    }
 
-    // Attack range bonus
-    let rangeFactor = this.range || 1;
-    const attackRange = this.chess.stats.attackRange;
-    if (attackRange.horizontal) {
-      rangeFactor += this.range * 2;
+    if (this.getAttackPotential() >= 25) {
+      // Attack range bonus
+      let rangeFactor = this.range || 1;
+      const attackRange = this.chess.stats.attackRange;
+      if (attackRange.horizontal) {
+        rangeFactor += rangeFactor;
+      }
+      if (attackRange.vertical) {
+        rangeFactor += rangeFactor;
+      }
+      if (attackRange.diagonal) {
+        rangeFactor += rangeFactor;
+      }
+      if (attackRange.lShape) {
+        rangeFactor += 4;
+      }
     }
-    if (attackRange.vertical) {
-      rangeFactor += this.range * 2;
-    }
-    if (attackRange.diagonal) {
-      rangeFactor += this.range * 2;
-    }
-    if (attackRange.lShape) {
-      rangeFactor += 4;
-    }
-    value += rangeFactor * 3;
+
     return Math.floor(value);
   }
 
@@ -2976,4 +3028,45 @@ export class ChessObject {
 
     return moves;
   }
+
+  get role(): string {
+    return this.chess.role;
+  }
+
+  get isFighter(): boolean {
+    return this.role === "fighter";
+  }
+
+  get isMage(): boolean {
+    return this.role === "mage";
+  }
+
+  get isSupport(): boolean {
+    return this.role === "support";
+  }
+
+  get isMarksman(): boolean {
+    return this.role === "marksman";
+  }
+
+  get isTank(): boolean {
+    return this.role === "tank";
+  }
+
+  get isAssassin(): boolean {
+    return this.role === "assassin";
+  }
+
+  get damageTargetPriorityFactor(): number {
+    const factor = {
+      "fighter": 1,
+      "mage": 2,
+      "support": 1.5,
+      "marksman": 2,
+      "tank": 0.5,
+      "assassin": 1.5,
+    };
+    return factor[this.role];
+  }
 }
+

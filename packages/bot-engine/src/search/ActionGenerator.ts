@@ -4,6 +4,7 @@ import {
   EventPayload,
   GameEvent,
   Chess,
+  ChessFactory,
   getPlayerPieces,
   getItemById,
   Square,
@@ -637,7 +638,19 @@ export class ActionGenerator {
           piece.skill.currentCooldown === 0 &&
           !this.isMobilitySkill(piece)
         ) {
-          this.generateSkillActions(game, piece, playerId, actions);
+          // Check if skill has value > 0 (filter out skills with no tactical value)
+          // This matches the ThreatEvaluator logic and prevents bot from using
+          // skills that provide no immediate benefit
+          const chessObject = ChessFactory.createChess(piece, game);
+          const skillScore = chessObject.getActiveSkillScore();
+          
+          console.log(`[ActionGen] ${piece.name} skill score: ${skillScore}`);
+          
+          if (skillScore > 0) {
+            this.generateSkillActions(game, piece, playerId, actions);
+          } else {
+            console.log(`[ActionGen] Skipping ${piece.name} skill (score 0)`);
+          }
         }
       }
     }

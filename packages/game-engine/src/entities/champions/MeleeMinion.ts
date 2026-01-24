@@ -1,5 +1,6 @@
 import { ChessObject } from "../ChessObject";
 import { getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { Square, AttackRange } from "../../types";
 
 export class MeleeMinion extends ChessObject {
   /**
@@ -26,6 +27,25 @@ export class MeleeMinion extends ChessObject {
       }
     }
     return count;
+  }
+
+  /**
+   * Override validateAttack to prevent backward attacks
+   * Blue minions cannot attack backward (negative Y), Red minions cannot attack forward (positive Y)
+   */
+  validateAttack(position: Square, attackRange: AttackRange): boolean {
+    // Check backward attack restriction
+    const deltaY = position.y - this.chess.position.y;
+    
+    if (this.chess.blue) {
+      // Blue minions cannot attack backward (negative Y direction)
+      if (deltaY < 0) return false;
+    } else {
+      // Red minions cannot attack backward (positive Y direction)
+      if (deltaY > 0) return false;
+    }
+    
+    return super.validateAttack(position, attackRange);
   }
 
   /**
