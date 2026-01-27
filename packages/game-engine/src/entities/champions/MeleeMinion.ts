@@ -36,7 +36,7 @@ export class MeleeMinion extends ChessObject {
   validateAttack(position: Square, attackRange: AttackRange): boolean {
     // Check backward attack restriction
     const deltaY = position.y - this.chess.position.y;
-    
+
     if (this.chess.blue) {
       // Blue minions cannot attack backward (negative Y direction)
       if (deltaY < 0) return false;
@@ -44,7 +44,7 @@ export class MeleeMinion extends ChessObject {
       // Red minions cannot attack backward (positive Y direction)
       if (deltaY > 0) return false;
     }
-    
+
     return super.validateAttack(position, attackRange);
   }
 
@@ -90,7 +90,7 @@ export class MeleeMinion extends ChessObject {
       // Deal true damage equal to 100% of target's max HP (instant kill)
       const executeDamage = this.damage(
         chess,
-        chess.maxHp,
+        99999,
         "true",
         this,
         0, // No sunder for true damage

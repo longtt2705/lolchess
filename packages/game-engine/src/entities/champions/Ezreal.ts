@@ -124,7 +124,7 @@ export class Ezreal extends ChessObject {
     // Sunder buff: (5 + 10% of AP) for 3 turns
     const sunderBonus = 5 + this.ap * 0.1;
     // This increases future attack damage, assume 2-3 attacks during buff duration
-    const sunderValue = sunderBonus * 2.5; 
+    const sunderValue = sunderBonus * 2.5;
 
     // Repositioning/mobility value
     const mobilityValue = 12;
@@ -145,7 +145,7 @@ export class Ezreal extends ChessObject {
     if (!targetPosition) {
       return 0; // Requires target position
     }
-    
+
     let totalValue = 0;
 
     // Sunder buff: (5 + 10% of AP) for 3 turns
@@ -163,7 +163,7 @@ export class Ezreal extends ChessObject {
     for (const adjPos of adjacentSquares) {
       const targetPiece = getChessAtPosition(this.game, this.chess.blue, adjPos);
       if (!targetPiece || targetPiece.blue === this.chess.blue) continue;
-      
+
       const target = ChessFactory.createChess(targetPiece, this.game);
       // Base damage: 10 + 40% AP + 10% AD
       const damage = this.calculateActiveSkillDamage(target);

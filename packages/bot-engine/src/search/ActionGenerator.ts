@@ -9,7 +9,7 @@ import {
   getItemById,
   Square,
 } from "@lolchess/game-engine";
-import { ScoredAction, LoSClearingMove, ActionCategory } from "../types";
+import { ScoredAction, LoSClearingMove, ActionCategory, ThreatInfo } from "../types";
 import { LoSEvaluator } from "../evaluation/LoSEvaluator";
 
 /** Mobility skills that reposition the caster (targetTypes === "squareInRange") */
@@ -643,9 +643,9 @@ export class ActionGenerator {
           // skills that provide no immediate benefit
           const chessObject = ChessFactory.createChess(piece, game);
           const skillScore = chessObject.getActiveSkillScore();
-          
+
           console.log(`[ActionGen] ${piece.name} skill score: ${skillScore}`);
-          
+
           if (skillScore > 0) {
             this.generateSkillActions(game, piece, playerId, actions);
           } else {
@@ -679,6 +679,27 @@ export class ActionGenerator {
         return action.targetPosition;
       default:
         return null;
+    }
+  }
+
+  /**
+   * Generate a combat action from a threat info
+   */
+  generateCombatActionFromThreat(playerId: string, threatInfo: ThreatInfo): EventPayload {
+    if (threatInfo.isAttack) {
+      return {
+        playerId,
+        event: GameEvent.ATTACK_CHESS,
+        casterPosition: threatInfo.attacker.position,
+        targetPosition: threatInfo.target.position,
+      };
+    } else {
+      return {
+        playerId,
+        event: GameEvent.SKILL,
+        casterPosition: threatInfo.attacker.position,
+        targetPosition: threatInfo.target.position,
+      };
     }
   }
 

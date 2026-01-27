@@ -204,47 +204,21 @@ export class BestMoveSearch {
    * Assumes we're already in the optimal position
    */
   private searchCombat(game: Game, playerId: string): SearchResult {
-    // Generate combat actions
-    const combatActions = this.actionGenerator.generateCombatActions(
-      game,
-      playerId
-    );
 
-    if (combatActions.length === 0) {
-      // No combat actions available, fall back to any available action
+    const threatInfo = this.threatEvaluator.getBestThreat(game, playerId);
+    if (!threatInfo) {
       return this.fallbackSearch(game, playerId);
     }
 
-    let bestAction: EventPayload | null = null;
-    let bestScore = -Infinity;
-
-    // Evaluate each combat action
-    for (const action of combatActions) {
-      if (this.isTimeUp()) break;
-
-      const result = this.gameEngine.processAction(game, action);
-      if (!result.success) continue;
-
-      this.nodesSearched++;
-
-      // Evaluate the resulting position
-      const score = this.evaluator.evaluate(result.game, playerId);
-
-      // Debug logging for skill actions
-      if (action.event === GameEvent.SKILL && action.casterPosition) {
-        const piece = getPieceAtPosition(game, action.casterPosition);
-        console.log(`[SearchCombat] ${piece?.name} skill -> Position score: ${score.toFixed(2)}, Previous best: ${bestScore.toFixed(2)}`);
-      }
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestAction = action;
-      }
-    }
+    // Generate combat actions
+    const bestAction = this.actionGenerator.generateCombatActionFromThreat(
+      playerId,
+      threatInfo
+    );
 
     return {
       bestAction,
-      score: bestScore,
+      score: threatInfo.priority,
       nodesSearched: this.nodesSearched,
       depth: 1,
       timeMs: Date.now() - this.startTime,

@@ -346,7 +346,7 @@ export class GameLogic {
       casterChess.skill?.payload?.azirId
     ) {
       // Find Azir on the board
-      const azir = getPieceById(game, casterChess.skill.payload.azirId);
+      const azir = getPieceById(game, casterChess.skill.payload?.azirId);
       if (azir) {
         guinsooRageblade = ChessFactory.createChess(azir, game).getItem("guinsoo_rageblade");
       }
@@ -371,18 +371,18 @@ export class GameLogic {
     // After executing the attack, check for attack-triggered payload data
     if (casterChess.skill?.payload) {
       // Yasuo's Way of the Wanderer: whirlwindTargets (triggered on critical strike)
-      if (casterChess.skill.payload.whirlwindTargets !== undefined) {
+      if (casterChess.skill.payload?.whirlwindTargets !== undefined) {
         actionDetails.whirlwindTargets =
-          casterChess.skill.payload.whirlwindTargets;
+          casterChess.skill.payload?.whirlwindTargets;
         // Clear the payload after copying so it doesn't persist to next attack
-        delete casterChess.skill.payload.whirlwindTargets;
+        delete casterChess.skill.payload?.whirlwindTargets;
       }
 
       // Jhin and Tristana's 4th shot detection
       if (
         (casterChess.name === "Jhin" || casterChess.name === "Tristana") &&
-        casterChess.skill.payload.attackCount !== undefined &&
-        casterChess.skill.payload.attackCount % 4 === 0
+        casterChess.skill.payload?.attackCount !== undefined &&
+        casterChess.skill.payload?.attackCount % 4 === 0
       ) {
         actionDetails.fourthShotProc = true;
 
@@ -472,31 +472,31 @@ export class GameLogic {
     // After executing the skill, check for skill-specific payload data
     if (actionDetails && casterChess.skill?.payload) {
       // Blitzcrank's Rocket Grab: pulledToPosition
-      if (casterChess.skill.payload.pulledToPosition) {
+      if (casterChess.skill.payload?.pulledToPosition) {
         actionDetails.pulledToPosition =
-          casterChess.skill.payload.pulledToPosition;
+          casterChess.skill.payload?.pulledToPosition;
       }
 
       // Twisted Fate's Pick a Card: cardTargets
-      if (casterChess.skill.payload.cardTargets) {
+      if (casterChess.skill.payload?.cardTargets) {
         (actionDetails as any).cardTargets =
-          casterChess.skill.payload.cardTargets;
+          casterChess.skill.payload?.cardTargets;
       }
-      if (casterChess.skill.payload.totalCardCount) {
+      if (casterChess.skill.payload?.totalCardCount) {
         (actionDetails as any).totalCardCount =
-          casterChess.skill.payload.totalCardCount;
+          casterChess.skill.payload?.totalCardCount;
       }
 
       // Viktor's Siphon Power: viktorModules
-      if (casterChess.skill.payload.viktorModules) {
+      if (casterChess.skill.payload?.viktorModules) {
         (actionDetails as any).viktorModules =
-          casterChess.skill.payload.viktorModules;
+          casterChess.skill.payload?.viktorModules;
       }
 
       // Leona's Solar Flare: sunlightTargets
-      if (casterChess.skill.payload.sunlightTargets) {
+      if (casterChess.skill.payload?.sunlightTargets) {
         (actionDetails as any).sunlightTargets =
-          casterChess.skill.payload.sunlightTargets;
+          casterChess.skill.payload?.sunlightTargets;
       }
     }
 
@@ -1559,7 +1559,7 @@ export class GameLogic {
       }
 
       // Check if this module is the currently available one
-      const currentModuleIndex = champion.skill.payload.currentModuleIndex;
+      const currentModuleIndex = champion.skill.payload?.currentModuleIndex;
       const expectedModuleId = `viktor_module_${(currentModuleIndex % 5) + 1}`;
       if (itemId !== expectedModuleId) {
         throw new Error(
@@ -1574,9 +1574,9 @@ export class GameLogic {
       const damageThresholds = [50, 150, 300];
       const requiredDamage = damageThresholds[modulesPurchased] || 9999;
 
-      if (champion.skill.payload.cumulativeDamage < requiredDamage) {
+      if (champion.skill.payload?.cumulativeDamage < requiredDamage) {
         throw new Error(
-          `Need ${requiredDamage} cumulative Siphon Power damage to unlock this module (current: ${champion.skill.payload.cumulativeDamage})`
+          `Need ${requiredDamage} cumulative Siphon Power damage to unlock this module (current: ${champion.skill.payload?.cumulativeDamage})`
         );
       }
     }

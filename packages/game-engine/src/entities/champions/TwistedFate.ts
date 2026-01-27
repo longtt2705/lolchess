@@ -100,7 +100,7 @@ export class TwistedFate extends ChessObject {
 
     // Assume hitting 2-3 targets (main target + adjacent enemies)
     const avgTargets = 2.5;
-    
+
     // Calculate total damage: first cards to each target + subsequent cards distributed
     const firstCardsTotal = firstCardDamage * avgTargets;
     const remainingCards = Math.max(0, cardCount - avgTargets);
@@ -142,10 +142,10 @@ export class TwistedFate extends ChessObject {
     // Cards distribute to target and adjacent enemies
     // Estimate 2-3 total targets (target + adjacents)
     const estimatedTargets = 2.5;
-    
+
     // First card per target
     const firstCardsValue = firstCardDamage * estimatedTargets;
-    
+
     // Remaining cards distributed
     const remainingCards = Math.max(0, cardCount - estimatedTargets);
     const subsequentValue = subsequentCardDamage * remainingCards;

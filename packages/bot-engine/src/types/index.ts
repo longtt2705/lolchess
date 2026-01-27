@@ -89,6 +89,8 @@ export interface ThreatInfo {
   canKill: boolean;
   /** Priority score for this threat */
   priority: number;
+  /** Whether this threat is a skill */
+  isAttack: boolean;
 }
 
 /**

@@ -18,7 +18,7 @@ export class Tristana extends ChessObject {
     this.chess.skill.payload.attackCount++;
 
     // Every 4th attack deals bonus (10+50% of AP + 25% of AD) physical damage to the target and his adjacent squares
-    if (this.chess.skill.payload.attackCount % 4 === 0) {
+    if (this.chess.skill.payload?.attackCount % 4 === 0) {
       const bonusDamage = 10 + this.ap * 0.5 + this.ad * 0.25;
 
       // Damage the primary target
@@ -51,7 +51,7 @@ export class Tristana extends ChessObject {
   }
 
   protected getAttackPotential(): number {
-    if ((this.chess.skill.payload.attackCount + 1) % 4 === 0) {
+    if ((this.chess.skill.payload?.attackCount + 1) % 4 === 0) {
       return super.getAttackPotential() + 10 + this.ap * 0.5 + this.ad * 0.25;
     }
     return super.getAttackPotential();

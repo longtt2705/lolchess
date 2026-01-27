@@ -80,6 +80,7 @@ export class ThreatEvaluator {
             damage: potentialDamage,
             canKill,
             priority: priority * (targetChessObject.damageTargetPriorityFactor ?? 1),
+            isAttack: true,
           });
         }
       } else {
@@ -94,6 +95,7 @@ export class ThreatEvaluator {
             damage: skillValue,
             canKill: false,
             priority: skillValue * (action.attacker.damageTargetPriorityFactor ?? 1),
+            isAttack: false,
           });
         } else {
           const skillTargets = this.gameEngine.getValidSkillTargets(game, action.attacker.chess.id);
@@ -125,6 +127,7 @@ export class ThreatEvaluator {
               damage: skillValue, // Use skillValue as damage estimate
               canKill,
               priority: priority * (targetChessObject.damageTargetPriorityFactor ?? 1),
+              isAttack: false,
             });
           }
         }
@@ -148,6 +151,11 @@ export class ThreatEvaluator {
     const threats = this.getPlayerThreats(game, playerId);
     // return threats.reduce((acc, threat) => acc + threat.priority, 0);
     return threats.at(0)?.priority ?? 0;
+  }
+
+  getBestThreat(game: Game, playerId: string): ThreatInfo | null {
+    const threats = this.getPlayerThreats(game, playerId);
+    return threats.at(0) ?? null;
   }
 
   /**

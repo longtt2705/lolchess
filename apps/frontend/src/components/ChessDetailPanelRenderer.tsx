@@ -1506,8 +1506,8 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 item => viktorModules.some(m => m.id === item.id)
                             ) || [];
                             const moduleCount = purchasedModules.length;
-                            const cumulativeDamage = detailViewPiece.skill.payload.cumulativeDamage || 0;
-                            const currentModuleIndex = detailViewPiece.skill.payload.currentModuleIndex || 0;
+                            const cumulativeDamage = detailViewPiece.skill.payload?.cumulativeDamage || 0;
+                            const currentModuleIndex = detailViewPiece.skill.payload?.currentModuleIndex || 0;
                             const currentModule = viktorModules[currentModuleIndex % viktorModules.length];
 
                             // Calculate which modules are unlocked based on damage thresholds

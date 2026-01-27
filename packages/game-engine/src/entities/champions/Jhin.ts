@@ -48,7 +48,7 @@ export class Jhin extends ChessObject {
   }
 
   protected getAttackPotential(): number {
-    if ((this.chess.skill.payload.attackCount + 1) % 4 === 0) {
+    if ((this.chess.skill.payload?.attackCount + 1) % 4 === 0) {
       return super.getAttackPotential(true) + 15;
     }
     return super.getAttackPotential();

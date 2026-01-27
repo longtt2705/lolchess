@@ -14,7 +14,7 @@ export class Viktor extends ChessObject {
   private updateUnlockedModulesCount(): void {
     if (!this.chess.skill?.payload) return;
 
-    const damage = this.chess.skill.payload.cumulativeDamage || 0;
+    const damage = this.chess.skill.payload?.cumulativeDamage || 0;
     const damageThresholds = [40, 120, 260];
 
     let unlocked = 0;
@@ -303,7 +303,7 @@ export class Viktor extends ChessObject {
     let value = 10 + this.ap * 0.5;
 
     // Module bonuses (assume some modules are equipped for higher value)
-    const moduleCount = this.chess.items.filter(item => 
+    const moduleCount = this.chess.items.filter(item =>
       item.id.startsWith("viktor_module_")
     ).length;
 
@@ -379,7 +379,7 @@ export class Viktor extends ChessObject {
       const bonusDamagePercent = 15 + this.ap * 0.1;
       const bonusDamage = (bonusDamagePercent / 100) * target.chess.stats.hp;
       totalValue += bonusDamage;
-      
+
       // Stun value (25% chance)
       totalValue += 10; // Expected value of stun
     }

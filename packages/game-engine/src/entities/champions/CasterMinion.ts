@@ -91,7 +91,7 @@ export class CasterMinion extends ChessObject {
       // Deal true damage equal to 100% of target's max HP (instant kill)
       const executeDamage = this.damage(
         chess,
-        chess.maxHp,
+        99999,
         "true",
         this,
         0, // No sunder for true damage

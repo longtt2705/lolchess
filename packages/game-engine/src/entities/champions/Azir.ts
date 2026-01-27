@@ -147,7 +147,7 @@ export class Azir extends ChessObject {
 
     // Value of promoting a minion to Sand Soldier
     // Sand Soldier gets significantly better stats and removes movement restrictions
-    
+
     // Stat improvements:
     // - HP: 30-40 -> 100 (+60-70 HP)
     // - AD: 5-10 -> 10 (small increase)
@@ -199,7 +199,7 @@ export class Azir extends ChessObject {
     }
 
     // Value of promoting this specific minion to Sand Soldier
-    
+
     // HP increase: Minions have 30-40 HP, Sand Soldiers have 100 HP
     const hpGain = 100 - target.chess.stats.hp;
     const hpGainValue = hpGain * 0.4;
