@@ -228,7 +228,7 @@ export class BestMoveSearch {
       this.nodesSearched++;
 
       // Evaluate the resulting position
-      const score = this.evaluator.evaluate(result.game, playerId);
+      const score = this.threatEvaluator.evaluateThreatScore(result.game, playerId);
 
       // Debug logging for skill actions
       if (action.event === GameEvent.SKILL && action.casterPosition) {

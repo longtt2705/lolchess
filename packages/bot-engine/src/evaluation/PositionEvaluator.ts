@@ -47,14 +47,14 @@ export class PositionEvaluator {
     const isBlue = game.bluePlayer === playerId;
 
     // Calculate individual components with NaN protection
-    const material = this.sanitizeNumber(this.evaluateMaterial(game, playerId, opponentId));
+    // const material = this.sanitizeNumber(this.evaluateMaterial(game, playerId, opponentId));
     const position = this.sanitizeNumber(this.evaluatePosition(game, playerId, opponentId, isBlue));
     const threats = this.sanitizeNumber(this.evaluateThreats(game, playerId, opponentId));
     const lineOfSight = this.sanitizeNumber(this.evaluateLineOfSight(game, playerId, opponentId));
 
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
-      material,
+      material: 0,
       position,
       threats,
       lineOfSight,
@@ -63,9 +63,9 @@ export class PositionEvaluator {
 
     // Calculate weighted total score
     const score =
-      material * PositionEvaluator.WEIGHTS.material +
+      // material * PositionEvaluator.WEIGHTS.material +
       position * PositionEvaluator.WEIGHTS.position +
-      threats * PositionEvaluator.WEIGHTS.threats +
+      // threats * PositionEvaluator.WEIGHTS.threats +
       lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight;
 
     // Final NaN protection
