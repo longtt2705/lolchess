@@ -164,14 +164,9 @@ export class BestMoveSearch {
       const threatImprovement = newThreatScore - currentThreatScore;
 
       // Combine threat improvement with position evaluation and shield bonus
-      const combinedScore = positionScore + threatImprovement * 2 + shieldBonus;
+      const combinedScore = positionScore + threatImprovement + shieldBonus;
 
-      if (
-        threatImprovement > bestThreatImprovement ||
-        (threatImprovement === bestThreatImprovement &&
-          combinedScore > bestScore)
-      ) {
-        bestThreatImprovement = threatImprovement;
+      if (combinedScore > bestScore) {
         bestScore = combinedScore;
         bestAction = action;
       }

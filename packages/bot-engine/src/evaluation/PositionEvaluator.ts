@@ -22,11 +22,11 @@ export class PositionEvaluator {
   // Evaluation weights
   private static readonly WEIGHTS = {
     material: 0.5,
-    position: 0.3,
+    position: 0.6,
     threats: 1,
     safety: 0.5,
     mobility: 0.2,
-    lineOfSight: 0.85, // LoS is important for ranged carries
+    lineOfSight: 1, // LoS is important for ranged carries
   };
 
   constructor(private gameEngine: GameEngine) {
@@ -49,14 +49,14 @@ export class PositionEvaluator {
     // Calculate individual components with NaN protection
     // const material = this.sanitizeNumber(this.evaluateMaterial(game, playerId, opponentId));
     const position = this.sanitizeNumber(this.evaluatePosition(game, playerId, opponentId, isBlue));
-    const threats = this.sanitizeNumber(this.evaluateThreats(game, playerId, opponentId));
+    // const threats = this.sanitizeNumber(this.evaluateThreats(game, playerId, opponentId));
     const lineOfSight = this.sanitizeNumber(this.evaluateLineOfSight(game, playerId, opponentId));
 
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
       material: 0,
       position,
-      threats,
+      threats: 0,
       lineOfSight,
     };
     console.log(`[PositionEvaluator] Position breakdown: ${JSON.stringify(breakdown)}`);
