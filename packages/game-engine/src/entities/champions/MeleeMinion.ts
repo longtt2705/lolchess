@@ -1,6 +1,7 @@
+import { AttackRange, Square } from "../../types";
+import { getAdjacentAllies, getAdjacentEnemies, getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { ChessFactory } from "../ChessFactory";
 import { ChessObject } from "../ChessObject";
-import { getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
-import { Square, AttackRange } from "../../types";
 
 export class MeleeMinion extends ChessObject {
   /**
@@ -29,6 +30,35 @@ export class MeleeMinion extends ChessObject {
     return count;
   }
 
+  getMaterialValue(): number {
+    const baseValue = super.getMaterialValue();
+    // Check if there are enemies critical flanking this minion
+    const enemies = getAdjacentEnemies(this.game, this.chess.position, this.chess.blue);
+    let numberOfEnemiesCriticalFlanking = 0;
+    for (const enemy of enemies) {
+      if (enemy.name !== "Melee Minion" && enemy.name !== "Caster Minion") {
+        continue;
+      }
+      const enemyMinion = ChessFactory.createChess(enemy, this.game) as MeleeMinion;
+      if (enemyMinion.isCriticalFlank(this)) {
+        numberOfEnemiesCriticalFlanking++;
+      }
+    }
+    const adjacentMinions = getAdjacentAllies(this.game, this.chess.position, this.chess.blue);
+    let numberOfAdjacentMinionsCriticalFlanking = 0;
+    for (const adjacentMinion of adjacentMinions) {
+      if (adjacentMinion.name !== "Melee Minion" && adjacentMinion.name !== "Caster Minion") {
+        continue;
+      }
+      const adjacentMinionObject = ChessFactory.createChess(adjacentMinion, this.game) as MeleeMinion;
+      if (adjacentMinionObject.isCriticalFlank(this, true)) {
+        numberOfAdjacentMinionsCriticalFlanking++;
+      }
+    }
+    const difference = numberOfEnemiesCriticalFlanking - numberOfAdjacentMinionsCriticalFlanking;
+    return Math.max(0, baseValue + difference * 10);
+  }
+
   /**
    * Override validateAttack to prevent backward attacks
    * Blue minions cannot attack backward (negative Y), Red minions cannot attack forward (positive Y)
@@ -52,8 +82,8 @@ export class MeleeMinion extends ChessObject {
    * Check if an attack qualifies for Critical Flank
    * Conditions: diagonal attack at range 1, target is a basic minion
    */
-  protected isCriticalFlank(target: ChessObject): boolean {
-    if (this.hasBaronBuff()) {
+  protected isCriticalFlank(target: ChessObject, ignoreBaronBuff: boolean = false): boolean {
+    if (!ignoreBaronBuff && this.hasBaronBuff()) {
       return false;
     }
 

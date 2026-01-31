@@ -22,12 +22,12 @@ export class PositionEvaluator {
 
   // Evaluation weights
   private static readonly WEIGHTS = {
-    material: 0.3,
-    position: 0.6,
-    threats: 1,
-    safety: 0.5,
+    material: 1,    // Increased from 0.3 (rewards kills)
+    position: 1,    // Decreased from 0.6 (less emphasis on structure)
+    threats: 1,     // Increased from 1 (rewards attack potential)
+    safety: 0.5,      // Increased from 0.5 (prioritize survival, especially Poro)
     mobility: 0.2,
-    lineOfSight: 1, // LoS is important for ranged carries
+    lineOfSight: 1, // Decreased from 1 (less emphasis on perfect positioning)
   };
 
   constructor(private gameEngine: GameEngine) {
@@ -372,7 +372,15 @@ export class PositionEvaluator {
     const pieces = getPlayerPieces(game, playerId);
     for (const piece of pieces) {
       if (piece.name === "Poro") {
-        safety += this.threatEvaluator.evaluatePositionSafety(game, piece, playerId) * 2;
+        const poroSafety = this.threatEvaluator.evaluatePositionSafety(game, piece, playerId);
+
+        // CRITICAL: If Poro is under direct threat, massively penalize
+        if (poroSafety < -50) {
+          // Enemy can deal significant damage - 10x multiplier for emergency escape
+          safety += poroSafety * 10;
+        } else {
+          safety += poroSafety * 2;
+        }
       } else {
         safety -= ChessFactory.createChess(piece, game).damageTargetPriorityFactor * this.threatEvaluator.evaluatePositionSafety(game, piece, playerId);
       }

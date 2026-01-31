@@ -1186,7 +1186,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${detailViewPiece.stats.ad > detailViewPiece.rawStats.ad ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {detailViewPiece.stats.ad}
+                                {Math.round(detailViewPiece.stats.ad)}
                             </span>
                         </div>
                         <div
@@ -1199,7 +1199,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${detailViewPiece.stats.ap > detailViewPiece.rawStats.ap ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {detailViewPiece.stats.ap}
+                                {Math.round(detailViewPiece.stats.ap)}
                             </span>
                         </div>
                         <div
@@ -1212,7 +1212,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${detailViewPiece.stats.physicalResistance > detailViewPiece.rawStats.physicalResistance ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {detailViewPiece.stats.physicalResistance}
+                                {Math.round(detailViewPiece.stats.physicalResistance)}
                             </span>
                         </div>
                         <div
@@ -1225,7 +1225,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${detailViewPiece.stats.magicResistance > detailViewPiece.rawStats.magicResistance ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {detailViewPiece.stats.magicResistance}
+                                {Math.round(detailViewPiece.stats.magicResistance)}
                             </span>
                         </div>
                         <div
@@ -1238,7 +1238,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${detailViewPiece.stats.speed > detailViewPiece.rawStats.speed ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {detailViewPiece.stats.speed}
+                                {Math.round(detailViewPiece.stats.speed)}
                             </span>
                         </div>
                         <div
@@ -1251,7 +1251,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${detailViewPiece.stats.attackRange.range > detailViewPiece.rawStats.attackRange.range ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {detailViewPiece.stats.attackRange.range}
+                                {Math.round(detailViewPiece.stats.attackRange.range)}
                             </span>
                             <AttackRangeIndicator
                                 attackRange={detailViewPiece.stats.attackRange}
@@ -1268,7 +1268,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${(detailViewPiece as any).stats.sunder > (detailViewPiece as any).rawStats.sunder ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {(detailViewPiece as any).stats.sunder || 0}
+                                {Math.round((detailViewPiece as any).stats.sunder || 0)}
                             </span>
                         </div>
                         <div
@@ -1281,7 +1281,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${(detailViewPiece as any).stats.criticalChance > (detailViewPiece as any).rawStats.criticalChance ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {(detailViewPiece as any).stats.criticalChance || 0}
+                                {Math.round((detailViewPiece as any).stats.criticalChance || 0)}
                             </span>
                         </div>
                         <div
@@ -1294,7 +1294,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${(detailViewPiece as any).stats.criticalDamage > (detailViewPiece as any).rawStats.criticalDamage ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {(detailViewPiece as any).stats.criticalDamage || 150}
+                                {Math.round((detailViewPiece as any).stats.criticalDamage || 150)}
                             </span>
                         </div>
                         <div
@@ -1307,7 +1307,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${(detailViewPiece as any).stats.damageAmplification > (detailViewPiece as any).rawStats.damageAmplification ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {(detailViewPiece as any).stats.damageAmplification || 0}
+                                {Math.round((detailViewPiece as any).stats.damageAmplification || 0)}
                             </span>
                         </div>
                         <div
@@ -1320,7 +1320,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${(detailViewPiece as any).stats.cooldownReduction > (detailViewPiece as any).rawStats.cooldownReduction ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {(detailViewPiece as any).stats.cooldownReduction || 0}
+                                {Math.round((detailViewPiece as any).stats.cooldownReduction || 0)}
                             </span>
                         </div>
                         <div
@@ -1333,7 +1333,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${(detailViewPiece as any).stats.lifesteal > (detailViewPiece as any).rawStats.lifesteal ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {(detailViewPiece as any).stats.lifesteal || 0}
+                                {Math.round((detailViewPiece as any).stats.lifesteal || 0)}
                             </span>
                         </div>
                         <div
@@ -1346,7 +1346,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${detailViewPiece.stats.hpRegen > detailViewPiece.rawStats.hpRegen ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {detailViewPiece.stats.hpRegen || 0}
+                                {Math.round(detailViewPiece.stats.hpRegen || 0)}
                             </span>
                         </div>
                         <div
@@ -1359,7 +1359,7 @@ export const ChessDetailPanelRenderer: React.FC<{
                                 ? `modified ${(detailViewPiece.stats.durability || 0) > +((detailViewPiece.rawStats as any).durability || 0) ? 'buffed' : 'debuffed'}`
                                 : ''
                                 }`}>
-                                {detailViewPiece.stats.durability || 0}%
+                                {Math.round(detailViewPiece.stats.durability || 0)}%
                             </span>
                         </div>
                     </div>

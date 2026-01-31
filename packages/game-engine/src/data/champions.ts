@@ -238,7 +238,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Blitzcrank",
-    role: "fighter",
+    role: "support",
     items_suggestions: ["blue_buff", "protectors_vow", "ionic_spark", "sunfire_cape", "bramble_vest", "evenshroud", "crownguard", "rabadon_deathcap"],
     stats: {
       maxHp: 125,
@@ -294,7 +294,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Taste Their Fear",
       description:
-        "Deals (20 + 80% AD + 50% AP) physical damage to the target. Damage will double on Isolated targets.",
+        "Deals (65 + 15% AD + 15% AP) physical damage to the target. Damage will double on Isolated targets.",
       cooldown: 5,
       attackRange: {
         range: 1,
@@ -331,7 +331,7 @@ export const champions: ChampionData[] = [
       type: "active",
       name: "Death Mark",
       description:
-        "Zed marks a target with a Death Mark in 3 turns. Zed can attack the marked target from any direction without range limit and blocking pieces. And if he does, he will teleport to the nearest adjacent square of the target (if there is no empty adjacent square, he will not teleport), and deal bonus (10 + 15% of AD + 30% of AP) physical damage to the target. The mark will be removed if Zed attacks the target.",
+        "Zed marks a target with a Death Mark in 3 turns. Zed can attack the marked target from any direction without range limit and blocking pieces. And if he does, he will teleport to the nearest adjacent square of the target (if there is no empty adjacent square, he will not teleport), and deal bonus (30 + 15% of AD + 15% of AP) physical damage to the target. The mark will be removed if Zed attacks the target.",
       cooldown: 3,
       attackRange: {
         range: 4,
@@ -351,10 +351,10 @@ export const champions: ChampionData[] = [
       maxHp: 150,
       ad: 20,
       ap: 30,
-      physicalResistance: 45,
+      physicalResistance: 30,
       magicResistance: 15,
       attackRange: {
-        range: 2,
+        range: 1,
         diagonal: true,
         horizontal: true,
         vertical: true,
@@ -366,7 +366,7 @@ export const champions: ChampionData[] = [
       type: "passive",
       name: "Granite Shield",
       description:
-        "If Malphite didn't get hit by damage for 4 turns, he gains a shield equal to (10+40% of AP)% of his max health. He gains (15 + 10% of AP) armor if having shield.",
+        "If Malphite didn't get hit by damage for 4 turns, he gains a shield equal to (10+40% of AP)% of his max health. He gains (25 + 10% of AP) armor if having shield.",
       cooldown: 3,
       currentCooldown: 0,
     },
@@ -379,7 +379,7 @@ export const champions: ChampionData[] = [
       maxHp: 160,
       ad: 20,
       ap: 30,
-      physicalResistance: 35,
+      physicalResistance: 25,
       magicResistance: 15,
       attackRange: {
         range: 1,
@@ -553,7 +553,7 @@ export const champions: ChampionData[] = [
       maxHp: 135,
       ad: 15,
       ap: 20,
-      physicalResistance: 50,
+      physicalResistance: 40,
       magicResistance: 20,
       hpRegen: 2,
       attackRange: {

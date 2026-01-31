@@ -36,7 +36,7 @@ export class KhaZix extends ChessObject {
       );
 
       // Base damage
-      let damage = 20 + this.ad * 0.8;
+      let damage = 65 + this.ad * 0.15 + this.ap * 0.15;
 
       // Check if target is isolated for bonus damage
       if (this.isTargetIsolated(targetChess.position, targetChess.blue)) {
@@ -61,7 +61,7 @@ export class KhaZix extends ChessObject {
     }
 
     // Base damage: 20 + 80% AD + 50% AP
-    const baseDamage = 20 + this.ad * 0.8 + this.ap * 0.5;
+    const baseDamage = 65 + this.ad * 0.15 + this.ap * 0.15;
 
     // Assume isolation for higher value (actual isolation check would need target context)
     // Use a conservative multiplier since we can't check isolation here
@@ -92,7 +92,7 @@ export class KhaZix extends ChessObject {
     }
 
     // Base damage: 20 + 80% AD + 50% AP
-    let damage = 20 + this.ad * 0.8 + this.ap * 0.5;
+    let damage = 65 + this.ad * 0.15 + this.ap * 0.15;
 
     // Check if target is isolated for bonus damage
     const isIsolated = this.isTargetIsolated(target.chess.position, target.chess.blue);

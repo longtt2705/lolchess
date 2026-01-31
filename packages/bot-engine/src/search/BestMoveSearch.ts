@@ -49,6 +49,14 @@ export class BestMoveSearch {
     }
     let bestAction: EventPayload | null = allActions[0];
     let bestScore = -Infinity;
+    
+    // Check current Poro safety for escape bonus calculation
+    const isBlue = game.bluePlayer === playerId;
+    const poroPiece = game.board.find(p => p.name === "Poro" && p.blue === isBlue);
+    const currentPoroSafety = poroPiece 
+      ? this.threatEvaluator.evaluatePositionSafety(game, poroPiece, playerId)
+      : 0;
+    
     for (const action of allActions) {
       if (this.isTimeUp()) break;
 
@@ -57,7 +65,32 @@ export class BestMoveSearch {
 
       this.nodesSearched++;
 
-      const score = this.evaluator.evaluate(result.game, playerId);
+      let score = this.evaluator.evaluate(result.game, playerId);
+      
+      // EMERGENCY ESCAPE BONUS: If Poro is under threat and this move gets it to safety
+      if (action.event === GameEvent.MOVE_CHESS && 
+          action.casterPosition && 
+          poroPiece &&
+          action.casterPosition.x === poroPiece.position.x &&
+          action.casterPosition.y === poroPiece.position.y &&
+          currentPoroSafety < -50) {
+        
+        // Calculate new Poro safety after the move
+        const newPoroPiece = result.game.board.find(p => p.name === "Poro" && p.blue === isBlue);
+        if (newPoroPiece) {
+          const newPoroSafety = this.threatEvaluator.evaluatePositionSafety(
+            result.game, 
+            newPoroPiece, 
+            playerId
+          );
+          
+          // If Poro escapes from danger, give huge bonus
+          if (newPoroSafety > currentPoroSafety + 50) {
+            score += 500; // Emergency escape bonus
+          }
+        }
+      }
+      
       if (score > bestScore) {
         bestScore = score;
         bestAction = action;

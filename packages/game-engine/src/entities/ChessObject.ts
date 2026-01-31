@@ -2571,6 +2571,9 @@ export class ChessObject {
   }
 
   public getMaterialValue(): number {
+    if (this.chess.stats.hp <= 0) {
+      return 0;
+    }
     let value = 0;
 
     // Gold value
@@ -2607,9 +2610,6 @@ export class ChessObject {
     } else {
       value += defensiveValue * numberOfEnemiesInRange * 0.125;
     }
-
-    // hp value
-    value += this.chess.stats.hp * 0.1 * this.damageTargetPriorityFactor;
 
     // Active skill values
     let activeSkillValue = 0;
@@ -2648,7 +2648,7 @@ export class ChessObject {
       }
     }
 
-    return Math.floor(value);
+    return Math.floor(value * this.damageTargetPriorityFactor);
   }
 
   public getValidAttackTargets(attackRange: AttackRange = this.attackRange): ChessObject[] {

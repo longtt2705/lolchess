@@ -53,9 +53,9 @@ export class ThreatEvaluator {
       }
     }
 
-    // Get top 40% of actions
+    // Get top 70% of actions (increased from 40% to be more aggressive)
     listActions.sort((a, b) => b.priority - a.priority);
-    const topActions = listActions.slice(0, Math.floor(listActions.length * 0.4));
+    const topActions = listActions.slice(0, Math.floor(listActions.length * 0.7));
 
 
     for (const action of topActions) {
@@ -146,11 +146,13 @@ export class ThreatEvaluator {
 
   /**
    * Evaluate overall threat score for a player
+   * Sums the top 3 threats to encourage aggressive play
    */
   evaluateThreatScore(game: Game, playerId: string): number {
     const threats = this.getPlayerThreats(game, playerId);
-    // return threats.reduce((acc, threat) => acc + threat.priority, 0);
-    return threats.at(0)?.priority ?? 0;
+    // Sum top 3 threats instead of just returning the best one
+    const topN = Math.min(3, threats.length);
+    return threats.slice(0, topN).reduce((acc, t) => acc + t.priority, 0);
   }
 
   getBestThreat(game: Game, playerId: string): ThreatInfo | null {
@@ -291,33 +293,56 @@ export class ThreatEvaluator {
   }
 
   /**
-   * Evaluate how safe a position is from enemy attacks
+   * Evaluate how safe a position is from enemy attacks AND skills
    * Returns negative value if threatened
    */
   evaluatePositionSafety(game: Game, piece: Chess, playerId: string): number {
     let safety = 0;
     const isBlue = game.bluePlayer === playerId;
 
-    // Find all enemy pieces that can attack this position
+    // Find all enemy pieces that can attack or use skills on this position
     for (const enemy of game.board) {
       if (enemy.stats.hp <= 0) continue;
       if (enemy.blue === isBlue) continue; // Skip allies
-      if (enemy.cannotAttack) continue;
 
-      const enemyAttacks = this.gameEngine.getValidAttacks(game, enemy.id);
-      const canAttackUs = enemyAttacks.some(
-        (pos) => pos.x === piece.position.x && pos.y === piece.position.y
-      );
       const enemyObject = ChessFactory.createChess(enemy, game);
       const pieceObject = ChessFactory.createChess(piece, game);
 
-      if (canAttackUs) {
-        const potentialDamage = enemyObject.calculateDamageAttack(pieceObject);
-        safety -= potentialDamage;
+      // Check ATTACK threats
+      if (!enemy.cannotAttack) {
+        const enemyAttacks = this.gameEngine.getValidAttacks(game, enemy.id);
+        const canAttackUs = enemyAttacks.some(
+          (pos) => pos.x === piece.position.x && pos.y === piece.position.y
+        );
 
-        // Extra penalty if enemy can kill us
-        if (piece.stats.hp <= potentialDamage) {
-          safety -= 200;
+        if (canAttackUs) {
+          const potentialDamage = enemyObject.calculateDamageAttack(pieceObject);
+          safety -= potentialDamage;
+
+          // Extra penalty if enemy can kill us
+          if (piece.stats.hp <= potentialDamage) {
+            safety -= 200;
+          }
+        }
+      }
+
+      // Check SKILL threats (NEW)
+      if (enemy.skill && enemy.skill.currentCooldown === 0) {
+        const skillTargets = this.gameEngine.getValidSkillTargets(game, enemy.id);
+        const canSkillUs = skillTargets.some(
+          (pos) => pos.x === piece.position.x && pos.y === piece.position.y
+        );
+
+        if (canSkillUs) {
+          const skillValue = enemyObject.getActiveSkillValue(piece.position);
+          if (skillValue > 0) {
+            safety -= skillValue;
+
+            // Extra penalty if skill can kill us
+            if (piece.stats.hp <= skillValue) {
+              safety -= 200;
+            }
+          }
         }
       }
     }

@@ -60,37 +60,19 @@ export class MaterialEvaluator {
   evaluatePiece(piece: Chess, game: Game): number {
     let value = 0;
 
-    // Base gold value
-    value += piece.stats.goldValue || 0;
 
-    // Add type-specific bonus
-    const typeValue =
-      MaterialEvaluator.PIECE_VALUES[piece.name] ||
-      MaterialEvaluator.PIECE_VALUES["Champion"];
-    value += typeValue;
-
+    const chessObject = ChessFactory.createChess(piece, game);
     // HP percentage factor - damaged pieces are worth less
     // Guard against division by zero or undefined maxHp
-    const maxHp = piece.stats.maxHp || 1;
-    const hp = piece.stats.hp || 0;
-    const hpPercent = Math.min(1, Math.max(0, hp / maxHp));
-    value *= 0.5 + hpPercent * 0.5;
-
-    // Stat-based value for champions
-    if (!this.isMinion(piece.name) && piece.name !== "Poro") {
-      try {
-        const materialValue = ChessFactory.createChess(
-          piece,
-          game
-        ).getMaterialValue();
-        // Guard against NaN from getMaterialValue
-        if (!isNaN(materialValue) && isFinite(materialValue)) {
-          value += materialValue;
-        }
-      } catch {
-        // If getMaterialValue fails, just use base value
-      }
+    const materialValue = chessObject.getMaterialValue();
+    // Guard against NaN from getMaterialValue
+    if (!isNaN(materialValue) && isFinite(materialValue)) {
+      const maxHp = chessObject.maxHp || 1;
+      const hp = chessObject.chess.stats.hp || 0;
+      const hpPercent = Math.min(1, Math.max(0, hp / maxHp));
+      value += materialValue * (0.6 + hpPercent * 0.4);
     }
+
 
     // Ensure we never return NaN
     const result = Math.floor(value);

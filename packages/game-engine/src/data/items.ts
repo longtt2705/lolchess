@@ -435,7 +435,7 @@ export const combinedItems: ItemData[] = [
       "Take 8% reduced damage from attacks. When struck by any attack, deal 8 + 10% of Physical Resistance magic damage to all adjacent enemies.",
     cost: 0,
     icon: "/icons/BrambleVest.png",
-    effects: [{ stat: "physicalResistance", value: 40, type: "add" }],
+    effects: [{ stat: "physicalResistance", value: 30, type: "add" }],
     isBasic: false,
     recipe: ["chain_vest", "chain_vest"],
     unique: true,
@@ -561,12 +561,11 @@ export const combinedItems: ItemData[] = [
   {
     id: "warmog_armor",
     name: "Warmog's Armor",
-    description: "Grants 20% Maximum Health",
+    description: "Grants 100 Maximum Health",
     cost: 0,
     icon: "/icons/WarmogsArmor.png",
     effects: [
-      { stat: "maxHp", value: 80, type: "add" },
-      { stat: "maxHp", value: 1.2, type: "multiply" },
+      { stat: "maxHp", value: 100, type: "add" },
       { stat: "hpRegen", value: 2, type: "add" },
     ],
     isBasic: false,
