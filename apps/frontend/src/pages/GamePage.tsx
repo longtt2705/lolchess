@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux'
 import { AttackProjectile, useChampions } from '../hooks/useChampions'
 import { ChessPiece, ChessPosition, GameState, useGame } from '../hooks/useGame'
 import { fetchAllItems, fetchBasicItems, fetchViktorModules, ItemData } from '../store/itemsSlice'
+import { fetchChampions } from '../store/gameSlice'
 import { AttackAnimation, DamageEffect, ItemPurchaseAnimation, MoveAnimation } from '../types/animation'
 import { AnimationAction, AnimationEngine } from '../utils/animationEngine'
 import { getImageUrl, isChampion } from '../utils/chessHelper'
@@ -663,8 +664,9 @@ const GamePage: React.FC = () => {
 
   // Get items from Redux store
   const { basicItems, allItems, viktorModules, loading: itemsLoading } = useAppSelector((state) => state.items)
+  const { champions, databaseLoading } = useAppSelector((state) => state.game)
 
-  // Fetch items on component mount
+  // Fetch items and champions on component mount
   useEffect(() => {
     if (basicItems.length === 0 && !itemsLoading) {
       dispatch(fetchBasicItems())
@@ -675,7 +677,10 @@ const GamePage: React.FC = () => {
     if (viktorModules.length === 0 && !itemsLoading) {
       dispatch(fetchViktorModules())
     }
-  }, [dispatch, basicItems.length, allItems.length, viktorModules.length, itemsLoading])
+    if (champions.length === 0 && !databaseLoading) {
+      dispatch(fetchChampions())
+    }
+  }, [dispatch, basicItems.length, allItems.length, viktorModules.length, champions.length, itemsLoading, databaseLoading])
 
   // Animation state
   const [attackAnimation, setAttackAnimation] = useState<AttackAnimation | null>(null)

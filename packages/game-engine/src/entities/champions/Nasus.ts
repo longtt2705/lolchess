@@ -254,7 +254,6 @@ export class Nasus extends ChessObject {
       totalValue += bonusAttackValue;
     });
 
-    console.log("Nasus active skill value:", totalValue);
     return totalValue;
   }
 }

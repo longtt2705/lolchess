@@ -4,6 +4,7 @@ import {
   GameEngine,
   getPlayerPieces,
   getPieceAtPosition,
+  ChessFactory,
 } from "@lolchess/game-engine";
 import { EvaluationResult, EvaluationBreakdown } from "../types";
 import { MaterialEvaluator } from "./MaterialEvaluator";
@@ -21,7 +22,7 @@ export class PositionEvaluator {
 
   // Evaluation weights
   private static readonly WEIGHTS = {
-    material: 0.5,
+    material: 0.3,
     position: 0.6,
     threats: 1,
     safety: 0.5,
@@ -35,7 +36,7 @@ export class PositionEvaluator {
       gameEngine,
       this.materialEvaluator
     );
-    this.losEvaluator = new LoSEvaluator(gameEngine);
+    this.losEvaluator = new LoSEvaluator();
   }
 
   /**
@@ -47,26 +48,29 @@ export class PositionEvaluator {
     const isBlue = game.bluePlayer === playerId;
 
     // Calculate individual components with NaN protection
-    // const material = this.sanitizeNumber(this.evaluateMaterial(game, playerId, opponentId));
+    const material = this.sanitizeNumber(this.evaluateMaterial(game, playerId, opponentId));
     const position = this.sanitizeNumber(this.evaluatePosition(game, playerId, opponentId, isBlue));
-    // const threats = this.sanitizeNumber(this.evaluateThreats(game, playerId, opponentId));
+    const threats = this.sanitizeNumber(this.evaluateThreats(game, playerId, opponentId));
     const lineOfSight = this.sanitizeNumber(this.evaluateLineOfSight(game, playerId, opponentId));
+    const safety = this.sanitizeNumber(this.evaluateSafety(game, playerId, opponentId));
 
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
-      material: 0,
+      material,
       position,
-      threats: 0,
+      threats,
       lineOfSight,
+      safety,
     };
     console.log(`[PositionEvaluator] Position breakdown: ${JSON.stringify(breakdown)}`);
 
     // Calculate weighted total score
     const score =
-      // material * PositionEvaluator.WEIGHTS.material +
+      material * PositionEvaluator.WEIGHTS.material +
       position * PositionEvaluator.WEIGHTS.position +
-      // threats * PositionEvaluator.WEIGHTS.threats +
-      lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight;
+      threats * PositionEvaluator.WEIGHTS.threats +
+      lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight * (!this.gameEngine.isOpeningPhase(game) ? 0.3 : 1) +
+      safety * PositionEvaluator.WEIGHTS.safety;
 
     // Final NaN protection
     return this.sanitizeNumber(score);
@@ -345,10 +349,10 @@ export class PositionEvaluator {
   }
 
   /**
-   * Evaluate Line of Sight for ranged carries
-   * Positive = good LoS (clear lanes to enemies)
-   * Negative = bad LoS (blocked by allies)
-   */
+  * Evaluate Line of Sight for ranged carries
+  * Positive = good LoS (clear lanes to enemies)
+  * Negative = bad LoS (blocked by allies)
+  */
   private evaluateLineOfSight(
     game: Game,
     playerId: string,
@@ -359,6 +363,22 @@ export class PositionEvaluator {
     return ourLoS - theirLoS;
   }
 
+  private evaluateSafety(
+    game: Game,
+    playerId: string,
+    opponentId: string
+  ): number {
+    let safety = 0;
+    const pieces = getPlayerPieces(game, playerId);
+    for (const piece of pieces) {
+      if (piece.name === "Poro") {
+        safety += this.threatEvaluator.evaluatePositionSafety(game, piece, playerId) * 2;
+      } else {
+        safety -= ChessFactory.createChess(piece, game).damageTargetPriorityFactor * this.threatEvaluator.evaluatePositionSafety(game, piece, playerId);
+      }
+    }
+    return safety;
+  }
   /**
    * Get the LoS evaluator for external use (e.g., by BotEngine)
    */
@@ -378,13 +398,14 @@ export class PositionEvaluator {
     const position = this.evaluatePosition(game, playerId, opponentId, isBlue);
     const threats = this.evaluateThreats(game, playerId, opponentId);
     const lineOfSight = this.evaluateLineOfSight(game, playerId, opponentId);
-
+    const safety = this.evaluateSafety(game, playerId, opponentId);
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
       material,
       position,
       threats,
       lineOfSight,
+      safety,
     };
 
     // Calculate weighted total score
@@ -392,7 +413,8 @@ export class PositionEvaluator {
       material * PositionEvaluator.WEIGHTS.material +
       position * PositionEvaluator.WEIGHTS.position +
       threats * PositionEvaluator.WEIGHTS.threats +
-      lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight;
+      lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight +
+      safety * PositionEvaluator.WEIGHTS.safety;
 
     return { score, breakdown };
   }

@@ -1100,6 +1100,7 @@ export class GameService implements OnModuleInit {
       const cleanedPiece = {
         id: piece.id,
         name: piece.name,
+        items_suggestions: piece.items_suggestions,
         role: piece.role,
         position: {
           x: piece.position.x,

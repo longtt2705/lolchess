@@ -32,5 +32,6 @@ export interface Chess {
   respawnAtRound?: number; // Round when this piece should respawn (if dead)
   summonerSpell?: SummonerSpell; // Summoner spell assigned during order phase
   role?: ChampionRole;
+  items_suggestions?: string[];
 }
 

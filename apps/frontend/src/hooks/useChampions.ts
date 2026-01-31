@@ -11,6 +11,8 @@ export interface AttackProjectile {
 
 export interface ChampionData {
   name: string;
+  items_suggestions?: string[];
+  role?: string;
   stats: {
     maxHp?: number;
     ad?: number;

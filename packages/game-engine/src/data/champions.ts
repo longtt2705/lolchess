@@ -2,6 +2,7 @@ import { Aura, ChessStats, Skill, AttackProjectile } from "../types";
 
 export type ChampionData = {
   name: string;
+  items_suggestions: string[];
   stats: Partial<ChessStats>;
   skill: Partial<Skill>;
   aura?: Partial<Aura>;
@@ -12,6 +13,7 @@ export type ChampionData = {
 export const champions: ChampionData[] = [
   {
     name: "Aatrox",
+    items_suggestions: ["bloodthirster", "hand_of_justice", "deaths_dance", "titans_resolve", "sterak_gage", "quicksilver", "spear_of_shojin", "wit_s_end"],
     role: "fighter",
     stats: {
       maxHp: 110,
@@ -39,6 +41,7 @@ export const champions: ChampionData[] = [
   {
     name: "Ahri",
     role: "mage",
+    items_suggestions: ["rabadon_deathcap", "morellonomicon", "blue_buff", "hextech_gunblade", "crownguard", "void_staff", "archangel_staff", "hand_of_justice"],
     stats: {
       maxHp: 70,
       ad: 5,
@@ -80,7 +83,8 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Garen",
-    role: "fighter",
+    role: "tank",
+    items_suggestions: ["warmog_armor", "dragon_claw", "bramble_vest", "sunfire_cape", "steadfast_heart", "spirit_visage", "adaptive_helm", "evenshroud"],
     stats: {
       maxHp: 120,
       ad: 25,
@@ -110,6 +114,7 @@ export const champions: ChampionData[] = [
   {
     name: "Janna",
     role: "support",
+    items_suggestions: ["blue_buff", "spear_of_shojin", "archangel_staff", "evenshroud", "hand_of_justice", "rabadon_deathcap", "adaptive_helm", "spirit_visage"],
     stats: {
       maxHp: 70,
       ad: 10,
@@ -163,6 +168,7 @@ export const champions: ChampionData[] = [
   {
     name: "Ashe",
     role: "marksman",
+    items_suggestions: ["guinsoo_rageblade", "rapid_firecannon", "giant_slayer", "hextech_gunblade", "infinity_edge", "last_whisper", "deathblade", "wit_s_end"],
     stats: {
       maxHp: 80,
       ad: 20,
@@ -198,6 +204,7 @@ export const champions: ChampionData[] = [
   {
     name: "Tristana",
     role: "marksman",
+    items_suggestions: ["guinsoo_rageblade", "infinity_edge", "deathblade", "giant_slayer", "last_whisper", "rapid_firecannon", "hextech_gunblade", "wit_s_end"],
     stats: {
       maxHp: 75,
       ad: 25,
@@ -232,6 +239,7 @@ export const champions: ChampionData[] = [
   {
     name: "Blitzcrank",
     role: "fighter",
+    items_suggestions: ["blue_buff", "protectors_vow", "ionic_spark", "sunfire_cape", "bramble_vest", "evenshroud", "crownguard", "rabadon_deathcap"],
     stats: {
       maxHp: 125,
       ad: 15,
@@ -266,6 +274,7 @@ export const champions: ChampionData[] = [
   {
     name: "Kha'Zix",
     role: "assassin",
+    items_suggestions: ["deathblade", "serpents_fang", "hextech_gunblade", "hand_of_justice", "rabadon_deathcap", "jeweled_gauntlet", "blue_buff", "bloodthirster"],
     stats: {
       maxHp: 80,
       ad: 35,
@@ -300,6 +309,7 @@ export const champions: ChampionData[] = [
   {
     name: "Zed",
     role: "assassin",
+    items_suggestions: ["deathblade", "serpents_fang", "hextech_gunblade", "hand_of_justice", "rabadon_deathcap", "jeweled_gauntlet", "blue_buff", "bloodthirster"],
     stats: {
       maxHp: 85,
       ad: 30,
@@ -336,6 +346,7 @@ export const champions: ChampionData[] = [
   {
     name: "Malphite",
     role: "tank",
+    items_suggestions: ["warmog_armor", "rabadon_deathcap", "ionic_spark", "bramble_vest", "sunfire_cape", "dragon_claw", "steadfast_heart", "adaptive_helm"],
     stats: {
       maxHp: 150,
       ad: 20,
@@ -363,6 +374,7 @@ export const champions: ChampionData[] = [
   {
     name: "Sion",
     role: "tank",
+    items_suggestions: ["warmog_armor", "crownguard", "bramble_vest", "sunfire_cape", "steadfast_heart", "ionic_spark", "adaptive_helm", "evenshroud"],
     stats: {
       maxHp: 160,
       ad: 20,
@@ -390,6 +402,7 @@ export const champions: ChampionData[] = [
   {
     name: "Jhin",
     role: "marksman",
+    items_suggestions: ["infinity_edge", "rapid_firecannon", "giant_slayer", "strikers_flail", "hextech_gunblade", "last_whisper", "deathblade", "bloodthirster"],
     stats: {
       maxHp: 44,
       ad: 44,
@@ -427,6 +440,7 @@ export const champions: ChampionData[] = [
   {
     name: "Soraka",
     role: "support",
+    items_suggestions: ["blue_buff", "warmog_armor", "spear_of_shojin", "rabadon_deathcap", "archangel_staff", "hand_of_justice", "evenshroud", "adaptive_helm"],
     stats: {
       maxHp: 90,
       ad: 10,
@@ -469,6 +483,7 @@ export const champions: ChampionData[] = [
   {
     name: "Nasus",
     role: "fighter",
+    items_suggestions: ["warmog_armor", "rabadon_deathcap", "spirit_visage", "sunfire_cape", "nashors_tooth", "dragon_claw", "bramble_vest", "morellonomicon"],
     stats: {
       maxHp: 125,
       ad: 35,
@@ -497,10 +512,12 @@ export const champions: ChampionData[] = [
   {
     name: "Teemo",
     role: "marksman",
+    items_suggestions: ["nashors_tooth", "hextech_gunblade", "rabadon_deathcap", "strikers_flail", "jeweled_gauntlet", "infinity_edge", "giant_slayer", "wit_s_end"],
     stats: {
       maxHp: 90,
       ad: 5,
       ap: 30,
+      criticalChance: 25,
       physicalResistance: 30,
       magicResistance: 10,
       attackRange: {
@@ -531,6 +548,7 @@ export const champions: ChampionData[] = [
   {
     name: "Rammus",
     role: "tank",
+    items_suggestions: ["bramble_vest", "warmog_armor", "gargoyle_stoneplate", "sunfire_cape", "dragon_claw", "steadfast_heart", "adaptive_helm", "evenshroud"],
     stats: {
       maxHp: 135,
       ad: 15,
@@ -557,6 +575,7 @@ export const champions: ChampionData[] = [
   {
     name: "Yasuo",
     role: "fighter",
+    items_suggestions: ["infinity_edge", "serpents_fang", "strikers_flail", "last_whisper", "quicksilver", "titans_resolve", "sterak_gage", "bloodthirster"],
     stats: {
       maxHp: 105,
       ad: 30,
@@ -586,6 +605,7 @@ export const champions: ChampionData[] = [
   {
     name: "Tryndamere",
     role: "fighter",
+    items_suggestions: ["infinity_edge", "serpents_fang", "strikers_flail", "last_whisper", "quicksilver", "titans_resolve", "sterak_gage", "bloodthirster"],
     stats: {
       maxHp: 110,
       ad: 30,
@@ -612,6 +632,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Viktor",
+    items_suggestions: ["viktor_module_1", "viktor_module_5", "viktor_module_2", "rabadon_deathcap", "blue_buff", "jeweled_gauntlet", "archangel_staff", "void_staff"],
     role: "mage",
     stats: {
       maxHp: 75,
@@ -655,6 +676,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Twisted Fate",
+    items_suggestions: ["hextech_gunblade", "jeweled_gauntlet", "nashors_tooth", "rabadon_deathcap", "hand_of_justice", "blue_buff", "infinity_edge", "archangel_staff"],
     role: "mage",
     stats: {
       maxHp: 75,
@@ -698,6 +720,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Ezreal",
+    items_suggestions: ["hextech_gunblade", "guinsoo_rageblade", "nashors_tooth", "spear_of_shojin", "rabadon_deathcap", "infinity_edge", "wit_s_end", "blue_buff"],
     role: "marksman",
     stats: {
       maxHp: 80,
@@ -741,6 +764,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Azir",
+    items_suggestions: ["rabadon_deathcap", "blue_buff", "archangel_staff", "nashors_tooth", "morellonomicon", "ionic_spark", "void_staff", "hextech_gunblade"],
     role: "mage",
     stats: {
       maxHp: 80,
@@ -783,6 +807,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Dr.Mundo",
+    items_suggestions: ["warmog_armor", "spirit_visage", "sunfire_cape", "morellonomicon", "hand_of_justice", "rabadon_deathcap", "bramble_vest", "dragon_claw"],
     role: "fighter",
     stats: {
       maxHp: 130,
@@ -816,6 +841,7 @@ export const champions: ChampionData[] = [
   },
   {
     name: "Leona",
+    items_suggestions: ["evenshroud", "blue_buff", "ionic_spark", "warmog_armor", "rabadon_deathcap", "sunfire_cape", "gargoyle_stoneplate", "protectors_vow"],
     role: "support",
     stats: {
       maxHp: 120,

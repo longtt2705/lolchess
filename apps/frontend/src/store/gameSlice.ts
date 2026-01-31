@@ -26,6 +26,8 @@ interface Game {
 
 export interface ChampionData {
   name: string;
+  items_suggestions?: string[];
+  role?: string;
   stats: any;
   skill: any;
   aura?: any;

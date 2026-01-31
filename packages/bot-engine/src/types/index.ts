@@ -31,6 +31,8 @@ export interface EvaluationBreakdown {
   threats: number;
   /** Line of Sight score for ranged carries (optional for backward compatibility) */
   lineOfSight?: number;
+  /** Safety score (negative if threatened by enemies) */
+  safety: number;
 }
 
 /**

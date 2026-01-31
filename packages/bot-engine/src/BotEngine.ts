@@ -85,25 +85,14 @@ export class BotEngine {
    * Get the best action for the bot to take
    */
   getAction(game: Game, botPlayerId: string): EventPayload | null {
-    const actions = this.actionGenerator.generateAll(game, botPlayerId);
-
-    if (actions.length === 0) {
-      return null;
-    }
-
     // Use search if depth > 0 (two-phase search uses time limit)
-    if (this.config.searchDepth > 0) {
-      const searchResult = this.minimax.search(
-        game,
-        botPlayerId,
-        this.config.timeLimit
-      );
+    const searchResult = this.minimax.searchV2(
+      game,
+      botPlayerId,
+      this.config.timeLimit
+    );
 
-      return searchResult.bestAction;
-    }
-
-    // Fallback to heuristic-based selection
-    return this.selectByHeuristics(game, botPlayerId, actions);
+    return searchResult.bestAction;
   }
 
   /**
@@ -131,15 +120,6 @@ export class BotEngine {
     );
     if (lethalAttacks.length > 0) {
       return this.getBestAttack(game, lethalAttacks);
-    }
-
-    // Priority 2: LoS clearing moves in opening phase (turns 1-5)
-    // "Window Opening" strategy: clear firing lanes for ranged carries
-    if (this.actionGenerator.isOpeningPhase(game)) {
-      const losClearingMove = this.getBestLoSClearingMove(game, botPlayerId, actions);
-      if (losClearingMove) {
-        return losClearingMove;
-      }
     }
 
     // Priority 3: Use skills (70% chance)
@@ -192,36 +172,6 @@ export class BotEngine {
     return this.pickRandom(actions);
   }
 
-  /**
-   * Get the best LoS clearing move for ranged carries
-   * Returns the move that clears the highest-value target lane
-   */
-  private getBestLoSClearingMove(
-    game: Game,
-    botPlayerId: string,
-    allActions: EventPayload[]
-  ): EventPayload | null {
-    const clearingDetails = this.actionGenerator.getLoSClearingDetails(game, botPlayerId);
-
-    if (clearingDetails.length === 0) {
-      return null;
-    }
-
-    // Get the highest value clearing move (already sorted by targetValue)
-    const bestClearing = clearingDetails[0];
-
-    // Find the corresponding action in the action list
-    const matchingAction = allActions.find(
-      (a) =>
-        a.event === GameEvent.MOVE_CHESS &&
-        a.casterPosition?.x === bestClearing.moveFrom.x &&
-        a.casterPosition?.y === bestClearing.moveFrom.y &&
-        a.targetPosition?.x === bestClearing.moveTo.x &&
-        a.targetPosition?.y === bestClearing.moveTo.y
-    );
-
-    return matchingAction || null;
-  }
 
   /**
    * Check if an attack can kill the target
@@ -407,7 +357,7 @@ export class BotEngine {
     _depth?: number,
     timeLimit?: number
   ): SearchResult {
-    return this.minimax.search(
+    return this.minimax.searchV2(
       game,
       playerId,
       timeLimit ?? this.config.timeLimit

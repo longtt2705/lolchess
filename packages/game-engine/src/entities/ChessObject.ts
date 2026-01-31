@@ -18,6 +18,7 @@ import {
   getChessAtPosition,
   getChessByName,
   getEnemiesInRange,
+  getSquaresInRange,
 } from "../utils/helpers";
 import { getGameRng } from "../utils/SeededRandom";
 
@@ -435,11 +436,11 @@ export class ChessObject {
     }
   }
 
-  protected getDebuff(id: string): Debuff | undefined {
+  public getDebuff(id: string): Debuff | undefined {
     return this.chess.debuffs.find((debuff) => debuff.id === id);
   }
 
-  protected hasDebuff(id: string): boolean {
+  public hasDebuff(id: string): boolean {
     return this.getDebuff(id) !== undefined;
   }
 
@@ -1375,7 +1376,7 @@ export class ChessObject {
     }
 
     if (this.hasItem("nashors_tooth")) {
-      this.damage(chess, 10 + this.ap * 0.2, "magic", this, this.sunder);
+      this.activeSkillDamage(chess, 10 + this.ap * 0.2, "magic", this, this.sunder);
     }
     if (this.hasItem("guinsoo_rageblade")) {
       const guinsooRageblade = this.getItem("guinsoo_rageblade");
@@ -1872,9 +1873,10 @@ export class ChessObject {
    * Rounds 31+: 10 turns
    */
   protected getDeathTimer(currentRound: number): number {
-    if (currentRound <= 15) return 4;
-    if (currentRound <= 30) return 7;
-    return 10;
+    if (currentRound <= 15) return 8;
+    if (currentRound <= 30) return 14;
+    if (currentRound <= 45) return 20;
+    return 28;
   }
 
   protected hasBaronBuff(): boolean {
@@ -2597,6 +2599,7 @@ export class ChessObject {
     defensiveValue += this.hpRegen * 0.5 * (this.isTank || this.isFighter ? 1.5 : 1);
     defensiveValue += this.maxHp * 0.025 * (this.isTank ? 2 : this.isFighter ? 1.25 : 1);
     defensiveValue += this.durability * 0.1 * (this.isTank ? 2 : this.isFighter ? 1.25 : 1);
+    defensiveValue += this.chess.shields?.reduce((acc, shield) => acc + shield.amount, 0) || 0 * 0.1 * (this.isTank ? 2 : this.isFighter ? 1.25 : 1);
 
     const numberOfEnemiesInRange = getEnemiesInRange(this.game, this.chess.position, 2, this.chess.blue).length;
     if (this.isTank) {
@@ -2604,6 +2607,9 @@ export class ChessObject {
     } else {
       value += defensiveValue * numberOfEnemiesInRange * 0.125;
     }
+
+    // hp value
+    value += this.chess.stats.hp * 0.1 * this.damageTargetPriorityFactor;
 
     // Active skill values
     let activeSkillValue = 0;
@@ -3066,7 +3072,20 @@ export class ChessObject {
       "tank": 0.5,
       "assassin": 1.5,
     };
-    return factor[this.role];
+    return factor[this.role] || 1;
+  }
+
+  public getAvailableAttackSquares(): Square[] {
+    if (this.chess.stats.hp <= 0 || this.isStunned) {
+      return [];
+    }
+    const availableAttackSquares: Square[] = [];
+    for (const square of getSquaresInRange(this.chess.position, this.attackRange.range)) {
+      if (this.validateAttack(square, this.attackRange)) {
+        availableAttackSquares.push(square);
+      }
+    }
+    return availableAttackSquares;
   }
 }
 

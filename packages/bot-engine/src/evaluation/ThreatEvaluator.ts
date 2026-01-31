@@ -308,9 +308,11 @@ export class ThreatEvaluator {
       const canAttackUs = enemyAttacks.some(
         (pos) => pos.x === piece.position.x && pos.y === piece.position.y
       );
+      const enemyObject = ChessFactory.createChess(enemy, game);
+      const pieceObject = ChessFactory.createChess(piece, game);
 
       if (canAttackUs) {
-        const potentialDamage = this.calculateDamage(enemy, piece);
+        const potentialDamage = enemyObject.calculateDamageAttack(pieceObject);
         safety -= potentialDamage;
 
         // Extra penalty if enemy can kill us

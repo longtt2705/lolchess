@@ -38,6 +38,40 @@ export class BestMoveSearch {
     );
   }
 
+  searchV2(game: Game, playerId: string, timeLimit: number = 5000): SearchResult {
+    this.nodesSearched = 0;
+    this.startTime = Date.now();
+    this.timeLimit = timeLimit;
+
+    const allActions = this.actionGenerator.generateAll(game, playerId);
+    if (allActions.length === 0) {
+      return this.fallbackSearch(game, playerId);
+    }
+    let bestAction: EventPayload | null = allActions[0];
+    let bestScore = -Infinity;
+    for (const action of allActions) {
+      if (this.isTimeUp()) break;
+
+      const result = this.gameEngine.processAction(game, action);
+      if (!result.success) continue;
+
+      this.nodesSearched++;
+
+      const score = this.evaluator.evaluate(result.game, playerId);
+      if (score > bestScore) {
+        bestScore = score;
+        bestAction = action;
+      }
+    }
+    return {
+      bestAction,
+      score: bestScore,
+      nodesSearched: this.nodesSearched,
+      depth: 1,
+      timeMs: Date.now() - this.startTime,
+    };
+  }
+
   /**
    * Two-Phase Search to find the best action
    *

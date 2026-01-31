@@ -506,6 +506,14 @@ export class GameEngine implements IGameEngine {
     return validTargets;
   }
 
+  getAvailableAttackSquares(game: Game, pieceId: string): Square[] {
+    const piece = getPieceById(game, pieceId);
+    if (!piece || piece.stats.hp <= 0) {
+      return [];
+    }
+    return ChessFactory.createChess(piece, game).getAvailableAttackSquares();
+  }
+
   /**
    * Check if the game is over
    */
@@ -546,6 +554,15 @@ export class GameEngine implements IGameEngine {
    */
   getCurrentPlayer(game: Game): string | undefined {
     return getCurrentPlayerId(game);
+  }
+
+  /**
+   * Check if the game is in the opening phase
+   * @param game - Current game state
+   * @returns True if the game is in the opening phase
+   */
+  isOpeningPhase(game: Game): boolean {
+    return game.currentRound <= 20;
   }
 }
 

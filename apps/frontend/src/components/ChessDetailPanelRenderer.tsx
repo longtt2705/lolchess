@@ -1,8 +1,9 @@
 import { AlertCircle, Check, Coins, Package, Shield, ShoppingCart, Users, Zap } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import styled from "styled-components";
 import { AttackRangeIndicator } from '../components/AttackRangeIndicator';
 import { ChessPiece } from "../hooks/useGame";
+import { useAppSelector } from '../hooks/redux';
 import { ItemData } from '../store/itemsSlice';
 import { formatNumber, getIconConfig, getImageUrl, getSkillStateDisplay, getStatIcon, isChampion, VIKTOR_DAMAGE_THRESHOLDS } from "../utils/chessHelper";
 import { formatAbilityDescription } from "../utils/formatAbilityDescription";
@@ -764,6 +765,145 @@ const SkillStateBadge = styled.div`
   z-index: 10;
 `
 
+const SuggestedItemsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+`
+
+const SuggestedItemIcon = styled.div`
+  position: relative;
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, var(--primary-bg) 0%, var(--accent-bg) 100%);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  &:hover {
+    border-color: var(--gold);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(200, 155, 60, 0.3);
+  }
+  
+  .priority-badge {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    background: rgba(200, 155, 60, 0.9);
+    color: var(--primary-bg);
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  
+  .item-fallback {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--gold);
+  }
+`
+
+const ItemTooltip = styled.div`
+  position: fixed;
+  background: linear-gradient(135deg, rgba(10, 14, 39, 0.98) 0%, rgba(20, 25, 45, 0.98) 100%);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 250px;
+  max-width: 350px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 10000;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  
+  &.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .tooltip-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    
+    img {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+    }
+    
+    .tooltip-title {
+      color: var(--gold);
+      font-weight: bold;
+      font-size: 13px;
+    }
+  }
+  
+  .tooltip-effects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+    
+    .effect-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(200, 155, 60, 0.15);
+      border: 1px solid rgba(200, 155, 60, 0.3);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: var(--primary-text);
+      font-weight: 600;
+      
+      img {
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+  
+  .tooltip-description {
+    color: var(--primary-text);
+    font-size: 11px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  
+  .tooltip-recipe {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--secondary-text);
+    
+    img {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+    }
+  }
+`
+
 // Helper function to render debuff icons
 const getDebuffIcon = (debuff: any, iconConfig: { src: string; alt: string }) => {
     if (iconConfig) {
@@ -842,6 +982,47 @@ export const ChessDetailPanelRenderer: React.FC<{
     shopItems: string[] | null,
     itemsLoading: boolean,
 }> = ({ detailViewPiece, currentPlayer, isMyTurn, hasBoughtItemThisTurn, hasPerformedActionThisTurn, setTooltipPosition, basicItems, allItems, viktorModules, handleBuyItem, shopItems, itemsLoading }) => {
+    // Get champion data for item suggestions
+    const champions = useAppSelector(state => state.game.champions)
+    const championData = useMemo(() =>
+        champions.find(c => c.name === detailViewPiece?.name),
+        [champions, detailViewPiece?.name]
+    )
+
+    // State for item suggestion tooltip
+    const [tooltipState, setTooltipState] = useState<{
+        visible: boolean;
+        itemId: string | null;
+        position: { top: number; left: number };
+    } | null>(null)
+
+    // Tooltip handlers for suggested items
+    const handleItemHover = (e: React.MouseEvent, itemId: string) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        const tooltipWidth = 300 // estimated
+        const viewportWidth = window.innerWidth
+
+        // Position to the right, or left if too close to edge
+        const left = rect.right + 10 + tooltipWidth > viewportWidth
+            ? rect.left - tooltipWidth - 10
+            : rect.right + 10
+
+        setTooltipState({
+            visible: true,
+            itemId,
+            position: { top: rect.top, left }
+        })
+    }
+
+    const handleItemLeave = () => {
+        setTooltipState(null)
+    }
+
+    // Helper to get item by id
+    const getItemById = (itemId: string) => {
+        return allItems.find(item => item.id === itemId)
+    }
+
     // Handle tooltip positioning
     const handleTooltipShow = (e: React.MouseEvent<HTMLDivElement>, content: string) => {
         const rect = e.currentTarget.getBoundingClientRect()
@@ -1495,6 +1676,103 @@ export const ChessDetailPanelRenderer: React.FC<{
                             <div className="no-items">No items equipped</div>
                         )}
                     </div>
+                    {/* Recommended Items Section - Only for champions */}
+                    {isChampion(detailViewPiece) && championData?.items_suggestions && championData.items_suggestions.length > 0 && (
+                        <div className="items-section" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+                            <div className="section-header">
+                                <Package size={16} />
+                                Recommended Items
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--secondary-text)', marginBottom: '12px' }}>
+                                Items are ordered by priority (most important first)
+                            </div>
+                            <SuggestedItemsGrid>
+                                {championData.items_suggestions.slice(0, 8).map((itemId, index) => {
+                                    const itemData = allItems.find(item => item.id === itemId)
+                                    if (!itemData) return null
+
+                                    return (
+                                        <SuggestedItemIcon
+                                            key={itemId}
+                                            onMouseEnter={(e) => handleItemHover(e, itemId)}
+                                            onMouseLeave={handleItemLeave}
+                                        >
+                                            {index < 3 && (
+                                                <div className="priority-badge">{index + 1}</div>
+                                            )}
+                                            {itemData.icon ? (
+                                                <img src={itemData.icon} alt={itemData.name} />
+                                            ) : (
+                                                <div className="item-fallback">
+                                                    {itemData.name.substring(0, 2).toUpperCase()}
+                                                </div>
+                                            )}
+                                        </SuggestedItemIcon>
+                                    )
+                                })}
+                            </SuggestedItemsGrid>
+                        </div>
+                    )}
+
+                    {/* Tooltip Portal */}
+                    {tooltipState?.visible && tooltipState.itemId && (() => {
+                        const itemData = allItems.find(item => item.id === tooltipState.itemId)
+                        if (!itemData) return null
+
+                        return (
+                            <ItemTooltip
+                                className="visible"
+                                style={{
+                                    top: `${tooltipState.position.top}px`,
+                                    left: `${tooltipState.position.left}px`,
+                                }}
+                            >
+                                <div className="tooltip-header">
+                                    {itemData.icon && <img src={itemData.icon} alt={itemData.name} />}
+                                    <div className="tooltip-title">{itemData.name}</div>
+                                </div>
+
+                                {itemData.effects && itemData.effects.length > 0 && (
+                                    <div className="tooltip-effects">
+                                        {itemData.effects.filter((e: any) => !e.conditional).map((effect: any, idx: number) => (
+                                            <div key={idx} className="effect-item">
+                                                <img src={getStatIcon(effect.stat)} alt={effect.stat} />
+                                                <span>
+                                                    +{effect.type === 'multiply'
+                                                        ? `${Math.round(effect.value * 100 - 100)}%`
+                                                        : effect.value
+                                                    } {effect.stat.replace(/([A-Z])/g, ' $1')}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {itemData.description && (
+                                    <div className="tooltip-description">
+                                        {itemData.description}
+                                    </div>
+                                )}
+
+                                {itemData.recipe && (
+                                    <div className="tooltip-recipe">
+                                        Recipe:
+                                        {getItemById(itemData.recipe[0])?.icon && (
+                                            <img src={getItemById(itemData.recipe[0])!.icon} alt="" />
+                                        )}
+                                        +
+                                        {getItemById(itemData.recipe[1])?.icon && (
+                                            <img src={getItemById(itemData.recipe[1])!.icon} alt="" />
+                                        )}
+                                        →
+                                        {itemData.icon && (
+                                            <img src={itemData.icon} alt="" />
+                                        )}
+                                    </div>
+                                )}
+                            </ItemTooltip>
+                        )
+                    })()}
 
                     {/* Viktor Module Shop - Only show for owned Viktor */}
                     {detailViewPiece.name === "Viktor" &&

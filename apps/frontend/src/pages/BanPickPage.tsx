@@ -112,124 +112,6 @@ const MainContent = styled.div`
   min-height: 0;
 `
 
-const BannedChampionsSection = styled.div`
-  background: linear-gradient(135deg, var(--secondary-bg) 0%, rgba(30, 35, 40, 0.9) 100%);
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%);
-  }
-  
-  h3 {
-    color: var(--gold);
-    margin: 0 0 8px 0;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 14px;
-    text-shadow: 0 2px 8px rgba(200, 155, 60, 0.5);
-    
-    svg {
-      filter: drop-shadow(0 2px 4px rgba(200, 155, 60, 0.5));
-    }
-  }
-`
-
-const BannedGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  max-width: 500px;
-  margin: 0 auto;
-`
-
-const BannedChampionSlot = styled(motion.div) <{ banned?: boolean; skipped?: boolean }>`
-  aspect-ratio: 1;
-  background: linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.5) 100%);
-  border: 3px solid var(--border);
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  font-size: 48px;
-  transition: all 0.3s ease;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  
-  .champion-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 12px;
-  }
-  
-  .empty-slot {
-    color: var(--secondary-text);
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  
-  ${props => props.banned && !props.skipped && `
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.3) 100%);
-    border-color: #ef4444;
-    
-    &::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(45deg);
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(180deg, transparent 0%, #ef4444 20%, #ef4444 80%, transparent 100%);
-      box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
-    }
-    
-    &::before {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-45deg);
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(180deg, transparent 0%, #ef4444 20%, #ef4444 80%, transparent 100%);
-      box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
-    }
-    
-    img {
-      filter: grayscale(1) brightness(0.5);
-    }
-  `}
-  
-  ${props => props.skipped && `
-    background: linear-gradient(135deg, var(--secondary-text) 0%, rgba(160, 155, 140, 0.5) 100%);
-    border-color: var(--secondary-text);
-    opacity: 0.6;
-    
-    svg {
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-    }
-  `}
-`
-
 const PlayerSections = styled.div`
   display: grid;
   grid-template-columns: 260px 1fr 260px;
@@ -1008,15 +890,13 @@ const SpellOption = styled.button<{ spellColor: string; isSelected?: boolean; is
   background: ${props => props.isSelected
     ? `linear-gradient(135deg, ${props.spellColor}44 0%, ${props.spellColor}22 100%)`
     : 'transparent'};
-  cursor: ${props => props.isDisabled ? 'not-allowed' : 'pointer'};
-  opacity: ${props => props.isDisabled ? 0.4 : 1};
+  cursor: pointer;
+  opacity: 1;
   transition: all 0.2s ease;
   
-  ${props => !props.isDisabled && `
-    &:hover {
-      background: linear-gradient(135deg, ${props.spellColor}33 0%, ${props.spellColor}11 100%);
-    }
-  `}
+  &:hover {
+    background: ${props => `linear-gradient(135deg, ${props.spellColor}33 0%, ${props.spellColor}11 100%)`};
+  }
   
   .spell-icon {
     width: 32px;
@@ -1040,7 +920,7 @@ const SpellOption = styled.button<{ spellColor: string; isSelected?: boolean; is
     .spell-name {
       font-size: 14px;
       font-weight: bold;
-      color: ${props => props.isDisabled ? 'var(--secondary-text)' : 'var(--primary-text)'};
+      color: var(--primary-text);
     }
     
     .spell-desc {
@@ -1135,6 +1015,82 @@ const BothReadyMessage = styled(motion.div)`
   }
 `
 
+const CompletionModal = styled(motion.div)`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+  color: var(--primary-bg);
+  padding: 48px 96px;
+  border-radius: 20px;
+  font-size: 36px;
+  font-weight: bold;
+  text-align: center;
+  z-index: 1000;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+  border: 4px solid #ffd700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  animation: completionGlow 1s ease-in-out infinite;
+  
+  @keyframes completionGlow {
+    0%, 100% { box-shadow: 0 12px 48px rgba(200, 155, 60, 0.6); }
+    50% { box-shadow: 0 12px 64px rgba(200, 155, 60, 1); }
+  }
+  
+  .subtitle {
+    font-size: 18px;
+    margin-top: 12px;
+    opacity: 0.9;
+    letter-spacing: 2px;
+  }
+`
+
+const LoadingScreen = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 60px;
+  color: var(--primary-text);
+  
+  .spinner-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+  }
+  
+  .spinner {
+    width: 100%;
+    height: 100%;
+    border: 4px solid var(--border);
+    border-top: 4px solid var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .loading-text {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 8px rgba(200, 155, 60, 0.5);
+  }
+  
+  .loading-subtitle {
+    font-size: 14px;
+    color: var(--secondary-text);
+    text-align: center;
+  }
+`
+
 interface SortableItemProps {
   id: string
   index: number
@@ -1142,6 +1098,7 @@ interface SortableItemProps {
   isReady: boolean
   currentSpell?: SummonerSpellType
   availableSpells: SummonerSpellType[]
+  localSpellAssignments: Record<string, SummonerSpellType>
   onSpellChange: (championName: string, spell: SummonerSpellType) => void
 }
 
@@ -1152,6 +1109,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
   isReady,
   currentSpell,
   availableSpells,
+  localSpellAssignments,
   onSpellChange,
 }) => {
   const [showSpellMenu, setShowSpellMenu] = useState(false)
@@ -1270,18 +1228,22 @@ const SortableItem: React.FC<SortableItemProps> = ({
                   const isAvailable = availableSpells.includes(spell)
                   const isSelected = currentSpell === spell
 
+                  // Find who currently has this spell (if anyone other than this champion)
+                  const championWithSpell = !isAvailable && !isSelected
+                    ? Object.entries(localSpellAssignments || {})
+                      .find(([champ, assignedSpell]) => assignedSpell === spell && champ !== championName)?.[0]
+                    : null
+
                   return (
                     <SpellOption
                       key={spell}
                       spellColor={info.color}
                       isSelected={isSelected}
-                      isDisabled={!isAvailable && !isSelected}
+                      isDisabled={false}
                       onClick={(e) => {
                         e.stopPropagation()
-                        if (isAvailable || isSelected) {
-                          onSpellChange(championName, spell)
-                          setShowSpellMenu(false)
-                        }
+                        onSpellChange(championName, spell)
+                        setShowSpellMenu(false)
                       }}
                     >
                       <span className="spell-icon">
@@ -1295,7 +1257,14 @@ const SortableItem: React.FC<SortableItemProps> = ({
                       </span>
                       <div className="spell-info">
                         <div className="spell-name">{spell}</div>
-                        <div className="spell-desc">{info.description}</div>
+                        <div className="spell-desc">
+                          {info.description}
+                          {championWithSpell && (
+                            <span style={{ color: 'var(--gold)', fontSize: '10px', display: 'block', marginTop: '2px' }}>
+                              Currently on {championWithSpell}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </SpellOption>
                   )
@@ -1321,6 +1290,9 @@ const BanPickPage: React.FC = () => {
   const { user } = useAppSelector(state => state.auth)
   const dispatch = useAppDispatch()
   const [showTurnIndicator, setShowTurnIndicator] = useState(false)
+  const [showCompletionModal, setShowCompletionModal] = useState(false)
+  const [hasShownCompletionModal, setHasShownCompletionModal] = useState(false)
+  const [canShowReorderPhase, setCanShowReorderPhase] = useState(false)
 
   // Get champion data
   const { champions, loading: championsLoading, error: championsError } = useChampions()
@@ -1330,13 +1302,11 @@ const BanPickPage: React.FC = () => {
 
   // Use the actual ban/pick hook
   const {
-    isConnected,
     loading: banPickLoading,
     gameData,
     banPickState,
     playerSide,
     isMyTurn,
-    currentAction,
     banChampion,
     pickChampion,
     skipBan,
@@ -1364,6 +1334,31 @@ const BanPickPage: React.FC = () => {
     }
   }, [gameId, user, navigate])
 
+
+  // Show completion modal when transitioning from pick to reorder phase
+  useEffect(() => {
+    if (!banPickState) return
+
+    // Detect transition from pick to reorder (ban/pick complete)
+    if (banPickState.phase === 'reorder') {
+      if (!hasShownCompletionModal) {
+        setShowCompletionModal(true)
+        setHasShownCompletionModal(true)
+        setCanShowReorderPhase(false) // Don't show reorder phase yet
+
+        const timer = setTimeout(() => {
+          setShowCompletionModal(false)
+          setCanShowReorderPhase(true) // Now allow reorder phase to be shown
+        }, 3000)
+
+        return () => clearTimeout(timer)
+      }
+    } else {
+      // Reset when not in reorder phase
+      setCanShowReorderPhase(false)
+      setHasShownCompletionModal(false)
+    }
+  }, [banPickState?.phase])
 
   useEffect(() => {
     if (!banPickState) return
@@ -1457,11 +1452,20 @@ const BanPickPage: React.FC = () => {
 
     setLocalSpellAssignments((prev) => {
       const newAssignments = { ...prev }
+      const currentChampionSpell = newAssignments[championName]
 
-      // Remove the spell from any other champion that has it
-      for (const [champ, assignedSpell] of Object.entries(newAssignments)) {
-        if (assignedSpell === spell && champ !== championName) {
-          delete newAssignments[champ]
+      // Find champion who currently has the desired spell
+      const championWithSpell = Object.entries(newAssignments)
+        .find(([champ, assignedSpell]) => assignedSpell === spell && champ !== championName)?.[0]
+
+      // Swap spells
+      if (championWithSpell) {
+        // If current champion has a spell, give it to the other champion
+        if (currentChampionSpell) {
+          newAssignments[championWithSpell] = currentChampionSpell
+        } else {
+          // If current champion has no spell, remove from other champion
+          delete newAssignments[championWithSpell]
         }
       }
 
@@ -1757,6 +1761,7 @@ const BanPickPage: React.FC = () => {
                   isReady={playerSide === 'blue' ? !!banPickState?.blueReady : !!banPickState?.redReady}
                   currentSpell={localSpellAssignments[championName]}
                   availableSpells={getAvailableSpells(championName)}
+                  localSpellAssignments={localSpellAssignments}
                   onSpellChange={handleSpellChange}
                 />
               ))}
@@ -1877,7 +1882,7 @@ const BanPickPage: React.FC = () => {
       </Header>
 
       <MainContent>
-        {banPickState?.phase === 'reorder' ? (
+        {banPickState?.phase === 'reorder' && canShowReorderPhase ? (
           // Reorder phase - show reorder UI instead of pick UI
           <div style={{
             display: 'flex',
@@ -1890,6 +1895,22 @@ const BanPickPage: React.FC = () => {
           }}>
             {reorderUI}
           </div>
+        ) : banPickState?.phase === "complete" ? (
+          // Loading screen while waiting for reorder phase to show
+          <LoadingScreen
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="spinner-container">
+              <div className="spinner" />
+            </div>
+            <div className="loading-text">Preparing Match</div>
+            <div className="loading-subtitle">
+              Setting up your champion lineup...
+            </div>
+          </LoadingScreen>
         ) : (
           // Ban/Pick phases - show normal UI
           <PlayerSections>
@@ -1923,6 +1944,21 @@ const BanPickPage: React.FC = () => {
           >
             {isMyTurn ? 'YOUR TURN!' : "OPPONENT'S TURN"}
           </TurnIndicator>
+        )}
+      </AnimatePresence>
+
+      {/* Completion Modal - Shows when ban/pick phase is complete */}
+      <AnimatePresence>
+        {showCompletionModal && (
+          <CompletionModal
+            initial={{ opacity: 0, scale: 0.5, x: "-50%", y: "-50%" }}
+            animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
+            exit={{ opacity: 0, scale: 0.5, x: "-50%", y: "-50%" }}
+            transition={{ duration: 0.5, type: "spring" }}
+          >
+            Ban/Pick Complete!
+            <div className="subtitle">Prepare Your Lineup</div>
+          </CompletionModal>
         )}
       </AnimatePresence>
 

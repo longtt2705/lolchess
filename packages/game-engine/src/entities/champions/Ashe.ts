@@ -1,6 +1,7 @@
 import { ChessObject } from "../ChessObject";
 import { Debuff } from "../../types";
 import { getGameRng } from "../../utils/SeededRandom";
+import { ChessFactory } from "../ChessFactory";
 
 export class Ashe extends ChessObject {
   // Create the Frost Shot debuff
@@ -44,7 +45,7 @@ export class Ashe extends ChessObject {
     let baseDamage = super.attack(chess);
 
     // Apply Frost Shot debuff
-    if (this.hasDebuff("frost_shot")) {
+    if (chess.hasDebuff("frost_shot")) {
       const damageBonus = Math.floor(
         chess.maxHp * (0.15 + (this.ap * 0.1) / 100)
       );

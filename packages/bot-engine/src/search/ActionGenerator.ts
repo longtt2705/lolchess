@@ -22,7 +22,7 @@ export class ActionGenerator {
   private losEvaluator: LoSEvaluator;
 
   constructor(private gameEngine: GameEngine) {
-    this.losEvaluator = new LoSEvaluator(gameEngine);
+    this.losEvaluator = new LoSEvaluator();
   }
 
   /**
@@ -134,7 +134,6 @@ export class ActionGenerator {
         playerId,
         event: GameEvent.SKILL,
         casterPosition: { x: piece.position.x, y: piece.position.y },
-        targetPosition: { x: piece.position.x, y: piece.position.y },
       });
     } else {
       for (const target of validSkillTargets) {
@@ -387,54 +386,6 @@ export class ActionGenerator {
    */
   filterValid(game: Game, actions: EventPayload[]): EventPayload[] {
     return actions.filter((action) => this.isValidAction(game, action));
-  }
-
-  /**
-   * Generate moves that would clear blocked Line of Sight for ranged carries
-   * These are moves where a blocking ally piece moves out of a firing lane,
-   * allowing a ranged carry to attack an enemy target
-   */
-  generateLoSClearingMoves(game: Game, playerId: string): EventPayload[] {
-    // Only generate LoS clearing moves if action hasn't been performed
-    if (game.hasPerformedActionThisTurn) {
-      return [];
-    }
-
-    const clearingMoves = this.losEvaluator.getLoSClearingMoves(game, playerId);
-    const actions: EventPayload[] = [];
-
-    for (const clearingMove of clearingMoves) {
-      const blocker = clearingMove.blocker;
-
-      // Check if blocker is stunned
-      const isStunned = blocker.debuffs?.some((d) => d.stun) ?? false;
-      if (isStunned) continue;
-
-      // Verify this is a valid move
-      const action: EventPayload = {
-        playerId,
-        event: GameEvent.MOVE_CHESS,
-        casterPosition: { x: blocker.position.x, y: blocker.position.y },
-        targetPosition: clearingMove.moveTo,
-      };
-
-      if (this.isValidAction(game, action)) {
-        actions.push(action);
-      }
-    }
-
-    return actions;
-  }
-
-  /**
-   * Get detailed LoS clearing information (including which carry benefits)
-   * Useful for prioritizing moves in the opening
-   */
-  getLoSClearingDetails(game: Game, playerId: string): LoSClearingMove[] {
-    if (game.hasPerformedActionThisTurn) {
-      return [];
-    }
-    return this.losEvaluator.getLoSClearingMoves(game, playerId);
   }
 
   // ============================================

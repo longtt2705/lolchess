@@ -1122,6 +1122,9 @@ export class GameLogic {
 
     const result = {
       id: pieceId,
+      role: championData.role,
+      attackProjectile: championData.attackProjectile,
+      items_suggestions: championData.items_suggestions,
       name: championName,
       position,
       startingPosition: { x: position.x, y: position.y },
