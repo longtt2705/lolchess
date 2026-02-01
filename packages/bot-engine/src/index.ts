@@ -49,3 +49,4 @@ export { MoveOrdering } from "./search/MoveOrdering";
 // Strategy
 export { BanPickStrategy } from "./strategy/BanPickStrategy";
 export { ItemStrategy } from "./strategy/ItemStrategy";
+export { SummonerSpellStrategy } from "./strategy/SummonerSpellStrategy";

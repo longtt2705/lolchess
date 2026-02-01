@@ -1470,6 +1470,7 @@ export class ChessObject {
 
   executeSkill(position?: Square): void {
     if (!this.validateSkill(this.chess.skill, position)) {
+      console.log(`[ChessObject] Invalid skill: ${this.chess.skill.name} - ${position?.x}, ${position?.y}`);
       throw new Error("Invalid skill");
     }
     this.skill(position);
@@ -1478,6 +1479,7 @@ export class ChessObject {
 
   protected skill(position?: Square): void {
     if (!this.validateSkill(this.chess.skill, position)) {
+      console.log(`[ChessObject] Invalid skill: ${this.chess.skill.name} - ${position?.x}, ${position?.y}`);
       throw new Error("Invalid skill");
     }
   }

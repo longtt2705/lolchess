@@ -10,6 +10,7 @@ import { EvaluationResult, EvaluationBreakdown } from "../types";
 import { MaterialEvaluator } from "./MaterialEvaluator";
 import { ThreatEvaluator } from "./ThreatEvaluator";
 import { LoSEvaluator } from "./LoSEvaluator";
+import { PassedPawnEvaluator } from "./PassedPawnEvaluator";
 
 /**
  * Main position evaluator that combines all evaluation aspects
@@ -19,15 +20,17 @@ export class PositionEvaluator {
   private materialEvaluator: MaterialEvaluator;
   private threatEvaluator: ThreatEvaluator;
   private losEvaluator: LoSEvaluator;
+  private passedPawnEvaluator: PassedPawnEvaluator;
 
   // Evaluation weights
   private static readonly WEIGHTS = {
-    material: 1,    // Increased from 0.3 (rewards kills)
+    material: 0.8,    // Increased from 0.3 (rewards kills)
     position: 1,    // Decreased from 0.6 (less emphasis on structure)
-    threats: 1,     // Increased from 1 (rewards attack potential)
+    threats: 0.7,     // Increased from 1 (rewards attack potential)
     safety: 0.5,      // Increased from 0.5 (prioritize survival, especially Poro)
     mobility: 0.2,
     lineOfSight: 1, // Decreased from 1 (less emphasis on perfect positioning)
+    passedPawn: 1.2, // High weight for promotion potential
   };
 
   constructor(private gameEngine: GameEngine) {
@@ -37,6 +40,7 @@ export class PositionEvaluator {
       this.materialEvaluator
     );
     this.losEvaluator = new LoSEvaluator();
+    this.passedPawnEvaluator = new PassedPawnEvaluator(gameEngine);
   }
 
   /**
@@ -53,6 +57,7 @@ export class PositionEvaluator {
     const threats = this.sanitizeNumber(this.evaluateThreats(game, playerId, opponentId));
     const lineOfSight = this.sanitizeNumber(this.evaluateLineOfSight(game, playerId, opponentId));
     const safety = this.sanitizeNumber(this.evaluateSafety(game, playerId, opponentId));
+    const passedPawn = this.sanitizeNumber(this.evaluatePassedPawns(game, playerId, opponentId));
 
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
@@ -61,6 +66,7 @@ export class PositionEvaluator {
       threats,
       lineOfSight,
       safety,
+      passedPawn,
     };
     console.log(`[PositionEvaluator] Position breakdown: ${JSON.stringify(breakdown)}`);
 
@@ -70,7 +76,8 @@ export class PositionEvaluator {
       position * PositionEvaluator.WEIGHTS.position +
       threats * PositionEvaluator.WEIGHTS.threats +
       lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight * (!this.gameEngine.isOpeningPhase(game) ? 0.3 : 1) +
-      safety * PositionEvaluator.WEIGHTS.safety;
+      safety * PositionEvaluator.WEIGHTS.safety +
+      passedPawn * PositionEvaluator.WEIGHTS.passedPawn;
 
     // Final NaN protection
     return this.sanitizeNumber(score);
@@ -387,6 +394,18 @@ export class PositionEvaluator {
     }
     return safety;
   }
+
+  /**
+   * Evaluate passed pawn promotion potential
+   */
+  private evaluatePassedPawns(
+    game: Game,
+    playerId: string,
+    opponentId: string
+  ): number {
+    return this.passedPawnEvaluator.evaluate(game, playerId, opponentId);
+  }
+
   /**
    * Get the LoS evaluator for external use (e.g., by BotEngine)
    */
@@ -407,6 +426,8 @@ export class PositionEvaluator {
     const threats = this.evaluateThreats(game, playerId, opponentId);
     const lineOfSight = this.evaluateLineOfSight(game, playerId, opponentId);
     const safety = this.evaluateSafety(game, playerId, opponentId);
+    const passedPawn = this.evaluatePassedPawns(game, playerId, opponentId);
+
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
       material,
@@ -414,6 +435,7 @@ export class PositionEvaluator {
       threats,
       lineOfSight,
       safety,
+      passedPawn,
     };
 
     // Calculate weighted total score
@@ -422,7 +444,8 @@ export class PositionEvaluator {
       position * PositionEvaluator.WEIGHTS.position +
       threats * PositionEvaluator.WEIGHTS.threats +
       lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight +
-      safety * PositionEvaluator.WEIGHTS.safety;
+      safety * PositionEvaluator.WEIGHTS.safety +
+      passedPawn * PositionEvaluator.WEIGHTS.passedPawn;
 
     return { score, breakdown };
   }

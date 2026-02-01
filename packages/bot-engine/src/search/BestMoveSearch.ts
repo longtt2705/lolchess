@@ -43,20 +43,30 @@ export class BestMoveSearch {
     this.startTime = Date.now();
     this.timeLimit = timeLimit;
 
+    // Before searching, check if currently position is good enough
+    const currentScore = this.evaluator.evaluate(game, playerId);
+    console.log(`[BestMoveSearch] Current score: ${currentScore}`);
+    if (currentScore > 500) {
+      const combatResult = this.searchCombat(game, playerId);
+      if (combatResult) {
+        return combatResult;
+      }
+    }
+
     const allActions = this.actionGenerator.generateAll(game, playerId);
     if (allActions.length === 0) {
       return this.fallbackSearch(game, playerId);
     }
     let bestAction: EventPayload | null = allActions[0];
     let bestScore = -Infinity;
-    
+
     // Check current Poro safety for escape bonus calculation
     const isBlue = game.bluePlayer === playerId;
     const poroPiece = game.board.find(p => p.name === "Poro" && p.blue === isBlue);
-    const currentPoroSafety = poroPiece 
+    const currentPoroSafety = poroPiece
       ? this.threatEvaluator.evaluatePositionSafety(game, poroPiece, playerId)
       : 0;
-    
+
     for (const action of allActions) {
       if (this.isTimeUp()) break;
 
@@ -66,31 +76,31 @@ export class BestMoveSearch {
       this.nodesSearched++;
 
       let score = this.evaluator.evaluate(result.game, playerId);
-      
+
       // EMERGENCY ESCAPE BONUS: If Poro is under threat and this move gets it to safety
-      if (action.event === GameEvent.MOVE_CHESS && 
-          action.casterPosition && 
-          poroPiece &&
-          action.casterPosition.x === poroPiece.position.x &&
-          action.casterPosition.y === poroPiece.position.y &&
-          currentPoroSafety < -50) {
-        
+      if (action.event === GameEvent.MOVE_CHESS &&
+        action.casterPosition &&
+        poroPiece &&
+        action.casterPosition.x === poroPiece.position.x &&
+        action.casterPosition.y === poroPiece.position.y &&
+        currentPoroSafety < -50) {
+
         // Calculate new Poro safety after the move
         const newPoroPiece = result.game.board.find(p => p.name === "Poro" && p.blue === isBlue);
         if (newPoroPiece) {
           const newPoroSafety = this.threatEvaluator.evaluatePositionSafety(
-            result.game, 
-            newPoroPiece, 
+            result.game,
+            newPoroPiece,
             playerId
           );
-          
+
           // If Poro escapes from danger, give huge bonus
           if (newPoroSafety > currentPoroSafety + 50) {
             score += 500; // Emergency escape bonus
           }
         }
       }
-      
+
       if (score > bestScore) {
         bestScore = score;
         bestAction = action;
@@ -157,7 +167,9 @@ export class BestMoveSearch {
 
     // Phase 2: Already in optimal position, find best combat action
     const combatResult = this.searchCombat(game, playerId);
-
+    if (!combatResult) {
+      return this.fallbackSearch(game, playerId);
+    }
     return {
       bestAction: combatResult.bestAction,
       score: combatResult.score,
@@ -265,12 +277,13 @@ export class BestMoveSearch {
    * Phase 2: Search for the best combat action
    * Assumes we're already in the optimal position
    */
-  private searchCombat(game: Game, playerId: string): SearchResult {
+  private searchCombat(game: Game, playerId: string): SearchResult | null {
 
     const threatInfo = this.threatEvaluator.getBestThreat(game, playerId);
     if (!threatInfo) {
-      return this.fallbackSearch(game, playerId);
+      return null;
     }
+    console.log(`[BestMoveSearch] Best threat: ${threatInfo.priority}`);
 
     // Generate combat actions
     const bestAction = this.actionGenerator.generateCombatActionFromThreat(

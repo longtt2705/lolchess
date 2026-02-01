@@ -151,6 +151,7 @@ export class ItemStrategy {
 
     // Rank champions by who should get items first
     const rankedChampions = this.rankChampionsForItems(eligibleChampions, gamePhase);
+    console.log(`[ItemStrategy] Ranked champions: ${rankedChampions.map(c => c.name).join(", ")}`);
 
     for (const champion of rankedChampions) {
       // Try to find best item based on champion's suggestions
@@ -447,7 +448,8 @@ export class ItemStrategy {
   shouldBuyItem(
     game: Game,
     playerId: string,
-    minGoldThreshold: number = 0
+    currentItemPrice: number,
+    minGoldThreshold: number = 0,
   ): boolean {
     const player = game.players.find((p) => p.userId === playerId);
     if (!player) return false;
@@ -463,7 +465,7 @@ export class ItemStrategy {
     // Check if there are affordable items
     const affordable = (game.shopItems || [])
       .map((id) => getItemById(id))
-      .filter((item) => item && item.isBasic && player.gold >= item.cost);
+      .filter((item) => item && item.isBasic && player.gold >= currentItemPrice);
 
     return affordable.length > 0;
   }

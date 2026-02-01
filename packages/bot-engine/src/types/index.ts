@@ -33,6 +33,8 @@ export interface EvaluationBreakdown {
   lineOfSight?: number;
   /** Safety score (negative if threatened by enemies) */
   safety: number;
+  /** Passed pawn promotion potential (optional for backward compatibility) */
+  passedPawn?: number;
 }
 
 /**
@@ -200,3 +202,32 @@ export interface PositionThreatScore {
  * Action category for two-phase search
  */
 export type ActionCategory = "positioning" | "combat" | "utility";
+
+/**
+ * Passed pawn evaluation score
+ * Analyzes promotion potential for minions
+ */
+export interface PassedPawnScore {
+  /** Whether this minion is a passed pawn (no enemy minions blocking) */
+  isPassedPawn: boolean;
+  /** Whether this minion can promote (Melee Minions only) */
+  canPromote: boolean;
+  /** Number of squares remaining to promotion */
+  distanceToPromotion: number;
+  /** Estimated turns to reach promotion */
+  turnsToPromotion: number;
+  /** No enemy can intercept before promotion */
+  isUnstoppable: boolean;
+  /** Any piece is blocking the direct path */
+  pathBlocked: boolean;
+  /** Number of enemies that can intercept */
+  threatCount: number;
+  /** Number of allies providing support */
+  supportCount: number;
+  /** HP percentage factor (0.3 - 1.0) */
+  healthFactor: number;
+  /** At risk of Critical Flank execution */
+  criticalFlankRisk: boolean;
+  /** Final weighted score for this passed pawn */
+  totalScore: number;
+}

@@ -1,26 +1,27 @@
 import {
+  EventPayload,
   Game,
   GameEngine,
-  EventPayload,
   GameEvent,
-  getPlayerPieces,
-  getPieceAtPosition,
+  GameLogic,
+  getPieceAtPosition
 } from "@lolchess/game-engine";
+import { ChampionEvaluator } from "./evaluation/ChampionEvaluator";
+import { MaterialEvaluator } from "./evaluation/MaterialEvaluator";
+import { PositionEvaluator } from "./evaluation/PositionEvaluator";
+import { ThreatEvaluator } from "./evaluation/ThreatEvaluator";
+import { ActionGenerator } from "./search/ActionGenerator";
+import { Minimax } from "./search/BestMoveSearch";
+import { MoveOrdering } from "./search/MoveOrdering";
+import { BanPickStrategy } from "./strategy/BanPickStrategy";
+import { ItemStrategy } from "./strategy/ItemStrategy";
+import { SummonerSpellStrategy } from "./strategy/SummonerSpellStrategy";
 import {
   BotConfig,
   BotDifficulty,
   EvaluationResult,
   SearchResult,
 } from "./types";
-import { PositionEvaluator } from "./evaluation/PositionEvaluator";
-import { ChampionEvaluator } from "./evaluation/ChampionEvaluator";
-import { ThreatEvaluator } from "./evaluation/ThreatEvaluator";
-import { MaterialEvaluator } from "./evaluation/MaterialEvaluator";
-import { ActionGenerator } from "./search/ActionGenerator";
-import { Minimax } from "./search/BestMoveSearch";
-import { MoveOrdering } from "./search/MoveOrdering";
-import { BanPickStrategy } from "./strategy/BanPickStrategy";
-import { ItemStrategy } from "./strategy/ItemStrategy";
 
 /**
  * Default configurations for each difficulty level
@@ -51,6 +52,7 @@ export class BotEngine {
   private moveOrdering: MoveOrdering;
   private banPickStrategy: BanPickStrategy;
   private itemStrategy: ItemStrategy;
+  private summonerSpellStrategy: SummonerSpellStrategy;
   private config: BotConfig;
 
   constructor(config: Partial<BotConfig> = {}) {
@@ -79,13 +81,48 @@ export class BotEngine {
     this.moveOrdering = new MoveOrdering(this.threatEvaluator);
     this.banPickStrategy = new BanPickStrategy();
     this.itemStrategy = new ItemStrategy();
+    this.summonerSpellStrategy = new SummonerSpellStrategy(this.gameEngine);
   }
 
   /**
    * Get the best action for the bot to take
+   * 
+   * Priority Order:
+   * 1. Free actions (summoner spells) - don't end turn
+   * 2. Free actions (item purchases) - don't end turn
+   * 3. Main search (positioning/combat)
    */
   getAction(game: Game, botPlayerId: string): EventPayload | null {
-    // Use search if depth > 0 (two-phase search uses time limit)
+    // Phase 0: Execute free actions before main search
+
+    // Check summoner spells first (higher impact than items)
+    if (!game.hasUsedSummonerSpellThisTurn) {
+      const spellAction = this.summonerSpellStrategy.recommendSummonerSpell(
+        game,
+        botPlayerId
+      );
+      if (spellAction) {
+        console.log(`[BotEngine] Using summoner spell`);
+        return spellAction;
+      }
+    }
+
+    // Check item purchases
+    const currentItemPrice = GameLogic.getCurrentItemPrice(game.players.find((p) => p.userId === botPlayerId)!);
+    if (!game.hasBoughtItemThisTurn && this.itemStrategy.shouldBuyItem(game, botPlayerId, currentItemPrice)) {
+      const itemRec = this.itemStrategy.recommendPurchase(game, botPlayerId);
+      if (itemRec) {
+        console.log(`[BotEngine] Buying item: ${itemRec.itemId} for ${itemRec.championId}`);
+        return {
+          playerId: botPlayerId,
+          event: GameEvent.BUY_ITEM,
+          itemId: itemRec.itemId,
+          targetChampionId: itemRec.championId,
+        };
+      }
+    }
+
+    // Phase 1-2: Main search for positioning/combat
     const searchResult = this.minimax.searchV2(
       game,
       botPlayerId,
@@ -381,8 +418,8 @@ export class BotEngine {
   /**
    * Check if should buy item
    */
-  shouldBuyItem(game: Game, playerId: string): boolean {
-    return this.itemStrategy.shouldBuyItem(game, playerId);
+  shouldBuyItem(game: Game, playerId: string, currentItemPrice: number): boolean {
+    return this.itemStrategy.shouldBuyItem(game, playerId, currentItemPrice);
   }
 
   // ============================================

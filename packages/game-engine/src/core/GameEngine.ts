@@ -448,62 +448,10 @@ export class GameEngine implements IGameEngine {
    */
   getValidSkillTargets(game: Game, pieceId: string): Square[] {
     const piece = getPieceById(game, pieceId);
-    if (!piece || piece.stats.hp <= 0 || !piece.skill) {
+    if (!piece || piece.stats.hp <= 0) {
       return [];
     }
-
-    // Basic implementation based on skill's attack range
-    const validTargets: Square[] = [];
-    const skillRange = piece.skill.attackRange?.range || 1;
-    const targetTypes = piece.skill.targetTypes || "enemy";
-
-    // If skill requires no target, return empty array (self-cast)
-    if (targetTypes === "none") {
-      return [];
-    }
-
-    // For "square" or "squareInRange", return all valid squares
-    if (targetTypes === "square" || targetTypes === "squareInRange") {
-      for (let x = 0; x <= 7; x++) {
-        for (let y = 0; y <= 7; y++) {
-          const dx = Math.abs(x - piece.position.x);
-          const dy = Math.abs(y - piece.position.y);
-          const distance = Math.max(dx, dy);
-
-          if (distance <= skillRange && distance > 0) {
-            validTargets.push({ x, y });
-          }
-        }
-      }
-      return validTargets;
-    }
-
-    for (const target of game.board) {
-      if (target.stats.hp <= 0) continue;
-
-      const dx = Math.abs(target.position.x - piece.position.x);
-      const dy = Math.abs(target.position.y - piece.position.y);
-      const distance = Math.max(dx, dy);
-
-      if (distance > skillRange) continue;
-
-      // Check target type
-      const isEnemy =
-        target.blue !== piece.blue || target.ownerId === "neutral";
-      const isAlly = target.blue === piece.blue && target.ownerId !== "neutral";
-      const isAllyMinion =
-        isAlly && (target.name.includes("Minion") || target.name === "Poro");
-
-      if (targetTypes === "enemy" && isEnemy) {
-        validTargets.push({ x: target.position.x, y: target.position.y });
-      } else if (targetTypes === "ally" && isAlly) {
-        validTargets.push({ x: target.position.x, y: target.position.y });
-      } else if (targetTypes === "allyMinion" && isAllyMinion) {
-        validTargets.push({ x: target.position.x, y: target.position.y });
-      }
-    }
-
-    return validTargets;
+    return ChessFactory.createChess(piece, game).getValidSkillTargets();
   }
 
   getAvailableAttackSquares(game: Game, pieceId: string): Square[] {

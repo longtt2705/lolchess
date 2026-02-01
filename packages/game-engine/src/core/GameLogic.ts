@@ -1701,10 +1701,10 @@ export class GameLogic {
    * Calculate the current item price based on player's inflation system
    * Price = baseItemCost + (itemsBought * inflationStep)
    */
-  private static getCurrentItemPrice(player: Player): number {
+  public static getCurrentItemPrice(player: Player): number {
     return (
       player.baseItemCost +
-      Math.min(player.itemsBought, 5) * player.inflationStep
+      Math.min(player.itemsBought, 4) * player.inflationStep
     );
   }
 

@@ -157,7 +157,11 @@ export class ThreatEvaluator {
 
   getBestThreat(game: Game, playerId: string): ThreatInfo | null {
     const threats = this.getPlayerThreats(game, playerId);
-    return threats.at(0) ?? null;
+    console.log(`[ThreatEvaluator] Best threat: ${threats.length > 0 ? threats[threats.length - 1].priority : 0} - ${threats.length > 0 ? threats[threats.length - 1].target.name : "No threats"}`);
+    if (threats.length > 0) {
+      return threats[0].priority > 0 ? threats[0] : null;
+    }
+    return null;
   }
 
   /**
