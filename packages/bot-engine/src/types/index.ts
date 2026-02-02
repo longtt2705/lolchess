@@ -35,6 +35,8 @@ export interface EvaluationBreakdown {
   safety: number;
   /** Passed pawn promotion potential (optional for backward compatibility) */
   passedPawn?: number;
+  /** Neutral monster control advantage (Drake, Baron) */
+  neutralMonster?: number;
 }
 
 /**

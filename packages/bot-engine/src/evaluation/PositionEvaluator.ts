@@ -11,6 +11,7 @@ import { MaterialEvaluator } from "./MaterialEvaluator";
 import { ThreatEvaluator } from "./ThreatEvaluator";
 import { LoSEvaluator } from "./LoSEvaluator";
 import { PassedPawnEvaluator } from "./PassedPawnEvaluator";
+import { NeutralMonsterEvaluator } from "./NeutralMonsterEvaluator";
 
 /**
  * Main position evaluator that combines all evaluation aspects
@@ -21,6 +22,7 @@ export class PositionEvaluator {
   private threatEvaluator: ThreatEvaluator;
   private losEvaluator: LoSEvaluator;
   private passedPawnEvaluator: PassedPawnEvaluator;
+  private neutralMonsterEvaluator: NeutralMonsterEvaluator;
 
   // Evaluation weights
   private static readonly WEIGHTS = {
@@ -31,6 +33,7 @@ export class PositionEvaluator {
     mobility: 0.2,
     lineOfSight: 1, // Decreased from 1 (less emphasis on perfect positioning)
     passedPawn: 1.2, // High weight for promotion potential
+    neutralMonster: 0.8, // Neutral monster control (Drake, Baron)
   };
 
   constructor(private gameEngine: GameEngine) {
@@ -41,6 +44,7 @@ export class PositionEvaluator {
     );
     this.losEvaluator = new LoSEvaluator();
     this.passedPawnEvaluator = new PassedPawnEvaluator(gameEngine);
+    this.neutralMonsterEvaluator = new NeutralMonsterEvaluator(gameEngine);
   }
 
   /**
@@ -58,6 +62,7 @@ export class PositionEvaluator {
     const lineOfSight = this.sanitizeNumber(this.evaluateLineOfSight(game, playerId, opponentId));
     const safety = this.sanitizeNumber(this.evaluateSafety(game, playerId, opponentId));
     const passedPawn = this.sanitizeNumber(this.evaluatePassedPawns(game, playerId, opponentId));
+    const neutralMonster = this.sanitizeNumber(this.evaluateNeutralMonsters(game, playerId, opponentId));
 
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
@@ -67,6 +72,7 @@ export class PositionEvaluator {
       lineOfSight,
       safety,
       passedPawn,
+      neutralMonster,
     };
     console.log(`[PositionEvaluator] Position breakdown: ${JSON.stringify(breakdown)}`);
 
@@ -77,7 +83,8 @@ export class PositionEvaluator {
       threats * PositionEvaluator.WEIGHTS.threats +
       lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight * (!this.gameEngine.isOpeningPhase(game) ? 0.3 : 1) +
       safety * PositionEvaluator.WEIGHTS.safety +
-      passedPawn * PositionEvaluator.WEIGHTS.passedPawn;
+      passedPawn * PositionEvaluator.WEIGHTS.passedPawn +
+      neutralMonster * PositionEvaluator.WEIGHTS.neutralMonster;
 
     // Final NaN protection
     return this.sanitizeNumber(score);
@@ -407,6 +414,17 @@ export class PositionEvaluator {
   }
 
   /**
+   * Evaluate neutral monster control (Drake, Baron)
+   */
+  private evaluateNeutralMonsters(
+    game: Game,
+    playerId: string,
+    opponentId: string
+  ): number {
+    return this.neutralMonsterEvaluator.evaluate(game, playerId, opponentId);
+  }
+
+  /**
    * Get the LoS evaluator for external use (e.g., by BotEngine)
    */
   getLoSEvaluator(): LoSEvaluator {
@@ -427,6 +445,7 @@ export class PositionEvaluator {
     const lineOfSight = this.evaluateLineOfSight(game, playerId, opponentId);
     const safety = this.evaluateSafety(game, playerId, opponentId);
     const passedPawn = this.evaluatePassedPawns(game, playerId, opponentId);
+    const neutralMonster = this.evaluateNeutralMonsters(game, playerId, opponentId);
 
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
@@ -436,6 +455,7 @@ export class PositionEvaluator {
       lineOfSight,
       safety,
       passedPawn,
+      neutralMonster,
     };
 
     // Calculate weighted total score
@@ -445,7 +465,8 @@ export class PositionEvaluator {
       threats * PositionEvaluator.WEIGHTS.threats +
       lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight +
       safety * PositionEvaluator.WEIGHTS.safety +
-      passedPawn * PositionEvaluator.WEIGHTS.passedPawn;
+      passedPawn * PositionEvaluator.WEIGHTS.passedPawn +
+      neutralMonster * PositionEvaluator.WEIGHTS.neutralMonster;
 
     return { score, breakdown };
   }
