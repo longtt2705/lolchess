@@ -595,12 +595,8 @@ export class ActionGenerator {
           const chessObject = ChessFactory.createChess(piece, game);
           const skillScore = chessObject.getActiveSkillScore();
 
-          console.log(`[ActionGen] ${piece.name} skill score: ${skillScore}`);
-
           if (skillScore > 0) {
             this.generateSkillActions(game, piece, playerId, actions);
-          } else {
-            console.log(`[ActionGen] Skipping ${piece.name} skill (score 0)`);
           }
         }
       }

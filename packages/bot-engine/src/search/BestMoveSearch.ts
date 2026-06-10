@@ -45,7 +45,6 @@ export class BestMoveSearch {
 
     // Before searching, check if currently position is good enough
     const currentScore = this.evaluator.evaluate(game, playerId);
-    console.log(`[BestMoveSearch] Current score: ${currentScore}`);
     if (currentScore > 500) {
       const combatResult = this.searchCombat(game, playerId);
       if (combatResult) {
@@ -283,7 +282,6 @@ export class BestMoveSearch {
     if (!threatInfo) {
       return null;
     }
-    console.log(`[BestMoveSearch] Best threat: ${threatInfo.priority}`);
 
     // Generate combat actions
     const bestAction = this.actionGenerator.generateCombatActionFromThreat(
@@ -350,5 +348,6 @@ export class BestMoveSearch {
   }
 }
 
-// Export as Minimax for backward compatibility with BotEngine
-export { BestMoveSearch as Minimax };
+// Kept ONLY as the self-play benchmark opponent for the AlphaBetaSearch rework.
+// Remove once the new search is validated (see docs/superpowers/specs/2026-06-10-bot-minimax-rework-design.md).
+export { BestMoveSearch as LegacySearch };
