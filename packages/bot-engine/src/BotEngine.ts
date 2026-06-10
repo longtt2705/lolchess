@@ -11,7 +11,8 @@ import { MaterialEvaluator } from "./evaluation/MaterialEvaluator";
 import { PositionEvaluator } from "./evaluation/PositionEvaluator";
 import { ThreatEvaluator } from "./evaluation/ThreatEvaluator";
 import { ActionGenerator } from "./search/ActionGenerator";
-import { Minimax } from "./search/BestMoveSearch";
+import { LegacySearch } from "./search/BestMoveSearch";
+import { AlphaBetaSearch } from "./search/AlphaBetaSearch";
 import { MoveOrdering } from "./search/MoveOrdering";
 import { BanPickStrategy } from "./strategy/BanPickStrategy";
 import { ItemStrategy } from "./strategy/ItemStrategy";
@@ -27,10 +28,10 @@ import {
  * Default configurations for each difficulty level
  */
 const DEFAULT_CONFIGS: Record<BotDifficulty, Partial<BotConfig>> = {
-  easy: { searchDepth: 0, randomness: 0.35, timeLimit: 1000 },
-  medium: { searchDepth: 1, randomness: 0.15, timeLimit: 2000 },
-  hard: { searchDepth: 2, randomness: 0.05, timeLimit: 3000 },
-  expert: { searchDepth: 3, randomness: 0, timeLimit: 5000 },
+  easy: { searchDepth: 1, randomness: 0.35, timeLimit: 1000 },
+  medium: { searchDepth: 2, randomness: 0.15, timeLimit: 3000 },
+  hard: { searchDepth: 3, randomness: 0.05, timeLimit: 8000 },
+  expert: { searchDepth: 4, randomness: 0, timeLimit: 20000 },
 };
 
 /**
@@ -48,7 +49,8 @@ export class BotEngine {
   private championEvaluator: ChampionEvaluator;
   private threatEvaluator: ThreatEvaluator;
   private actionGenerator: ActionGenerator;
-  private minimax: Minimax;
+  private alphaBeta: AlphaBetaSearch;
+  private legacySearch: LegacySearch;
   private moveOrdering: MoveOrdering;
   private banPickStrategy: BanPickStrategy;
   private itemStrategy: ItemStrategy;
@@ -61,9 +63,10 @@ export class BotEngine {
 
     this.config = {
       difficulty,
-      searchDepth: config.searchDepth ?? defaults.searchDepth ?? 1,
+      searchDepth: config.searchDepth ?? defaults.searchDepth ?? 2,
       randomness: config.randomness ?? defaults.randomness ?? 0.15,
-      timeLimit: config.timeLimit ?? defaults.timeLimit ?? 2000,
+      timeLimit: config.timeLimit ?? defaults.timeLimit ?? 3000,
+      engine: config.engine ?? "alphabeta",
     };
 
     // Initialize components
@@ -73,12 +76,18 @@ export class BotEngine {
     const materialEvaluator = new MaterialEvaluator();
     this.threatEvaluator = new ThreatEvaluator(this.gameEngine, materialEvaluator);
     this.actionGenerator = new ActionGenerator(this.gameEngine);
-    this.minimax = new Minimax(
+    this.moveOrdering = new MoveOrdering(this.threatEvaluator);
+    this.alphaBeta = new AlphaBetaSearch(
+      this.gameEngine,
+      this.positionEvaluator,
+      this.actionGenerator,
+      this.moveOrdering
+    );
+    this.legacySearch = new LegacySearch(
       this.gameEngine,
       this.positionEvaluator,
       this.actionGenerator
     );
-    this.moveOrdering = new MoveOrdering(this.threatEvaluator);
     this.banPickStrategy = new BanPickStrategy();
     this.itemStrategy = new ItemStrategy();
     this.summonerSpellStrategy = new SummonerSpellStrategy(this.gameEngine);
@@ -86,33 +95,31 @@ export class BotEngine {
 
   /**
    * Get the best action for the bot to take
-   * 
+   *
    * Priority Order:
    * 1. Free actions (summoner spells) - don't end turn
    * 2. Free actions (item purchases) - don't end turn
    * 3. Main search (positioning/combat)
    */
   getAction(game: Game, botPlayerId: string): EventPayload | null {
-    // Phase 0: Execute free actions before main search
+    // Phase 0: free actions (don't end the turn)
 
-    // Check summoner spells first (higher impact than items)
+    // Summoner spells — sanity-checked: only cast if it actually improves the position.
     if (!game.hasUsedSummonerSpellThisTurn) {
       const spellAction = this.summonerSpellStrategy.recommendSummonerSpell(
         game,
         botPlayerId
       );
-      if (spellAction) {
-        console.log(`[BotEngine] Using summoner spell`);
+      if (spellAction && this.spellImprovesPosition(game, botPlayerId, spellAction)) {
         return spellAction;
       }
     }
 
-    // Check item purchases
+    // Item purchases
     const currentItemPrice = GameLogic.getCurrentItemPrice(game.players.find((p) => p.userId === botPlayerId)!);
     if (!game.hasBoughtItemThisTurn && this.itemStrategy.shouldBuyItem(game, botPlayerId, currentItemPrice)) {
       const itemRec = this.itemStrategy.recommendPurchase(game, botPlayerId);
       if (itemRec) {
-        console.log(`[BotEngine] Buying item: ${itemRec.itemId} for ${itemRec.championId}`);
         return {
           playerId: botPlayerId,
           event: GameEvent.BUY_ITEM,
@@ -122,14 +129,60 @@ export class BotEngine {
       }
     }
 
-    // Phase 1-2: Main search for positioning/combat
-    const searchResult = this.minimax.searchV2(
-      game,
-      botPlayerId,
-      this.config.timeLimit
-    );
+    // Phase 1: board action via search
+    const searchResult =
+      this.config.engine === "legacy"
+        ? this.legacySearch.searchV2(game, botPlayerId, this.config.timeLimit)
+        : this.alphaBeta.search(game, botPlayerId, {
+            maxDepth: this.config.searchDepth,
+            timeLimit: this.config.timeLimit ?? 3000,
+          });
 
-    return searchResult.bestAction;
+    let action = searchResult.bestAction;
+
+    // Lower difficulties: occasionally play a random legal board action instead.
+    const boardActions = this.actionGenerator
+      .generateAll(game, botPlayerId)
+      .filter(
+        (a) =>
+          a.event === GameEvent.MOVE_CHESS ||
+          a.event === GameEvent.ATTACK_CHESS ||
+          a.event === GameEvent.SKILL
+      );
+    if (
+      action &&
+      this.config.randomness &&
+      this.config.randomness > 0 &&
+      Math.random() < this.config.randomness &&
+      boardActions.length > 0
+    ) {
+      action = this.pickRandom(boardActions);
+    }
+
+    // The backend must always get an action: fall back to any legal board action.
+    if (!action && boardActions.length > 0) {
+      action = boardActions[0];
+    }
+
+    return action;
+  }
+
+  /**
+   * Sanity check for spell recommendations: simulate the spell and require the
+   * evaluation to improve. Prevents wasting long-cooldown spells (Flash) on
+   * positions the board search can handle anyway.
+   */
+  private spellImprovesPosition(
+    game: Game,
+    botPlayerId: string,
+    spellAction: EventPayload
+  ): boolean {
+    const SPELL_MARGIN = 30;
+    const sim = this.gameEngine.processAction(game, spellAction);
+    if (!sim.success) return false;
+    const before = this.positionEvaluator.evaluate(game, botPlayerId);
+    const after = this.positionEvaluator.evaluate(sim.game, botPlayerId);
+    return after >= before + SPELL_MARGIN;
   }
 
   /**
@@ -385,20 +438,18 @@ export class BotEngine {
   }
 
   /**
-   * Search for best move with look-ahead
-   * Note: The two-phase search uses time-based limits instead of depth
+   * Search for best move with look-ahead using iterative-deepening alpha-beta.
    */
   search(
     game: Game,
     playerId: string,
-    _depth?: number,
+    depth?: number,
     timeLimit?: number
   ): SearchResult {
-    return this.minimax.searchV2(
-      game,
-      playerId,
-      timeLimit ?? this.config.timeLimit
-    );
+    return this.alphaBeta.search(game, playerId, {
+      maxDepth: depth ?? this.config.searchDepth,
+      timeLimit: timeLimit ?? this.config.timeLimit ?? 3000,
+    });
   }
 
   // ============================================

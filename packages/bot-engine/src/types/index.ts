@@ -11,12 +11,14 @@ export type BotDifficulty = "easy" | "medium" | "hard" | "expert";
 export interface BotConfig {
   /** Difficulty level affects search depth and randomness */
   difficulty: BotDifficulty;
-  /** How many moves ahead to search (0 = heuristics only) */
+  /** Maximum search depth in plies (iterative deepening may stop earlier on time) */
   searchDepth: number;
   /** Maximum time for search in milliseconds */
   timeLimit?: number;
   /** Randomness factor (0-1), adds variance to prevent predictability */
   randomness?: number;
+  /** Search engine: the alpha-beta rework (default) or the legacy greedy search (benchmark only) */
+  engine?: "alphabeta" | "legacy";
 }
 
 /**

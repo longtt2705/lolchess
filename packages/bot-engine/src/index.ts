@@ -43,7 +43,10 @@ export { ThreatEvaluator } from "./evaluation/ThreatEvaluator";
 
 // Search
 export { ActionGenerator } from "./search/ActionGenerator";
-export { Minimax } from "./search/BestMoveSearch";
+export { AlphaBetaSearch } from "./search/AlphaBetaSearch";
+export { LegacySearch } from "./search/BestMoveSearch";
+// Backward-compatible alias: "Minimax" now points at the real minimax.
+export { AlphaBetaSearch as Minimax } from "./search/AlphaBetaSearch";
 export { MoveOrdering } from "./search/MoveOrdering";
 
 // Strategy
