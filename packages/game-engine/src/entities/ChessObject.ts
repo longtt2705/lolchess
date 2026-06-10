@@ -81,6 +81,8 @@ export class ChessObject {
         updatedDamage = (updatedDamage * this.criticalDamage) / 100; // 125% damage
         this.postCritDamage(chess, updatedDamage);
       }
+    } else {
+      this.willCrit = false;
     }
     const damageDealt = this.damage(
       chess,
