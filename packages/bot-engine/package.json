@@ -8,19 +8,29 @@
     "build": "tsc",
     "watch": "tsc --watch",
     "clean": "rm -rf dist",
+    "test": "jest",
+    "selfplay": "node dist/selfplay/run.js",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@lolchess/game-engine": "*"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "@types/jest": "^29.5.2"
   },
-  "keywords": [
-    "lolchess",
-    "bot",
-    "ai",
-    "game-engine"
-  ],
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "testEnvironment": "node",
+    "testTimeout": 30000
+  },
+  "keywords": ["lolchess", "bot", "ai", "game-engine"],
   "license": "MIT"
 }
