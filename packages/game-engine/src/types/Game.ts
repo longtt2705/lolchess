@@ -6,6 +6,8 @@ import { BanPickState } from "./BanPickState";
 export interface GameSettings {
   roundTime: number;
   startingGold: number;
+  /** When true, critical strikes never occur (used by bot search for determinism) */
+  disableCrit?: boolean;
 }
 
 export interface Game {

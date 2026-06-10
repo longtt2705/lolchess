@@ -73,7 +73,7 @@ export class ChessObject {
     sunder: number = 0
   ): number {
     let updatedDamage = damage;
-    if (this.hasItem("jeweled_gauntlet")) {
+    if (this.hasItem("jeweled_gauntlet") && !this.game.gameSettings?.disableCrit) {
       const rng = getGameRng();
       this.willCrit = rng.chance(this.criticalChance);
 
@@ -1420,6 +1420,7 @@ export class ChessObject {
 
   protected isCriticalStrike(forceCritical: boolean = false): boolean {
     if (forceCritical) return true;
+    if (this.game.gameSettings?.disableCrit) return false;
     const rng = getGameRng();
     return rng.chance(this.criticalChance);
   }
