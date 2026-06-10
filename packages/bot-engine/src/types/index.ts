@@ -37,6 +37,8 @@ export interface EvaluationBreakdown {
   passedPawn?: number;
   /** Neutral monster control advantage (Drake, Baron) */
   neutralMonster?: number;
+  /** Gold-in-bank and skill-readiness advantage */
+  economy?: number;
 }
 
 /**

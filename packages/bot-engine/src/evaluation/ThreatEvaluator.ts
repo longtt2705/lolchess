@@ -145,19 +145,20 @@ export class ThreatEvaluator {
   }
 
   /**
-   * Evaluate overall threat score for a player
-   * Sums the top 3 threats to encourage aggressive play
+   * Evaluate overall threat score for a player.
+   * All threats count with geometrically diminishing weight, so three medium
+   * threats outweigh one big one but a long tail can't dominate.
    */
   evaluateThreatScore(game: Game, playerId: string): number {
     const threats = this.getPlayerThreats(game, playerId);
-    // Sum top 3 threats instead of just returning the best one
-    const topN = Math.min(3, threats.length);
-    return threats.slice(0, topN).reduce((acc, t) => acc + t.priority, 0);
+    return threats.reduce(
+      (acc, t, i) => acc + t.priority * Math.pow(0.6, i),
+      0
+    );
   }
 
   getBestThreat(game: Game, playerId: string): ThreatInfo | null {
     const threats = this.getPlayerThreats(game, playerId);
-    console.log(`[ThreatEvaluator] Best threat: ${threats.length > 0 ? threats[threats.length - 1].priority : 0} - ${threats.length > 0 ? threats[threats.length - 1].target.name : "No threats"}`);
     if (threats.length > 0) {
       return threats[0].priority > 0 ? threats[0] : null;
     }
@@ -165,14 +166,19 @@ export class ThreatEvaluator {
   }
 
   /**
-   * Calculate damage between two pieces
+   * Calculate expected damage between two pieces.
+   * Search simulations run crit-free (gameSettings.disableCrit), so crit is
+   * priced in here as expected value: AD * (1 + chance% * (critDmg% - 1)).
    */
   calculateDamage(attacker: Chess, target: Chess): number {
     // Create a temporary game-like context for ChessFactory
     const tempGame = { board: [attacker, target] } as Game;
     const attackerObject = ChessFactory.createChess(attacker, tempGame);
     const targetObject = ChessFactory.createChess(target, tempGame);
-    return attackerObject.calculateDamageAttack(targetObject);
+    const baseDamage = attackerObject.calculateDamageAttack(targetObject);
+    const critChance = Math.min(attackerObject.criticalChance, 100) / 100;
+    const critMultiplier = attackerObject.criticalDamage / 100;
+    return baseDamage * (1 + critChance * (critMultiplier - 1));
   }
 
   // ============================================

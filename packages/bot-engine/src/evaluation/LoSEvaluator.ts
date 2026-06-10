@@ -1,30 +1,10 @@
 import {
-  Chess,
   Game,
-  GameEngine,
   Square,
   getPlayerPieces,
-  isPathClear,
-  champions,
   ChessFactory,
   getPieceAtPosition,
 } from "@lolchess/game-engine";
-import { BlockedLane, LoSAnalysis, LoSClearingMove } from "../types";
-
-/**
- * Direction vectors for 8-directional movement
- */
-const DIRECTIONS = [
-  { dx: 0, dy: 1 }, // Up (forward for blue)
-  { dx: 0, dy: -1 }, // Down (forward for red)
-  { dx: 1, dy: 0 }, // Right
-  { dx: -1, dy: 0 }, // Left
-  { dx: 1, dy: 1 }, // Diagonal up-right
-  { dx: -1, dy: 1 }, // Diagonal up-left
-  { dx: 1, dy: -1 }, // Diagonal down-right
-  { dx: -1, dy: -1 }, // Diagonal down-left
-];
-
 /**
  * Evaluates Line of Sight (LoS) for ranged pieces
  *
@@ -39,25 +19,32 @@ export class LoSEvaluator {
   evaluateLoS(game: Game, playerId: string): number {
     let score = 0;
     const baseScore = 10;
+    const isBlue = game.bluePlayer === playerId;
     const pieces = getPlayerPieces(game, playerId);
-    const uniqueAttackSquares = new Set<Square>();
+    // Dedupe by coordinate key — Set<Square> would compare object references
+    const uniqueAttackSquares = new Map<string, Square>();
     for (const piece of pieces) {
       const availableAttackSquares = ChessFactory.createChess(piece, game).getAvailableAttackSquares();
       for (const square of availableAttackSquares) {
-        uniqueAttackSquares.add(square);
+        uniqueAttackSquares.set(`${square.x},${square.y}`, square);
       }
     }
 
     for (const square of uniqueAttackSquares.values()) {
       if (square.x < 0 || square.x > 7 || square.y < 0 || square.y > 7) continue;
-      // if center square, give a bonus)
-      if ((square.y === 3 || square.y === 4) && (square.x === 3 || square.x === 4)) {
-        score += baseScore * 2;
-      }
 
       const target = getPieceAtPosition(game, square);
-      if (!target) score += baseScore;
-      else score += ChessFactory.createChess(target, game).damageTargetPriorityFactor * baseScore;
+      if (!target) {
+        // Covering empty central squares has mild positional value; the rest is noise
+        if ((square.y === 3 || square.y === 4) && square.x >= 2 && square.x <= 5) {
+          score += baseScore * 0.5;
+        }
+        continue;
+      }
+      // Covering our own pieces is worth nothing
+      if (target.blue === isBlue) continue;
+      // Line of sight onto enemies (and neutral monsters) is what matters
+      score += ChessFactory.createChess(target, game).damageTargetPriorityFactor * baseScore;
     }
     return score;
   }

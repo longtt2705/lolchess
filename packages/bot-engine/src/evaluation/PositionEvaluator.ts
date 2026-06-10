@@ -33,6 +33,7 @@ export class PositionEvaluator {
     lineOfSight: 1, // Decreased from 1 (less emphasis on perfect positioning)
     passedPawn: 1.2, // High weight for promotion potential
     neutralMonster: 0.8, // Neutral monster control (Drake, Baron)
+    economy: 0.3,   // Gold-in-bank and skill-readiness advantage
   };
 
   constructor(private gameEngine: GameEngine) {
@@ -62,6 +63,9 @@ export class PositionEvaluator {
     const safety = this.sanitizeNumber(this.evaluateSafety(game, playerId, opponentId));
     const passedPawn = this.sanitizeNumber(this.evaluatePassedPawns(game, playerId, opponentId));
     const neutralMonster = this.sanitizeNumber(this.evaluateNeutralMonsters(game, playerId, opponentId));
+    const economy = this.sanitizeNumber(this.evaluateEconomy(game, playerId, opponentId));
+
+    const losPhaseMult = !this.gameEngine.isOpeningPhase(game) ? 0.3 : 1;
 
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
@@ -72,16 +76,18 @@ export class PositionEvaluator {
       safety,
       passedPawn,
       neutralMonster,
+      economy,
     };
     // Calculate weighted total score
     const score =
       material * PositionEvaluator.WEIGHTS.material +
       position * PositionEvaluator.WEIGHTS.position +
       threats * PositionEvaluator.WEIGHTS.threats +
-      lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight * (!this.gameEngine.isOpeningPhase(game) ? 0.3 : 1) +
+      lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight * losPhaseMult +
       safety * PositionEvaluator.WEIGHTS.safety +
       passedPawn * PositionEvaluator.WEIGHTS.passedPawn +
-      neutralMonster * PositionEvaluator.WEIGHTS.neutralMonster;
+      neutralMonster * PositionEvaluator.WEIGHTS.neutralMonster +
+      economy * PositionEvaluator.WEIGHTS.economy;
 
     // Final NaN protection
     return this.sanitizeNumber(score);
@@ -386,6 +392,30 @@ export class PositionEvaluator {
   }
 
   /**
+   * Economy: gold lead plus a small premium per ready (off-cooldown) skill.
+   * Symmetric: my economy minus theirs.
+   */
+  private evaluateEconomy(
+    game: Game,
+    playerId: string,
+    opponentId: string
+  ): number {
+    const me = game.players.find((p) => p.userId === playerId);
+    const them = game.players.find((p) => p.userId === opponentId);
+    const goldDiff = (me?.gold ?? 0) - (them?.gold ?? 0);
+    const readyDiff =
+      this.countReadySkills(game, playerId) -
+      this.countReadySkills(game, opponentId);
+    return goldDiff * 0.5 + readyDiff * 5;
+  }
+
+  private countReadySkills(game: Game, playerId: string): number {
+    return getPlayerPieces(game, playerId).filter(
+      (p) => p.skill && p.skill.currentCooldown === 0
+    ).length;
+  }
+
+  /**
    * Sum of per-piece safety (negative when pieces stand in enemy fire).
    * The Poro is weighted heavily but linearly — lethal sequences are the
    * search's job to find, not the evaluation's job to panic about.
@@ -457,6 +487,9 @@ export class PositionEvaluator {
     const safety = this.evaluateSafety(game, playerId, opponentId);
     const passedPawn = this.evaluatePassedPawns(game, playerId, opponentId);
     const neutralMonster = this.evaluateNeutralMonsters(game, playerId, opponentId);
+    const economy = this.evaluateEconomy(game, playerId, opponentId);
+
+    const losPhaseMult = !this.gameEngine.isOpeningPhase(game) ? 0.3 : 1;
 
     // Create breakdown
     const breakdown: EvaluationBreakdown = {
@@ -467,6 +500,7 @@ export class PositionEvaluator {
       safety,
       passedPawn,
       neutralMonster,
+      economy,
     };
 
     // Calculate weighted total score
@@ -474,10 +508,11 @@ export class PositionEvaluator {
       material * PositionEvaluator.WEIGHTS.material +
       position * PositionEvaluator.WEIGHTS.position +
       threats * PositionEvaluator.WEIGHTS.threats +
-      lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight +
+      lineOfSight * PositionEvaluator.WEIGHTS.lineOfSight * losPhaseMult +
       safety * PositionEvaluator.WEIGHTS.safety +
       passedPawn * PositionEvaluator.WEIGHTS.passedPawn +
-      neutralMonster * PositionEvaluator.WEIGHTS.neutralMonster;
+      neutralMonster * PositionEvaluator.WEIGHTS.neutralMonster +
+      economy * PositionEvaluator.WEIGHTS.economy;
 
     return { score, breakdown };
   }
