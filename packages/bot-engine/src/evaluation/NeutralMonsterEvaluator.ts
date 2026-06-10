@@ -3,6 +3,7 @@ import {
   Game,
   GameEngine,
   getPlayerPieces,
+  getCurrentPlayerId,
   ChessFactory,
   Square,
 } from "@lolchess/game-engine";
@@ -70,6 +71,9 @@ export class NeutralMonsterEvaluator {
       return 0; // No monsters on board
     }
 
+    // Derive whose turn it actually is from the real game state so that
+    // evaluate(game, A, B) === -evaluate(game, B, A) (symmetry invariant).
+    const currentTurnPlayerId = getCurrentPlayerId(game);
     let totalScore = 0;
 
     for (const monster of monsters) {
@@ -77,13 +81,13 @@ export class NeutralMonsterEvaluator {
         game,
         monster,
         playerId,
-        true
+        currentTurnPlayerId === playerId
       );
       const opponentControl = this.evaluateControlScore(
         game,
         monster,
         opponentId,
-        false
+        currentTurnPlayerId === opponentId
       );
 
       const controlDiff = playerControl - opponentControl;

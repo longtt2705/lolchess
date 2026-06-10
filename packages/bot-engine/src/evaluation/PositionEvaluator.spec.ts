@@ -1,5 +1,6 @@
 import { GameEngine } from "@lolchess/game-engine";
 import { PositionEvaluator } from "./PositionEvaluator";
+import { NeutralMonsterEvaluator } from "./NeutralMonsterEvaluator";
 
 const CHAMPS = ["Garen", "Ahri", "Ashe", "Aatrox", "Janna"];
 const BLUE = "blue-player";
@@ -56,6 +57,87 @@ describe("PositionEvaluator symmetry", () => {
       -evaluator.evaluate(state, RED),
       3
     );
+  });
+
+  it("is symmetric when a neutral monster (Drake) is on the board (exposes turn-bonus asymmetry)", () => {
+    const { engine, game } = makeGame(42);
+    const evaluator = new PositionEvaluator(engine);
+
+    // Place Drake at a central position adjacent to pieces we'll move there.
+    // Drake position: x=4, y=3 (center of board).
+    const template = game.board[0];
+    const fakeDrake = {
+      ...JSON.parse(JSON.stringify(template)),
+      id: "test-drake",
+      name: "Infernal Drake",
+      ownerId: "neutral",
+      blue: undefined,
+      position: { x: 4, y: 3 },
+      stats: { ...JSON.parse(JSON.stringify(template.stats)), hp: 250, maxHp: 250 },
+    } as any;
+    (game.board as any[]).push(fakeDrake);
+
+    // Move a blue piece to be adjacent (y=2, same file) so it can attack the Drake.
+    // Find an existing blue piece and teleport it.
+    const bluePiece = game.board.find(
+      (p) => p.ownerId === BLUE && p.stats.hp > 0
+    )!;
+    bluePiece.position = { x: 4, y: 2 };
+
+    // Move a red piece to also be adjacent (y=4) so both sides have range.
+    const redPiece = game.board.find(
+      (p) => p.ownerId === RED && p.stats.hp > 0
+    )!;
+    redPiece.position = { x: 4, y: 4 };
+
+    // Set round to an even number so it is RED's turn.
+    // With the bug: evaluate(game, BLUE) always gives BLUE isCurrentTurn=true
+    // even though it's actually RED's turn — breaking symmetry.
+    (game as any).currentRound = 2;
+
+    // Evaluate from both sides — must be an exact mirror.
+    const blueScore = evaluator.evaluate(game, BLUE);
+    const redScore = evaluator.evaluate(game, RED);
+
+    expect(blueScore).toBeCloseTo(-redScore, 3);
+  });
+
+  it("NeutralMonsterEvaluator.evaluate is anti-symmetric: evaluate(A,B) === -evaluate(B,A)", () => {
+    const { engine, game } = makeGame(42);
+    const neutralEvaluator = new NeutralMonsterEvaluator(engine);
+
+    // Place Drake adjacent to pieces of both sides so control score is non-zero.
+    const template = game.board[0];
+    const fakeDrake = {
+      ...JSON.parse(JSON.stringify(template)),
+      id: "test-drake",
+      name: "Infernal Drake",
+      ownerId: "neutral",
+      blue: undefined,
+      position: { x: 4, y: 3 },
+      stats: { ...JSON.parse(JSON.stringify(template.stats)), hp: 250, maxHp: 250 },
+    } as any;
+    (game.board as any[]).push(fakeDrake);
+
+    // Teleport one blue piece and one red piece adjacent to the Drake.
+    const bluePiece = game.board.find(
+      (p) => p.ownerId === BLUE && p.stats.hp > 0
+    )!;
+    bluePiece.position = { x: 4, y: 2 };
+
+    const redPiece = game.board.find(
+      (p) => p.ownerId === RED && p.stats.hp > 0
+    )!;
+    redPiece.position = { x: 4, y: 4 };
+
+    // Use an even round so it's RED's turn — the bug gives blue a free +50
+    // turn-advantage bonus that red doesn't get when evaluating symmetrically.
+    (game as any).currentRound = 2;
+
+    const blueScore = neutralEvaluator.evaluate(game, BLUE, RED);
+    const redScore = neutralEvaluator.evaluate(game, RED, BLUE);
+
+    expect(blueScore).toBeCloseTo(-redScore, 3);
   });
 
   it("is symmetric in a mid-game position where pieces threaten each other (exposes safety sign bug)", () => {
