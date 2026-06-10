@@ -176,8 +176,10 @@ export class ThreatEvaluator {
     const attackerObject = ChessFactory.createChess(attacker, tempGame);
     const targetObject = ChessFactory.createChess(target, tempGame);
     const baseDamage = attackerObject.calculateDamageAttack(targetObject);
+    // calculateDamageAttack already prices crit in when criticalChance > 50
+    if (attackerObject.criticalChance > 50) return baseDamage;
     const critChance = Math.min(attackerObject.criticalChance, 100) / 100;
-    const critMultiplier = attackerObject.criticalDamage / 100;
+    const critMultiplier = Math.max(attackerObject.criticalDamage / 100, 1);
     return baseDamage * (1 + critChance * (critMultiplier - 1));
   }
 

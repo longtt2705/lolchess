@@ -67,17 +67,6 @@ export class PositionEvaluator {
 
     const losPhaseMult = !this.gameEngine.isOpeningPhase(game) ? 0.3 : 1;
 
-    // Create breakdown
-    const breakdown: EvaluationBreakdown = {
-      material,
-      position,
-      threats,
-      lineOfSight,
-      safety,
-      passedPawn,
-      neutralMonster,
-      economy,
-    };
     // Calculate weighted total score
     const score =
       material * PositionEvaluator.WEIGHTS.material +

@@ -31,6 +31,8 @@ export class LoSEvaluator {
     }
 
     for (const square of uniqueAttackSquares.values()) {
+      // Intentionally excludes the z (x=-1) and i (x=8) monster files:
+      // objective control is NeutralMonsterEvaluator's job, not LoS.
       if (square.x < 0 || square.x > 7 || square.y < 0 || square.y > 7) continue;
 
       const target = getPieceAtPosition(game, square);
