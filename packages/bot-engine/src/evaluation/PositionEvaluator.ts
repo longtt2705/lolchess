@@ -410,13 +410,18 @@ export class PositionEvaluator {
 
   /**
    * Evaluate passed pawn promotion potential
+   * Returns the symmetric my-minus-their difference so that
+   * evaluatePassedPawns(game, A, B) === -evaluatePassedPawns(game, B, A).
    */
   private evaluatePassedPawns(
     game: Game,
     playerId: string,
     opponentId: string
   ): number {
-    return this.passedPawnEvaluator.evaluate(game, playerId, opponentId);
+    return (
+      this.passedPawnEvaluator.evaluate(game, playerId, opponentId) -
+      this.passedPawnEvaluator.evaluate(game, opponentId, playerId)
+    );
   }
 
   /**

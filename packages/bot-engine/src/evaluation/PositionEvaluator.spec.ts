@@ -140,6 +140,42 @@ describe("PositionEvaluator symmetry", () => {
     expect(blueScore).toBeCloseTo(-redScore, 3);
   });
 
+  it("is symmetric when blue has a passed pawn and red does not (exposes passed-pawn asymmetry bug)", () => {
+    // Arrange: teleport a blue Melee Minion deep into red territory and clear
+    // all red minions (Melee, Caster, Siege) from files 0-2 so the blue minion
+    // at (1,5) passes the isPassedPawnCheck and gets a nonzero passedPawn score.
+    const { engine, game } = makeGame(42);
+    const evaluator = new PositionEvaluator(engine);
+
+    // Teleport the blue Melee Minion on file 1 to y=5 (deep into red territory)
+    const blueMinion = game.board.find(
+      (p) => p.name === "Melee Minion" && p.ownerId === BLUE && p.position.x === 1
+    )!;
+    blueMinion.position = { x: 1, y: 5 };
+
+    // Wipe out all red minion-type pieces on files 0–2 so nothing blocks the
+    // passed-pawn check on the same/adjacent files ahead of the blue minion.
+    game.board.forEach((p) => {
+      if (
+        ["Melee Minion", "Caster Minion", "Siege Minion"].includes(p.name) &&
+        p.ownerId === RED &&
+        p.position.x >= 0 &&
+        p.position.x <= 2
+      ) {
+        p.stats.hp = 0;
+      }
+    });
+
+    // Verify the scenario actually triggers a nonzero passedPawn component.
+    const blueBreakdown = evaluator.evaluateWithBreakdown(game, BLUE);
+    expect(blueBreakdown.breakdown.passedPawn).not.toBe(0);
+
+    // The core assertion: full evaluation must be anti-symmetric.
+    const blueScore = evaluator.evaluate(game, BLUE);
+    const redScore = evaluator.evaluate(game, RED);
+    expect(blueScore).toBeCloseTo(-redScore, 3);
+  });
+
   it("is symmetric in a mid-game position where pieces threaten each other (exposes safety sign bug)", () => {
     // seed=42: blue pieces start at y=0..1, red at y=6..7
     // Advance blue minion e2->e3->e4 and mirror for red f7->f6->f5
