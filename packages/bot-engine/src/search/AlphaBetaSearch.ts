@@ -13,8 +13,9 @@ import { ActionGenerator } from "./ActionGenerator";
 import { MoveOrdering } from "./MoveOrdering";
 
 const MATE_SCORE = 100000;
-const ROOT_CANDIDATES = 12;
-const NODE_CANDIDATES = 8;
+const ROOT_CANDIDATES = 24;
+const NODE_CANDIDATES = 16;
+const MIN_MOVE_CANDIDATES = 6;
 const MAX_QUIESCENCE_PLIES = 4;
 const MAX_FORCING_ACTIONS = 6;
 
@@ -78,6 +79,10 @@ export class AlphaBetaSearch {
     let previousBest: EventPayload | null = null;
 
     for (let depth = 1; depth <= options.maxDepth; depth++) {
+      // Don't start a depth we likely can't finish: a depth begun past the
+      // halfway mark burns the remaining budget and gets discarded anyway.
+      if (Date.now() - this.startTime > this.timeLimit / 2) break;
+
       try {
         const ordered = this.putFirst(rootActions, previousBest);
         let iterBest: EventPayload | null = null;
@@ -251,9 +256,29 @@ export class AlphaBetaSearch {
 
     const scored = this.moveOrdering.orderActions(game, all, playerId);
     const top = scored.slice(0, limit);
-    for (const s of scored.slice(limit)) {
+    const selected = new Set(top.map((s) => s.action));
+    const rest = scored.slice(limit);
+
+    // Move quota: combat actions outscore quiet moves, so a pure top-N cut
+    // can starve the tree of defensive/repositioning moves. Top up with the
+    // best remaining moves until the quota is met.
+    let moveCount = top.filter((s) => s.action.event === GameEvent.MOVE_CHESS).length;
+    if (moveCount < MIN_MOVE_CANDIDATES) {
+      for (const s of rest) {
+        if (moveCount >= MIN_MOVE_CANDIDATES) break;
+        if (s.action.event !== GameEvent.MOVE_CHESS || selected.has(s.action)) continue;
+        top.push(s);
+        selected.add(s.action);
+        moveCount++;
+      }
+    }
+
+    // Forcing actions (kills, Poro attacks) are never pruned away.
+    for (const s of rest) {
+      if (selected.has(s.action)) continue;
       if (s.isKiller || this.targetsPoro(game, s.action)) {
         top.push(s);
+        selected.add(s.action);
       }
     }
     return top.map((s) => s.action);
@@ -279,7 +304,8 @@ export class AlphaBetaSearch {
   }
 
   private putFirst(actions: EventPayload[], first: EventPayload | null): EventPayload[] {
-    if (!first) return actions;
+    // Always return a copy so callers never alias the cached root array.
+    if (!first) return [...actions];
     const rest = actions.filter((a) => a !== first);
     return rest.length === actions.length ? actions : [first, ...rest];
   }

@@ -2,6 +2,7 @@ import {
   Game,
   EventPayload,
   GameEvent,
+  ChessFactory,
   getPieceAtPosition,
 } from "@lolchess/game-engine";
 import { ScoredAction } from "../types";
@@ -107,11 +108,31 @@ export class MoveOrdering {
                 score += 500;
               }
 
-              // Priority 2: Low HP enemies
+              // Priority 2: Killing skills — mark as killer so quiescence
+              // extends skill-kills the same way it extends attack-kills.
+              // Skill value estimation can throw for exotic skills, so keep
+              // the un-augmented score on error.
+              if (action.casterPosition) {
+                try {
+                  const caster = getPieceAtPosition(game, action.casterPosition);
+                  if (caster) {
+                    const skillValue = ChessFactory.createChess(caster, game)
+                      .getActiveSkillValue(action.targetPosition);
+                    if (target.stats.hp <= skillValue) {
+                      isKiller = true;
+                      score += 500 + (target.stats.goldValue || 0);
+                    }
+                  }
+                } catch {
+                  // ignore — fall back to the base score
+                }
+              }
+
+              // Priority 3: Low HP enemies
               const hpPercent = target.stats.hp / target.stats.maxHp;
               score += (1 - hpPercent) * 40;
 
-              // Priority 3: High value targets
+              // Priority 4: High value targets
               score += (target.stats.goldValue || 0) * 0.3;
             }
           }
