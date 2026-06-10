@@ -4,7 +4,6 @@ import {
   GameEngine,
   getPlayerPieces,
   getPieceAtPosition,
-  ChessFactory,
 } from "@lolchess/game-engine";
 import { EvaluationResult, EvaluationBreakdown } from "../types";
 import { MaterialEvaluator } from "./MaterialEvaluator";
@@ -74,8 +73,6 @@ export class PositionEvaluator {
       passedPawn,
       neutralMonster,
     };
-    console.log(`[PositionEvaluator] Position breakdown: ${JSON.stringify(breakdown)}`);
-
     // Calculate weighted total score
     const score =
       material * PositionEvaluator.WEIGHTS.material +
@@ -382,21 +379,30 @@ export class PositionEvaluator {
     playerId: string,
     opponentId: string
   ): number {
+    return (
+      this.calculatePlayerSafety(game, playerId) -
+      this.calculatePlayerSafety(game, opponentId)
+    );
+  }
+
+  /**
+   * Sum of per-piece safety (negative when pieces stand in enemy fire).
+   * The Poro is weighted heavily but linearly — lethal sequences are the
+   * search's job to find, not the evaluation's job to panic about.
+   */
+  private calculatePlayerSafety(game: Game, playerId: string): number {
     let safety = 0;
     const pieces = getPlayerPieces(game, playerId);
     for (const piece of pieces) {
+      const pieceSafety = this.threatEvaluator.evaluatePositionSafety(
+        game,
+        piece,
+        playerId
+      );
       if (piece.name === "Poro") {
-        const poroSafety = this.threatEvaluator.evaluatePositionSafety(game, piece, playerId);
-
-        // CRITICAL: If Poro is under direct threat, massively penalize
-        if (poroSafety < -50) {
-          // Enemy can deal significant damage - 10x multiplier for emergency escape
-          safety += poroSafety * 10;
-        } else {
-          safety += poroSafety * 2;
-        }
+        safety += pieceSafety * 3;
       } else {
-        safety -= ChessFactory.createChess(piece, game).damageTargetPriorityFactor * this.threatEvaluator.evaluatePositionSafety(game, piece, playerId);
+        safety += pieceSafety * 0.5;
       }
     }
     return safety;
