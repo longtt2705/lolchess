@@ -14,9 +14,11 @@ export class MailService implements OnModuleInit {
     const host = this.configService.get<string>('SMTP_HOST');
 
     if (host) {
+      const port = parseInt(this.configService.get<string>('SMTP_PORT') || '587', 10);
       this.transporter = nodemailer.createTransport({
         host,
-        port: parseInt(this.configService.get<string>('SMTP_PORT') || '587', 10),
+        port,
+        secure: port === 465,
         auth: {
           user: this.configService.get<string>('SMTP_USER'),
           pass: this.configService.get<string>('SMTP_PASS'),
