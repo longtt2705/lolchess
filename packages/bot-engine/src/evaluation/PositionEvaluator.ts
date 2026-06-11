@@ -455,6 +455,7 @@ export class PositionEvaluator {
     for (const piece of pieces) {
       const key = `${piece.position.x},${piece.position.y}`;
       let pieceSafety = 0;
+      let incomingDamage = 0;
       let pieceObject: ReturnType<typeof ChessFactory.createChess> | null = null;
 
       for (const enemy of enemies) {
@@ -462,6 +463,7 @@ export class PositionEvaluator {
           pieceObject ??= ChessFactory.createChess(piece, game);
           const potentialDamage = enemy.object.calculateDamageAttack(pieceObject);
           pieceSafety -= potentialDamage;
+          incomingDamage += potentialDamage;
           if (piece.stats.hp <= potentialDamage) {
             pieceSafety -= 200;
           }
@@ -470,11 +472,27 @@ export class PositionEvaluator {
           const skillValue = enemy.object.getActiveSkillValue(piece.position);
           if (skillValue > 0) {
             pieceSafety -= skillValue;
+            incomingDamage += skillValue;
             if (piece.stats.hp <= skillValue) {
               pieceSafety -= 200;
             }
           }
         }
+      }
+
+      // Poro execution pricing: chip damage on the Poro must scale with how
+      // close it gets to lethal, not just with the per-hit amount. Without
+      // this, a 10-dmg/turn attacker parked next to a 100hp Poro costs only
+      // ~-15 eval points per turn (after multipliers) while walking the Poro
+      // out of its "castled" corner costs ~-115 positional points — so the
+      // bot lets the Poro be executed over 10 turns while ahead on material
+      // (observed: seed 1014, rounds 148-167). The escalation term prices
+      // the threat at a fraction of the Poro's strategic value proportional
+      // to incoming-damage / current-hp (capped at 1), so the eval starts
+      // screaming while there is still time to escape or kill the attacker.
+      if (piece.name === "Poro" && incomingDamage > 0) {
+        const lethality = Math.min(1, incomingDamage / Math.max(1, piece.stats.hp));
+        pieceSafety -= 800 * lethality;
       }
 
       safety += piece.name === "Poro" ? pieceSafety * 3 : pieceSafety * 0.5;

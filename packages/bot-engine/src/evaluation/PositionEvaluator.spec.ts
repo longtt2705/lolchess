@@ -233,3 +233,90 @@ describe("PositionEvaluator symmetry", () => {
     expect(blueScore).toBeCloseTo(-redScore, 3);
   });
 });
+
+describe("PositionEvaluator Poro execution pricing", () => {
+  // Regression for the seed-1014 loss mode: a legacy Siege Minion parked next
+  // to the castled Poro executed it 10 HP at a time over 10 turns while the
+  // bot was ahead on total HP. The flat -damage safety pricing (~-15 eval
+  // points after multipliers) could never outweigh the +100 castle bonus, so
+  // no escape or defense was ever worth it to the search.
+  function setupExecution(poroHp: number) {
+    const engine = new GameEngine();
+    const game = engine.createGame({
+      seed: 42,
+      bluePlayerId: BLUE,
+      redPlayerId: RED,
+      blueChampions: CHAMPS,
+      redChampions: CHAMPS,
+      startingGold: 100,
+    });
+    const evaluator = new PositionEvaluator(engine);
+
+    // Keep only the two Poros and one red Siege Minion bearing on the blue
+    // Poro along an open file.
+    const siege = game.board.find(
+      (p) => p.name === "Siege Minion" && p.ownerId === RED && p.stats.hp > 0
+    )!;
+    for (const p of game.board) {
+      if (p.name === "Poro" || p.id === siege.id) continue;
+      p.stats.hp = 0;
+    }
+    const bluePoro = game.board.find(
+      (p) => p.name === "Poro" && p.ownerId === BLUE
+    )!;
+    const redPoro = game.board.find(
+      (p) => p.name === "Poro" && p.ownerId === RED
+    )!;
+    bluePoro.position = { x: 1, y: 0 }; // castled corner
+    bluePoro.stats.hp = poroHp;
+    redPoro.position = { x: 7, y: 7 };
+    siege.position = { x: 1, y: 4 }; // same file, clear path to the Poro
+
+    return { evaluator, game };
+  }
+
+  it("prices a chip attacker on the Poro worse as the Poro's HP drops", () => {
+    const atFull = setupExecution(200);
+    const atLow = setupExecution(60);
+
+    const safetyFull =
+      atFull.evaluator.evaluateWithBreakdown(atFull.game, BLUE).breakdown.safety;
+    const safetyLow =
+      atLow.evaluator.evaluateWithBreakdown(atLow.game, BLUE).breakdown.safety;
+
+    // Same attacker, same damage per hit — but the low-HP Poro is closer to
+    // execution, so the threat must price substantially worse.
+    expect(safetyLow).toBeLessThan(safetyFull - 100);
+  });
+
+  it("prices Poro chip threats above the castle walk-out cost while escape is still possible", () => {
+    // Walking out of the castled corner costs ~115 positional points
+    // (+100 castle bonus lost, -15 step-out penalty). With several turns
+    // still available to escape (hp well above per-hit damage), the safety
+    // penalty (weighted 0.5 in the total) must already exceed that, or the
+    // search will always prefer to stand and die slowly.
+    const { evaluator, game } = setupExecution(100);
+    const withAttacker =
+      evaluator.evaluateWithBreakdown(game, BLUE).breakdown.safety;
+
+    const noAttacker = setupExecution(100);
+    const siege = noAttacker.game.board.find(
+      (p) => p.name === "Siege Minion" && p.ownerId === RED && p.stats.hp > 0
+    )!;
+    siege.stats.hp = 0;
+    const withoutAttacker =
+      noAttacker.evaluator.evaluateWithBreakdown(noAttacker.game, BLUE)
+        .breakdown.safety;
+
+    const weightedPenalty = (withoutAttacker - withAttacker) * 0.5; // safety weight
+    expect(weightedPenalty).toBeGreaterThan(115);
+  });
+
+  it("stays anti-symmetric with the execution escalation active", () => {
+    const { evaluator, game } = setupExecution(60);
+    expect(evaluator.evaluate(game, BLUE)).toBeCloseTo(
+      -evaluator.evaluate(game, RED),
+      3
+    );
+  });
+});
