@@ -63,6 +63,30 @@ export const registerUser = createAsyncThunk(
   }
 )
 
+export const requestPasswordReset = createAsyncThunk(
+  'auth/requestPasswordReset',
+  async ({ email }: { email: string }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/forgot-password`, { email })
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Request failed')
+    }
+  }
+)
+
+export const resetPassword = createAsyncThunk(
+  'auth/resetPassword',
+  async ({ token, newPassword }: { token: string; newPassword: string }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/reset-password`, { token, newPassword })
+      return response.data
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Password reset failed')
+    }
+  }
+)
+
 export const getCurrentUser = createAsyncThunk(
   'auth/getCurrentUser',
   async (_, { rejectWithValue }) => {
@@ -165,6 +189,30 @@ const authSlice = createSlice({
         state.isAuthenticated = false
         state.error = action.payload as string || 'Failed to get user'
         // Token was likely invalid, so we've already cleared localStorage in the thunk
+      })
+      // Request password reset
+      .addCase(requestPasswordReset.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(requestPasswordReset.fulfilled, (state) => {
+        state.loading = false
+      })
+      .addCase(requestPasswordReset.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string || 'Request failed'
+      })
+      // Reset password
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string || 'Password reset failed'
       })
   },
 })
