@@ -116,6 +116,10 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const user = await this.usersService.findByResetTokenHash(tokenHash);
 

@@ -100,5 +100,13 @@ describe('AuthService — password reset', () => {
       );
       expect(usersService.update).not.toHaveBeenCalled();
     });
+
+    it('rejects a new password shorter than 6 characters before any lookup', async () => {
+      await expect(authService.resetPassword('rawtoken', '123')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(usersService.findByResetTokenHash).not.toHaveBeenCalled();
+      expect(usersService.update).not.toHaveBeenCalled();
+    });
   });
 });
