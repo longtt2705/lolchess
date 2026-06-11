@@ -89,10 +89,20 @@ export class AlphaBetaSearch {
       // halfway mark burns the remaining budget and gets discarded anyway.
       if (Date.now() - this.startTime > this.timeLimit / 2) break;
 
+      // Partial-iteration state, visible to the timeout handler. Root moves
+      // are ordered previous-best first, so once at least one root move has
+      // been fully searched at this depth, `iterBest` is the argmax over a
+      // set that includes the previous depth's choice — strictly
+      // better-informed than the depth-(d-1) answer. Observed in self-play
+      // at 3000ms: critical moves burned the full budget starting depth 3,
+      // timed out mid-iteration, discarded the work, and played the shallow
+      // depth-2 move (the corner-walk blunders in seeds 1001/1019).
+      const ordered = this.putFirst(rootActions, previousBest);
+      let iterBest: EventPayload | null = null;
+      let iterScore = -Infinity;
+      let completedAny = false;
+
       try {
-        const ordered = this.putFirst(rootActions, previousBest);
-        let iterBest: EventPayload | null = null;
-        let iterScore = -Infinity;
         let alpha = -Infinity;
 
         for (const action of ordered) {
@@ -101,6 +111,7 @@ export class AlphaBetaSearch {
           this.nodesSearched++;
 
           const score = this.alphaBeta(result.game, depth - 1, alpha, Infinity, rootPlayerId, 1);
+          completedAny = true;
           if (score > iterScore) {
             iterScore = score;
             iterBest = action;
@@ -118,7 +129,18 @@ export class AlphaBetaSearch {
         // A forced win was found — no need to search deeper.
         if (bestScore > MATE_SCORE - 1000) break;
       } catch (e) {
-        if (e instanceof SearchTimeout) break;
+        if (e instanceof SearchTimeout) {
+          // Adopt the partial iteration's best if it searched at least one
+          // root move to full depth (which, by ordering, includes the
+          // previous best unless that move itself failed to apply).
+          if (completedAny && iterBest) {
+            bestAction = iterBest;
+            bestScore = iterScore;
+            // completedDepth intentionally NOT bumped: it reports fully
+            // completed depths only.
+          }
+          break;
+        }
         throw e;
       }
     }
