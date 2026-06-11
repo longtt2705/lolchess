@@ -1,15 +1,20 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
+import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private mailService: MailService,
   ) {}
 
   async validateUser(username: string, password: string): Promise<any> {
@@ -87,5 +92,59 @@ export class AuthService {
       // Re-throw other errors
       throw error;
     }
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.usersService.findByEmail(email);
+
+    // Enumeration-safe: silently return when no account matches.
+    if (!user) {
+      return;
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    const userId = (user as any)._id.toString();
+    await this.usersService.update(userId, {
+      resetPasswordTokenHash: tokenHash,
+      resetPasswordExpires: expires,
+    });
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const resetUrl = `${frontendUrl}/reset-password?token=${rawToken}`;
+    try {
+      await this.mailService.sendPasswordResetEmail(user.email, resetUrl);
+    } catch (error) {
+      // Swallow send failures so a real account that fails to email is
+      // indistinguishable from an unknown email (enumeration-safety).
+      this.logger.error(`Failed to send password reset email: ${error}`);
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await this.usersService.findByResetTokenHash(tokenHash);
+
+    if (
+      !user ||
+      !user.resetPasswordExpires ||
+      user.resetPasswordExpires.getTime() < Date.now()
+    ) {
+      throw new BadRequestException('Invalid or expired password reset token');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const userId = (user as any)._id.toString();
+    await this.usersService.update(userId, {
+      password: hashedPassword,
+      resetPasswordTokenHash: null,
+      resetPasswordExpires: null,
+    });
   }
 }

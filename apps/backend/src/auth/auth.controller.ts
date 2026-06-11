@@ -22,6 +22,21 @@ export class AuthController {
     return this.authService.register(registerDto.username, registerDto.email, registerDto.password);
   }
 
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: { email: string }) {
+    await this.authService.forgotPassword(body.email);
+    // Always generic — never reveal whether the email exists.
+    return {
+      message: 'If an account exists for that email, a password reset link has been sent.',
+    };
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: { token: string; newPassword: string }) {
+    await this.authService.resetPassword(body.token, body.newPassword);
+    return { message: 'Password has been reset successfully.' };
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(@Request() req) {

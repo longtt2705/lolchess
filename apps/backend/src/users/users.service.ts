@@ -28,6 +28,10 @@ export class UsersService {
     return this.userModel.findOne({ email }).exec();
   }
 
+  async findByResetTokenHash(tokenHash: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ resetPasswordTokenHash: tokenHash }).exec();
+  }
+
   async update(id: string, updateUserDto: any): Promise<User> {
     return this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).select('-password').exec();
   }
