@@ -128,6 +128,21 @@ const RegisterLink = styled.div`
   }
 `
 
+const ForgotLink = styled.div`
+  text-align: center;
+  margin-top: 12px;
+
+  a {
+    color: var(--secondary-text);
+    text-decoration: none;
+    font-size: 14px;
+
+    &:hover {
+      color: var(--gold);
+    }
+  }
+`
+
 interface LoginFormData {
   username: string
   password: string
@@ -207,6 +222,10 @@ const LoginPage: React.FC = () => {
             {loading ? 'Logging in...' : 'Login'}
           </LoginButton>
         </Form>
+
+        <ForgotLink>
+          <Link to="/forgot-password">Forgot password?</Link>
+        </ForgotLink>
 
         <RegisterLink>
           Don't have an account?{' '}
