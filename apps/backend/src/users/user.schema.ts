@@ -14,6 +14,12 @@ export class User {
   @Prop({ required: true })
   password: string;
 
+  @Prop({ required: false, default: null })
+  resetPasswordTokenHash?: string;
+
+  @Prop({ required: false, default: null })
+  resetPasswordExpires?: Date;
+
   @Prop({ default: 0 })
   level: number;
 
