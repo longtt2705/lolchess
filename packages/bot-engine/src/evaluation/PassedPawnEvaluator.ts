@@ -7,8 +7,8 @@ import {
   ChessFactory,
   ChessObject,
   Square,
-} from "@lolchess/game-engine";
-import { PassedPawnScore } from "../types";
+} from '@lolchess/game-engine';
+import { PassedPawnScore } from '../types';
 
 /**
  * Evaluates passed pawn promotion potential
@@ -32,7 +32,7 @@ export class PassedPawnEvaluator {
       if (!this.isMinion(piece.name)) continue;
 
       const score = this.evaluatePassedPawn(game, piece, playerId, opponentId, isBlue);
-      
+
       if (score.isPassedPawn) {
         passedPawnCount++;
         totalScore += score.totalScore;
@@ -55,14 +55,14 @@ export class PassedPawnEvaluator {
     minion: Chess,
     playerId: string,
     opponentId: string,
-    isBlue: boolean
+    isBlue: boolean,
   ): PassedPawnScore {
-    const canPromote = minion.name === "Melee Minion";
-    
+    const canPromote = minion.name === 'Melee Minion';
+
     // Calculate distance and turns to promotion
     const promotionRank = isBlue ? 7 : 0;
     const distanceToPromotion = Math.abs(promotionRank - minion.position.y);
-    
+
     const minionObject = ChessFactory.createChess(minion, game);
     const effectiveSpeed = this.calculateEffectiveSpeed(minionObject);
     const turnsToPromotion = Math.ceil(distanceToPromotion / effectiveSpeed);
@@ -75,7 +75,7 @@ export class PassedPawnEvaluator {
         opponentMinionPositions.add(`${piece.position.x},${piece.position.y}`);
       }
     }
-    
+
     const isPassedPawn = this.isPassedPawnCheck(minion, opponentMinionPositions, isBlue);
 
     // If not a passed pawn, return minimal score
@@ -104,7 +104,7 @@ export class PassedPawnEvaluator {
       minion,
       turnsToPromotion,
       isBlue,
-      opponentId
+      opponentId,
     );
 
     // Analyze support structure
@@ -166,15 +166,13 @@ export class PassedPawnEvaluator {
   private isPassedPawnCheck(
     minion: Chess,
     opponentMinionPositions: Set<string>,
-    isBlue: boolean
+    isBlue: boolean,
   ): boolean {
     const file = minion.position.x;
     const rank = minion.position.y;
 
     // Check all squares ahead in same file and adjacent files
-    const filesToCheck = [file - 1, file, file + 1].filter(
-      (f) => f >= 0 && f <= 7
-    );
+    const filesToCheck = [file - 1, file, file + 1].filter((f) => f >= 0 && f <= 7);
 
     for (const f of filesToCheck) {
       // Check all ranks ahead
@@ -213,7 +211,7 @@ export class PassedPawnEvaluator {
         if (piece && piece.stats.hp > 0) {
           // Check if it's a ghosted ally (doesn't block)
           const isAlly = piece.blue === minion.blue;
-          const hasGhost = piece.debuffs?.some((d) => d.name === "Ghost") ?? false;
+          const hasGhost = piece.debuffs?.some((d) => d.name === 'Ghost') ?? false;
           if (!isAlly || !hasGhost) {
             return true;
           }
@@ -225,7 +223,7 @@ export class PassedPawnEvaluator {
         if (piece && piece.stats.hp > 0) {
           // Check if it's a ghosted ally (doesn't block)
           const isAlly = piece.blue === minion.blue;
-          const hasGhost = piece.debuffs?.some((d) => d.name === "Ghost") ?? false;
+          const hasGhost = piece.debuffs?.some((d) => d.name === 'Ghost') ?? false;
           if (!isAlly || !hasGhost) {
             return true;
           }
@@ -244,7 +242,7 @@ export class PassedPawnEvaluator {
     minion: Chess,
     turnsToPromotion: number,
     isBlue: boolean,
-    opponentId: string
+    opponentId: string,
   ): {
     threatCount: number;
     minInterceptionTurns: number;
@@ -278,7 +276,7 @@ export class PassedPawnEvaluator {
       }
 
       // Check for Critical Flank risk (enemy minions diagonal)
-      if (enemy.name === "Melee Minion" || enemy.name === "Caster Minion") {
+      if (enemy.name === 'Melee Minion' || enemy.name === 'Caster Minion') {
         const deltaX = Math.abs(enemy.position.x - minion.position.x);
         const deltaY = Math.abs(enemy.position.y - minion.position.y);
         if (deltaX === 1 && deltaY === 1) {
@@ -294,15 +292,12 @@ export class PassedPawnEvaluator {
       }
 
       // Special case: Check enemy Poro (King) distance
-      if (enemy.name === "Poro") {
+      if (enemy.name === 'Poro') {
         // Poro can only capture at range 1
         const promotionSquare = { x: minion.position.x, y: promotionRank };
-        const poroDistance = this.calculateManhattanDistance(
-          enemy.position,
-          promotionSquare
-        );
+        const poroDistance = this.calculateManhattanDistance(enemy.position, promotionSquare);
         const turnsForPoroToReach = Math.ceil(poroDistance / enemySpeed);
-        
+
         if (turnsForPoroToReach <= turnsToPromotion + 1) {
           // Poro can reach the promotion square around the same time
           threatCount++;
@@ -324,9 +319,7 @@ export class PassedPawnEvaluator {
     const promotionRank = isBlue ? 7 : 0;
 
     // Minions can move diagonally forward, so include adjacent files
-    const filesToConsider = [file - 1, file, file + 1].filter(
-      (f) => f >= 0 && f <= 7
-    );
+    const filesToConsider = [file - 1, file, file + 1].filter((f) => f >= 0 && f <= 7);
 
     for (const f of filesToConsider) {
       if (isBlue) {
@@ -357,14 +350,14 @@ export class PassedPawnEvaluator {
     game: Game,
     minion: Chess,
     playerId: string,
-    isBlue: boolean
+    isBlue: boolean,
   ): number {
     let supportCount = 0;
     const playerPieces = getPlayerPieces(game, playerId);
 
     // Check for pawn chain (diagonal allies behind)
     const supportY = isBlue ? minion.position.y - 1 : minion.position.y + 1;
-    
+
     for (const ally of playerPieces) {
       if (ally.id === minion.id || ally.stats.hp <= 0) continue;
 
@@ -378,7 +371,7 @@ export class PassedPawnEvaluator {
 
       // Check for nearby friendly pieces that can protect
       const distance = this.calculateManhattanDistance(ally.position, minion.position);
-      if (distance <= 2 && ally.name !== "Poro") {
+      if (distance <= 2 && ally.name !== 'Poro') {
         supportCount++;
       }
     }
@@ -445,22 +438,18 @@ export class PassedPawnEvaluator {
    */
   private isMinion(pieceName: string): boolean {
     return [
-      "Melee Minion",
-      "Caster Minion",
-      "Siege Minion",
-      "Super Minion",
-      "Sand Soldier",
+      'Melee Minion',
+      'Caster Minion',
+      'Siege Minion',
+      'Super Minion',
+      'Sand Soldier',
     ].includes(pieceName);
   }
 
   /**
    * Get detailed passed pawn analysis for debugging
    */
-  getPassedPawnDetails(
-    game: Game,
-    playerId: string,
-    opponentId: string
-  ): PassedPawnScore[] {
+  getPassedPawnDetails(game: Game, playerId: string, opponentId: string): PassedPawnScore[] {
     const pieces = getPlayerPieces(game, playerId);
     const isBlue = game.bluePlayer === playerId;
     const scores: PassedPawnScore[] = [];
@@ -469,7 +458,7 @@ export class PassedPawnEvaluator {
       if (!this.isMinion(piece.name)) continue;
 
       const score = this.evaluatePassedPawn(game, piece, playerId, opponentId, isBlue);
-      
+
       if (score.isPassedPawn) {
         scores.push(score);
       }

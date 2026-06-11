@@ -9,16 +9,16 @@
  *
  * Acceptance gate from the spec: new bot wins >= 80% of decided games.
  */
-import { GameEngine, Game, getCurrentPlayerId, GameEvent } from "@lolchess/game-engine";
-import { BotEngine } from "../BotEngine";
+import { GameEngine, Game, getCurrentPlayerId, GameEvent } from '@lolchess/game-engine';
+import { BotEngine } from '../BotEngine';
 
-const CHAMPS = ["Garen", "Ahri", "Ashe", "Aatrox", "Janna"];
-const BLUE_ID = "blue-bot";
-const RED_ID = "red-bot";
+const CHAMPS = ['Garen', 'Ahri', 'Ashe', 'Aatrox', 'Janna'];
+const BLUE_ID = 'blue-bot';
+const RED_ID = 'red-bot';
 const MAX_ROUNDS = 400; // 200 turns each, then declared a draw
 const MAX_ACTIONS_PER_TURN = 6; // free actions safety valve
 
-type Outcome = "new" | "legacy" | "draw" | "error";
+type Outcome = 'new' | 'legacy' | 'draw' | 'error';
 
 interface GameRecord {
   seed: number;
@@ -33,8 +33,8 @@ interface GameRecord {
 
 function playGame(seed: number, newIsBlue: boolean, timeLimit: number): GameRecord {
   const engine = new GameEngine();
-  const newBot = new BotEngine({ difficulty: "expert", timeLimit });
-  const legacyBot = new BotEngine({ difficulty: "expert", timeLimit, engine: "legacy" });
+  const newBot = new BotEngine({ difficulty: 'expert', timeLimit });
+  const legacyBot = new BotEngine({ difficulty: 'expert', timeLimit, engine: 'legacy' });
 
   let game: Game = engine.createGame({
     seed,
@@ -77,7 +77,7 @@ function playGame(seed: number, newIsBlue: boolean, timeLimit: number): GameReco
       action = bots[pid].getAction(game, pid);
     } catch (e) {
       console.error(`  [seed ${seed}] bot ${pid} threw:`, e);
-      return record(seed, newIsBlue, "error", game, newMoveTimes, suspendedMs);
+      return record(seed, newIsBlue, 'error', game, newMoveTimes, suspendedMs);
     }
     const wallMs = Date.now() - t0;
     const monoMs = performance.now() - m0;
@@ -85,14 +85,14 @@ function playGame(seed: number, newIsBlue: boolean, timeLimit: number): GameReco
       suspendedMs += wallMs - monoMs;
       console.error(
         `  [seed ${seed}] process suspension detected during ${pid} move: ` +
-          `wall=${wallMs}ms mono=${Math.round(monoMs)}ms`
+          `wall=${wallMs}ms mono=${Math.round(monoMs)}ms`,
       );
     }
     if (pid === newBotId) newMoveTimes.push(Math.round(monoMs));
     if (monoMs > timeLimit * 1.5) {
       console.error(
         `  [seed ${seed}] SLOW MOVE by ${pid}: mono=${Math.round(monoMs)}ms ` +
-          `(budget ${timeLimit}ms) round=${game.currentRound}`
+          `(budget ${timeLimit}ms) round=${game.currentRound}`,
       );
     }
 
@@ -104,33 +104,36 @@ function playGame(seed: number, newIsBlue: boolean, timeLimit: number): GameReco
           (a) =>
             a.event === GameEvent.MOVE_CHESS ||
             a.event === GameEvent.ATTACK_CHESS ||
-            a.event === GameEvent.SKILL
+            a.event === GameEvent.SKILL,
         );
       if (!fallback) {
         // No board action at all: stalemate -> draw
-        return record(seed, newIsBlue, "draw", game, newMoveTimes, suspendedMs);
+        return record(seed, newIsBlue, 'draw', game, newMoveTimes, suspendedMs);
       }
       action = fallback;
     }
 
     const result = engine.processAction(game, action);
     if (!result.success) {
-      console.error(`  [seed ${seed}] illegal action by ${pid}: ${result.error}`, JSON.stringify(action));
-      return record(seed, newIsBlue, "error", game, newMoveTimes, suspendedMs);
+      console.error(
+        `  [seed ${seed}] illegal action by ${pid}: ${result.error}`,
+        JSON.stringify(action),
+      );
+      return record(seed, newIsBlue, 'error', game, newMoveTimes, suspendedMs);
     }
     game = result.game;
   }
 
   if (!engine.isGameOver(game)) {
-    return record(seed, newIsBlue, "draw", game, newMoveTimes, suspendedMs);
+    return record(seed, newIsBlue, 'draw', game, newMoveTimes, suspendedMs);
   }
 
   const winner = engine.getWinner(game); // "blue" | "red" | null
   if (winner === null || winner === undefined) {
-    return record(seed, newIsBlue, "draw", game, newMoveTimes, suspendedMs);
+    return record(seed, newIsBlue, 'draw', game, newMoveTimes, suspendedMs);
   }
-  const newWon = (winner === "blue") === newIsBlue;
-  return record(seed, newIsBlue, newWon ? "new" : "legacy", game, newMoveTimes, suspendedMs);
+  const newWon = (winner === 'blue') === newIsBlue;
+  return record(seed, newIsBlue, newWon ? 'new' : 'legacy', game, newMoveTimes, suspendedMs);
 }
 
 function record(
@@ -139,12 +142,10 @@ function record(
   outcome: Outcome,
   game: Game,
   newMoveTimes: number[],
-  suspendedMs: number
+  suspendedMs: number,
 ): GameRecord {
   const avg =
-    newMoveTimes.length > 0
-      ? newMoveTimes.reduce((a, b) => a + b, 0) / newMoveTimes.length
-      : 0;
+    newMoveTimes.length > 0 ? newMoveTimes.reduce((a, b) => a + b, 0) / newMoveTimes.length : 0;
   return {
     seed,
     newIsBlue,
@@ -157,36 +158,37 @@ function record(
 }
 
 function main() {
-  const numGames = parseInt(process.argv[2] ?? "10", 10);
-  const timeLimitArg = parseInt(process.argv[3] ?? "3000", 10);
+  const numGames = parseInt(process.argv[2] ?? '10', 10);
+  const timeLimitArg = parseInt(process.argv[3] ?? '3000', 10);
   // A NaN time limit would silently disable every time check downstream.
-  const timeLimit =
-    isFinite(timeLimitArg) && timeLimitArg > 0 ? timeLimitArg : 3000;
+  const timeLimit = isFinite(timeLimitArg) && timeLimitArg > 0 ? timeLimitArg : 3000;
   const records: GameRecord[] = [];
 
-  console.log(`Self-play: ${numGames} games, ${timeLimit}ms/move, new(alphabeta) vs legacy(greedy)\n`);
+  console.log(
+    `Self-play: ${numGames} games, ${timeLimit}ms/move, new(alphabeta) vs legacy(greedy)\n`,
+  );
 
   for (let i = 0; i < numGames; i++) {
-    const seed = parseInt(process.argv[4] ?? "1000", 10) + i;
+    const seed = parseInt(process.argv[4] ?? '1000', 10) + i;
     const newIsBlue = i % 2 === 0; // alternate colors
     const t0 = Date.now();
     const rec = playGame(seed, newIsBlue, timeLimit);
     records.push(rec);
     console.log(
-      `game ${i + 1}/${numGames} seed=${seed} new=${newIsBlue ? "blue" : "red"} -> ` +
+      `game ${i + 1}/${numGames} seed=${seed} new=${newIsBlue ? 'blue' : 'red'} -> ` +
         `${rec.outcome.toUpperCase()} in ${rec.rounds} rounds ` +
         `(avg new-bot move ${rec.avgNewMoveMs}ms, max ${rec.maxNewMoveMs}ms` +
-        `${rec.suspendedMs > 0 ? `, SUSPENDED ${rec.suspendedMs}ms` : ""}, ` +
-        `game took ${Math.round((Date.now() - t0) / 1000)}s)`
+        `${rec.suspendedMs > 0 ? `, SUSPENDED ${rec.suspendedMs}ms` : ''}, ` +
+        `game took ${Math.round((Date.now() - t0) / 1000)}s)`,
     );
   }
 
-  const wins = records.filter((r) => r.outcome === "new").length;
-  const losses = records.filter((r) => r.outcome === "legacy").length;
-  const draws = records.filter((r) => r.outcome === "draw").length;
-  const errors = records.filter((r) => r.outcome === "error").length;
+  const wins = records.filter((r) => r.outcome === 'new').length;
+  const losses = records.filter((r) => r.outcome === 'legacy').length;
+  const draws = records.filter((r) => r.outcome === 'draw').length;
+  const errors = records.filter((r) => r.outcome === 'error').length;
   const decided = wins + losses;
-  const winRate = decided > 0 ? ((wins / decided) * 100).toFixed(1) : "n/a";
+  const winRate = decided > 0 ? ((wins / decided) * 100).toFixed(1) : 'n/a';
 
   console.log(`\n=== RESULTS ===`);
   console.log(`new bot:    ${wins} wins`);

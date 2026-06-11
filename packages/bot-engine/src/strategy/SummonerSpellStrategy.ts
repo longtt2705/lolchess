@@ -7,13 +7,13 @@ import {
   getPlayerPieces,
   getPieceAtPosition,
   Square,
-} from "@lolchess/game-engine";
-import { ThreatEvaluator } from "../evaluation/ThreatEvaluator";
-import { MaterialEvaluator } from "../evaluation/MaterialEvaluator";
+} from '@lolchess/game-engine';
+import { ThreatEvaluator } from '../evaluation/ThreatEvaluator';
+import { MaterialEvaluator } from '../evaluation/MaterialEvaluator';
 
 /**
  * Strategy for summoner spell usage
- * 
+ *
  * Evaluates when and which summoner spell to use based on:
  * - Piece threat level (prioritize Poro and high-value pieces)
  * - HP thresholds (emergency situations)
@@ -24,10 +24,7 @@ export class SummonerSpellStrategy {
   private threatEvaluator: ThreatEvaluator;
 
   constructor(private gameEngine: GameEngine) {
-    this.threatEvaluator = new ThreatEvaluator(
-      gameEngine,
-      new MaterialEvaluator()
-    );
+    this.threatEvaluator = new ThreatEvaluator(gameEngine, new MaterialEvaluator());
   }
 
   /**
@@ -43,15 +40,15 @@ export class SummonerSpellStrategy {
       }
 
       switch (piece.summonerSpell.type) {
-        case "Flash":
+        case 'Flash':
           return this.evaluateFlash(game, piece, playerId).score > 0;
-        case "Ghost":
+        case 'Ghost':
           return this.evaluateGhost(game, piece, playerId) > 0;
-        case "Heal":
+        case 'Heal':
           return this.evaluateHeal(game, piece, playerId) > 0;
-        case "Barrier":
+        case 'Barrier':
           return this.evaluateBarrier(game, piece, playerId) > 0;
-        case "Smite":
+        case 'Smite':
           return this.evaluateSmite(game, piece, playerId).score > 0;
         default:
           return false;
@@ -63,10 +60,7 @@ export class SummonerSpellStrategy {
    * Recommend the best summoner spell to use
    * Returns the spell action with highest priority
    */
-  recommendSummonerSpell(
-    game: Game,
-    playerId: string
-  ): EventPayload | null {
+  recommendSummonerSpell(game: Game, playerId: string): EventPayload | null {
     if (game.hasUsedSummonerSpellThisTurn) return null;
 
     const pieces = this.getEligiblePieces(game, playerId);
@@ -82,7 +76,7 @@ export class SummonerSpellStrategy {
       let action: EventPayload | null = null;
 
       switch (piece.summonerSpell.type) {
-        case "Flash": {
+        case 'Flash': {
           const flashEval = this.evaluateFlash(game, piece, playerId);
           score = flashEval.score;
           if (score > 0 && flashEval.target) {
@@ -96,7 +90,7 @@ export class SummonerSpellStrategy {
           break;
         }
 
-        case "Ghost": {
+        case 'Ghost': {
           score = this.evaluateGhost(game, piece, playerId);
           if (score > 0) {
             action = {
@@ -109,7 +103,7 @@ export class SummonerSpellStrategy {
           break;
         }
 
-        case "Heal": {
+        case 'Heal': {
           score = this.evaluateHeal(game, piece, playerId);
           if (score > 0) {
             action = {
@@ -122,7 +116,7 @@ export class SummonerSpellStrategy {
           break;
         }
 
-        case "Barrier": {
+        case 'Barrier': {
           score = this.evaluateBarrier(game, piece, playerId);
           if (score > 0) {
             action = {
@@ -135,7 +129,7 @@ export class SummonerSpellStrategy {
           break;
         }
 
-        case "Smite": {
+        case 'Smite': {
           const smiteEval = this.evaluateSmite(game, piece, playerId);
           score = smiteEval.score;
           if (score > 0 && smiteEval.target) {
@@ -160,9 +154,7 @@ export class SummonerSpellStrategy {
     }
 
     if (bestAction) {
-      console.log(
-        `[SummonerSpellStrategy] Recommending spell with score ${bestScore}`
-      );
+      console.log(`[SummonerSpellStrategy] Recommending spell with score ${bestScore}`);
     }
 
     return bestAction;
@@ -179,20 +171,16 @@ export class SummonerSpellStrategy {
   private evaluateFlash(
     game: Game,
     piece: Chess,
-    playerId: string
+    playerId: string,
   ): { score: number; target?: Square } {
     let bestScore = 0;
     let bestTarget: Square | undefined;
 
     // Check current danger level
-    const currentSafety = this.threatEvaluator.evaluatePositionSafety(
-      game,
-      piece,
-      playerId
-    );
+    const currentSafety = this.threatEvaluator.evaluatePositionSafety(game, piece, playerId);
 
     // Bonus for Poro in danger
-    const isPoro = piece.name === "Poro";
+    const isPoro = piece.name === 'Poro';
     const isInDanger = currentSafety < -50;
     const isCriticalDanger = currentSafety < -100;
 
@@ -207,7 +195,7 @@ export class SummonerSpellStrategy {
         if (distance > 0 && distance <= 2) {
           // Check if square is empty
           const occupied = game.board.find(
-            (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0
+            (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0,
           );
           if (!occupied) {
             flashPositions.push({ x, y });
@@ -221,11 +209,7 @@ export class SummonerSpellStrategy {
       const originalPos = { ...piece.position };
       piece.position = pos;
 
-      const newSafety = this.threatEvaluator.evaluatePositionSafety(
-        game,
-        piece,
-        playerId
-      );
+      const newSafety = this.threatEvaluator.evaluatePositionSafety(game, piece, playerId);
 
       piece.position = originalPos;
 
@@ -257,7 +241,7 @@ export class SummonerSpellStrategy {
         for (const targetPos of attackTargets) {
           const target = getPieceAtPosition(game, targetPos);
           if (target && target.blue !== piece.blue) {
-            if (target.name === "Poro") {
+            if (target.name === 'Poro') {
               attackValue += 200;
             } else {
               attackValue += target.stats.goldValue || 0;
@@ -290,11 +274,7 @@ export class SummonerSpellStrategy {
     let score = 0;
 
     // Check if piece is in danger (escape scenario)
-    const currentSafety = this.threatEvaluator.evaluatePositionSafety(
-      game,
-      piece,
-      playerId
-    );
+    const currentSafety = this.threatEvaluator.evaluatePositionSafety(game, piece, playerId);
 
     if (currentSafety < -30) {
       score += Math.abs(currentSafety) * 0.5; // Moderate escape value
@@ -303,13 +283,13 @@ export class SummonerSpellStrategy {
     // Check chase potential (can we reach high-value targets with +1 speed?)
     const isBlue = game.bluePlayer === playerId;
     const enemyPoro = game.board.find(
-      (p) => p.name === "Poro" && p.blue !== isBlue && p.stats.hp > 0
+      (p) => p.name === 'Poro' && p.blue !== isBlue && p.stats.hp > 0,
     );
 
     if (enemyPoro) {
       const distance = Math.max(
         Math.abs(enemyPoro.position.x - piece.position.x),
-        Math.abs(enemyPoro.position.y - piece.position.y)
+        Math.abs(enemyPoro.position.y - piece.position.y),
       );
 
       // If Poro is within range with +1 speed (3 turns)
@@ -341,7 +321,7 @@ export class SummonerSpellStrategy {
 
       const distance = Math.max(
         Math.abs(ally.position.x - piece.position.x),
-        Math.abs(ally.position.y - piece.position.y)
+        Math.abs(ally.position.y - piece.position.y),
       );
       return distance === 1;
     });
@@ -349,7 +329,7 @@ export class SummonerSpellStrategy {
     if (adjacentAllies.length > 0) {
       // Find lowest HP ally
       const lowestHpAlly = adjacentAllies.reduce((min, ally) =>
-        ally.stats.hp < min.stats.hp ? ally : min
+        ally.stats.hp < min.stats.hp ? ally : min,
       );
 
       const allyHpPercent = lowestHpAlly.stats.hp / lowestHpAlly.stats.maxHp;
@@ -360,14 +340,14 @@ export class SummonerSpellStrategy {
         const allySafety = this.threatEvaluator.evaluatePositionSafety(
           game,
           lowestHpAlly,
-          playerId
+          playerId,
         );
         if (allySafety < -20) {
           score += Math.abs(allySafety) * 0.5;
         }
 
         // Bonus if ally is Poro
-        if (lowestHpAlly.name === "Poro") {
+        if (lowestHpAlly.name === 'Poro') {
           score += 200;
         }
       }
@@ -384,11 +364,7 @@ export class SummonerSpellStrategy {
     let score = 0;
 
     // Check if piece is threatened
-    const currentSafety = this.threatEvaluator.evaluatePositionSafety(
-      game,
-      piece,
-      playerId
-    );
+    const currentSafety = this.threatEvaluator.evaluatePositionSafety(game, piece, playerId);
 
     if (currentSafety < -30) {
       // Barrier value = incoming damage up to shield amount (50 HP)
@@ -396,7 +372,7 @@ export class SummonerSpellStrategy {
       score += incomingDamage * 2; // Double value for prevention
 
       // Extra value for Poro
-      if (piece.name === "Poro") {
+      if (piece.name === 'Poro') {
         score += 300;
       }
 
@@ -417,7 +393,7 @@ export class SummonerSpellStrategy {
   private evaluateSmite(
     game: Game,
     piece: Chess,
-    playerId: string
+    playerId: string,
   ): { score: number; target?: Chess } {
     let bestScore = 0;
     let bestTarget: Chess | undefined;
@@ -430,20 +406,20 @@ export class SummonerSpellStrategy {
 
       const distance = Math.max(
         Math.abs(target.position.x - piece.position.x),
-        Math.abs(target.position.y - piece.position.y)
+        Math.abs(target.position.y - piece.position.y),
       );
 
       if (distance > 2) continue;
 
       // Check if valid Smite target
       const isNeutralMonster =
-        target.ownerId === "neutral" ||
-        target.name.includes("Drake") ||
-        target.name === "Baron Nashor" ||
-        target.name === "Elder Dragon";
+        target.ownerId === 'neutral' ||
+        target.name.includes('Drake') ||
+        target.name === 'Baron Nashor' ||
+        target.name === 'Elder Dragon';
 
       const isEnemyMinion =
-        (target.name.includes("Minion") || target.name === "Super Minion") &&
+        (target.name.includes('Minion') || target.name === 'Super Minion') &&
         target.blue !== isBlue;
 
       if (!isEnemyMinion && !isNeutralMonster) continue;
@@ -505,17 +481,11 @@ export class SummonerSpellStrategy {
    */
   private isPoroInDanger(game: Game, playerId: string): boolean {
     const isBlue = game.bluePlayer === playerId;
-    const poro = game.board.find(
-      (p) => p.name === "Poro" && p.blue === isBlue && p.stats.hp > 0
-    );
+    const poro = game.board.find((p) => p.name === 'Poro' && p.blue === isBlue && p.stats.hp > 0);
 
     if (!poro) return false;
 
-    const safety = this.threatEvaluator.evaluatePositionSafety(
-      game,
-      poro,
-      playerId
-    );
+    const safety = this.threatEvaluator.evaluatePositionSafety(game, poro, playerId);
 
     return safety < -50;
   }

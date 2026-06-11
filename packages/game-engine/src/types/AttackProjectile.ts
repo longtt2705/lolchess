@@ -6,4 +6,3 @@ export interface AttackProjectile {
   speed?: number;
   icon?: string;
 }
-

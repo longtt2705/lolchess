@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+coverage
+package-lock.json
+*.log
+
+# Prose docs are hand-maintained (RULE.md is the authoritative ruleset) — leave them alone.
+*.md

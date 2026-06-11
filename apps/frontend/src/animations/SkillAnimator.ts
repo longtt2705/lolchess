@@ -1,25 +1,25 @@
-import { SkillAnimationRenderer } from "./types";
-import { genericSkillRenderer } from "./skills/genericSkill";
-import { rocketGrabRenderer } from "./skills/rocketGrab";
-import { spiritRushRenderer } from "./skills/spiritRush";
-import { cardThrowRenderer } from "./skills/cardThrow";
-import { arcaneShiftRenderer } from "./skills/arcaneShift";
-import { tasteTheirFearRenderer } from "./skills/tasteTheirFear";
-import { infectedBonesawRenderer } from "./skills/infectedBonesaw";
-import { deathMarkRenderer } from "./skills/deathMark";
-import { soulFurnaceRenderer } from "./skills/soulFurnace";
-import { judgmentRenderer } from "./skills/judgment";
-import { wayOfTheWandererRenderer } from "./skills/wayOfTheWanderer";
-import { ariseRenderer } from "./skills/arise";
-import { siphonPowerRenderer } from "./skills/siphonPower";
-import { furyOfTheSandsRenderer } from "./skills/furyOfTheSands";
-import { criticalFlankRenderer } from "./skills/criticalFlank";
-import { flashRenderer } from "./skills/flash";
-import { ghostRenderer } from "./skills/ghost";
-import { healRenderer } from "./skills/heal";
-import { barrierRenderer } from "./skills/barrier";
-import { smiteRenderer } from "./skills/smite";
-import { solarFlareRenderer } from "./skills/solarFlare";
+import { SkillAnimationRenderer } from './types';
+import { genericSkillRenderer } from './skills/genericSkill';
+import { rocketGrabRenderer } from './skills/rocketGrab';
+import { spiritRushRenderer } from './skills/spiritRush';
+import { cardThrowRenderer } from './skills/cardThrow';
+import { arcaneShiftRenderer } from './skills/arcaneShift';
+import { tasteTheirFearRenderer } from './skills/tasteTheirFear';
+import { infectedBonesawRenderer } from './skills/infectedBonesaw';
+import { deathMarkRenderer } from './skills/deathMark';
+import { soulFurnaceRenderer } from './skills/soulFurnace';
+import { judgmentRenderer } from './skills/judgment';
+import { wayOfTheWandererRenderer } from './skills/wayOfTheWanderer';
+import { ariseRenderer } from './skills/arise';
+import { siphonPowerRenderer } from './skills/siphonPower';
+import { furyOfTheSandsRenderer } from './skills/furyOfTheSands';
+import { criticalFlankRenderer } from './skills/criticalFlank';
+import { flashRenderer } from './skills/flash';
+import { ghostRenderer } from './skills/ghost';
+import { healRenderer } from './skills/heal';
+import { barrierRenderer } from './skills/barrier';
+import { smiteRenderer } from './skills/smite';
+import { solarFlareRenderer } from './skills/solarFlare';
 
 /**
  * Registry mapping skill names to their animation renderers
@@ -27,56 +27,56 @@ import { solarFlareRenderer } from "./skills/solarFlare";
  */
 const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
   // Blitzcrank
-  "Rocket Grab": rocketGrabRenderer,
+  'Rocket Grab': rocketGrabRenderer,
 
   // Ahri
-  "Spirit Rush": spiritRushRenderer,
+  'Spirit Rush': spiritRushRenderer,
 
   // Twisted Fate
-  "Wild Cards": cardThrowRenderer,
+  'Wild Cards': cardThrowRenderer,
 
   // Ezreal
-  "Arcane Shift": arcaneShiftRenderer,
+  'Arcane Shift': arcaneShiftRenderer,
 
   // Kha'Zix
-  "Taste Their Fear": tasteTheirFearRenderer,
+  'Taste Their Fear': tasteTheirFearRenderer,
 
   // Dr. Mundo
-  "Infected Bonesaw": infectedBonesawRenderer,
+  'Infected Bonesaw': infectedBonesawRenderer,
 
   // Zed
-  "Death Mark": deathMarkRenderer,
+  'Death Mark': deathMarkRenderer,
 
   // Sion
-  "Soul Furnace": soulFurnaceRenderer,
+  'Soul Furnace': soulFurnaceRenderer,
 
   // Garen
-  "Judgment": judgmentRenderer,
+  Judgment: judgmentRenderer,
 
   // Yasuo
-  "Way of the Wanderer": wayOfTheWandererRenderer,
+  'Way of the Wanderer': wayOfTheWandererRenderer,
 
   // Azir
-  "Arise": ariseRenderer,
+  Arise: ariseRenderer,
 
   // Viktor
-  "Siphon Power": siphonPowerRenderer,
+  'Siphon Power': siphonPowerRenderer,
 
   // Nasus
-  "Fury of the Sands": furyOfTheSandsRenderer,
+  'Fury of the Sands': furyOfTheSandsRenderer,
 
   // Minions (Melee Minion and Caster Minion)
-  "The Critical Flank": criticalFlankRenderer,
+  'The Critical Flank': criticalFlankRenderer,
 
   // Summoner Spells
-  "Flash": flashRenderer,
-  "Ghost": ghostRenderer,
-  "Heal": healRenderer,
-  "Barrier": barrierRenderer,
-  "Smite": smiteRenderer,
+  Flash: flashRenderer,
+  Ghost: ghostRenderer,
+  Heal: healRenderer,
+  Barrier: barrierRenderer,
+  Smite: smiteRenderer,
 
   // Leona
-  "Solar Flare": solarFlareRenderer,
+  'Solar Flare': solarFlareRenderer,
 
   // Add more skills here as they're implemented
   // 'Skill Name': skillRenderer,
@@ -86,9 +86,7 @@ const skillAnimationRegistry: Record<string, SkillAnimationRenderer> = {
  * Get the animation renderer for a specific skill
  * Falls back to generic animation if skill-specific one doesn't exist
  */
-export const getSkillAnimationRenderer = (
-  skillName: string
-): SkillAnimationRenderer => {
+export const getSkillAnimationRenderer = (skillName: string): SkillAnimationRenderer => {
   const renderer = skillAnimationRegistry[skillName];
 
   if (renderer) {
@@ -96,9 +94,7 @@ export const getSkillAnimationRenderer = (
   }
 
   // Fallback to generic animation
-  console.log(
-    `No custom animation found for skill: ${skillName}, using generic animation`
-  );
+  console.log(`No custom animation found for skill: ${skillName}, using generic animation`);
   return genericSkillRenderer;
 };
 
@@ -107,7 +103,7 @@ export const getSkillAnimationRenderer = (
  */
 export const registerSkillAnimation = (
   skillName: string,
-  renderer: SkillAnimationRenderer
+  renderer: SkillAnimationRenderer,
 ): void => {
   skillAnimationRegistry[skillName] = renderer;
 };

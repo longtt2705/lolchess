@@ -8,11 +8,11 @@
  * - Querying game state
  */
 
-import { Game, GameSettings } from "../types/Game";
-import { EventPayload } from "../types/Events";
-import { Square } from "../types/Square";
-import { Chess } from "../types/Chess";
-import { GameEngineCallbacks } from "../types/callbacks";
+import { Game, GameSettings } from '../types/Game';
+import { EventPayload } from '../types/Events';
+import { Square } from '../types/Square';
+import { Chess } from '../types/Chess';
+import { GameEngineCallbacks } from '../types/callbacks';
 
 /**
  * Configuration for creating a new game
@@ -162,9 +162,9 @@ export interface IGameEngine {
  */
 export function createEmptyGame(seed: number): Game {
   return {
-    name: "Game",
-    status: "waiting",
-    phase: "gameplay",
+    name: 'Game',
+    status: 'waiting',
+    phase: 'gameplay',
     players: [],
     maxPlayers: 2,
     currentRound: 1,
@@ -181,14 +181,7 @@ export function createEmptyGame(seed: number): Game {
       startingGold: 0,
     },
     // Dragon Soul System - 6 drake types, only 4 will spawn per game
-    drakePool: [
-      "Infernal",
-      "Cloud",
-      "Mountain",
-      "Hextech",
-      "Ocean",
-      "Chemtech",
-    ],
+    drakePool: ['Infernal', 'Cloud', 'Mountain', 'Hextech', 'Ocean', 'Chemtech'],
     drakesKilled: 0,
     elderDrakeKillerTeam: null,
   };
@@ -235,7 +228,7 @@ export function isPlayerTurn(game: Game, playerId: string): boolean {
  * @returns True if game status is "finished"
  */
 export function isGameOver(game: Game): boolean {
-  return game.status === "finished";
+  return game.status === 'finished';
 }
 
 /**
@@ -266,15 +259,9 @@ export function getPieceById(game: Game, pieceId: string): Chess | undefined {
  * @param position - Board position
  * @returns The chess piece at that position or undefined
  */
-export function getPieceAtPosition(
-  game: Game,
-  position: Square
-): Chess | undefined {
+export function getPieceAtPosition(game: Game, position: Square): Chess | undefined {
   return game.board.find(
-    (p) =>
-      p.position.x === position.x &&
-      p.position.y === position.y &&
-      p.stats.hp > 0
+    (p) => p.position.x === position.x && p.position.y === position.y && p.stats.hp > 0,
   );
 }
 
@@ -298,12 +285,12 @@ export function getLivingPieces(game: Game): Chess[] {
 }
 
 // Re-export shop constants from GameLogic for backward compatibility
-export { SHOP_ITEMS_COUNT, SHOP_REFRESH_INTERVAL } from "./GameLogic";
+export { SHOP_ITEMS_COUNT, SHOP_REFRESH_INTERVAL } from './GameLogic';
 
 // Import GameLogic for concrete implementation
-import { GameLogic, setDevelopmentMode } from "./GameLogic";
-import { ChessFactory } from "../entities/ChessFactory";
-import { SeededRandom, setGameRng, clearGameRng } from "../utils/SeededRandom";
+import { GameLogic, setDevelopmentMode } from './GameLogic';
+import { ChessFactory } from '../entities/ChessFactory';
+import { SeededRandom, setGameRng, clearGameRng } from '../utils/SeededRandom';
 
 /**
  * Concrete implementation of the game engine
@@ -332,7 +319,7 @@ export class GameEngine implements IGameEngine {
 
     // Create base game state
     const game = createEmptyGame(seed);
-    game.name = config.name ?? "Game";
+    game.name = config.name ?? 'Game';
 
     // Set up players if provided
     if (config.bluePlayerId && config.redPlayerId) {
@@ -341,9 +328,9 @@ export class GameEngine implements IGameEngine {
       game.players = [
         {
           userId: config.bluePlayerId,
-          username: "Blue Player",
+          username: 'Blue Player',
           gold: config.startingGold ?? 0,
-          side: "blue",
+          side: 'blue',
           selectedChampions: config.blueChampions ?? [],
           bannedChampions: [],
           itemsBought: 0,
@@ -352,9 +339,9 @@ export class GameEngine implements IGameEngine {
         },
         {
           userId: config.redPlayerId,
-          username: "Red Player",
+          username: 'Red Player',
           gold: config.startingGold ?? 0,
-          side: "red",
+          side: 'red',
           selectedChampions: config.redChampions ?? [],
           bannedChampions: [],
           itemsBought: 0,

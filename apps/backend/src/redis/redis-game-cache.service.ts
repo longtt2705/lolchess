@@ -1,8 +1,8 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { InjectQueue } from "@nestjs/bullmq";
-import { Queue } from "bullmq";
-import Redis from "ioredis";
-import { Game } from "../game/game.schema";
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import Redis from 'ioredis';
+import { Game } from '../game/game.schema';
 
 /**
  * Redis-based game state cache service
@@ -12,15 +12,13 @@ import { Game } from "../game/game.schema";
 export class RedisGameCacheService {
   private readonly logger = new Logger(RedisGameCacheService.name);
   private readonly redis: Redis;
-  private readonly GAME_KEY_PREFIX = "game:";
+  private readonly GAME_KEY_PREFIX = 'game:';
   private readonly GAME_TTL = 3600 * 24; // 24 hours TTL for game state
 
-  constructor(
-    @InjectQueue("game-persistence") private gamePersistenceQueue: Queue
-  ) {
+  constructor(@InjectQueue('game-persistence') private gamePersistenceQueue: Queue) {
     // Initialize Redis client for cache
     this.redis = new Redis({
-      host: process.env.REDIS_HOST || "localhost",
+      host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT) || 6379,
       password: process.env.REDIS_PASSWORD,
       retryStrategy: (times) => {
@@ -29,12 +27,12 @@ export class RedisGameCacheService {
       },
     });
 
-    this.redis.on("connect", () => {
-      this.logger.log("Redis client connected successfully");
+    this.redis.on('connect', () => {
+      this.logger.log('Redis client connected successfully');
     });
 
-    this.redis.on("error", (err) => {
-      this.logger.error("Redis client error:", err);
+    this.redis.on('error', (err) => {
+      this.logger.error('Redis client error:', err);
     });
   }
 
@@ -68,7 +66,7 @@ export class RedisGameCacheService {
     options?: {
       skipPersistence?: boolean; // Skip queuing MongoDB update
       priority?: number; // Job priority (1-10, higher = more urgent)
-    }
+    },
   ): Promise<void> {
     try {
       const key = this.getGameKey(gameId);
@@ -134,11 +132,11 @@ export class RedisGameCacheService {
   private async queueGamePersistence(
     gameId: string,
     gameState: Game,
-    priority: number = 5
+    priority: number = 5,
   ): Promise<void> {
     try {
       await this.gamePersistenceQueue.add(
-        "persist-game",
+        'persist-game',
         {
           gameId,
           gameState,
@@ -150,15 +148,13 @@ export class RedisGameCacheService {
           removeOnFail: 1000, // Keep last 1000 failed jobs
           attempts: 3, // Retry up to 3 times on failure
           backoff: {
-            type: "exponential",
+            type: 'exponential',
             delay: 1000, // Start with 1 second delay
           },
-        }
+        },
       );
 
-      this.logger.debug(
-        `Game ${gameId} persistence queued (priority: ${priority})`
-      );
+      this.logger.debug(`Game ${gameId} persistence queued (priority: ${priority})`);
     } catch (error) {
       this.logger.error(`Error queuing game ${gameId} persistence:`, error);
       throw error;
@@ -191,7 +187,7 @@ export class RedisGameCacheService {
         failed,
       };
     } catch (error) {
-      this.logger.error("Error getting queue stats:", error);
+      this.logger.error('Error getting queue stats:', error);
       return null;
     }
   }

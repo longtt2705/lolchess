@@ -1,7 +1,7 @@
-import { Debuff, Square } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { ChessFactory } from "../ChessFactory";
-import { getAdjacentEnemies, getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { Debuff, Square } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { ChessFactory } from '../ChessFactory';
+import { getAdjacentEnemies, getAdjacentSquares, getChessAtPosition } from '../../utils/helpers';
 
 export class Nasus extends ChessObject {
   /**
@@ -26,11 +26,7 @@ export class Nasus extends ChessObject {
     this.chess.stats.hp = Math.min(this.maxHp, currentHp + 50);
 
     // Find all adjacent enemies and deal AOE damage
-    const adjacentEnemies = getAdjacentEnemies(
-      this.game,
-      this.chess.position,
-      this.chess.blue
-    );
+    const adjacentEnemies = getAdjacentEnemies(this.game, this.chess.position, this.chess.blue);
 
     // Calculate damage: (10 + 15% of AP)% of enemy's Max HP
     const percentDamage = 10 + this.ap * 0.15;
@@ -40,7 +36,7 @@ export class Nasus extends ChessObject {
 
       // Deal % max HP magic damage
       const damage = Math.floor((percentDamage / 100) * enemy.stats.maxHp);
-      this.activeSkillDamage(enemyObject, damage, "magic", this, this.sunder);
+      this.activeSkillDamage(enemyObject, damage, 'magic', this, this.sunder);
 
       // Apply slow + DOT debuff to hit enemies
       this.applySlowDebuff(enemyObject);
@@ -52,25 +48,25 @@ export class Nasus extends ChessObject {
    */
   private createTransformationDebuff(originalMaxHp: number): Debuff {
     return {
-      id: "fury_of_the_sands",
-      name: "Fury of the Sands",
+      id: 'fury_of_the_sands',
+      name: 'Fury of the Sands',
       description: `Ascended Form: +50 Max HP, +20 Physical Resistance, +1 Attack Range. Basic attacks deal bonus damage equal to ${Math.floor(5 + this.ap * 0.1)}% of target's Max HP.`,
       duration: 3,
       maxDuration: 3,
       effects: [
         {
-          stat: "maxHp",
+          stat: 'maxHp',
           modifier: 50,
-          type: "add",
+          type: 'add',
         },
         {
-          stat: "physicalResistance",
+          stat: 'physicalResistance',
           modifier: 20,
-          type: "add",
+          type: 'add',
         },
       ],
       damagePerTurn: 0,
-      damageType: "magic",
+      damageType: 'magic',
       healPerTurn: 0,
       stun: false,
       unique: true,
@@ -80,7 +76,7 @@ export class Nasus extends ChessObject {
       currentStacks: 1,
       maximumStacks: 1,
       isTransformation: true,
-      onExpireId: "nasus_transform",
+      onExpireId: 'nasus_transform',
       payload: {
         originalMaxHp: originalMaxHp,
         bonusMaxHp: 50,
@@ -95,20 +91,20 @@ export class Nasus extends ChessObject {
     const dotDamage = 5 + this.ap * 0.1;
 
     const slowDebuff: Debuff = {
-      id: "fury_of_the_sands_slow",
-      name: "Sands of Ruin",
+      id: 'fury_of_the_sands_slow',
+      name: 'Sands of Ruin',
       description: `Slowed and taking ${Math.floor(dotDamage)} magic damage per turn.`,
       duration: 2,
       maxDuration: 2,
       effects: [
         {
-          stat: "speed",
+          stat: 'speed',
           modifier: -1,
-          type: "add",
+          type: 'add',
         },
       ],
       damagePerTurn: dotDamage,
-      damageType: "magic",
+      damageType: 'magic',
       healPerTurn: 0,
       stun: false,
       unique: false,
@@ -126,10 +122,7 @@ export class Nasus extends ChessObject {
    * Check if Nasus is in Ascended (transformed) form
    */
   get isTransformed(): boolean {
-    return (
-      this.chess.debuffs?.some((debuff) => debuff.id === "fury_of_the_sands") ??
-      false
-    );
+    return this.chess.debuffs?.some((debuff) => debuff.id === 'fury_of_the_sands') ?? false;
   }
 
   /**
@@ -153,10 +146,8 @@ export class Nasus extends ChessObject {
     if (this.isTransformed) {
       const bonusAd = this.ad - this.chess.stats.ad;
       const percentDamage = 10 + bonusAd * 0.1;
-      const bonusDamage = Math.floor(
-        (percentDamage / 100) * target.chess.stats.maxHp
-      );
-      this.damage(target, bonusDamage, "magic", this, this.sunder);
+      const bonusDamage = Math.floor((percentDamage / 100) * target.chess.stats.maxHp);
+      this.damage(target, bonusDamage, 'magic', this, this.sunder);
       return baseDamage + bonusDamage;
     }
 
@@ -165,7 +156,7 @@ export class Nasus extends ChessObject {
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -199,16 +190,24 @@ export class Nasus extends ChessObject {
     // This applies for 3 turns, assume 2 attacks during transformation
     const bonusAttackDamage = avgEnemyHp * 0.1 * 2; // Conservative estimate
 
-    return aoeDamage + totalDotDamage + slowValue + hpGainValue + armorValue + rangeValue + bonusAttackDamage;
+    return (
+      aoeDamage +
+      totalDotDamage +
+      slowValue +
+      hpGainValue +
+      armorValue +
+      rangeValue +
+      bonusAttackDamage
+    );
   }
 
-  getActiveSkillDamageType(): "physical" | "magic" {
-    return "magic";
+  getActiveSkillDamageType(): 'physical' | 'magic' {
+    return 'magic';
   }
 
   public getActiveSkillValue(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -234,7 +233,6 @@ export class Nasus extends ChessObject {
       totalValue += aoeDamage * 1.5;
     });
 
-
     if (adjacentEnemies.length >= 1) {
       // Transformation bonuses (always gained)
       // +50 HP immediate
@@ -246,11 +244,18 @@ export class Nasus extends ChessObject {
       totalValue += 20 * 0.4;
     }
 
-    const rangeTargets = this.getValidAttackTargets({ range: this.range + 1, diagonal: true, horizontal: true, vertical: true, lShape: false });
+    const rangeTargets = this.getValidAttackTargets({
+      range: this.range + 1,
+      diagonal: true,
+      horizontal: true,
+      vertical: true,
+      lShape: false,
+    });
     console.log(`[Nasus] Targets in extended range: ${rangeTargets.length}`);
 
     rangeTargets.forEach((target) => {
-      const bonusAttackValue = target.chess.stats.maxHp * 0.1 * 2.5 + target.getMaterialValue() * 0.8;
+      const bonusAttackValue =
+        target.chess.stats.maxHp * 0.1 * 2.5 + target.getMaterialValue() * 0.8;
       totalValue += bonusAttackValue;
     });
 

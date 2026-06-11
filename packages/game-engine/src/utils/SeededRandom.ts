@@ -72,8 +72,8 @@ export class SeededRandom {
    * @param length Length of the ID string (default: 9)
    */
   nextId(length: number = 9): string {
-    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-    let result = "";
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
     for (let i = 0; i < length; i++) {
       result += chars[this.nextInt(0, chars.length)];
     }
@@ -135,4 +135,3 @@ export function setGameRng(rng: SeededRandom): void {
 export function clearGameRng(): void {
   currentGameRng = null;
 }
-

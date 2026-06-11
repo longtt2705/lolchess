@@ -1,14 +1,14 @@
-import { Square } from "./Square";
-import { ChessStats } from "./ChessStats";
-import { Skill } from "./Skill";
-import { Item } from "./Item";
-import { Debuff } from "./Debuff";
-import { Aura } from "./Aura";
-import { Shield } from "./Shield";
-import { AttackProjectile } from "./AttackProjectile";
-import { SummonerSpell } from "./SummonerSpell";
+import { Square } from './Square';
+import { ChessStats } from './ChessStats';
+import { Skill } from './Skill';
+import { Item } from './Item';
+import { Debuff } from './Debuff';
+import { Aura } from './Aura';
+import { Shield } from './Shield';
+import { AttackProjectile } from './AttackProjectile';
+import { SummonerSpell } from './SummonerSpell';
 
-export type ChampionRole = "assassin" | "mage" | "support" | "marksman" | "tank" | "fighter";
+export type ChampionRole = 'assassin' | 'mage' | 'support' | 'marksman' | 'tank' | 'fighter';
 
 export interface Chess {
   id: string;
@@ -34,4 +34,3 @@ export interface Chess {
   role?: ChampionRole;
   items_suggestions?: string[];
 }
-

@@ -1,15 +1,15 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { Logger } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Job } from "bullmq";
-import { Model } from "mongoose";
-import { GameDocument, GAME_MODEL_NAME } from "../game/game.schema";
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Job } from 'bullmq';
+import { Model } from 'mongoose';
+import { GameDocument, GAME_MODEL_NAME } from '../game/game.schema';
 
 /**
  * BullMQ Worker that processes game persistence jobs
  * Handles asynchronous writes from Redis cache to MongoDB
  */
-@Processor("game-persistence")
+@Processor('game-persistence')
 export class GamePersistenceProcessor extends WorkerHost {
   private readonly logger = new Logger(GamePersistenceProcessor.name);
 
@@ -24,7 +24,7 @@ export class GamePersistenceProcessor extends WorkerHost {
     const { gameId, gameState, timestamp } = job.data;
 
     this.logger.debug(
-      `Processing persistence job for game ${gameId} (queued at ${new Date(timestamp).toISOString()})`
+      `Processing persistence job for game ${gameId} (queued at ${new Date(timestamp).toISOString()})`,
     );
 
     try {
@@ -71,21 +71,18 @@ export class GamePersistenceProcessor extends WorkerHost {
                 elderDrakeKillerTeam: gameState.elderDrakeKillerTeam,
               },
             },
-            { new: true }
+            { new: true },
           )
           .exec();
       }
 
       this.logger.log(
-        `Successfully persisted game ${gameId} to MongoDB (delay: ${Date.now() - timestamp}ms)`
+        `Successfully persisted game ${gameId} to MongoDB (delay: ${Date.now() - timestamp}ms)`,
       );
 
       return { success: true, gameId, persistedAt: Date.now() };
     } catch (error) {
-      this.logger.error(
-        `Failed to persist game ${gameId} to MongoDB:`,
-        error.message
-      );
+      this.logger.error(`Failed to persist game ${gameId} to MongoDB:`, error.message);
       throw error; // Re-throw to trigger retry
     }
   }
@@ -101,8 +98,6 @@ export class GamePersistenceProcessor extends WorkerHost {
    * Handle job failure
    */
   async onFailed(job: Job<any>, error: Error) {
-    this.logger.error(
-      `Job ${job.id} failed for game ${job.data.gameId}: ${error.message}`
-    );
+    this.logger.error(`Job ${job.id} failed for game ${job.data.gameId}: ${error.message}`);
   }
 }

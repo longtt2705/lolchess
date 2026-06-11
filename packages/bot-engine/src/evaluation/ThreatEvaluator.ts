@@ -7,9 +7,9 @@ import {
   getPieceAtPosition,
   getPlayerPieces,
   Square,
-} from "@lolchess/game-engine";
-import { ThreatInfo, PositionThreatScore } from "../types";
-import { MaterialEvaluator } from "./MaterialEvaluator";
+} from '@lolchess/game-engine';
+import { ThreatInfo, PositionThreatScore } from '../types';
+import { MaterialEvaluator } from './MaterialEvaluator';
 
 /**
  * Evaluates threats and attack opportunities
@@ -17,8 +17,8 @@ import { MaterialEvaluator } from "./MaterialEvaluator";
 export class ThreatEvaluator {
   constructor(
     private gameEngine: GameEngine,
-    private materialEvaluator: MaterialEvaluator
-  ) { }
+    private materialEvaluator: MaterialEvaluator,
+  ) {}
   /**
    * Get all threats a player can make
    */
@@ -57,7 +57,6 @@ export class ThreatEvaluator {
     listActions.sort((a, b) => b.priority - a.priority);
     const topActions = listActions.slice(0, Math.floor(listActions.length * 0.7));
 
-
     for (const action of topActions) {
       if (action.isAttack) {
         const attackTargets = this.gameEngine.getValidAttacks(game, action.attacker.chess.id);
@@ -65,14 +64,13 @@ export class ThreatEvaluator {
           const target = getPieceAtPosition(game, targetPos);
           if (!target) continue;
           const targetChessObject = ChessFactory.createChess(target, game);
-          const potentialDamage =
-            action.attacker.calculateDamageAttack(targetChessObject);
+          const potentialDamage = action.attacker.calculateDamageAttack(targetChessObject);
           const canKill = targetChessObject.chess.stats.hp <= potentialDamage;
 
           // Calculate priority
           let priority = potentialDamage;
           if (canKill) priority += 100;
-          if (target.name === "Poro") priority += 500;
+          if (target.name === 'Poro') priority += 500;
 
           threats.push({
             attacker: action.attacker.chess,
@@ -84,7 +82,7 @@ export class ThreatEvaluator {
           });
         }
       } else {
-        if (action.attacker.chess.skill?.targetTypes === "none") {
+        if (action.attacker.chess.skill?.targetTypes === 'none') {
           // Self-cast skill with no target
           const skillValue = action.attacker.getActiveSkillValue(null);
 
@@ -113,13 +111,14 @@ export class ThreatEvaluator {
             // Estimate if skill can kill based on target HP and skill value
             // For damage skills, high value + low target HP suggests kill potential
             const isEnemy = target.blue !== action.attacker.chess.blue;
-            const lowHp = targetChessObject.chess.stats.hp < targetChessObject.chess.stats.maxHp * 0.3;
+            const lowHp =
+              targetChessObject.chess.stats.hp < targetChessObject.chess.stats.maxHp * 0.3;
             const canKill = isEnemy && lowHp && skillValue > 50; // Rough estimate
 
             // Calculate priority based on skill value
             let priority = skillValue;
             if (canKill) priority += 100;
-            if (target.name === "Poro") priority += 500;
+            if (target.name === 'Poro') priority += 500;
 
             threats.push({
               attacker: action.attacker.chess,
@@ -151,10 +150,7 @@ export class ThreatEvaluator {
    */
   evaluateThreatScore(game: Game, playerId: string): number {
     const threats = this.getPlayerThreats(game, playerId);
-    return threats.reduce(
-      (acc, t, i) => acc + t.priority * Math.pow(0.6, i),
-      0
-    );
+    return threats.reduce((acc, t, i) => acc + t.priority * Math.pow(0.6, i), 0);
   }
 
   getBestThreat(game: Game, playerId: string): ThreatInfo | null {
@@ -195,7 +191,7 @@ export class ThreatEvaluator {
     game: Game,
     piece: Chess,
     targetPosition: Square,
-    playerId: string
+    playerId: string,
   ): PositionThreatScore {
     // Temporarily move the piece to the target position
     const originalPosition = { ...piece.position };
@@ -228,17 +224,14 @@ export class ThreatEvaluator {
     }
 
     // Evaluate skill targets (only for damage skills)
-    if (
-      piece.skill?.type === "active" &&
-      piece.skill?.targetTypes !== "squareInRange"
-    ) {
+    if (piece.skill?.type === 'active' && piece.skill?.targetTypes !== 'squareInRange') {
       for (const targetPos of skillTargets) {
         const target = getPieceAtPosition(game, targetPos);
         if (!target) continue;
 
         // Avoid double counting if also in attack range
         const alreadyCounted = attackTargets.some(
-          (at) => at.x === targetPos.x && at.y === targetPos.y
+          (at) => at.x === targetPos.x && at.y === targetPos.y,
         );
         if (!alreadyCounted) {
           attackableTargets++;
@@ -276,15 +269,11 @@ export class ThreatEvaluator {
   /**
    * Evaluate the value of attacking a specific target
    */
-  private evaluateTargetValue(
-    game: Game,
-    attacker: Chess,
-    target: Chess
-  ): number {
+  private evaluateTargetValue(game: Game, attacker: Chess, target: Chess): number {
     let value = 0;
 
     // Poro is extremely high value
-    if (target.name === "Poro") {
+    if (target.name === 'Poro') {
       value += 1000;
     }
 
@@ -324,7 +313,7 @@ export class ThreatEvaluator {
       if (!enemy.cannotAttack) {
         const enemyAttacks = this.gameEngine.getValidAttacks(game, enemy.id);
         const canAttackUs = enemyAttacks.some(
-          (pos) => pos.x === piece.position.x && pos.y === piece.position.y
+          (pos) => pos.x === piece.position.x && pos.y === piece.position.y,
         );
 
         if (canAttackUs) {
@@ -342,7 +331,7 @@ export class ThreatEvaluator {
       if (enemy.skill && enemy.skill.currentCooldown === 0) {
         const skillTargets = this.gameEngine.getValidSkillTargets(game, enemy.id);
         const canSkillUs = skillTargets.some(
-          (pos) => pos.x === piece.position.x && pos.y === piece.position.y
+          (pos) => pos.x === piece.position.x && pos.y === piece.position.y,
         );
 
         if (canSkillUs) {
@@ -386,7 +375,7 @@ export class ThreatEvaluator {
         if (target.blue === isBlue) continue;
 
         // Add value based on target
-        if (target.name === "Poro") {
+        if (target.name === 'Poro') {
           score += 500;
         }
 

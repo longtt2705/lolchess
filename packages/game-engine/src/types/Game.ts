@@ -1,7 +1,7 @@
-import { Player } from "./Player";
-import { Chess } from "./Chess";
-import { ActionDetails } from "./Events";
-import { BanPickState } from "./BanPickState";
+import { Player } from './Player';
+import { Chess } from './Chess';
+import { ActionDetails } from './Events';
+import { BanPickState } from './BanPickState';
 
 export interface GameSettings {
   roundTime: number;
@@ -36,4 +36,3 @@ export interface Game {
   drakesKilled: number; // Total drakes killed in game
   elderDrakeKillerTeam: string | null; // Player ID who has Elder buff (execute below 15% HP)
 }
-

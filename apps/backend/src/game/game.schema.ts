@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import mongoose, { Document } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, { Document } from 'mongoose';
 
 // Import pure types
 import {
@@ -24,7 +24,7 @@ import {
   GameSettings as GameSettingsType,
   Game as GameType,
   GameEvent,
-} from "./types";
+} from './types';
 
 // Re-export pure types for backward compatibility
 export type {
@@ -54,7 +54,7 @@ export type {
 export { GameEvent };
 
 // Model name constants for Mongoose
-export const GAME_MODEL_NAME = "Game";
+export const GAME_MODEL_NAME = 'Game';
 
 // Mongoose Document types
 export type GameDocument = GameType & Document;
@@ -158,7 +158,7 @@ export class DebuffEffectSchema implements DebuffEffectType {
   @Prop({ required: true })
   modifier: number; // positive or negative value
 
-  @Prop({ default: "add" })
+  @Prop({ default: 'add' })
   type: string; // 'add', 'multiply', 'set'
 }
 
@@ -184,8 +184,8 @@ export class DebuffSchema implements DebuffType {
   @Prop({ default: 0 })
   damagePerTurn: number; // damage dealt each turn
 
-  @Prop({ default: "physical" })
-  damageType: "physical" | "magic" | "true" | "non-lethal"; // 'physical', 'magic', 'true', 'non-lethal'
+  @Prop({ default: 'physical' })
+  damageType: 'physical' | 'magic' | 'true' | 'non-lethal'; // 'physical', 'magic', 'true', 'non-lethal'
 
   @Prop({ default: false })
   stun: boolean; // whether the debuff is a stun
@@ -231,10 +231,10 @@ export class AuraEffectSchema implements AuraEffectType {
   @Prop({ required: true })
   modifier: number; // positive or negative value
 
-  @Prop({ default: "add" })
+  @Prop({ default: 'add' })
   type: string; // 'add', 'multiply', 'set'
 
-  @Prop({ default: "allies" })
+  @Prop({ default: 'allies' })
   target: string; // 'allies', 'enemies', 'all'
 }
 
@@ -260,7 +260,7 @@ export class AuraSchema implements AuraType {
   @Prop({ default: false })
   requiresAlive: boolean; // aura only works if the piece is alive
 
-  @Prop({ default: "permanent" })
+  @Prop({ default: 'permanent' })
   duration: string; // 'permanent', 'turn', 'combat'
 }
 
@@ -291,17 +291,11 @@ export class SkillSchema implements SkillType {
   @Prop({ type: AttackRangeSchema, required: true })
   attackRange: AttackRangeType;
   @Prop({ required: true })
-  targetTypes:
-    | "square"
-    | "squareInRange"
-    | "ally"
-    | "allyMinion"
-    | "enemy"
-    | "none";
+  targetTypes: 'square' | 'squareInRange' | 'ally' | 'allyMinion' | 'enemy' | 'none';
   @Prop({ required: true })
   currentCooldown: number;
   @Prop({ required: true })
-  type: "passive" | "active";
+  type: 'passive' | 'active';
   @Prop({ type: mongoose.Schema.Types.Mixed, required: false })
   payload?: any;
 }
@@ -318,7 +312,7 @@ export class ShieldSchema implements ShieldType {
 export class SummonerSpellSchema implements SummonerSpellType {
   @Prop({
     required: true,
-    enum: ["Flash", "Ghost", "Heal", "Barrier", "Smite"],
+    enum: ['Flash', 'Ghost', 'Heal', 'Barrier', 'Smite'],
   })
   type: SummonerSpellTypeEnum;
 
@@ -517,10 +511,10 @@ export class ActionDetailsSchema implements ActionDetailsType {
 
 @Schema()
 export class BanPickStateSchema implements BanPickStateType {
-  @Prop({ required: true, enum: ["ban", "pick", "reorder", "complete"] })
+  @Prop({ required: true, enum: ['ban', 'pick', 'reorder', 'complete'] })
   phase: string;
 
-  @Prop({ required: true, enum: ["blue", "red"] })
+  @Prop({ required: true, enum: ['blue', 'red'] })
   currentTurn: string;
 
   @Prop({ required: true, default: 1 })
@@ -598,7 +592,7 @@ export class PlayerSchema implements PlayerType {
   @Prop({ default: 0 })
   lastRoundDamage: number;
 
-  @Prop({ enum: ["blue", "red"] })
+  @Prop({ enum: ['blue', 'red'] })
   side?: string;
 
   @Prop({ type: [String], default: [] })
@@ -633,7 +627,7 @@ export class GameSchema implements GameType {
 
   @Prop({
     required: true,
-    enum: ["waiting", "ban_pick", "in_progress", "finished"],
+    enum: ['waiting', 'ban_pick', 'in_progress', 'finished'],
   })
   status: string;
 
@@ -654,8 +648,8 @@ export class GameSchema implements GameType {
 
   @Prop({
     required: true,
-    enum: ["ban_phase", "pick_phase", "gameplay"],
-    default: "ban_phase",
+    enum: ['ban_phase', 'pick_phase', 'gameplay'],
+    default: 'ban_phase',
   })
   phase: string;
 
@@ -698,7 +692,7 @@ export class GameSchema implements GameType {
   // Dragon Soul System
   @Prop({
     type: [String],
-    default: ["Infernal", "Cloud", "Mountain", "Hextech", "Ocean", "Chemtech"],
+    default: ['Infernal', 'Cloud', 'Mountain', 'Hextech', 'Ocean', 'Chemtech'],
   })
   drakePool: string[]; // Available drake types to spawn (starts with 6, removes on spawn)
 
@@ -711,13 +705,9 @@ export class GameSchema implements GameType {
 
 // Export Mongoose schema factories (only for document classes with @Schema decorator)
 export const ChessMongooseSchema = SchemaFactory.createForClass(ChessSchema);
-export const EventPayloadMongooseSchema =
-  SchemaFactory.createForClass(EventPayloadSchema);
-export const ActionDetailsMongooseSchema =
-  SchemaFactory.createForClass(ActionDetailsSchema);
-export const BanPickStateMongooseSchema =
-  SchemaFactory.createForClass(BanPickStateSchema);
+export const EventPayloadMongooseSchema = SchemaFactory.createForClass(EventPayloadSchema);
+export const ActionDetailsMongooseSchema = SchemaFactory.createForClass(ActionDetailsSchema);
+export const BanPickStateMongooseSchema = SchemaFactory.createForClass(BanPickStateSchema);
 export const PlayerMongooseSchema = SchemaFactory.createForClass(PlayerSchema);
-export const GameSettingsMongooseSchema =
-  SchemaFactory.createForClass(GameSettingsSchema);
+export const GameSettingsMongooseSchema = SchemaFactory.createForClass(GameSettingsSchema);
 export const GameMongooseSchema = SchemaFactory.createForClass(GameSchema);

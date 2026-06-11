@@ -1,7 +1,7 @@
-import { ChessObject } from "../ChessObject";
-import { Square } from "../../types";
-import { ChessFactory } from "../ChessFactory";
-import { getAdjacentEnemies, getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { ChessObject } from '../ChessObject';
+import { Square } from '../../types';
+import { ChessFactory } from '../ChessFactory';
+import { getAdjacentEnemies, getAdjacentSquares, getChessAtPosition } from '../../utils/helpers';
 
 export class Sion extends ChessObject {
   // Soul Furnace active skill
@@ -15,26 +15,15 @@ export class Sion extends ChessObject {
       const targetChess = getChessAtPosition(
         this.game,
         !this.chess.blue, // Opposite team
-        square
+        square,
       );
 
       if (targetChess) {
-        const targetChessObject = ChessFactory.createChess(
-          targetChess,
-          this.game
-        );
+        const targetChessObject = ChessFactory.createChess(targetChess, this.game);
 
         // Deal 5% of target's max health as magic damage
-        const drainDamage = Math.floor(
-          targetChessObject.maxHp * (0.04 + (this.ap * 0.03) / 100)
-        );
-        this.activeSkillDamage(
-          targetChessObject,
-          drainDamage,
-          "true",
-          this,
-          this.sunder
-        );
+        const drainDamage = Math.floor(targetChessObject.maxHp * (0.04 + (this.ap * 0.03) / 100));
+        this.activeSkillDamage(targetChessObject, drainDamage, 'true', this, this.sunder);
 
         this.chess.stats.maxHp += drainDamage;
         this.heal(this, drainDamage);
@@ -49,13 +38,13 @@ export class Sion extends ChessObject {
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
     // Average damage potential per adjacent enemy
     // Drains (4 + 3% AP)% of each enemy's max health
-    const drainPercent = 4 + (this.ap * 0.03);
+    const drainPercent = 4 + this.ap * 0.03;
     const avgEnemyHp = 100; // Assume average enemy HP
     const damagePerEnemy = avgEnemyHp * (drainPercent / 100);
 
@@ -72,7 +61,7 @@ export class Sion extends ChessObject {
 
   public getActiveSkillValue(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -83,13 +72,13 @@ export class Sion extends ChessObject {
 
     let drainDamage = 0;
     let shieldValue = 0;
-    let additionalTargetValue = 0;
+    const additionalTargetValue = 0;
     // Drain 5% of max health from each enemy adjacent to Sion
     adjacentEnemies.forEach((enemy) => {
       const enemyObject = ChessFactory.createChess(enemy, this.game);
 
       // Drain: (4 + 3% AP)% of target's max health
-      const drainPercent = 4 + (this.ap * 0.03);
+      const drainPercent = 4 + this.ap * 0.03;
       drainDamage = (drainPercent / 100) * enemyObject.chess.stats.maxHp;
 
       // Shield value: (10% of max health + 40% AP) for 3 turns
@@ -97,7 +86,7 @@ export class Sion extends ChessObject {
       shieldValue = shieldAmount * 0.5; // Shields worth 50%
     });
 
-    console.log("Sion active skill value:", drainDamage + shieldValue + additionalTargetValue);
+    console.log('Sion active skill value:', drainDamage + shieldValue + additionalTargetValue);
     return drainDamage + shieldValue + additionalTargetValue;
   }
 }

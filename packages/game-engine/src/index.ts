@@ -40,13 +40,13 @@ export {
   // Constants
   SHOP_ITEMS_COUNT,
   SHOP_REFRESH_INTERVAL,
-} from "./core";
+} from './core';
 
 // Types
-export * from "./types";
+export * from './types';
 
 // Utils
-export { SeededRandom, getGameRng, setGameRng, clearGameRng } from "./utils/SeededRandom";
+export { SeededRandom, getGameRng, setGameRng, clearGameRng } from './utils/SeededRandom';
 export {
   getAdjacentSquares,
   calculateDistance,
@@ -57,10 +57,10 @@ export {
   getAdjacentEnemies,
   getAdjacentAllies,
   getPiecesInLine,
-} from "./utils/helpers";
+} from './utils/helpers';
 
 // Data
-export { champions, ChampionData } from "./data/champions";
+export { champions, ChampionData } from './data/champions';
 export {
   basicItems,
   combinedItems,
@@ -76,13 +76,8 @@ export {
   ItemData,
   ItemEffect,
   ItemConditionContext,
-} from "./data/items";
+} from './data/items';
 
 // Entities
-export {
-  ChessObject,
-  ChessFactory,
-  IChessFactory,
-  chessFactory,
-} from "./entities";
-export * from "./entities/champions";
+export { ChessObject, ChessFactory, IChessFactory, chessFactory } from './entities';
+export * from './entities/champions';

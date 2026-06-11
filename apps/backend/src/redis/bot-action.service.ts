@@ -1,13 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy } from "@nestjs/common";
-import { InjectQueue } from "@nestjs/bullmq";
-import { Queue } from "bullmq";
-import Redis from "ioredis";
-import { Game } from "../game/types";
-import {
-  BotActionJob,
-  BotActionResult,
-  BOT_ACTION_RESULTS_CHANNEL,
-} from "./bot-action.processor";
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import Redis from 'ioredis';
+import { Game } from '../game/types';
+import { BotActionJob, BotActionResult, BOT_ACTION_RESULTS_CHANNEL } from './bot-action.processor';
 
 /**
  * Callback type for bot action result handlers
@@ -29,12 +25,10 @@ export class BotActionService implements OnModuleDestroy {
   private resultHandlers: Map<string, BotActionResultHandler[]> = new Map();
   private globalHandlers: BotActionResultHandler[] = [];
 
-  constructor(
-    @InjectQueue("bot-actions") private readonly botActionQueue: Queue
-  ) {
+  constructor(@InjectQueue('bot-actions') private readonly botActionQueue: Queue) {
     // Initialize Redis subscriber for Pub/Sub
     this.subscriber = new Redis({
-      host: process.env.REDIS_HOST || "localhost",
+      host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT) || 6379,
       password: process.env.REDIS_PASSWORD,
       retryStrategy: (times) => {
@@ -43,12 +37,12 @@ export class BotActionService implements OnModuleDestroy {
       },
     });
 
-    this.subscriber.on("connect", () => {
-      this.logger.log("Bot action service Redis subscriber connected");
+    this.subscriber.on('connect', () => {
+      this.logger.log('Bot action service Redis subscriber connected');
     });
 
-    this.subscriber.on("error", (err) => {
-      this.logger.error("Bot action service Redis subscriber error:", err);
+    this.subscriber.on('error', (err) => {
+      this.logger.error('Bot action service Redis subscriber error:', err);
     });
 
     // Subscribe to bot action results channel
@@ -61,17 +55,15 @@ export class BotActionService implements OnModuleDestroy {
   private async setupSubscription(): Promise<void> {
     try {
       await this.subscriber.subscribe(BOT_ACTION_RESULTS_CHANNEL);
-      this.logger.log(
-        `Subscribed to channel: ${BOT_ACTION_RESULTS_CHANNEL}`
-      );
+      this.logger.log(`Subscribed to channel: ${BOT_ACTION_RESULTS_CHANNEL}`);
 
-      this.subscriber.on("message", (channel, message) => {
+      this.subscriber.on('message', (channel, message) => {
         if (channel === BOT_ACTION_RESULTS_CHANNEL) {
           this.handleBotActionResult(message);
         }
       });
     } catch (error) {
-      this.logger.error("Failed to subscribe to bot action results:", error);
+      this.logger.error('Failed to subscribe to bot action results:', error);
     }
   }
 
@@ -81,16 +73,14 @@ export class BotActionService implements OnModuleDestroy {
   private handleBotActionResult(message: string): void {
     try {
       const result: BotActionResult = JSON.parse(message);
-      this.logger.debug(
-        `Received bot action result for game ${result.gameId}`
-      );
+      this.logger.debug(`Received bot action result for game ${result.gameId}`);
 
       // Call global handlers
       for (const handler of this.globalHandlers) {
         try {
           handler(result);
         } catch (error) {
-          this.logger.error("Error in global bot action handler:", error);
+          this.logger.error('Error in global bot action handler:', error);
         }
       }
 
@@ -101,23 +91,19 @@ export class BotActionService implements OnModuleDestroy {
           try {
             handler(result);
           } catch (error) {
-            this.logger.error("Error in game-specific bot action handler:", error);
+            this.logger.error('Error in game-specific bot action handler:', error);
           }
         }
       }
     } catch (error) {
-      this.logger.error("Failed to parse bot action result:", error);
+      this.logger.error('Failed to parse bot action result:', error);
     }
   }
 
   /**
    * Queue a bot action job
    */
-  async queueBotAction(
-    gameId: string,
-    botPlayerId: string,
-    gameState: Game
-  ): Promise<void> {
+  async queueBotAction(gameId: string, botPlayerId: string, gameState: Game): Promise<void> {
     try {
       const jobData: BotActionJob = {
         gameId,
@@ -126,25 +112,20 @@ export class BotActionService implements OnModuleDestroy {
         timestamp: Date.now(),
       };
 
-      await this.botActionQueue.add("process-bot-action", jobData, {
+      await this.botActionQueue.add('process-bot-action', jobData, {
         priority: 1, // High priority for bot actions
         removeOnComplete: 100,
         removeOnFail: 1000,
         attempts: 3,
         backoff: {
-          type: "exponential",
+          type: 'exponential',
           delay: 500,
         },
       });
 
-      this.logger.log(
-        `Queued bot action for ${botPlayerId} in game ${gameId}`
-      );
+      this.logger.log(`Queued bot action for ${botPlayerId} in game ${gameId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to queue bot action for ${botPlayerId}:`,
-        error
-      );
+      this.logger.error(`Failed to queue bot action for ${botPlayerId}:`, error);
       throw error;
     }
   }
@@ -167,10 +148,7 @@ export class BotActionService implements OnModuleDestroy {
    * Register a handler for a specific game's bot action results
    * Returns unsubscribe function
    */
-  onGameBotActionResult(
-    gameId: string,
-    handler: BotActionResultHandler
-  ): () => void {
+  onGameBotActionResult(gameId: string, handler: BotActionResultHandler): () => void {
     if (!this.resultHandlers.has(gameId)) {
       this.resultHandlers.set(gameId, []);
     }
@@ -216,7 +194,7 @@ export class BotActionService implements OnModuleDestroy {
         failed,
       };
     } catch (error) {
-      this.logger.error("Error getting bot action queue stats:", error);
+      this.logger.error('Error getting bot action queue stats:', error);
       return null;
     }
   }
@@ -230,9 +208,9 @@ export class BotActionService implements OnModuleDestroy {
       await this.subscriber.quit();
       this.globalHandlers = [];
       this.resultHandlers.clear();
-      this.logger.log("Bot action service cleaned up");
+      this.logger.log('Bot action service cleaned up');
     } catch (error) {
-      this.logger.error("Error during cleanup:", error);
+      this.logger.error('Error during cleanup:', error);
     }
   }
 }

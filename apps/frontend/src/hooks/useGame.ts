@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import axios from "axios";
-import { useAppDispatch, useAppSelector } from "./redux";
-import { useWebSocket } from "./useWebSocket";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
+import { useAppDispatch, useAppSelector } from './redux';
+import { useWebSocket } from './useWebSocket';
 
 // Queue item for sequential animation processing
 export interface GameStateQueueItem {
@@ -9,7 +9,7 @@ export interface GameStateQueueItem {
   newState: GameState;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export interface ChessPosition {
   x: number;
@@ -74,7 +74,7 @@ export interface ChessPiece {
   skill?: {
     name: string;
     description: string;
-    type: "passive" | "active";
+    type: 'passive' | 'active';
     cooldown: number;
     currentCooldown: number;
     attackRange?: {
@@ -84,13 +84,7 @@ export interface ChessPiece {
       vertical: boolean;
       lShape?: boolean;
     };
-    targetTypes?:
-      | "square"
-      | "squareInRange"
-      | "ally"
-      | "allyMinion"
-      | "enemy"
-      | "none";
+    targetTypes?: 'square' | 'squareInRange' | 'ally' | 'allyMinion' | 'enemy' | 'none';
     payload?: {
       currentModuleIndex?: number;
       cumulativeDamage?: number;
@@ -114,7 +108,7 @@ export interface ChessPiece {
       type: string;
     }>;
     damagePerTurn: number;
-    damageType: "physical" | "magic" | "true" | "non-lethal";
+    damageType: 'physical' | 'magic' | 'true' | 'non-lethal';
     stun?: boolean;
     healPerTurn: number;
     unique: boolean;
@@ -142,7 +136,7 @@ export interface ChessPiece {
   deadAtRound?: number;
   respawnAtRound?: number;
   summonerSpell?: {
-    type: "Flash" | "Ghost" | "Heal" | "Barrier" | "Smite";
+    type: 'Flash' | 'Ghost' | 'Heal' | 'Barrier' | 'Smite';
     cooldown: number;
     currentCooldown: number;
   };
@@ -150,12 +144,7 @@ export interface ChessPiece {
 
 export interface ActionDetails {
   timestamp: number;
-  actionType:
-    | "move_chess"
-    | "attack_chess"
-    | "skill"
-    | "buy_item"
-    | "use_summoner_spell";
+  actionType: 'move_chess' | 'attack_chess' | 'skill' | 'buy_item' | 'use_summoner_spell';
   casterId: string;
   casterPosition: ChessPosition;
   targetId?: string;
@@ -208,7 +197,7 @@ export interface GameState {
     userId: string;
     username: string;
     gold: number;
-    side?: "blue" | "red";
+    side?: 'blue' | 'red';
     selectedChampions?: string[];
     bannedChampions?: string[];
   }>;
@@ -221,13 +210,7 @@ export interface GameState {
 }
 
 export interface GameAction {
-  type:
-    | "move"
-    | "attack"
-    | "skill"
-    | "buy_item"
-    | "buy_viktor_module"
-    | "summoner_spell";
+  type: 'move' | 'attack' | 'skill' | 'buy_item' | 'buy_viktor_module' | 'summoner_spell';
   casterPosition?: ChessPosition;
   targetPosition?: ChessPosition;
   itemId?: string;
@@ -259,23 +242,17 @@ export const useGame = (gameId: string) => {
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [displayState, setDisplayState] = useState<GameState | null>(null); // What's currently displayed
-  const [gameStateQueue, setGameStateQueue] = useState<GameStateQueueItem[]>(
-    []
-  ); // Queue of states waiting for animations
+  const [gameStateQueue, setGameStateQueue] = useState<GameStateQueueItem[]>([]); // Queue of states waiting for animations
   const isAnimatingRef = useRef(false); // Track if animations are currently playing
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPiece, setSelectedPiece] = useState<ChessPiece | null>(null);
   const [validMoves, setValidMoves] = useState<ChessPosition[]>([]);
   const [validAttacks, setValidAttacks] = useState<ChessPosition[]>([]);
-  const [validSkillTargets, setValidSkillTargets] = useState<ChessPosition[]>(
-    []
-  );
+  const [validSkillTargets, setValidSkillTargets] = useState<ChessPosition[]>([]);
   const [isSkillMode, setIsSkillMode] = useState(false);
   const [isSummonerSpellMode, setIsSummonerSpellMode] = useState(false);
-  const [validSummonerSpellTargets, setValidSummonerSpellTargets] = useState<
-    ChessPosition[]
-  >([]);
+  const [validSummonerSpellTargets, setValidSummonerSpellTargets] = useState<ChessPosition[]>([]);
 
   // Update game state from WebSocket - add to queue for sequential processing
   useEffect(() => {
@@ -310,12 +287,9 @@ export const useGame = (gameId: string) => {
   // Clear selection if selected piece becomes stunned
   useEffect(() => {
     if (selectedPiece && gameState) {
-      const currentPiece = gameState.board.find(
-        (p) => p.id === selectedPiece.id
-      );
+      const currentPiece = gameState.board.find((p) => p.id === selectedPiece.id);
       if (currentPiece) {
-        const isStunned =
-          (currentPiece as any).debuffs?.some((d: any) => d.stun) ?? false;
+        const isStunned = (currentPiece as any).debuffs?.some((d: any) => d.stun) ?? false;
         if (isStunned) {
           setSelectedPiece(null);
           setValidMoves([]);
@@ -334,7 +308,7 @@ export const useGame = (gameId: string) => {
     const fetchGameState = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem('token');
         const response = await axios.get(`${API_URL}/games/${gameId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -344,7 +318,7 @@ export const useGame = (gameId: string) => {
           setDisplayState(response.data.game); // Initialize displayState
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch game state");
+        setError(err.response?.data?.message || 'Failed to fetch game state');
       } finally {
         setLoading(false);
       }
@@ -362,22 +336,20 @@ export const useGame = (gameId: string) => {
       wsInitializeGameplay();
     } else {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem('token');
         const response = await axios.post(
           `${API_URL}/games/${gameId}/initialize-gameplay`,
           {},
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         if (response.data.game) {
           setGameState(response.data.game);
         }
       } catch (err: any) {
-        setError(
-          err.response?.data?.message || "Failed to initialize gameplay"
-        );
+        setError(err.response?.data?.message || 'Failed to initialize gameplay');
       }
     }
   }, [gameId, wsConnected, wsInitializeGameplay]);
@@ -399,16 +371,16 @@ export const useGame = (gameId: string) => {
       // Map action type to event string
       const getEventString = (type: string) => {
         switch (type) {
-          case "move":
-            return "move_chess";
-          case "attack":
-            return "attack_chess";
-          case "skill":
-            return "skill";
-          case "summoner_spell":
-            return "use_summoner_spell";
+          case 'move':
+            return 'move_chess';
+          case 'attack':
+            return 'attack_chess';
+          case 'skill':
+            return 'skill';
+          case 'summoner_spell':
+            return 'use_summoner_spell';
           default:
-            return "buy_item";
+            return 'buy_item';
         }
       };
 
@@ -425,7 +397,7 @@ export const useGame = (gameId: string) => {
         wsSendAction(actionData);
       } else {
         try {
-          const token = localStorage.getItem("token");
+          const token = localStorage.getItem('token');
           const payload = {
             playerId: currentUser.id,
             event: getEventString(action.type),
@@ -435,23 +407,19 @@ export const useGame = (gameId: string) => {
             targetChampionId: action.targetChampionId,
           };
 
-          const response = await axios.post(
-            `${API_URL}/games/${gameId}/action`,
-            payload,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
+          const response = await axios.post(`${API_URL}/games/${gameId}/action`, payload, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
           if (response.data.game) {
             setGameState(response.data.game);
           }
         } catch (err: any) {
-          setError(err.response?.data?.message || "Failed to execute action");
+          setError(err.response?.data?.message || 'Failed to execute action');
         }
       }
     },
-    [gameState, currentUser, gameId, wsConnected, wsSendAction]
+    [gameState, currentUser, gameId, wsConnected, wsSendAction],
   );
 
   // Select piece and calculate valid moves/attacks
@@ -464,13 +432,11 @@ export const useGame = (gameId: string) => {
 
       // Check if it's player's turn
       const isPlayerTurn =
-        gameState.currentRound % 2 ===
-        (gameState.bluePlayer === currentUser.id ? 1 : 0);
+        gameState.currentRound % 2 === (gameState.bluePlayer === currentUser.id ? 1 : 0);
       if (!isPlayerTurn) return;
 
       // Check if piece is stunned - stunned pieces cannot be selected for actions
-      const isStunned =
-        (piece as any).debuffs?.some((debuff: any) => debuff.stun) ?? false;
+      const isStunned = (piece as any).debuffs?.some((debuff: any) => debuff.stun) ?? false;
       if (isStunned) return;
 
       setSelectedPiece(piece);
@@ -485,7 +451,7 @@ export const useGame = (gameId: string) => {
       // First move bonus: Minions get +1 speed on their first move
       if (
         !piece.hasMovedBefore &&
-        (piece.name === "Melee Minion" || piece.name === "Caster Minion")
+        (piece.name === 'Melee Minion' || piece.name === 'Caster Minion')
       ) {
         effectiveSpeed += 1;
       }
@@ -531,8 +497,7 @@ export const useGame = (gameId: string) => {
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = gameState.board.find(
-            (p) =>
-              p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+            (p) => p.position.x === newX && p.position.y === newY && p.stats.hp > 0,
           );
 
           if (!occupiedBy) {
@@ -551,11 +516,11 @@ export const useGame = (gameId: string) => {
         if (!attackRange) return;
 
         // Check backward attack restriction for minions
-        if (piece.name === "Melee Minion" || piece.name === "Caster Minion") {
+        if (piece.name === 'Melee Minion' || piece.name === 'Caster Minion') {
           // Calculate target Y after one step in this direction
           const targetY = piece.position.y + dy;
           const deltaY = targetY - piece.position.y;
-          
+
           if (piece.blue) {
             // Blue minions cannot attack backward (negative Y direction)
             if (deltaY < 0) return;
@@ -583,8 +548,7 @@ export const useGame = (gameId: string) => {
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = gameState.board.find(
-            (p) =>
-              p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+            (p) => p.position.x === newX && p.position.y === newY && p.stats.hp > 0,
           );
 
           if (occupiedBy) {
@@ -597,7 +561,7 @@ export const useGame = (gameId: string) => {
             } else {
               // Ally piece - check if it has Ghost debuff
               const hasGhost = (occupiedBy as any).debuffs?.some(
-                (d: any) => d.payload?.isGhost === true
+                (d: any) => d.payload?.isGhost === true,
               );
               if (!hasGhost) {
                 // Ally without Ghost blocks the path
@@ -633,8 +597,7 @@ export const useGame = (gameId: string) => {
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = gameState.board.find(
-            (p) =>
-              p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+            (p) => p.position.x === newX && p.position.y === newY && p.stats.hp > 0,
           );
 
           // L-shape can only attack enemy pieces (not empty squares)
@@ -645,7 +608,7 @@ export const useGame = (gameId: string) => {
       }
 
       // Check for ZED'S DEATH MARK - can attack marked targets from anywhere
-      if (piece.name === "Zed") {
+      if (piece.name === 'Zed') {
         // Find all enemy pieces with Death Mark from this Zed
         gameState.board.forEach((target) => {
           // Skip if not an enemy or dead
@@ -654,7 +617,7 @@ export const useGame = (gameId: string) => {
           // Check if target has Death Mark debuff from this Zed
           const deathMarkId = `death_mark_${piece.id}_${target.id}`;
           const hasDeathMark = (target as any).debuffs?.some(
-            (debuff: any) => debuff.id === deathMarkId
+            (debuff: any) => debuff.id === deathMarkId,
           );
 
           if (hasDeathMark) {
@@ -665,27 +628,24 @@ export const useGame = (gameId: string) => {
       }
 
       // Check for CASTLING (Poro with Siege Minion/Rook)
-      if (piece.name === "Poro" && !piece.hasMovedBefore) {
+      if (piece.name === 'Poro' && !piece.hasMovedBefore) {
         // Check kingside castling (right/east)
         const kingsideRook = gameState.board.find(
           (p) =>
             p.position.x === 7 &&
             p.position.y === piece.position.y &&
-            p.name === "Siege Minion" &&
+            p.name === 'Siege Minion' &&
             p.blue === piece.blue &&
             p.stats.hp > 0 &&
-            !p.hasMovedBefore
+            !p.hasMovedBefore,
         );
 
         if (kingsideRook) {
           // Check if path is clear between king and rook
           const pathClear = ![5, 6].some((x) =>
             gameState.board.find(
-              (p) =>
-                p.position.x === x &&
-                p.position.y === piece.position.y &&
-                p.stats.hp > 0
-            )
+              (p) => p.position.x === x && p.position.y === piece.position.y && p.stats.hp > 0,
+            ),
           );
 
           if (pathClear) {
@@ -698,21 +658,18 @@ export const useGame = (gameId: string) => {
           (p) =>
             p.position.x === 0 &&
             p.position.y === piece.position.y &&
-            p.name === "Siege Minion" &&
+            p.name === 'Siege Minion' &&
             p.blue === piece.blue &&
             p.stats.hp > 0 &&
-            !p.hasMovedBefore
+            !p.hasMovedBefore,
         );
 
         if (queensideRook) {
           // Check if path is clear between king and rook
           const pathClear = ![1, 2, 3].some((x) =>
             gameState.board.find(
-              (p) =>
-                p.position.x === x &&
-                p.position.y === piece.position.y &&
-                p.stats.hp > 0
-            )
+              (p) => p.position.x === x && p.position.y === piece.position.y && p.stats.hp > 0,
+            ),
           );
 
           if (pathClear) {
@@ -749,8 +706,7 @@ export const useGame = (gameId: string) => {
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = gameState.board.find(
-            (p) =>
-              p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+            (p) => p.position.x === newX && p.position.y === newY && p.stats.hp > 0,
           );
 
           if (!occupiedBy) {
@@ -767,7 +723,7 @@ export const useGame = (gameId: string) => {
       setValidMoves(moves);
       setValidAttacks(attacks);
     },
-    [gameState, currentUser]
+    [gameState, currentUser],
   );
 
   // Clear selection
@@ -784,13 +740,13 @@ export const useGame = (gameId: string) => {
   // Activate skill targeting mode
   const activateSkillMode = useCallback(
     (piece: ChessPiece) => {
-      if (!gameState || !piece.skill || piece.skill.type !== "active") return;
+      if (!gameState || !piece.skill || piece.skill.type !== 'active') return;
 
       const skill = piece.skill;
       const skillTargets: ChessPosition[] = [];
 
       // If skill has no targetTypes or is "none", execute immediately
-      if (!skill.targetTypes || skill.targetTypes === "none") {
+      if (!skill.targetTypes || skill.targetTypes === 'none') {
         setIsSkillMode(false);
         setValidSkillTargets([]);
         return;
@@ -827,38 +783,36 @@ export const useGame = (gameId: string) => {
 
           const targetPosition = { x: newX, y: newY };
           const occupiedBy = gameState.board.find(
-            (p) =>
-              p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+            (p) => p.position.x === newX && p.position.y === newY && p.stats.hp > 0,
           );
 
           // Handle different target types for L-shape
-          if (skill.targetTypes === "square") {
+          if (skill.targetTypes === 'square') {
             // Can target empty squares
             if (!occupiedBy) {
               skillTargets.push(targetPosition);
             }
-          } else if (skill.targetTypes === "squareInRange") {
+          } else if (skill.targetTypes === 'squareInRange') {
             // Can target empty squares within range
             if (!occupiedBy) {
               skillTargets.push(targetPosition);
             }
-          } else if (skill.targetTypes === "enemy") {
+          } else if (skill.targetTypes === 'enemy') {
             // Can only target enemy pieces
             if (occupiedBy && occupiedBy.ownerId !== piece.ownerId) {
               skillTargets.push(targetPosition);
             }
-          } else if (skill.targetTypes === "ally") {
+          } else if (skill.targetTypes === 'ally') {
             // Can only target ally pieces
             if (occupiedBy && occupiedBy.ownerId === piece.ownerId) {
               skillTargets.push(targetPosition);
             }
-          } else if (skill.targetTypes === "allyMinion") {
+          } else if (skill.targetTypes === 'allyMinion') {
             // Can only target ally minions
             if (
               occupiedBy &&
               occupiedBy.ownerId === piece.ownerId &&
-              (occupiedBy.name === "Melee Minion" ||
-                occupiedBy.name === "Caster Minion")
+              (occupiedBy.name === 'Melee Minion' || occupiedBy.name === 'Caster Minion')
             ) {
               skillTargets.push(targetPosition);
             }
@@ -898,19 +852,16 @@ export const useGame = (gameId: string) => {
 
             const targetPosition = { x: newX, y: newY };
             const occupiedBy = gameState.board.find(
-              (p) =>
-                p.position.x === newX && p.position.y === newY && p.stats.hp > 0
+              (p) => p.position.x === newX && p.position.y === newY && p.stats.hp > 0,
             );
 
             // Check if occupied piece has Ghost debuff
             const hasGhost = occupiedBy
-              ? (occupiedBy as any).debuffs?.some(
-                  (d: any) => d.payload?.isGhost === true
-                )
+              ? (occupiedBy as any).debuffs?.some((d: any) => d.payload?.isGhost === true)
               : false;
 
             // Handle different target types
-            if (skill.targetTypes === "square") {
+            if (skill.targetTypes === 'square') {
               // Can target empty squares within range (path must be clear)
               if (occupiedBy) {
                 // Check if it's an ally with Ghost - can pass through
@@ -923,13 +874,13 @@ export const useGame = (gameId: string) => {
               } else {
                 skillTargets.push(targetPosition);
               }
-            } else if (skill.targetTypes === "squareInRange") {
+            } else if (skill.targetTypes === 'squareInRange') {
               // Can target empty squares within range (ignoring obstacles)
               if (!occupiedBy) {
                 skillTargets.push(targetPosition);
               }
               // Don't break - continue checking full range even if square is occupied
-            } else if (skill.targetTypes === "enemy") {
+            } else if (skill.targetTypes === 'enemy') {
               // Can only target enemy pieces
               if (occupiedBy && occupiedBy.ownerId !== piece.ownerId) {
                 skillTargets.push(targetPosition);
@@ -941,7 +892,7 @@ export const useGame = (gameId: string) => {
                 }
                 // Continue through Ghost ally
               }
-            } else if (skill.targetTypes === "ally") {
+            } else if (skill.targetTypes === 'ally') {
               // Can only target ally pieces
               if (occupiedBy && occupiedBy.ownerId === piece.ownerId) {
                 skillTargets.push(targetPosition);
@@ -953,13 +904,12 @@ export const useGame = (gameId: string) => {
                 }
                 // Continue through Ghost enemy (unlikely but consistent)
               }
-            } else if (skill.targetTypes === "allyMinion") {
+            } else if (skill.targetTypes === 'allyMinion') {
               // Can only target ally minions (Melee Minion or Caster Minion)
               if (
                 occupiedBy &&
                 occupiedBy.ownerId === piece.ownerId &&
-                (occupiedBy.name === "Melee Minion" ||
-                  occupiedBy.name === "Caster Minion")
+                (occupiedBy.name === 'Melee Minion' || occupiedBy.name === 'Caster Minion')
               ) {
                 skillTargets.push(targetPosition);
                 break; // Stop at first ally minion
@@ -981,7 +931,7 @@ export const useGame = (gameId: string) => {
       setValidMoves([]);
       setValidAttacks([]);
     },
-    [gameState]
+    [gameState],
   );
 
   // Activate summoner spell targeting mode
@@ -997,7 +947,7 @@ export const useGame = (gameId: string) => {
 
       // Calculate valid targets based on spell type
       switch (spell.type) {
-        case "Flash": {
+        case 'Flash': {
           // Flash: Can teleport to any empty square within range 2
           for (let x = -1; x <= 8; x++) {
             for (let y = 0; y <= 7; y++) {
@@ -1013,8 +963,7 @@ export const useGame = (gameId: string) => {
 
               // Check if square is empty
               const occupiedBy = gameState.board.find(
-                (p) =>
-                  p.position.x === x && p.position.y === y && p.stats.hp > 0
+                (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0,
               );
 
               if (!occupiedBy) {
@@ -1025,22 +974,22 @@ export const useGame = (gameId: string) => {
           break;
         }
 
-        case "Ghost":
-        case "Heal":
-        case "Barrier": {
+        case 'Ghost':
+        case 'Heal':
+        case 'Barrier': {
           // These spells are self-cast or auto-targeting - execute immediately
           setIsSummonerSpellMode(false);
           setValidSummonerSpellTargets([]);
           // Execute the spell immediately
           executeAction({
-            type: "summoner_spell",
+            type: 'summoner_spell',
             casterPosition: piece.position,
             targetPosition: piece.position, // Self-target
           });
           return;
         }
 
-        case "Smite": {
+        case 'Smite': {
           // Smite: Can only target enemy minions or neutral monsters within range 2
           gameState.board.forEach((p) => {
             if (p.stats.hp <= 0) return;
@@ -1054,14 +1003,14 @@ export const useGame = (gameId: string) => {
 
             // Check if it's a neutral monster
             const isNeutralMonster =
-              p.ownerId === "neutral" ||
-              p.name.includes("Drake") ||
-              p.name === "Baron Nashor" ||
-              p.name === "Elder Dragon";
+              p.ownerId === 'neutral' ||
+              p.name.includes('Drake') ||
+              p.name === 'Baron Nashor' ||
+              p.name === 'Elder Dragon';
 
             // Check if it's an ENEMY minion (not ally minion)
             const isEnemyMinion =
-              (p.name.includes("Minion") || p.name === "Super Minion") &&
+              (p.name.includes('Minion') || p.name === 'Super Minion') &&
               p.ownerId !== piece.ownerId;
 
             if (isEnemyMinion || isNeutralMonster) {
@@ -1080,20 +1029,17 @@ export const useGame = (gameId: string) => {
       setValidSkillTargets([]);
       setIsSkillMode(false);
     },
-    [gameState, executeAction]
+    [gameState, executeAction],
   );
 
   // Check if it's current user's turn
   const isMyTurn =
     gameState && currentUser
-      ? gameState.currentRound % 2 ===
-        (gameState.bluePlayer === currentUser.id ? 1 : 0)
+      ? gameState.currentRound % 2 === (gameState.bluePlayer === currentUser.id ? 1 : 0)
       : false;
 
   // Get current player data
-  const currentPlayer = gameState?.players.find(
-    (p) => p.userId === currentUser?.id
-  );
+  const currentPlayer = gameState?.players.find((p) => p.userId === currentUser?.id);
 
   // Get opponent data
   const opponent = gameState?.players.find((p) => p.userId !== currentUser?.id);
@@ -1119,7 +1065,7 @@ export const useGame = (gameId: string) => {
         wsRespondToDraw(accept);
       }
     },
-    [wsConnected, wsRespondToDraw]
+    [wsConnected, wsRespondToDraw],
   );
 
   // Set animation state - called by GamePage when starting/finishing animations

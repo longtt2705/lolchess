@@ -1,6 +1,6 @@
-import { Debuff } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { Debuff } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { getAdjacentSquares, getChessAtPosition } from '../../utils/helpers';
 
 export class Poro extends ChessObject {
   /**
@@ -9,7 +9,7 @@ export class Poro extends ChessObject {
    */
   applyDebuff(chess: ChessObject, debuff: Debuff): boolean {
     // If the debuff would stun and the target is a Poro, ignore it
-    if (debuff.stun && chess.chess.name === "Poro") {
+    if (debuff.stun && chess.chess.name === 'Poro') {
       return false;
     }
     return super.applyDebuff(chess, debuff);
@@ -28,13 +28,9 @@ export class Poro extends ChessObject {
       const ally = getChessAtPosition(this.game, this.chess.blue, square);
       if (
         ally &&
-        [
-          "Melee Minion",
-          "Caster Minion",
-          "Sand Soldier",
-          "Super Minion",
-          "Poro",
-        ].includes(ally.name) &&
+        ['Melee Minion', 'Caster Minion', 'Sand Soldier', 'Super Minion', 'Poro'].includes(
+          ally.name,
+        ) &&
         ally.stats.hp > 0
       ) {
         count++;
@@ -80,23 +76,16 @@ export class Poro extends ChessObject {
   protected damage(
     chess: ChessObject,
     damage: number,
-    damageType: "physical" | "magic" | "true" | "non-lethal",
+    damageType: 'physical' | 'magic' | 'true' | 'non-lethal',
     attacker: ChessObject,
     sunder: number = 0,
-    fromAttack: boolean = false
+    fromAttack: boolean = false,
   ): number {
     // Cap damage at 50% of max HP
     const maxDamage = this.maxHp * 0.5;
     const cappedDamage = Math.min(damage, maxDamage);
 
     // Call parent damage method with capped damage
-    return super.damage(
-      chess,
-      cappedDamage,
-      damageType,
-      attacker,
-      sunder,
-      fromAttack
-    );
+    return super.damage(chess, cappedDamage, damageType, attacker, sunder, fromAttack);
   }
 }

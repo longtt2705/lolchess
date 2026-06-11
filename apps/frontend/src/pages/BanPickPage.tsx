@@ -1,9 +1,19 @@
-import React, { useEffect, useState, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Sword, Shield, X, SkipForward, Zap, Target, RotateCcw, Check, Shuffle } from 'lucide-react'
-import { toast } from 'react-hot-toast'
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Sword,
+  Shield,
+  X,
+  SkipForward,
+  Zap,
+  Target,
+  RotateCcw,
+  Check,
+  Shuffle,
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import {
   DndContext,
   closestCenter,
@@ -12,38 +22,66 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core'
+} from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { useBanPick, SummonerSpellType, SUMMONER_SPELL_TYPES } from '../hooks/useBanPick'
-import { useChampions, ChampionData } from '../hooks/useChampions'
-import { resetBanPick } from '../store/gameSlice'
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useAppSelector, useAppDispatch } from '../hooks/redux';
+import { useBanPick, SummonerSpellType, SUMMONER_SPELL_TYPES } from '../hooks/useBanPick';
+import { useChampions, ChampionData } from '../hooks/useChampions';
+import { resetBanPick } from '../store/gameSlice';
 
 // Summoner spell icons and colors
-const SUMMONER_SPELL_INFO: Record<SummonerSpellType, { icon: string; color: string; description: string }> = {
-  Flash: { icon: '/icons/Flash.png', color: '#FFD700', description: 'Teleport to target square (CD: 20)' },
-  Ghost: { icon: '/icons/Ghost.png', color: '#87CEEB', description: '+1 speed, ghost for 3 turns (CD: 10)' },
-  Heal: { icon: '/icons/Heal.png', color: '#90EE90', description: 'Heal caster and lowest HP ally (CD: 15)' },
-  Barrier: { icon: '/icons/Barrier.png', color: '#DDA0DD', description: 'Shield to block damage (CD: 15)' },
-  Smite: { icon: '/icons/Smite.png', color: '#FF6347', description: '50 true damage to minions/monsters (CD: 10)' },
-}
+const SUMMONER_SPELL_INFO: Record<
+  SummonerSpellType,
+  { icon: string; color: string; description: string }
+> = {
+  Flash: {
+    icon: '/icons/Flash.png',
+    color: '#FFD700',
+    description: 'Teleport to target square (CD: 20)',
+  },
+  Ghost: {
+    icon: '/icons/Ghost.png',
+    color: '#87CEEB',
+    description: '+1 speed, ghost for 3 turns (CD: 10)',
+  },
+  Heal: {
+    icon: '/icons/Heal.png',
+    color: '#90EE90',
+    description: 'Heal caster and lowest HP ally (CD: 15)',
+  },
+  Barrier: {
+    icon: '/icons/Barrier.png',
+    color: '#DDA0DD',
+    description: 'Shield to block damage (CD: 15)',
+  },
+  Smite: {
+    icon: '/icons/Smite.png',
+    color: '#FF6347',
+    description: '50 true damage to minions/monsters (CD: 10)',
+  },
+};
 
 const BanPickContainer = styled.div`
   height: 100vh;
   max-height: 100vh;
   overflow: hidden;
-  background: radial-gradient(ellipse at top, rgba(200, 155, 60, 0.15) 0%, var(--primary-bg) 50%, var(--primary-bg) 100%);
+  background: radial-gradient(
+    ellipse at top,
+    rgba(200, 155, 60, 0.15) 0%,
+    var(--primary-bg) 50%,
+    var(--primary-bg) 100%
+  );
   display: flex;
   flex-direction: column;
   position: relative;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -51,10 +89,15 @@ const BanPickContainer = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, transparent 0%, rgba(200, 155, 60, 0.05) 50%, transparent 100%);
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      rgba(200, 155, 60, 0.05) 50%,
+      transparent 100%
+    );
     pointer-events: none;
   }
-`
+`;
 
 const Header = styled.div`
   background: linear-gradient(180deg, var(--secondary-bg) 0%, rgba(30, 35, 40, 0.95) 100%);
@@ -68,13 +111,13 @@ const Header = styled.div`
   z-index: 100;
   position: relative;
   flex-shrink: 0;
-`
+`;
 
 const GameInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
-  
+
   h2 {
     color: var(--gold);
     margin: 0;
@@ -83,7 +126,7 @@ const GameInfo = styled.div`
     text-shadow: 0 2px 8px rgba(200, 155, 60, 0.5);
     letter-spacing: 1px;
   }
-  
+
   .phase {
     background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
     padding: 8px 16px;
@@ -95,7 +138,7 @@ const GameInfo = styled.div`
     letter-spacing: 1px;
     box-shadow: 0 4px 12px rgba(200, 155, 60, 0.4);
   }
-`
+`;
 
 const MainContent = styled.div`
   flex: 1;
@@ -110,7 +153,7 @@ const MainContent = styled.div`
   z-index: 1;
   overflow: hidden;
   min-height: 0;
-`
+`;
 
 const PlayerSections = styled.div`
   display: grid;
@@ -119,12 +162,12 @@ const PlayerSections = styled.div`
   align-items: center;
   flex: 1;
   min-height: 0;
-  
+
   @media (max-width: 1400px) {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-`
+`;
 
 const SkipBanButton = styled(motion.button)`
   background: linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%);
@@ -145,46 +188,46 @@ const SkipBanButton = styled(motion.button)`
   letter-spacing: 1px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
-  
+
   svg {
     transition: transform 0.3s ease;
     width: 14px;
     height: 14px;
   }
-  
+
   &:hover {
     border-color: var(--gold);
     background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
     color: var(--primary-bg);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(200, 155, 60, 0.4);
-    
+
     svg {
       transform: translateX(4px);
     }
   }
-  
+
   &:active {
     transform: translateY(0px);
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
-    
+
     &:hover {
       border-color: var(--border);
       background: linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%);
       color: var(--primary-text);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      
+
       svg {
         transform: none;
       }
     }
   }
-`
+`;
 
 const SidePanel = styled.div<{ isActive?: boolean }>`
   background: linear-gradient(135deg, var(--secondary-bg) 0%, rgba(30, 35, 40, 0.9) 100%);
@@ -200,7 +243,7 @@ const SidePanel = styled.div<{ isActive?: boolean }>`
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   height: fit-content;
   max-height: 100%;
-  
+
   h3 {
     color: var(--gold);
     margin: 0 0 4px 0;
@@ -210,7 +253,7 @@ const SidePanel = styled.div<{ isActive?: boolean }>`
     font-size: 14px;
     text-shadow: 0 2px 4px rgba(200, 155, 60, 0.5);
   }
-  
+
   h4 {
     color: var(--primary-text);
     margin: 0 0 6px 0;
@@ -219,10 +262,10 @@ const SidePanel = styled.div<{ isActive?: boolean }>`
     letter-spacing: 1px;
     opacity: 0.8;
   }
-  
+
   &.blue {
     border-left: 5px solid #0596aa;
-    
+
     &::before {
       content: '';
       position: absolute;
@@ -234,10 +277,10 @@ const SidePanel = styled.div<{ isActive?: boolean }>`
       box-shadow: 0 0 20px rgba(5, 150, 170, 0.5);
     }
   }
-  
+
   &.red {
     border-left: 5px solidrgb(240, 21, 21);
-    
+
     &::before {
       content: '';
       position: absolute;
@@ -245,12 +288,14 @@ const SidePanel = styled.div<{ isActive?: boolean }>`
       left: 0;
       width: 5px;
       height: 100%;
-      background: linear-gradient(180deg,rgb(255, 0, 0) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgb(255, 0, 0) 0%, transparent 100%);
       box-shadow: 0 0 20px rgba(250, 0, 0, 0.5);
     }
   }
-  
-  ${props => props.isActive && `
+
+  ${(props) =>
+    props.isActive &&
+    `
     border-color: var(--gold);
     box-shadow: 0 0 40px rgba(200, 155, 60, 0.5);
     background: linear-gradient(135deg, rgba(200, 155, 60, 0.15) 0%, rgba(30, 35, 40, 0.9) 100%);
@@ -277,7 +322,7 @@ const SidePanel = styled.div<{ isActive?: boolean }>`
       to { transform: rotate(360deg); }
     }
   `}
-`
+`;
 
 const BanIndicator = styled.div`
   display: flex;
@@ -286,7 +331,7 @@ const BanIndicator = styled.div`
   background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   flex-shrink: 0;
-  
+
   h4 {
     color: #ef4444;
     margin: 0 0 6px 0;
@@ -295,20 +340,20 @@ const BanIndicator = styled.div`
     align-items: center;
     gap: 4px;
   }
-`
+`;
 
 const BanSlot = styled.div<{ filled?: boolean }>`
   width: 40px;
   height: 40px;
-  background: ${props => props.filled ? 'var(--accent-bg)' : 'rgba(0, 0, 0, 0.3)'};
-  border: 2px solid ${props => props.filled ? '#ef4444' : 'var(--border)'};
+  background: ${(props) => (props.filled ? 'var(--accent-bg)' : 'rgba(0, 0, 0, 0.3)')};
+  border: 2px solid ${(props) => (props.filled ? '#ef4444' : 'var(--border)')};
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   transition: all 0.3s ease;
-  
+
   img {
     width: 100%;
     height: 100%;
@@ -316,8 +361,10 @@ const BanSlot = styled.div<{ filled?: boolean }>`
     border-radius: 4px;
     filter: grayscale(1) brightness(0.5);
   }
-  
-  ${props => props.filled && `
+
+  ${(props) =>
+    props.filled &&
+    `
     &::after {
       content: "✕";
       position: absolute;
@@ -327,7 +374,7 @@ const BanSlot = styled.div<{ filled?: boolean }>`
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
     }
   `}
-`
+`;
 
 const ChampionGrid = styled.div`
   background: linear-gradient(135deg, var(--secondary-bg) 0%, rgba(30, 35, 40, 0.9) 100%);
@@ -341,7 +388,7 @@ const ChampionGrid = styled.div`
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -351,7 +398,7 @@ const ChampionGrid = styled.div`
     height: 3px;
     background: linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%);
   }
-  
+
   h3 {
     color: var(--gold);
     margin: 0 0 8px 0;
@@ -360,7 +407,7 @@ const ChampionGrid = styled.div`
     text-shadow: 0 2px 8px rgba(200, 155, 60, 0.5);
     flex-shrink: 0;
   }
-`
+`;
 
 const ChampionList = styled.div`
   display: grid;
@@ -369,27 +416,27 @@ const ChampionList = styled.div`
   overflow-y: auto;
   padding: 4px;
   flex: 1;
-  
+
   &::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: var(--primary-bg);
     border-radius: 4px;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: var(--gold);
     border-radius: 4px;
-    
+
     &:hover {
       background: #b8860b;
     }
   }
-`
+`;
 
-const ChampionCard = styled(motion.div) <{
+const ChampionCard = styled(motion.div)<{
   banned?: boolean;
   picked?: boolean;
   clickable?: boolean;
@@ -400,19 +447,19 @@ const ChampionCard = styled(motion.div) <{
   border-radius: 12px;
   display: flex;
   flex-direction: column;
-  cursor: ${props => props.clickable ? 'pointer' : 'default'};
+  cursor: ${(props) => (props.clickable ? 'pointer' : 'default')};
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  
+
   .champion-portrait {
     width: 100%;
     height: 70%;
     object-fit: cover;
     transition: all 0.3s ease;
   }
-  
+
   .champion-info {
     flex: 1;
     padding: 8px;
@@ -422,7 +469,7 @@ const ChampionCard = styled(motion.div) <{
     justify-content: center;
     background: rgba(0, 0, 0, 0.3);
   }
-  
+
   .name {
     font-size: 13px;
     font-weight: bold;
@@ -430,14 +477,16 @@ const ChampionCard = styled(motion.div) <{
     color: var(--primary-text);
     margin-bottom: 4px;
   }
-  
+
   .stats {
     font-size: 10px;
     color: var(--secondary-text);
     text-align: center;
   }
-  
-  ${props => props.clickable && `
+
+  ${(props) =>
+    props.clickable &&
+    `
     &:hover {
       transform: translateY(-4px) scale(1.02);
       border-color: var(--gold);
@@ -461,8 +510,10 @@ const ChampionCard = styled(motion.div) <{
       transform: translateY(-2px) scale(1.0);
     }
   `}
-  
-  ${props => props.banned && `
+
+  ${(props) =>
+    props.banned &&
+    `
     opacity: 0.4;
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.2) 100%);
     pointer-events: none;
@@ -489,7 +540,9 @@ const ChampionCard = styled(motion.div) <{
     }
   `}
   
-  ${props => props.picked && `
+  ${(props) =>
+    props.picked &&
+    `
     opacity: 0.5;
     background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(22, 163, 74, 0.2) 100%);
     pointer-events: none;
@@ -514,7 +567,7 @@ const ChampionCard = styled(motion.div) <{
       letter-spacing: 1px;
     }
   `}
-`
+`;
 
 const BanPickList = styled.div`
   display: flex;
@@ -522,27 +575,30 @@ const BanPickList = styled.div`
   gap: 8px;
   flex: 1;
   overflow-y: auto;
-  
+
   &::-webkit-scrollbar {
     width: 4px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 2px;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: var(--gold);
     border-radius: 2px;
   }
-`
+`;
 
 const BanPickSlot = styled.div<{ filled?: boolean; active?: boolean }>`
   height: 48px;
   width: 100%;
-  background: ${props => props.filled ? 'linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%)' : 'rgba(0, 0, 0, 0.3)'};
-  border: 2px solid ${props => props.active ? 'var(--gold)' : 'var(--border)'};
+  background: ${(props) =>
+    props.filled
+      ? 'linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%)'
+      : 'rgba(0, 0, 0, 0.3)'};
+  border: 2px solid ${(props) => (props.active ? 'var(--gold)' : 'var(--border)')};
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -551,10 +607,13 @@ const BanPickSlot = styled.div<{ filled?: boolean; active?: boolean }>`
   transition: all 0.3s ease;
   padding: 4px;
   overflow: hidden;
-  box-shadow: ${props => props.active ? '0 0 20px rgba(200, 155, 60, 0.5)' : 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'};
+  box-shadow: ${(props) =>
+    props.active ? '0 0 20px rgba(200, 155, 60, 0.5)' : 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'};
   flex-shrink: 0;
-  
-  ${props => props.active && `
+
+  ${(props) =>
+    props.active &&
+    `
     animation: activePulse 2s ease-in-out infinite;
     
     &::before {
@@ -565,17 +624,26 @@ const BanPickSlot = styled.div<{ filled?: boolean; active?: boolean }>`
       animation: shimmer 2s linear infinite;
     }
   `}
-  
+
   @keyframes activePulse {
-    0%, 100% { box-shadow: 0 0 20px rgba(200, 155, 60, 0.5); }
-    50% { box-shadow: 0 0 30px rgba(200, 155, 60, 0.8); }
+    0%,
+    100% {
+      box-shadow: 0 0 20px rgba(200, 155, 60, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(200, 155, 60, 0.8);
+    }
   }
-  
+
   @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
   }
-  
+
   .champion-icon {
     width: 40px;
     height: 40px;
@@ -583,7 +651,7 @@ const BanPickSlot = styled.div<{ filled?: boolean; active?: boolean }>`
     object-fit: cover;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
-  
+
   .empty-text {
     font-size: 9px;
     color: var(--secondary-text);
@@ -591,16 +659,17 @@ const BanPickSlot = styled.div<{ filled?: boolean; active?: boolean }>`
     letter-spacing: 1px;
     font-weight: 600;
   }
-`
+`;
 
-const TurnIndicator = styled(motion.div) <{ isMyTurn: boolean }>`
+const TurnIndicator = styled(motion.div)<{ isMyTurn: boolean }>`
   position: fixed;
   top: 50%;
   left: 50%;
-  background: ${props => props.isMyTurn
-    ? 'linear-gradient(135deg, var(--gold) 0%, #b8860b 100%)'
-    : 'linear-gradient(135deg, var(--secondary-text) 0%, #5b5b5b 100%)'};
-  color: ${props => props.isMyTurn ? 'var(--primary-bg)' : 'white'};
+  background: ${(props) =>
+    props.isMyTurn
+      ? 'linear-gradient(135deg, var(--gold) 0%, #b8860b 100%)'
+      : 'linear-gradient(135deg, var(--secondary-text) 0%, #5b5b5b 100%)'};
+  color: ${(props) => (props.isMyTurn ? 'var(--primary-bg)' : 'white')};
   padding: 32px 64px;
   border-radius: 16px;
   font-size: 28px;
@@ -608,11 +677,13 @@ const TurnIndicator = styled(motion.div) <{ isMyTurn: boolean }>`
   text-align: center;
   z-index: 1000;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
-  border: 3px solid ${props => props.isMyTurn ? '#ffd700' : '#888'};
+  border: 3px solid ${(props) => (props.isMyTurn ? '#ffd700' : '#888')};
   letter-spacing: 2px;
   text-transform: uppercase;
-  
-  ${props => props.isMyTurn && `
+
+  ${(props) =>
+    props.isMyTurn &&
+    `
     animation: victoryGlow 1s ease-in-out infinite;
     
     @keyframes victoryGlow {
@@ -620,7 +691,7 @@ const TurnIndicator = styled(motion.div) <{ isMyTurn: boolean }>`
       50% { box-shadow: 0 12px 64px rgba(200, 155, 60, 1); }
     }
   `}
-`
+`;
 
 const DevToolsPanel = styled.div`
   position: fixed;
@@ -632,7 +703,7 @@ const DevToolsPanel = styled.div`
   padding: 10px;
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  
+
   h4 {
     color: #e74c3c;
     margin: 0 0 8px 0;
@@ -641,7 +712,7 @@ const DevToolsPanel = styled.div`
     text-transform: uppercase;
     letter-spacing: 1px;
   }
-  
+
   .dev-button {
     background: #e74c3c;
     border: none;
@@ -655,23 +726,23 @@ const DevToolsPanel = styled.div`
     align-items: center;
     gap: 6px;
     transition: all 0.2s ease;
-    
+
     &:hover {
       background: #c0392b;
       transform: translateY(-1px);
     }
-    
+
     &:active {
       transform: translateY(0);
     }
-    
+
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
       transform: none;
     }
   }
-`
+`;
 
 const ReorderContainer = styled.div`
   background: linear-gradient(135deg, var(--secondary-bg) 0%, rgba(30, 35, 40, 0.9) 100%);
@@ -681,7 +752,7 @@ const ReorderContainer = styled.div`
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: visible;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -691,7 +762,7 @@ const ReorderContainer = styled.div`
     height: 3px;
     background: linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%);
   }
-  
+
   h3 {
     color: var(--gold);
     margin: 0 0 16px 0;
@@ -703,7 +774,7 @@ const ReorderContainer = styled.div`
     justify-content: center;
     gap: 8px;
   }
-`
+`;
 
 const ReorderInstructions = styled.div`
   text-align: center;
@@ -713,7 +784,7 @@ const ReorderInstructions = styled.div`
   padding: 12px;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
-`
+`;
 
 const ChampionOrderList = styled.div`
   display: flex;
@@ -722,9 +793,9 @@ const ChampionOrderList = styled.div`
   margin-bottom: 20px;
   position: relative;
   overflow: visible;
-`
+`;
 
-const SortableChampionCard = styled(motion.div) <{ isDragging?: boolean; isReady?: boolean }>`
+const SortableChampionCard = styled(motion.div)<{ isDragging?: boolean; isReady?: boolean }>`
   background: linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%);
   border: 2px solid var(--border);
   border-radius: 12px;
@@ -736,14 +807,18 @@ const SortableChampionCard = styled(motion.div) <{ isDragging?: boolean; isReady
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: visible;
-  
-  ${props => props.isDragging && `
+
+  ${(props) =>
+    props.isDragging &&
+    `
     opacity: 0.5;
     transform: scale(1.05);
     z-index: 1000;
   `}
-  
-  ${props => !props.isReady && `
+
+  ${(props) =>
+    !props.isReady &&
+    `
     &:hover {
       border-color: var(--gold);
       box-shadow: 0 6px 20px rgba(200, 155, 60, 0.4);
@@ -764,7 +839,7 @@ const SortableChampionCard = styled(motion.div) <{ isDragging?: boolean; isReady
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(200, 155, 60, 0.4);
   }
-  
+
   .champion-portrait {
     width: 60px;
     height: 60px;
@@ -773,34 +848,36 @@ const SortableChampionCard = styled(motion.div) <{ isDragging?: boolean; isReady
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
   }
-  
+
   .champion-details {
     flex: 1;
-    
+
     .name {
       font-size: 16px;
       font-weight: bold;
       color: var(--primary-text);
       margin-bottom: 4px;
     }
-    
+
     .hint {
       font-size: 12px;
       color: var(--secondary-text);
     }
   }
-  
+
   .drag-handle {
     color: var(--secondary-text);
-    opacity: ${props => props.isReady ? '0.3' : '0.6'};
+    opacity: ${(props) => (props.isReady ? '0.3' : '0.6')};
     transition: opacity 0.3s ease;
-    cursor: ${props => props.isReady ? 'default' : 'grab'};
-    
+    cursor: ${(props) => (props.isReady ? 'default' : 'grab')};
+
     &:active {
-      cursor: ${props => props.isReady ? 'default' : 'grabbing'};
+      cursor: ${(props) => (props.isReady ? 'default' : 'grabbing')};
     }
-    
-    ${props => !props.isReady && `
+
+    ${(props) =>
+      !props.isReady &&
+      `
       &:hover {
         opacity: 1;
       }
@@ -814,21 +891,23 @@ const SortableChampionCard = styled(motion.div) <{ isDragging?: boolean; isReady
     margin-left: auto;
     padding-right: 16px;
   }
-`
+`;
 
 const SpellDropdown = styled.div<{ isReady?: boolean }>`
   position: relative;
-`
+`;
 
 const SpellButton = styled.button<{ hasSpell?: boolean; spellColor?: string; isReady?: boolean }>`
   width: 48px;
   height: 48px;
   border-radius: 8px;
-  border: 2px solid ${props => props.hasSpell ? props.spellColor || 'var(--gold)' : 'var(--border)'};
-  background: ${props => props.hasSpell
-    ? `linear-gradient(135deg, ${props.spellColor}33 0%, ${props.spellColor}11 100%)`
-    : 'var(--secondary-bg)'};
-  cursor: ${props => props.isReady ? 'default' : 'pointer'};
+  border: 2px solid
+    ${(props) => (props.hasSpell ? props.spellColor || 'var(--gold)' : 'var(--border)')};
+  background: ${(props) =>
+    props.hasSpell
+      ? `linear-gradient(135deg, ${props.spellColor}33 0%, ${props.spellColor}11 100%)`
+      : 'var(--secondary-bg)'};
+  cursor: ${(props) => (props.isReady ? 'default' : 'pointer')};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -836,34 +915,43 @@ const SpellButton = styled.button<{ hasSpell?: boolean; spellColor?: string; isR
   transition: all 0.2s ease;
   padding: 4px;
   overflow: hidden;
-  
+
   img {
     width: 100%;
     height: 100%;
     object-fit: contain;
   }
-  
-  ${props => !props.isReady && !props.hasSpell && `
+
+  ${(props) =>
+    !props.isReady &&
+    !props.hasSpell &&
+    `
     &:hover {
       border-color: var(--gold);
       background: linear-gradient(135deg, rgba(200, 155, 60, 0.2) 0%, rgba(200, 155, 60, 0.1) 100%);
     }
   `}
-  
-  ${props => !props.isReady && props.hasSpell && `
+
+  ${(props) =>
+    !props.isReady &&
+    props.hasSpell &&
+    `
     &:hover {
       transform: scale(1.05);
       box-shadow: 0 0 12px ${props.spellColor}66;
     }
   `}
-`
+`;
 
-const SpellMenu = styled(motion.div) <{ openUpward?: boolean }>`
+const SpellMenu = styled(motion.div)<{ openUpward?: boolean }>`
   position: absolute;
-  ${props => props.openUpward ? `
+  ${(props) =>
+    props.openUpward
+      ? `
     bottom: 100%;
     margin-bottom: 8px;
-  ` : `
+  `
+      : `
     top: 100%;
     margin-top: 8px;
   `}
@@ -877,9 +965,13 @@ const SpellMenu = styled(motion.div) <{ openUpward?: boolean }>`
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   max-height: 360px;
   overflow-y: auto;
-`
+`;
 
-const SpellOption = styled.button<{ spellColor: string; isSelected?: boolean; isDisabled?: boolean }>`
+const SpellOption = styled.button<{
+  spellColor: string;
+  isSelected?: boolean;
+  isDisabled?: boolean;
+}>`
   width: 100%;
   display: flex;
   align-items: center;
@@ -887,17 +979,19 @@ const SpellOption = styled.button<{ spellColor: string; isSelected?: boolean; is
   padding: 10px 12px;
   border: none;
   border-radius: 8px;
-  background: ${props => props.isSelected
-    ? `linear-gradient(135deg, ${props.spellColor}44 0%, ${props.spellColor}22 100%)`
-    : 'transparent'};
+  background: ${(props) =>
+    props.isSelected
+      ? `linear-gradient(135deg, ${props.spellColor}44 0%, ${props.spellColor}22 100%)`
+      : 'transparent'};
   cursor: pointer;
   opacity: 1;
   transition: all 0.2s ease;
-  
+
   &:hover {
-    background: ${props => `linear-gradient(135deg, ${props.spellColor}33 0%, ${props.spellColor}11 100%)`};
+    background: ${(props) =>
+      `linear-gradient(135deg, ${props.spellColor}33 0%, ${props.spellColor}11 100%)`};
   }
-  
+
   .spell-icon {
     width: 32px;
     height: 32px;
@@ -905,30 +999,30 @@ const SpellOption = styled.button<{ spellColor: string; isSelected?: boolean; is
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    
+
     img {
       width: 100%;
       height: 100%;
       object-fit: contain;
     }
   }
-  
+
   .spell-info {
     text-align: left;
     flex: 1;
-    
+
     .spell-name {
       font-size: 14px;
       font-weight: bold;
       color: var(--primary-text);
     }
-    
+
     .spell-desc {
       font-size: 11px;
       color: var(--secondary-text);
     }
   }
-`
+`;
 
 const ReadySection = styled.div`
   display: flex;
@@ -937,14 +1031,15 @@ const ReadySection = styled.div`
   align-items: center;
   padding-top: 16px;
   border-top: 2px solid var(--border);
-`
+`;
 
-const ReadyButton = styled(motion.button) <{ isReady?: boolean }>`
-  background: ${props => props.isReady
-    ? 'linear-gradient(135deg, var(--gold) 0%, #b8860b 100%)'
-    : 'linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%)'};
-  border: 2px solid ${props => props.isReady ? 'var(--gold)' : 'var(--border)'};
-  color: ${props => props.isReady ? 'var(--primary-bg)' : 'var(--primary-text)'};
+const ReadyButton = styled(motion.button)<{ isReady?: boolean }>`
+  background: ${(props) =>
+    props.isReady
+      ? 'linear-gradient(135deg, var(--gold) 0%, #b8860b 100%)'
+      : 'linear-gradient(135deg, var(--accent-bg) 0%, rgba(60, 60, 65, 0.8) 100%)'};
+  border: 2px solid ${(props) => (props.isReady ? 'var(--gold)' : 'var(--border)')};
+  color: ${(props) => (props.isReady ? 'var(--primary-bg)' : 'var(--primary-text)')};
   padding: 12px 32px;
   border-radius: 8px;
   display: flex;
@@ -956,43 +1051,39 @@ const ReadyButton = styled(motion.button) <{ isReady?: boolean }>`
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  box-shadow: ${props => props.isReady
-    ? '0 6px 20px rgba(200, 155, 60, 0.4)'
-    : '0 4px 12px rgba(0, 0, 0, 0.2)'};
-  
+  box-shadow: ${(props) =>
+    props.isReady ? '0 6px 20px rgba(200, 155, 60, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.2)'};
+
   &:hover {
     transform: translateY(-2px);
-    box-shadow: ${props => props.isReady
-    ? '0 8px 24px rgba(200, 155, 60, 0.6)'
-    : '0 6px 20px rgba(200, 155, 60, 0.3)'};
+    box-shadow: ${(props) =>
+      props.isReady ? '0 8px 24px rgba(200, 155, 60, 0.6)' : '0 6px 20px rgba(200, 155, 60, 0.3)'};
     border-color: var(--gold);
   }
-  
+
   &:active {
     transform: translateY(0px);
   }
-`
+`;
 
 const ReadyStatusIndicator = styled.div<{ isReady?: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: ${props => props.isReady
-    ? 'rgba(34, 197, 94, 0.2)'
-    : 'rgba(160, 155, 140, 0.2)'};
-  border: 2px solid ${props => props.isReady ? '#22c55e' : 'var(--secondary-text)'};
+  background: ${(props) => (props.isReady ? 'rgba(34, 197, 94, 0.2)' : 'rgba(160, 155, 140, 0.2)')};
+  border: 2px solid ${(props) => (props.isReady ? '#22c55e' : 'var(--secondary-text)')};
   border-radius: 8px;
   font-size: 12px;
-  color: ${props => props.isReady ? '#22c55e' : 'var(--secondary-text)'};
+  color: ${(props) => (props.isReady ? '#22c55e' : 'var(--secondary-text)')};
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
-  
+
   svg {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   }
-`
+`;
 
 const BothReadyMessage = styled(motion.div)`
   background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
@@ -1006,14 +1097,19 @@ const BothReadyMessage = styled(motion.div)`
   text-transform: uppercase;
   letter-spacing: 1px;
   box-shadow: 0 8px 24px rgba(200, 155, 60, 0.6);
-  
+
   animation: pulseGlow 1.5s ease-in-out infinite;
-  
+
   @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 8px 24px rgba(200, 155, 60, 0.6); }
-    50% { box-shadow: 0 8px 32px rgba(200, 155, 60, 1); }
+    0%,
+    100% {
+      box-shadow: 0 8px 24px rgba(200, 155, 60, 0.6);
+    }
+    50% {
+      box-shadow: 0 8px 32px rgba(200, 155, 60, 1);
+    }
   }
-`
+`;
 
 const CompletionModal = styled(motion.div)`
   position: fixed;
@@ -1032,19 +1128,24 @@ const CompletionModal = styled(motion.div)`
   letter-spacing: 3px;
   text-transform: uppercase;
   animation: completionGlow 1s ease-in-out infinite;
-  
+
   @keyframes completionGlow {
-    0%, 100% { box-shadow: 0 12px 48px rgba(200, 155, 60, 0.6); }
-    50% { box-shadow: 0 12px 64px rgba(200, 155, 60, 1); }
+    0%,
+    100% {
+      box-shadow: 0 12px 48px rgba(200, 155, 60, 0.6);
+    }
+    50% {
+      box-shadow: 0 12px 64px rgba(200, 155, 60, 1);
+    }
   }
-  
+
   .subtitle {
     font-size: 18px;
     margin-top: 12px;
     opacity: 0.9;
     letter-spacing: 2px;
   }
-`
+`;
 
 const LoadingScreen = styled(motion.div)`
   display: flex;
@@ -1054,13 +1155,13 @@ const LoadingScreen = styled(motion.div)`
   gap: 24px;
   padding: 60px;
   color: var(--primary-text);
-  
+
   .spinner-container {
     position: relative;
     width: 80px;
     height: 80px;
   }
-  
+
   .spinner {
     width: 100%;
     height: 100%;
@@ -1069,12 +1170,16 @@ const LoadingScreen = styled(motion.div)`
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
-  
+
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
   }
-  
+
   .loading-text {
     font-size: 20px;
     font-weight: bold;
@@ -1083,23 +1188,23 @@ const LoadingScreen = styled(motion.div)`
     letter-spacing: 2px;
     text-shadow: 0 2px 8px rgba(200, 155, 60, 0.5);
   }
-  
+
   .loading-subtitle {
     font-size: 14px;
     color: var(--secondary-text);
     text-align: center;
   }
-`
+`;
 
 interface SortableItemProps {
-  id: string
-  index: number
-  championName: string
-  isReady: boolean
-  currentSpell?: SummonerSpellType
-  availableSpells: SummonerSpellType[]
-  localSpellAssignments: Record<string, SummonerSpellType>
-  onSpellChange: (championName: string, spell: SummonerSpellType) => void
+  id: string;
+  index: number;
+  championName: string;
+  isReady: boolean;
+  currentSpell?: SummonerSpellType;
+  availableSpells: SummonerSpellType[];
+  localSpellAssignments: Record<string, SummonerSpellType>;
+  onSpellChange: (championName: string, spell: SummonerSpellType) => void;
 }
 
 const SortableItem: React.FC<SortableItemProps> = ({
@@ -1112,77 +1217,68 @@ const SortableItem: React.FC<SortableItemProps> = ({
   localSpellAssignments,
   onSpellChange,
 }) => {
-  const [showSpellMenu, setShowSpellMenu] = useState(false)
-  const [openUpward, setOpenUpward] = useState(false)
-  const menuRef = React.useRef<HTMLDivElement>(null)
-  const buttonRef = React.useRef<HTMLButtonElement>(null)
+  const [showSpellMenu, setShowSpellMenu] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id, disabled: isReady })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: isReady,
+  });
 
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowSpellMenu(false)
+        setShowSpellMenu(false);
       }
-    }
+    };
 
     if (showSpellMenu) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showSpellMenu])
+  }, [showSpellMenu]);
 
   // Determine if menu should open upward or downward
   useEffect(() => {
     if (showSpellMenu && buttonRef.current) {
-      const buttonRect = buttonRef.current.getBoundingClientRect()
-      const spaceBelow = window.innerHeight - buttonRect.bottom
-      const spaceAbove = buttonRect.top
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - buttonRect.bottom;
+      const spaceAbove = buttonRect.top;
 
       // Open upward if more space above and not enough below
-      setOpenUpward(spaceAbove > spaceBelow && spaceBelow < 360)
+      setOpenUpward(spaceAbove > spaceBelow && spaceBelow < 360);
     }
-  }, [showSpellMenu])
+  }, [showSpellMenu]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-  }
+  };
 
-  const spellInfo = currentSpell ? SUMMONER_SPELL_INFO[currentSpell] : null
+  const spellInfo = currentSpell ? SUMMONER_SPELL_INFO[currentSpell] : null;
 
   return (
-    <SortableChampionCard
-      ref={setNodeRef}
-      style={style}
-      isDragging={isDragging}
-      isReady={isReady}
-    >
+    <SortableChampionCard ref={setNodeRef} style={style} isDragging={isDragging} isReady={isReady}>
       <div className="position-number">{index + 1}</div>
       <img
         src={`/icons/${championName.toLowerCase()}.webp`}
         alt={championName}
         className="champion-portrait"
         onError={(e) => {
-          e.currentTarget.style.display = 'none'
+          e.currentTarget.style.display = 'none';
         }}
       />
       <div className="champion-details">
         <div className="name">{championName}</div>
         <div className="hint">
-          {index === 0 && "Back Row - Tank"}
-          {index === 1 && "Back Row - Support"}
-          {index === 2 && "Front Row - DPS"}
-          {index === 3 && "Front Row - Carry"}
-          {index === 4 && "Front Row - Flex"}
+          {index === 0 && 'Back Row - Tank'}
+          {index === 1 && 'Back Row - Support'}
+          {index === 2 && 'Front Row - DPS'}
+          {index === 3 && 'Front Row - Carry'}
+          {index === 4 && 'Front Row - Flex'}
         </div>
       </div>
 
@@ -1195,8 +1291,8 @@ const SortableItem: React.FC<SortableItemProps> = ({
             spellColor={spellInfo?.color}
             isReady={isReady}
             onClick={(e) => {
-              e.stopPropagation()
-              if (!isReady) setShowSpellMenu(!showSpellMenu)
+              e.stopPropagation();
+              if (!isReady) setShowSpellMenu(!showSpellMenu);
             }}
             title={spellInfo?.description || 'Select a summoner spell'}
           >
@@ -1205,8 +1301,8 @@ const SortableItem: React.FC<SortableItemProps> = ({
                 src={spellInfo?.icon}
                 alt={currentSpell}
                 onError={(e) => {
-                  e.currentTarget.style.display = 'none'
-                  e.currentTarget.parentElement!.textContent = '❓'
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.textContent = '❓';
                 }}
               />
             ) : (
@@ -1224,15 +1320,18 @@ const SortableItem: React.FC<SortableItemProps> = ({
                 transition={{ duration: 0.15 }}
               >
                 {SUMMONER_SPELL_TYPES.map((spell) => {
-                  const info = SUMMONER_SPELL_INFO[spell]
-                  const isAvailable = availableSpells.includes(spell)
-                  const isSelected = currentSpell === spell
+                  const info = SUMMONER_SPELL_INFO[spell];
+                  const isAvailable = availableSpells.includes(spell);
+                  const isSelected = currentSpell === spell;
 
                   // Find who currently has this spell (if anyone other than this champion)
-                  const championWithSpell = !isAvailable && !isSelected
-                    ? Object.entries(localSpellAssignments || {})
-                      .find(([champ, assignedSpell]) => assignedSpell === spell && champ !== championName)?.[0]
-                    : null
+                  const championWithSpell =
+                    !isAvailable && !isSelected
+                      ? Object.entries(localSpellAssignments || {}).find(
+                          ([champ, assignedSpell]) =>
+                            assignedSpell === spell && champ !== championName,
+                        )?.[0]
+                      : null;
 
                   return (
                     <SpellOption
@@ -1241,9 +1340,9 @@ const SortableItem: React.FC<SortableItemProps> = ({
                       isSelected={isSelected}
                       isDisabled={false}
                       onClick={(e) => {
-                        e.stopPropagation()
-                        onSpellChange(championName, spell)
-                        setShowSpellMenu(false)
+                        e.stopPropagation();
+                        onSpellChange(championName, spell);
+                        setShowSpellMenu(false);
                       }}
                     >
                       <span className="spell-icon">
@@ -1251,7 +1350,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
                           src={info.icon}
                           alt={spell}
                           onError={(e) => {
-                            e.currentTarget.style.display = 'none'
+                            e.currentTarget.style.display = 'none';
                           }}
                         />
                       </span>
@@ -1260,14 +1359,21 @@ const SortableItem: React.FC<SortableItemProps> = ({
                         <div className="spell-desc">
                           {info.description}
                           {championWithSpell && (
-                            <span style={{ color: 'var(--gold)', fontSize: '10px', display: 'block', marginTop: '2px' }}>
+                            <span
+                              style={{
+                                color: 'var(--gold)',
+                                fontSize: '10px',
+                                display: 'block',
+                                marginTop: '2px',
+                              }}
+                            >
                               Currently on {championWithSpell}
                             </span>
                           )}
                         </div>
                       </div>
                     </SpellOption>
-                  )
+                  );
                 })}
               </SpellMenu>
             )}
@@ -1281,24 +1387,24 @@ const SortableItem: React.FC<SortableItemProps> = ({
         </div>
       )}
     </SortableChampionCard>
-  )
-}
+  );
+};
 
 const BanPickPage: React.FC = () => {
-  const { gameId } = useParams<{ gameId: string }>()
-  const navigate = useNavigate()
-  const { user } = useAppSelector(state => state.auth)
-  const dispatch = useAppDispatch()
-  const [showTurnIndicator, setShowTurnIndicator] = useState(false)
-  const [showCompletionModal, setShowCompletionModal] = useState(false)
-  const [hasShownCompletionModal, setHasShownCompletionModal] = useState(false)
-  const [canShowReorderPhase, setCanShowReorderPhase] = useState(false)
+  const { gameId } = useParams<{ gameId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const [showTurnIndicator, setShowTurnIndicator] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [hasShownCompletionModal, setHasShownCompletionModal] = useState(false);
+  const [canShowReorderPhase, setCanShowReorderPhase] = useState(false);
 
   // Get champion data
-  const { champions, loading: championsLoading, error: championsError } = useChampions()
+  const { champions, loading: championsLoading, error: championsError } = useChampions();
 
   // Get loading state from Redux for reset operation
-  const isResetting = useAppSelector((state) => state.game.loading)
+  const isResetting = useAppSelector((state) => state.game.loading);
 
   // Use the actual ban/pick hook
   const {
@@ -1314,221 +1420,232 @@ const BanPickPage: React.FC = () => {
     setReady,
     setSummonerSpells,
     mySummonerSpells,
-  } = useBanPick(gameId || '')
+  } = useBanPick(gameId || '');
 
   // Local state for champion order during reorder phase
-  const [localChampionOrder, setLocalChampionOrder] = useState<string[]>([])
+  const [localChampionOrder, setLocalChampionOrder] = useState<string[]>([]);
 
   // Local state for summoner spell assignments during reorder phase
-  const [localSpellAssignments, setLocalSpellAssignments] = useState<Record<string, SummonerSpellType>>({})
+  const [localSpellAssignments, setLocalSpellAssignments] = useState<
+    Record<string, SummonerSpellType>
+  >({});
 
-  const currentPhase = banPickState?.phase === 'ban' ? 'Ban Phase' :
-    banPickState?.phase === 'pick' ? 'Pick Phase' :
-      banPickState?.phase === 'reorder' ? 'Reorder Phase' :
-        'Loading...'
+  const currentPhase =
+    banPickState?.phase === 'ban'
+      ? 'Ban Phase'
+      : banPickState?.phase === 'pick'
+        ? 'Pick Phase'
+        : banPickState?.phase === 'reorder'
+          ? 'Reorder Phase'
+          : 'Loading...';
 
   useEffect(() => {
     if (!gameId || !user) {
-      navigate('/lobby')
-      return
+      navigate('/lobby');
+      return;
     }
-  }, [gameId, user, navigate])
-
+  }, [gameId, user, navigate]);
 
   // Show completion modal when transitioning from pick to reorder phase
   useEffect(() => {
-    if (!banPickState) return
+    if (!banPickState) return;
 
     // Detect transition from pick to reorder (ban/pick complete)
     if (banPickState.phase === 'reorder') {
       if (!hasShownCompletionModal) {
-        setShowCompletionModal(true)
-        setHasShownCompletionModal(true)
-        setCanShowReorderPhase(false) // Don't show reorder phase yet
+        setShowCompletionModal(true);
+        setHasShownCompletionModal(true);
+        setCanShowReorderPhase(false); // Don't show reorder phase yet
 
         const timer = setTimeout(() => {
-          setShowCompletionModal(false)
-          setCanShowReorderPhase(true) // Now allow reorder phase to be shown
-        }, 3000)
+          setShowCompletionModal(false);
+          setCanShowReorderPhase(true); // Now allow reorder phase to be shown
+        }, 3000);
 
-        return () => clearTimeout(timer)
+        return () => clearTimeout(timer);
       }
     } else {
       // Reset when not in reorder phase
-      setCanShowReorderPhase(false)
-      setHasShownCompletionModal(false)
+      setCanShowReorderPhase(false);
+      setHasShownCompletionModal(false);
     }
-  }, [banPickState?.phase])
+  }, [banPickState?.phase]);
 
   useEffect(() => {
-    if (!banPickState) return
+    if (!banPickState) return;
 
     // Show turn indicator briefly when turn changes
-    setShowTurnIndicator(true)
-    const timer = setTimeout(() => setShowTurnIndicator(false), 2500)
-    return () => clearTimeout(timer)
-  }, [banPickState?.currentTurn])
+    setShowTurnIndicator(true);
+    const timer = setTimeout(() => setShowTurnIndicator(false), 2500);
+    return () => clearTimeout(timer);
+  }, [banPickState?.currentTurn]);
 
   const handleChampionClick = (championName: string) => {
-    if (!banPickState) return
+    if (!banPickState) return;
 
     if (!isMyTurn) {
-      toast.error("It's not your turn!")
-      return
+      toast.error("It's not your turn!");
+      return;
     }
 
-    if (banPickState.bannedChampions.includes(championName) ||
+    if (
+      banPickState.bannedChampions.includes(championName) ||
       banPickState.bluePicks.includes(championName) ||
-      banPickState.redPicks.includes(championName)) {
-      toast.error('Champion already banned or picked!')
-      return
+      banPickState.redPicks.includes(championName)
+    ) {
+      toast.error('Champion already banned or picked!');
+      return;
     }
 
     // Use the actual ban/pick functions
     if (banPickState.phase === 'ban') {
-      banChampion(championName)
+      banChampion(championName);
     } else if (banPickState.phase === 'pick') {
-      pickChampion(championName)
+      pickChampion(championName);
     }
-  }
+  };
 
   const handleSkipBan = () => {
-    if (!banPickState || banPickState.phase !== 'ban' || !isMyTurn) return
-    skipBan()
-  }
+    if (!banPickState || banPickState.phase !== 'ban' || !isMyTurn) return;
+    skipBan();
+  };
 
   // Initialize local champion order when entering reorder phase
   useEffect(() => {
     if (banPickState?.phase === 'reorder' && playerSide) {
-      const currentOrder = playerSide === 'blue'
-        ? banPickState.blueChampionOrder
-        : banPickState.redChampionOrder
+      const currentOrder =
+        playerSide === 'blue' ? banPickState.blueChampionOrder : banPickState.redChampionOrder;
 
       if (currentOrder && currentOrder.length > 0) {
-        setLocalChampionOrder(currentOrder)
+        setLocalChampionOrder(currentOrder);
       }
     }
-  }, [banPickState?.phase, banPickState?.blueChampionOrder, banPickState?.redChampionOrder, playerSide])
+  }, [
+    banPickState?.phase,
+    banPickState?.blueChampionOrder,
+    banPickState?.redChampionOrder,
+    playerSide,
+  ]);
 
   // Sync local spell assignments with server state
   useEffect(() => {
     if (mySummonerSpells && Object.keys(mySummonerSpells).length > 0) {
-      setLocalSpellAssignments(mySummonerSpells)
+      setLocalSpellAssignments(mySummonerSpells);
     }
-  }, [mySummonerSpells])
+  }, [mySummonerSpells]);
 
   // Handle drag and drop reordering
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
+    }),
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
+    const { active, over } = event;
 
     if (!over || active.id === over.id) {
-      return
+      return;
     }
 
     setLocalChampionOrder((items) => {
-      const oldIndex = items.indexOf(active.id as string)
-      const newIndex = items.indexOf(over.id as string)
+      const oldIndex = items.indexOf(active.id as string);
+      const newIndex = items.indexOf(over.id as string);
 
-      const newOrder = arrayMove(items, oldIndex, newIndex)
+      const newOrder = arrayMove(items, oldIndex, newIndex);
 
       // Send the new order to the server
-      reorderChampions(newOrder)
+      reorderChampions(newOrder);
 
-      return newOrder
-    })
-  }
+      return newOrder;
+    });
+  };
 
   // Handle summoner spell change for a champion
   const handleSpellChange = (championName: string, spell: SummonerSpellType) => {
-    const isReady = playerSide === 'blue' ? banPickState?.blueReady : banPickState?.redReady
-    if (isReady) return // Don't allow changes when ready
+    const isReady = playerSide === 'blue' ? banPickState?.blueReady : banPickState?.redReady;
+    if (isReady) return; // Don't allow changes when ready
 
     setLocalSpellAssignments((prev) => {
-      const newAssignments = { ...prev }
-      const currentChampionSpell = newAssignments[championName]
+      const newAssignments = { ...prev };
+      const currentChampionSpell = newAssignments[championName];
 
       // Find champion who currently has the desired spell
-      const championWithSpell = Object.entries(newAssignments)
-        .find(([champ, assignedSpell]) => assignedSpell === spell && champ !== championName)?.[0]
+      const championWithSpell = Object.entries(newAssignments).find(
+        ([champ, assignedSpell]) => assignedSpell === spell && champ !== championName,
+      )?.[0];
 
       // Swap spells
       if (championWithSpell) {
         // If current champion has a spell, give it to the other champion
         if (currentChampionSpell) {
-          newAssignments[championWithSpell] = currentChampionSpell
+          newAssignments[championWithSpell] = currentChampionSpell;
         } else {
           // If current champion has no spell, remove from other champion
-          delete newAssignments[championWithSpell]
+          delete newAssignments[championWithSpell];
         }
       }
 
       // Assign the spell to this champion
-      newAssignments[championName] = spell
+      newAssignments[championName] = spell;
 
       // Send to server
-      setSummonerSpells(newAssignments)
+      setSummonerSpells(newAssignments);
 
-      return newAssignments
-    })
-  }
+      return newAssignments;
+    });
+  };
 
   // Get available spells (not assigned to other champions)
   const getAvailableSpells = (championName: string): SummonerSpellType[] => {
     const usedSpells = Object.entries(localSpellAssignments)
       .filter(([champ]) => champ !== championName)
-      .map(([, spell]) => spell)
+      .map(([, spell]) => spell);
 
-    return SUMMONER_SPELL_TYPES.filter(spell => !usedSpells.includes(spell))
-  }
+    return SUMMONER_SPELL_TYPES.filter((spell) => !usedSpells.includes(spell));
+  };
 
   // Check if all champions have spells assigned
-  const allSpellsAssigned = localChampionOrder.length === 5 &&
-    localChampionOrder.every(champ => localSpellAssignments[champ])
+  const allSpellsAssigned =
+    localChampionOrder.length === 5 &&
+    localChampionOrder.every((champ) => localSpellAssignments[champ]);
 
   const handleReadyToggle = () => {
-    if (!banPickState || banPickState.phase !== 'reorder') return
+    if (!banPickState || banPickState.phase !== 'reorder') return;
 
-    const isCurrentlyReady = playerSide === 'blue'
-      ? banPickState.blueReady
-      : banPickState.redReady
+    const isCurrentlyReady = playerSide === 'blue' ? banPickState.blueReady : banPickState.redReady;
 
     // If trying to ready up, validate spells are assigned
     if (!isCurrentlyReady && !allSpellsAssigned) {
-      toast.error('Please assign a summoner spell to each champion!')
-      return
+      toast.error('Please assign a summoner spell to each champion!');
+      return;
     }
 
-    setReady(!isCurrentlyReady)
-  }
+    setReady(!isCurrentlyReady);
+  };
 
   // Reset ban/pick (dev tools)
   const handleResetBanPick = useCallback(async () => {
-    if (!gameId || isResetting) return
+    if (!gameId || isResetting) return;
 
     try {
       // Dispatch the reset ban/pick thunk
-      const result = await dispatch(resetBanPick(gameId))
+      const result = await dispatch(resetBanPick(gameId));
 
       if (resetBanPick.fulfilled.match(result)) {
         // Success
-        toast.success('Ban/Pick phase has been reset!')
+        toast.success('Ban/Pick phase has been reset!');
       } else {
         // Error handled by Redux, but we can show additional feedback
-        console.error('Failed to reset ban/pick:', result.error?.message)
-        toast.error('Failed to reset ban/pick phase')
+        console.error('Failed to reset ban/pick:', result.error?.message);
+        toast.error('Failed to reset ban/pick phase');
       }
     } catch (error) {
-      console.error('Error resetting ban/pick:', error)
-      toast.error('Error resetting ban/pick phase')
+      console.error('Error resetting ban/pick:', error);
+      toast.error('Error resetting ban/pick phase');
     }
-  }, [gameId, isResetting, dispatch])
+  }, [gameId, isResetting, dispatch]);
 
   if (championsLoading || banPickLoading) {
     return (
@@ -1545,7 +1662,7 @@ const BanPickPage: React.FC = () => {
           </div>
         </MainContent>
       </BanPickContainer>
-    )
+    );
   }
 
   if (championsError) {
@@ -1563,7 +1680,7 @@ const BanPickPage: React.FC = () => {
           </div>
         </MainContent>
       </BanPickContainer>
-    )
+    );
   }
 
   // Check if ban/pick state is available
@@ -1582,12 +1699,12 @@ const BanPickPage: React.FC = () => {
           </div>
         </MainContent>
       </BanPickContainer>
-    )
+    );
   }
 
   // Get blue and red bans for display
-  const blueBans = banPickState?.blueBans || []
-  const redBans = banPickState?.redBans || []
+  const blueBans = banPickState?.blueBans || [];
+  const redBans = banPickState?.redBans || [];
 
   // Create panel components
   const blueSidePanel = (
@@ -1600,16 +1717,19 @@ const BanPickPage: React.FC = () => {
       {/* Bans */}
       <BanIndicator>
         <div style={{ flex: 1 }}>
-          <h4><Target size={12} />Bans ({blueBans.length}/2)</h4>
+          <h4>
+            <Target size={12} />
+            Bans ({blueBans.length}/2)
+          </h4>
           <div style={{ display: 'flex', gap: '8px' }}>
-            {[0, 1].map(index => (
+            {[0, 1].map((index) => (
               <BanSlot key={`blue-ban-${index}`} filled={!!blueBans[index]}>
                 {blueBans[index] && (
                   <img
                     src={`/icons/${blueBans[index].toLowerCase()}.webp`}
                     alt={blueBans[index]}
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none'
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 )}
@@ -1623,11 +1743,16 @@ const BanPickPage: React.FC = () => {
       <div>
         <h4>Picks ({banPickState?.bluePicks.length || 0}/5)</h4>
         <BanPickList>
-          {[0, 1, 2, 3, 4].map(index => (
+          {[0, 1, 2, 3, 4].map((index) => (
             <BanPickSlot
               key={`blue-pick-${index}`}
-              filled={!!(banPickState?.bluePicks[index])}
-              active={isMyTurn && playerSide === 'blue' && banPickState?.phase === 'pick' && (banPickState?.bluePicks.length === index)}
+              filled={!!banPickState?.bluePicks[index]}
+              active={
+                isMyTurn &&
+                playerSide === 'blue' &&
+                banPickState?.phase === 'pick' &&
+                banPickState?.bluePicks.length === index
+              }
             >
               {banPickState?.bluePicks[index] ? (
                 <img
@@ -1635,7 +1760,7 @@ const BanPickPage: React.FC = () => {
                   alt={banPickState.bluePicks[index]}
                   className="champion-icon"
                   onError={(e) => {
-                    e.currentTarget.style.display = 'none'
+                    e.currentTarget.style.display = 'none';
                   }}
                 />
               ) : (
@@ -1658,7 +1783,7 @@ const BanPickPage: React.FC = () => {
         </SkipBanButton>
       )}
     </SidePanel>
-  )
+  );
 
   const redSidePanel = (
     <SidePanel className="red" isActive={banPickState?.currentTurn === 'red'}>
@@ -1670,16 +1795,19 @@ const BanPickPage: React.FC = () => {
       {/* Bans */}
       <BanIndicator>
         <div style={{ flex: 1 }}>
-          <h4><Target size={12} />Bans ({redBans.length}/2)</h4>
+          <h4>
+            <Target size={12} />
+            Bans ({redBans.length}/2)
+          </h4>
           <div style={{ display: 'flex', gap: '8px' }}>
-            {[0, 1].map(index => (
+            {[0, 1].map((index) => (
               <BanSlot key={`red-ban-${index}`} filled={!!redBans[index]}>
                 {redBans[index] && (
                   <img
                     src={`/icons/${redBans[index].toLowerCase()}.webp`}
                     alt={redBans[index]}
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none'
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 )}
@@ -1693,11 +1821,16 @@ const BanPickPage: React.FC = () => {
       <div>
         <h4>Picks ({banPickState?.redPicks.length || 0}/5)</h4>
         <BanPickList>
-          {[0, 1, 2, 3, 4].map(index => (
+          {[0, 1, 2, 3, 4].map((index) => (
             <BanPickSlot
               key={`red-pick-${index}`}
-              filled={!!(banPickState?.redPicks[index])}
-              active={isMyTurn && playerSide === 'red' && banPickState?.phase === 'pick' && (banPickState?.redPicks.length === index)}
+              filled={!!banPickState?.redPicks[index]}
+              active={
+                isMyTurn &&
+                playerSide === 'red' &&
+                banPickState?.phase === 'pick' &&
+                banPickState?.redPicks.length === index
+              }
             >
               {banPickState?.redPicks[index] ? (
                 <img
@@ -1705,7 +1838,7 @@ const BanPickPage: React.FC = () => {
                   alt={banPickState.redPicks[index]}
                   className="champion-icon"
                   onError={(e) => {
-                    e.currentTarget.style.display = 'none'
+                    e.currentTarget.style.display = 'none';
                   }}
                 />
               ) : (
@@ -1728,7 +1861,7 @@ const BanPickPage: React.FC = () => {
         </SkipBanButton>
       )}
     </SidePanel>
-  )
+  );
 
   // Reorder phase UI
   const reorderUI = (
@@ -1738,19 +1871,13 @@ const BanPickPage: React.FC = () => {
         Arrange Your Champion Lineup
       </h3>
       <ReorderInstructions>
-        Drag and drop to reorder your champions. The order determines their starting positions on the board.
+        Drag and drop to reorder your champions. The order determines their starting positions on
+        the board.
       </ReorderInstructions>
 
       {localChampionOrder.length > 0 ? (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={localChampionOrder}
-            strategy={verticalListSortingStrategy}
-          >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={localChampionOrder} strategy={verticalListSortingStrategy}>
             <ChampionOrderList>
               {localChampionOrder.map((championName, index) => (
                 <SortableItem
@@ -1758,7 +1885,9 @@ const BanPickPage: React.FC = () => {
                   id={championName}
                   index={index}
                   championName={championName}
-                  isReady={playerSide === 'blue' ? !!banPickState?.blueReady : !!banPickState?.redReady}
+                  isReady={
+                    playerSide === 'blue' ? !!banPickState?.blueReady : !!banPickState?.redReady
+                  }
                   currentSpell={localSpellAssignments[championName]}
                   availableSpells={getAvailableSpells(championName)}
                   localSpellAssignments={localSpellAssignments}
@@ -1819,32 +1948,45 @@ const BanPickPage: React.FC = () => {
 
         {/* Spell assignment status hint */}
         {!(playerSide === 'blue' ? banPickState?.blueReady : banPickState?.redReady) && (
-          <div style={{
-            textAlign: 'center',
-            color: allSpellsAssigned ? 'var(--green)' : 'var(--secondary-text)',
-            fontSize: '12px',
-            marginTop: '8px',
-          }}>
+          <div
+            style={{
+              textAlign: 'center',
+              color: allSpellsAssigned ? 'var(--green)' : 'var(--secondary-text)',
+              fontSize: '12px',
+              marginTop: '8px',
+            }}
+          >
             {allSpellsAssigned
               ? '✓ All summoner spells assigned'
-              : `Summoner spells: ${Object.keys(localSpellAssignments).length}/5 assigned`
-            }
+              : `Summoner spells: ${Object.keys(localSpellAssignments).length}/5 assigned`}
           </div>
         )}
       </ReadySection>
     </ReorderContainer>
-  )
+  );
 
   const championGrid = (
     <ChampionGrid>
       <h3>Select Champions ({champions.length} Available)</h3>
       <ChampionList>
-        {champions.map(champion => (
+        {champions.map((champion) => (
           <ChampionCard
             key={champion.name}
             banned={banPickState?.bannedChampions.includes(champion.name) || false}
-            picked={(banPickState?.bluePicks.includes(champion.name) || banPickState?.redPicks.includes(champion.name)) || false}
-            clickable={!!(isMyTurn && banPickState && !banPickState.bannedChampions.includes(champion.name) && !banPickState.bluePicks.includes(champion.name) && !banPickState.redPicks.includes(champion.name))}
+            picked={
+              banPickState?.bluePicks.includes(champion.name) ||
+              banPickState?.redPicks.includes(champion.name) ||
+              false
+            }
+            clickable={
+              !!(
+                isMyTurn &&
+                banPickState &&
+                !banPickState.bannedChampions.includes(champion.name) &&
+                !banPickState.bluePicks.includes(champion.name) &&
+                !banPickState.redPicks.includes(champion.name)
+              )
+            }
             onClick={() => handleChampionClick(champion.name)}
             whileHover={isMyTurn ? { scale: 1.03 } : {}}
             whileTap={isMyTurn ? { scale: 0.97 } : {}}
@@ -1857,7 +1999,7 @@ const BanPickPage: React.FC = () => {
               alt={champion.name}
               className="champion-portrait"
               onError={(e) => {
-                e.currentTarget.style.display = 'none'
+                e.currentTarget.style.display = 'none';
               }}
             />
             <div className="champion-info">
@@ -1870,7 +2012,7 @@ const BanPickPage: React.FC = () => {
         ))}
       </ChampionList>
     </ChampionGrid>
-  )
+  );
 
   return (
     <BanPickContainer>
@@ -1884,18 +2026,20 @@ const BanPickPage: React.FC = () => {
       <MainContent>
         {banPickState?.phase === 'reorder' && canShowReorderPhase ? (
           // Reorder phase - show reorder UI instead of pick UI
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '40px',
-            maxWidth: '800px',
-            margin: '0 auto',
-            width: '100%'
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '40px',
+              maxWidth: '800px',
+              margin: '0 auto',
+              width: '100%',
+            }}
+          >
             {reorderUI}
           </div>
-        ) : banPickState?.phase === "complete" ? (
+        ) : banPickState?.phase === 'complete' ? (
           // Loading screen while waiting for reorder phase to show
           <LoadingScreen
             initial={{ opacity: 0 }}
@@ -1907,9 +2051,7 @@ const BanPickPage: React.FC = () => {
               <div className="spinner" />
             </div>
             <div className="loading-text">Preparing Match</div>
-            <div className="loading-subtitle">
-              Setting up your champion lineup...
-            </div>
+            <div className="loading-subtitle">Setting up your champion lineup...</div>
           </LoadingScreen>
         ) : (
           // Ban/Pick phases - show normal UI
@@ -1937,10 +2079,10 @@ const BanPickPage: React.FC = () => {
         {showTurnIndicator && (
           <TurnIndicator
             isMyTurn={isMyTurn}
-            initial={{ opacity: 0, scale: 0.5, x: "-50%", y: "-50%" }}
-            animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
-            exit={{ opacity: 0, scale: 0.5, x: "-50%", y: "-50%" }}
-            transition={{ duration: 0.5, type: "spring" }}
+            initial={{ opacity: 0, scale: 0.5, x: '-50%', y: '-50%' }}
+            animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+            exit={{ opacity: 0, scale: 0.5, x: '-50%', y: '-50%' }}
+            transition={{ duration: 0.5, type: 'spring' }}
           >
             {isMyTurn ? 'YOUR TURN!' : "OPPONENT'S TURN"}
           </TurnIndicator>
@@ -1951,10 +2093,10 @@ const BanPickPage: React.FC = () => {
       <AnimatePresence>
         {showCompletionModal && (
           <CompletionModal
-            initial={{ opacity: 0, scale: 0.5, x: "-50%", y: "-50%" }}
-            animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
-            exit={{ opacity: 0, scale: 0.5, x: "-50%", y: "-50%" }}
-            transition={{ duration: 0.5, type: "spring" }}
+            initial={{ opacity: 0, scale: 0.5, x: '-50%', y: '-50%' }}
+            animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+            exit={{ opacity: 0, scale: 0.5, x: '-50%', y: '-50%' }}
+            transition={{ duration: 0.5, type: 'spring' }}
           >
             Ban/Pick Complete!
             <div className="subtitle">Prepare Your Lineup</div>
@@ -1978,7 +2120,7 @@ const BanPickPage: React.FC = () => {
         </DevToolsPanel>
       )}
     </BanPickContainer>
-  )
-}
+  );
+};
 
-export default BanPickPage
+export default BanPickPage;

@@ -15,4 +15,3 @@ export interface Aura {
   requiresAlive?: boolean; // aura only works if the piece is alive
   duration: string; // 'permanent', 'turn', 'combat'
 }
-

@@ -1,31 +1,18 @@
-import { Square } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { ChessFactory } from "../ChessFactory";
-import { getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { Square } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { ChessFactory } from '../ChessFactory';
+import { getAdjacentSquares, getChessAtPosition } from '../../utils/helpers';
 
 export class TwistedFate extends ChessObject {
   skill(position?: Square): void {
     const cardCount = 10 + Math.floor(this.ap * 0.2);
-    const targetChess = getChessAtPosition(
-      this.game,
-      !this.chess.blue,
-      position
-    );
+    const targetChess = getChessAtPosition(this.game, !this.chess.blue, position);
 
-    const targets: ChessObject[] = [
-      ChessFactory.createChess(targetChess, this.game),
-    ];
+    const targets: ChessObject[] = [ChessFactory.createChess(targetChess, this.game)];
     getAdjacentSquares(position).forEach((square) => {
-      const targetChess = getChessAtPosition(
-        this.game,
-        !this.chess.blue,
-        square
-      );
+      const targetChess = getChessAtPosition(this.game, !this.chess.blue, square);
       if (targetChess) {
-        const targetChessObject = ChessFactory.createChess(
-          targetChess,
-          this.game
-        );
+        const targetChessObject = ChessFactory.createChess(targetChess, this.game);
         targets.push(targetChessObject);
       }
     });
@@ -43,17 +30,17 @@ export class TwistedFate extends ChessObject {
         this.activeSkillDamage(
           target,
           (1 + this.ap * 0.05 + this.ad * 0.05) * 0.6,
-          "magic",
+          'magic',
           this,
-          this.sunder
+          this.sunder,
         );
       } else {
         this.activeSkillDamage(
           target,
           1 + this.ap * 0.05 + this.ad * 0.05,
-          "magic",
+          'magic',
           this,
-          this.sunder
+          this.sunder,
         );
         isFirstCard.add(target.chess.id);
       }
@@ -76,16 +63,14 @@ export class TwistedFate extends ChessObject {
       if (!this.chess.skill.payload) {
         this.chess.skill.payload = {};
       }
-      this.chess.skill.payload.cardTargets = Array.from(
-        cardTargetsMap.values()
-      );
+      this.chess.skill.payload.cardTargets = Array.from(cardTargetsMap.values());
       this.chess.skill.payload.totalCardCount = cardCount;
     }
   }
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -111,7 +96,7 @@ export class TwistedFate extends ChessObject {
 
   public getActiveSkillValue(targetPosition?: Square | null): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 

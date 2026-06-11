@@ -4,24 +4,19 @@ import {
   GameEngine,
   GameEvent,
   GameLogic,
-  getPieceAtPosition
-} from "@lolchess/game-engine";
-import { MaterialEvaluator } from "./evaluation/MaterialEvaluator";
-import { PositionEvaluator } from "./evaluation/PositionEvaluator";
-import { ThreatEvaluator } from "./evaluation/ThreatEvaluator";
-import { ActionGenerator } from "./search/ActionGenerator";
-import { LegacySearch } from "./search/BestMoveSearch";
-import { AlphaBetaSearch } from "./search/AlphaBetaSearch";
-import { MoveOrdering } from "./search/MoveOrdering";
-import { BanPickStrategy } from "./strategy/BanPickStrategy";
-import { ItemStrategy } from "./strategy/ItemStrategy";
-import { SummonerSpellStrategy } from "./strategy/SummonerSpellStrategy";
-import {
-  BotConfig,
-  BotDifficulty,
-  EvaluationResult,
-  SearchResult,
-} from "./types";
+  getPieceAtPosition,
+} from '@lolchess/game-engine';
+import { MaterialEvaluator } from './evaluation/MaterialEvaluator';
+import { PositionEvaluator } from './evaluation/PositionEvaluator';
+import { ThreatEvaluator } from './evaluation/ThreatEvaluator';
+import { ActionGenerator } from './search/ActionGenerator';
+import { LegacySearch } from './search/BestMoveSearch';
+import { AlphaBetaSearch } from './search/AlphaBetaSearch';
+import { MoveOrdering } from './search/MoveOrdering';
+import { BanPickStrategy } from './strategy/BanPickStrategy';
+import { ItemStrategy } from './strategy/ItemStrategy';
+import { SummonerSpellStrategy } from './strategy/SummonerSpellStrategy';
+import { BotConfig, BotDifficulty, EvaluationResult, SearchResult } from './types';
 
 /**
  * Default configurations for each difficulty level
@@ -56,7 +51,7 @@ export class BotEngine {
   private config: BotConfig;
 
   constructor(config: Partial<BotConfig> = {}) {
-    const difficulty = config.difficulty || "medium";
+    const difficulty = config.difficulty || 'medium';
     const defaults = DEFAULT_CONFIGS[difficulty];
 
     this.config = {
@@ -67,11 +62,8 @@ export class BotEngine {
       // CLI arg) passes ?? untouched and then disables EVERY time check —
       // `Date.now() - start > NaN` is always false, so the search never
       // times out.
-      timeLimit:
-        BotEngine.sanitizeTimeLimit(config.timeLimit) ??
-        defaults.timeLimit ??
-        3000,
-      engine: config.engine ?? "alphabeta",
+      timeLimit: BotEngine.sanitizeTimeLimit(config.timeLimit) ?? defaults.timeLimit ?? 3000,
+      engine: config.engine ?? 'alphabeta',
     };
 
     // Initialize components
@@ -85,12 +77,12 @@ export class BotEngine {
       this.gameEngine,
       this.positionEvaluator,
       this.actionGenerator,
-      this.moveOrdering
+      this.moveOrdering,
     );
     this.legacySearch = new LegacySearch(
       this.gameEngine,
       this.positionEvaluator,
-      this.actionGenerator
+      this.actionGenerator,
     );
     this.banPickStrategy = new BanPickStrategy();
     this.itemStrategy = new ItemStrategy();
@@ -110,10 +102,7 @@ export class BotEngine {
 
     // Summoner spells — sanity-checked: only cast if it actually improves the position.
     if (!game.hasUsedSummonerSpellThisTurn) {
-      const spellAction = this.summonerSpellStrategy.recommendSummonerSpell(
-        game,
-        botPlayerId
-      );
+      const spellAction = this.summonerSpellStrategy.recommendSummonerSpell(game, botPlayerId);
       if (spellAction) {
         // The payload carries no spell id; derive it from the caster piece.
         // Ghost (speed buff) and Barrier (shield) are invisible to the
@@ -124,19 +113,21 @@ export class BotEngine {
           ? getPieceAtPosition(game, spellAction.casterPosition)
           : null;
         const spellType = caster?.summonerSpell?.type;
-        const evaluatorBlind = spellType === "Ghost" || spellType === "Barrier";
-        if (
-          evaluatorBlind ||
-          this.spellImprovesPosition(game, botPlayerId, spellAction)
-        ) {
+        const evaluatorBlind = spellType === 'Ghost' || spellType === 'Barrier';
+        if (evaluatorBlind || this.spellImprovesPosition(game, botPlayerId, spellAction)) {
           return spellAction;
         }
       }
     }
 
     // Item purchases
-    const currentItemPrice = GameLogic.getCurrentItemPrice(game.players.find((p) => p.userId === botPlayerId)!);
-    if (!game.hasBoughtItemThisTurn && this.itemStrategy.shouldBuyItem(game, botPlayerId, currentItemPrice)) {
+    const currentItemPrice = GameLogic.getCurrentItemPrice(
+      game.players.find((p) => p.userId === botPlayerId)!,
+    );
+    if (
+      !game.hasBoughtItemThisTurn &&
+      this.itemStrategy.shouldBuyItem(game, botPlayerId, currentItemPrice)
+    ) {
       const itemRec = this.itemStrategy.recommendPurchase(game, botPlayerId);
       if (itemRec) {
         return {
@@ -150,7 +141,7 @@ export class BotEngine {
 
     // Phase 1: board action via search
     const searchResult =
-      this.config.engine === "legacy"
+      this.config.engine === 'legacy'
         ? this.legacySearch.searchV2(game, botPlayerId, this.config.timeLimit)
         : this.alphaBeta.search(game, botPlayerId, {
             maxDepth: this.config.searchDepth,
@@ -179,9 +170,7 @@ export class BotEngine {
     // legal board action.
     if (!action) {
       const boardActions = this.generateBoardActions(game, botPlayerId);
-      action =
-        this.moveOrdering.orderActions(game, boardActions, botPlayerId)[0]
-          ?.action ?? null;
+      action = this.moveOrdering.orderActions(game, boardActions, botPlayerId)[0]?.action ?? null;
     }
 
     return action;
@@ -197,7 +186,7 @@ export class BotEngine {
         (a) =>
           a.event === GameEvent.MOVE_CHESS ||
           a.event === GameEvent.ATTACK_CHESS ||
-          a.event === GameEvent.SKILL
+          a.event === GameEvent.SKILL,
       );
   }
 
@@ -209,7 +198,7 @@ export class BotEngine {
   private spellImprovesPosition(
     game: Game,
     botPlayerId: string,
-    spellAction: EventPayload
+    spellAction: EventPayload,
   ): boolean {
     const SPELL_MARGIN = 30;
     const sim = this.gameEngine.processAction(game, spellAction);
@@ -221,7 +210,7 @@ export class BotEngine {
 
   /** A usable time budget is a finite positive number; anything else is rejected. */
   private static sanitizeTimeLimit(t: number | undefined): number | undefined {
-    return typeof t === "number" && isFinite(t) && t > 0 ? t : undefined;
+    return typeof t === 'number' && isFinite(t) && t > 0 ? t : undefined;
   }
 
   /**
@@ -238,11 +227,7 @@ export class BotEngine {
   /**
    * Get a champion to ban
    */
-  getBanChoice(
-    bannedChampions: string[],
-    blueBans?: string[],
-    redBans?: string[]
-  ): string | null {
+  getBanChoice(bannedChampions: string[], blueBans?: string[], redBans?: string[]): string | null {
     return this.banPickStrategy.getBan(bannedChampions, blueBans, redBans);
   }
 
@@ -252,13 +237,9 @@ export class BotEngine {
   getPickChoice(
     bannedChampions: string[],
     alreadyPicked: string[],
-    botPicks: string[]
+    botPicks: string[],
   ): string | null {
-    return this.banPickStrategy.getPick(
-      bannedChampions,
-      alreadyPicked,
-      botPicks
-    );
+    return this.banPickStrategy.getPick(bannedChampions, alreadyPicked, botPicks);
   }
 
   /**
@@ -289,12 +270,7 @@ export class BotEngine {
   /**
    * Search for best move with look-ahead using iterative-deepening alpha-beta.
    */
-  search(
-    game: Game,
-    playerId: string,
-    depth?: number,
-    timeLimit?: number
-  ): SearchResult {
+  search(game: Game, playerId: string, depth?: number, timeLimit?: number): SearchResult {
     return this.alphaBeta.search(game, playerId, {
       maxDepth: depth ?? this.config.searchDepth,
       timeLimit: timeLimit ?? this.config.timeLimit ?? 3000,
@@ -310,7 +286,7 @@ export class BotEngine {
    */
   getItemRecommendation(
     game: Game,
-    playerId: string
+    playerId: string,
   ): { itemId: string; championId: string } | null {
     return this.itemStrategy.recommendPurchase(game, playerId);
   }

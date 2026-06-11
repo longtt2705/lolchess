@@ -1,7 +1,12 @@
-import { AttackRange, Square } from "../../types";
-import { getAdjacentAllies, getAdjacentEnemies, getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
-import { ChessFactory } from "../ChessFactory";
-import { ChessObject } from "../ChessObject";
+import { AttackRange, Square } from '../../types';
+import {
+  getAdjacentAllies,
+  getAdjacentEnemies,
+  getAdjacentSquares,
+  getChessAtPosition,
+} from '../../utils/helpers';
+import { ChessFactory } from '../ChessFactory';
+import { ChessObject } from '../ChessObject';
 
 export class CasterMinion extends ChessObject {
   /**
@@ -15,13 +20,9 @@ export class CasterMinion extends ChessObject {
       const ally = getChessAtPosition(this.game, this.chess.blue, square);
       if (
         ally &&
-        [
-          "Melee Minion",
-          "Caster Minion",
-          "Sand Soldier",
-          "Super Minion",
-          "Poro",
-        ].includes(ally.name) &&
+        ['Melee Minion', 'Caster Minion', 'Sand Soldier', 'Super Minion', 'Poro'].includes(
+          ally.name,
+        ) &&
         ally.stats.hp > 0
       ) {
         count++;
@@ -64,8 +65,7 @@ export class CasterMinion extends ChessObject {
     const isDiagonalRangeOne = deltaX === 1 && deltaY === 1;
 
     const isBasicMinion =
-      target.chess.name === "Melee Minion" ||
-      target.chess.name === "Caster Minion";
+      target.chess.name === 'Melee Minion' || target.chess.name === 'Caster Minion';
 
     return isDiagonalRangeOne && isBasicMinion;
   }
@@ -79,7 +79,7 @@ export class CasterMinion extends ChessObject {
   protected attack(
     chess: ChessObject,
     forceCritical: boolean = false,
-    damageMultiplier: number = 1
+    damageMultiplier: number = 1,
   ): number {
     // Check for Critical Flank conditions
     if (this.isCriticalFlank(chess)) {
@@ -93,10 +93,10 @@ export class CasterMinion extends ChessObject {
       const executeDamage = this.damage(
         chess,
         99999,
-        "true",
+        'true',
         this,
         0, // No sunder for true damage
-        true // This is from an attack
+        true, // This is from an attack
       );
 
       // Track Critical Flank proc in game.lastAction for animation
@@ -121,7 +121,7 @@ export class CasterMinion extends ChessObject {
     const enemies = getAdjacentEnemies(this.game, this.chess.position, this.chess.blue);
     let numberOfEnemiesCriticalFlanking = 0;
     for (const enemy of enemies) {
-      if (enemy.name !== "Melee Minion" && enemy.name !== "Caster Minion") {
+      if (enemy.name !== 'Melee Minion' && enemy.name !== 'Caster Minion') {
         continue;
       }
       const enemyMinion = ChessFactory.createChess(enemy, this.game) as CasterMinion;
@@ -132,10 +132,13 @@ export class CasterMinion extends ChessObject {
     const adjacentMinions = getAdjacentAllies(this.game, this.chess.position, this.chess.blue);
     let numberOfAdjacentMinionsCriticalFlanking = 0;
     for (const adjacentMinion of adjacentMinions) {
-      if (adjacentMinion.name !== "Melee Minion" && adjacentMinion.name !== "Caster Minion") {
+      if (adjacentMinion.name !== 'Melee Minion' && adjacentMinion.name !== 'Caster Minion') {
         continue;
       }
-      const adjacentMinionObject = ChessFactory.createChess(adjacentMinion, this.game) as CasterMinion;
+      const adjacentMinionObject = ChessFactory.createChess(
+        adjacentMinion,
+        this.game,
+      ) as CasterMinion;
       if (adjacentMinionObject.isCriticalFlank(this, true)) {
         numberOfAdjacentMinionsCriticalFlanking++;
       }

@@ -1,12 +1,12 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import styled from 'styled-components'
-import { motion } from 'framer-motion'
-import { KeyRound, Mail } from 'lucide-react'
-import { toast } from 'react-hot-toast'
-import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { requestPasswordReset } from '../store/authSlice'
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import { KeyRound, Mail } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { useAppSelector, useAppDispatch } from '../hooks/redux';
+import { requestPasswordReset } from '../store/authSlice';
 
 const Container = styled.div`
   min-height: calc(100vh - 200px);
@@ -14,7 +14,7 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   padding: 40px;
-`
+`;
 
 const Card = styled(motion.div)`
   background: var(--secondary-bg);
@@ -24,7 +24,7 @@ const Card = styled(motion.div)`
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   width: 100%;
   max-width: 400px;
-`
+`;
 
 const Title = styled.h1`
   text-align: center;
@@ -39,19 +39,19 @@ const Title = styled.h1`
   .icon {
     color: var(--gold);
   }
-`
+`;
 
 const Subtitle = styled.p`
   text-align: center;
   color: var(--secondary-text);
   margin-bottom: 30px;
-`
+`;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 20px;
-`
+`;
 
 const InputGroup = styled.div`
   display: flex;
@@ -69,7 +69,7 @@ const InputGroup = styled.div`
       color: var(--gold);
     }
   }
-`
+`;
 
 const Input = styled.input`
   padding: 12px 16px;
@@ -89,12 +89,12 @@ const Input = styled.input`
   &::placeholder {
     color: var(--secondary-text);
   }
-`
+`;
 
 const ErrorMessage = styled.span`
   color: var(--red);
   font-size: 14px;
-`
+`;
 
 const SubmitButton = styled(motion.button)`
   background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
@@ -111,7 +111,7 @@ const SubmitButton = styled(motion.button)`
     opacity: 0.6;
     cursor: not-allowed;
   }
-`
+`;
 
 const BackLink = styled.div`
   text-align: center;
@@ -127,32 +127,36 @@ const BackLink = styled.div`
       color: var(--hover);
     }
   }
-`
+`;
 
 const Confirmation = styled.p`
   text-align: center;
   color: var(--primary-text);
   line-height: 1.6;
-`
+`;
 
 interface ForgotFormData {
-  email: string
+  email: string;
 }
 
 const ForgotPasswordPage: React.FC = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm<ForgotFormData>()
-  const { loading } = useAppSelector(state => state.auth)
-  const dispatch = useAppDispatch()
-  const [submitted, setSubmitted] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotFormData>();
+  const { loading } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const [submitted, setSubmitted] = useState(false);
 
   const onSubmit = async (data: ForgotFormData) => {
     try {
-      await dispatch(requestPasswordReset(data)).unwrap()
-      setSubmitted(true)
+      await dispatch(requestPasswordReset(data)).unwrap();
+      setSubmitted(true);
     } catch (err) {
-      toast.error(typeof err === 'string' ? err : 'Request failed')
+      toast.error(typeof err === 'string' ? err : 'Request failed');
     }
-  }
+  };
 
   return (
     <Container>
@@ -169,8 +173,8 @@ const ForgotPasswordPage: React.FC = () => {
         {submitted ? (
           <>
             <Confirmation>
-              If an account exists for that email, we&apos;ve sent a password reset link.
-              Check your inbox and follow the link to set a new password.
+              If an account exists for that email, we&apos;ve sent a password reset link. Check your
+              inbox and follow the link to set a new password.
             </Confirmation>
             <BackLink>
               <Link to="/login">Back to Login</Link>
@@ -216,7 +220,7 @@ const ForgotPasswordPage: React.FC = () => {
         )}
       </Card>
     </Container>
-  )
-}
+  );
+};
 
-export default ForgotPasswordPage
+export default ForgotPasswordPage;

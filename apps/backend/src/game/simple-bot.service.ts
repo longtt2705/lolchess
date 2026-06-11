@@ -1,16 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
-import {
-  Game,
-  EventPayload,
-  SummonerSpellType,
-  SUMMONER_SPELL_TYPES,
-} from "@lolchess/game-engine";
-import {
-  BotEngine,
-  BotConfig,
-  BotDifficulty,
-  EvaluationResult,
-} from "@lolchess/bot-engine";
+import { Injectable, Logger } from '@nestjs/common';
+import { Game, EventPayload, SummonerSpellType, SUMMONER_SPELL_TYPES } from '@lolchess/game-engine';
+import { BotEngine, BotConfig, BotDifficulty, EvaluationResult } from '@lolchess/bot-engine';
 
 /**
  * Simple Bot Service
@@ -27,15 +17,12 @@ export class SimpleBotService {
   private botEngines: Map<string, BotEngine> = new Map();
 
   // Default difficulty for bots
-  private defaultDifficulty: BotDifficulty = "expert";
+  private defaultDifficulty: BotDifficulty = 'expert';
 
   /**
    * Get or create a bot engine for a specific bot player
    */
-  private getBotEngine(
-    botPlayerId: string,
-    difficulty?: BotDifficulty
-  ): BotEngine {
+  private getBotEngine(botPlayerId: string, difficulty?: BotDifficulty): BotEngine {
     const key = botPlayerId;
 
     if (!this.botEngines.has(key)) {
@@ -44,7 +31,7 @@ export class SimpleBotService {
       };
       this.botEngines.set(key, new BotEngine(config));
       this.logger.debug(
-        `Created bot engine for ${botPlayerId} with difficulty ${config.difficulty}`
+        `Created bot engine for ${botPlayerId} with difficulty ${config.difficulty}`,
       );
     }
 
@@ -71,7 +58,7 @@ export class SimpleBotService {
    * Check if a player ID belongs to a bot
    */
   isBotPlayer(playerId: string): boolean {
-    return playerId.startsWith("bot-player-");
+    return playerId.startsWith('bot-player-');
   }
 
   /**
@@ -80,15 +67,11 @@ export class SimpleBotService {
   getBotBanChoice(
     bannedChampions: string[],
     blueBans?: string[],
-    redBans?: string[]
+    redBans?: string[],
   ): string | null {
     // Use a temporary engine for ban/pick decisions
     const botEngine = new BotEngine({ difficulty: this.defaultDifficulty });
-    const banChoice = botEngine.getBanChoice(
-      bannedChampions,
-      blueBans,
-      redBans
-    );
+    const banChoice = botEngine.getBanChoice(bannedChampions, blueBans, redBans);
 
     this.logger.debug(`Bot ban choice: ${banChoice}`);
     return banChoice;
@@ -100,14 +83,10 @@ export class SimpleBotService {
   getBotPickChoice(
     bannedChampions: string[],
     alreadyPicked: string[],
-    botPicks: string[]
+    botPicks: string[],
   ): string | null {
     const botEngine = new BotEngine({ difficulty: this.defaultDifficulty });
-    const pickChoice = botEngine.getPickChoice(
-      bannedChampions,
-      alreadyPicked,
-      botPicks
-    );
+    const pickChoice = botEngine.getPickChoice(bannedChampions, alreadyPicked, botPicks);
 
     this.logger.debug(`Bot pick choice: ${pickChoice}`);
     return pickChoice;
@@ -133,9 +112,7 @@ export class SimpleBotService {
    * - Barrier for marksmen (protection)
    * - Smite for remaining (objective control)
    */
-  getBotSpellAssignments(
-    championNames: string[]
-  ): Record<string, SummonerSpellType> {
+  getBotSpellAssignments(championNames: string[]): Record<string, SummonerSpellType> {
     const assignments: Record<string, SummonerSpellType> = {};
     const availableSpells = [...SUMMONER_SPELL_TYPES];
 
@@ -147,9 +124,7 @@ export class SimpleBotService {
       }
     });
 
-    this.logger.debug(
-      `Bot spell assignments: ${JSON.stringify(assignments)}`
-    );
+    this.logger.debug(`Bot spell assignments: ${JSON.stringify(assignments)}`);
     return assignments;
   }
 

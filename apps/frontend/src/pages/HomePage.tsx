@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
-import { motion } from 'framer-motion'
-import { Play, Users, Trophy, Sword, AlertCircle, ArrowRight, BookOpen, Bot } from 'lucide-react'
-import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { fetchActiveGame, createGameVsBot } from '../store/gameSlice'
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import { Play, Users, Trophy, Sword, AlertCircle, ArrowRight, BookOpen, Bot } from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '../hooks/redux';
+import { fetchActiveGame, createGameVsBot } from '../store/gameSlice';
 
 const HomeContainer = styled.div`
   min-height: calc(100vh - 200px);
@@ -14,11 +14,11 @@ const HomeContainer = styled.div`
   justify-content: center;
   text-align: center;
   padding: 40px;
-`
+`;
 
 const HeroSection = styled(motion.div)`
   margin-bottom: 60px;
-  
+
   h1 {
     font-size: 4rem;
     background: linear-gradient(135deg, var(--gold) 0%, var(--hover) 100%);
@@ -28,14 +28,14 @@ const HeroSection = styled(motion.div)`
     margin-bottom: 20px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
-  
+
   p {
     font-size: 1.5rem;
     color: var(--secondary-text);
     max-width: 600px;
     line-height: 1.6;
   }
-`
+`;
 
 const FeatureGrid = styled.div`
   display: grid;
@@ -44,7 +44,7 @@ const FeatureGrid = styled.div`
   max-width: 1000px;
   width: 100%;
   margin-bottom: 50px;
-`
+`;
 
 const FeatureCard = styled(motion.div)`
   background: var(--secondary-bg);
@@ -53,30 +53,30 @@ const FeatureCard = styled(motion.div)`
   border: 1px solid var(--border);
   text-align: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  
+
   .icon {
     color: var(--gold);
     margin-bottom: 20px;
   }
-  
+
   h3 {
     color: var(--primary-text);
     margin-bottom: 15px;
     font-size: 1.3rem;
   }
-  
+
   p {
     color: var(--secondary-text);
     line-height: 1.5;
   }
-`
+`;
 
 const CTASection = styled(motion.div)`
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
   justify-content: center;
-`
+`;
 
 const PrimaryButton = styled(Link)`
   background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
@@ -91,12 +91,12 @@ const PrimaryButton = styled(Link)`
   gap: 10px;
   transition: all 0.2s ease;
   border: 2px solid transparent;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(200, 155, 60, 0.3);
   }
-`
+`;
 
 const SecondaryButton = styled(Link)`
   background: transparent;
@@ -111,13 +111,13 @@ const SecondaryButton = styled(Link)`
   align-items: center;
   gap: 10px;
   transition: all 0.2s ease;
-  
+
   &:hover {
     border-color: var(--gold);
     box-shadow: 0 0 12px rgba(200, 155, 60, 0.2);
     transform: translateY(-2px);
   }
-`
+`;
 
 const BotButton = styled.button`
   background: linear-gradient(135deg, var(--hover) 0%, #0596aa 100%);
@@ -132,18 +132,18 @@ const BotButton = styled.button`
   gap: 10px;
   transition: all 0.2s ease;
   cursor: pointer;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(91, 192, 222, 0.3);
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
   }
-`
+`;
 
 const ActiveGameBanner = styled(motion.div)`
   background: linear-gradient(135deg, var(--hover) 0%, #0596aa 100%);
@@ -158,30 +158,30 @@ const ActiveGameBanner = styled(motion.div)`
   box-shadow: 0 6px 24px rgba(91, 192, 222, 0.3);
   max-width: 800px;
   width: 100%;
-  
+
   .alert-content {
     display: flex;
     align-items: center;
     gap: 16px;
-    
+
     .alert-icon {
       color: var(--primary-bg);
     }
-    
+
     .alert-text {
       h4 {
         color: var(--primary-bg);
         font-size: 1.3rem;
         margin-bottom: 4px;
       }
-      
+
       p {
         color: rgba(10, 14, 39, 0.8);
         font-size: 0.95rem;
       }
     }
   }
-`
+`;
 
 const ActiveGameButton = styled(motion.button)`
   background: var(--primary-bg);
@@ -197,79 +197,89 @@ const ActiveGameButton = styled(motion.button)`
   gap: 8px;
   transition: all 0.2s ease;
   white-space: nowrap;
-  
+
   &:hover {
     transform: translateX(4px);
     box-shadow: 0 4px 12px rgba(10, 14, 39, 0.3);
   }
-`
+`;
 
 const HomePage: React.FC = () => {
-  const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const { isAuthenticated, user } = useAppSelector(state => state.auth)
-  const { activeGame, loading, error } = useAppSelector(state => state.game)
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const { activeGame, loading, error } = useAppSelector((state) => state.game);
 
   useEffect(() => {
     if (user && isAuthenticated) {
-      dispatch(fetchActiveGame(user.id))
+      dispatch(fetchActiveGame(user.id));
     }
-  }, [user, isAuthenticated, dispatch])
+  }, [user, isAuthenticated, dispatch]);
 
   const handleReturnToGame = () => {
-    if (!activeGame) return
+    if (!activeGame) return;
 
-    const gameId = activeGame.id || (activeGame as any)._id
+    const gameId = activeGame.id || (activeGame as any)._id;
 
     // Navigate based on game status/phase
-    if (activeGame.status === 'ban_pick' || activeGame.phase === 'ban_phase' || activeGame.phase === 'pick_phase') {
-      navigate(`/ban-pick/${gameId}`)
+    if (
+      activeGame.status === 'ban_pick' ||
+      activeGame.phase === 'ban_phase' ||
+      activeGame.phase === 'pick_phase'
+    ) {
+      navigate(`/ban-pick/${gameId}`);
     } else {
-      navigate(`/game/${gameId}`)
+      navigate(`/game/${gameId}`);
     }
-  }
+  };
 
   const handlePlayVsBot = async () => {
-    if (!user) return
+    if (!user) return;
 
     try {
-      const result = await dispatch(createGameVsBot({
-        userId: user.id,
-        username: user.username
-      })).unwrap()
+      const result = await dispatch(
+        createGameVsBot({
+          userId: user.id,
+          username: user.username,
+        }),
+      ).unwrap();
 
-      const gameId = result.game._id || result.game.id
+      const gameId = result.game._id || result.game.id;
 
       // Navigate to ban-pick phase
-      navigate(`/ban-pick/${gameId}`)
+      navigate(`/ban-pick/${gameId}`);
     } catch (error) {
-      console.error('Error creating bot game:', error)
-      alert('Failed to create game with bot. Please try again.')
+      console.error('Error creating bot game:', error);
+      alert('Failed to create game with bot. Please try again.');
     }
-  }
+  };
 
   const features = [
     {
       icon: <Sword size={48} />,
-      title: "Strategic Battles",
-      description: "Experience the thrill of auto-chess with League of Legends champions. Build your team and watch them fight!"
+      title: 'Strategic Battles',
+      description:
+        'Experience the thrill of auto-chess with League of Legends champions. Build your team and watch them fight!',
     },
     {
       icon: <Users size={48} />,
-      title: "1v1 Battles",
-      description: "Face off against another player in intense head-to-head matches. Prove your strategic mastery in direct combat!"
+      title: '1v1 Battles',
+      description:
+        'Face off against another player in intense head-to-head matches. Prove your strategic mastery in direct combat!',
     },
     {
       icon: <Trophy size={48} />,
-      title: "Ranked System",
-      description: "Earn your place on the leaderboard with our comprehensive ranking system. Track your progress and achievements!"
+      title: 'Ranked System',
+      description:
+        'Earn your place on the leaderboard with our comprehensive ranking system. Track your progress and achievements!',
     },
     {
       icon: <BookOpen size={48} />,
-      title: "Learn the Rules",
-      description: "New to LOL Chess? Check out our comprehensive rulebook to master the game mechanics and strategies!"
-    }
-  ]
+      title: 'Learn the Rules',
+      description:
+        'New to LOL Chess? Check out our comprehensive rulebook to master the game mechanics and strategies!',
+    },
+  ];
 
   return (
     <HomeContainer>
@@ -280,8 +290,8 @@ const HomePage: React.FC = () => {
       >
         <h1>Welcome to LOL Chess</h1>
         <p>
-          The ultimate 1v1 League of Legends auto-chess experience. Build your team,
-          strategize your positioning, and defeat your opponent in epic battles!
+          The ultimate 1v1 League of Legends auto-chess experience. Build your team, strategize your
+          positioning, and defeat your opponent in epic battles!
         </p>
       </HeroSection>
 
@@ -311,13 +321,16 @@ const HomePage: React.FC = () => {
         {features.map((feature, index) => (
           <FeatureCard
             key={index}
-            as={feature.title === "Learn the Rules" ? Link : "div"}
-            to={feature.title === "Learn the Rules" ? "/instructions" : undefined}
+            as={feature.title === 'Learn the Rules' ? Link : 'div'}
+            to={feature.title === 'Learn the Rules' ? '/instructions' : undefined}
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: index * 0.2 }}
             whileHover={{ scale: 1.05 }}
-            style={{ textDecoration: 'none', cursor: feature.title === "Learn the Rules" ? 'pointer' : 'default' }}
+            style={{
+              textDecoration: 'none',
+              cursor: feature.title === 'Learn the Rules' ? 'pointer' : 'default',
+            }}
           >
             <div className="icon">{feature.icon}</div>
             <h3>{feature.title}</h3>
@@ -356,7 +369,7 @@ const HomePage: React.FC = () => {
         )}
       </CTASection>
     </HomeContainer>
-  )
-}
+  );
+};
 
-export default HomePage
+export default HomePage;

@@ -1,10 +1,10 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { Logger, Inject, forwardRef } from "@nestjs/common";
-import { Job } from "bullmq";
-import Redis from "ioredis";
-import { GameService } from "../game/game.service";
-import { SimpleBotService } from "../game/simple-bot.service";
-import { Game } from "../game/types";
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Logger, Inject, forwardRef } from '@nestjs/common';
+import { Job } from 'bullmq';
+import Redis from 'ioredis';
+import { GameService } from '../game/game.service';
+import { SimpleBotService } from '../game/simple-bot.service';
+import { Game } from '../game/types';
 
 /**
  * Bot Action Job Payload
@@ -33,18 +33,18 @@ export interface BotActionResult {
 /**
  * Redis Pub/Sub channel for bot action results
  */
-export const BOT_ACTION_RESULTS_CHANNEL = "bot-action-results";
+export const BOT_ACTION_RESULTS_CHANNEL = 'bot-action-results';
 
 /**
  * BullMQ Worker that processes bot action jobs
- * 
+ *
  * This processor:
  * 1. Receives bot action jobs from the queue
  * 2. Gets the bot's action from SimpleBotService
  * 3. Executes the action through GameService (like a player action)
  * 4. Publishes results to Redis Pub/Sub for the Gateway to emit WebSocket events
  */
-@Processor("bot-actions")
+@Processor('bot-actions')
 export class BotActionProcessor extends WorkerHost {
   private readonly logger = new Logger(BotActionProcessor.name);
   private readonly redis: Redis;
@@ -53,13 +53,13 @@ export class BotActionProcessor extends WorkerHost {
     @Inject(forwardRef(() => GameService))
     private readonly gameService: GameService,
     @Inject(forwardRef(() => SimpleBotService))
-    private readonly simpleBotService: SimpleBotService
+    private readonly simpleBotService: SimpleBotService,
   ) {
     super();
 
     // Initialize Redis client for Pub/Sub publishing
     this.redis = new Redis({
-      host: process.env.REDIS_HOST || "localhost",
+      host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT) || 6379,
       password: process.env.REDIS_PASSWORD,
       retryStrategy: (times) => {
@@ -68,12 +68,12 @@ export class BotActionProcessor extends WorkerHost {
       },
     });
 
-    this.redis.on("connect", () => {
-      this.logger.log("Bot action processor Redis client connected");
+    this.redis.on('connect', () => {
+      this.logger.log('Bot action processor Redis client connected');
     });
 
-    this.redis.on("error", (err) => {
-      this.logger.error("Bot action processor Redis error:", err);
+    this.redis.on('error', (err) => {
+      this.logger.error('Bot action processor Redis error:', err);
     });
   }
 
@@ -84,7 +84,7 @@ export class BotActionProcessor extends WorkerHost {
     const { gameId, botPlayerId, gameState, timestamp } = job.data;
 
     this.logger.log(
-      `Processing bot action for ${botPlayerId} in game ${gameId} (queued at ${new Date(timestamp).toISOString()})`
+      `Processing bot action for ${botPlayerId} in game ${gameId} (queued at ${new Date(timestamp).toISOString()})`,
     );
 
     try {
@@ -97,7 +97,7 @@ export class BotActionProcessor extends WorkerHost {
           gameId,
           botPlayerId,
           success: false,
-          message: "Game not found",
+          message: 'Game not found',
         };
         await this.publishResult(result);
         return result;
@@ -106,9 +106,7 @@ export class BotActionProcessor extends WorkerHost {
       // Verify it's still the bot's turn
       const currentPlayerId = this.gameService.getCurrentPlayer(currentGame);
       if (currentPlayerId !== botPlayerId) {
-        this.logger.warn(
-          `Bot ${botPlayerId} turn skipped - current player is ${currentPlayerId}`
-        );
+        this.logger.warn(`Bot ${botPlayerId} turn skipped - current player is ${currentPlayerId}`);
         const result: BotActionResult = {
           gameId,
           botPlayerId,
@@ -120,17 +118,14 @@ export class BotActionProcessor extends WorkerHost {
       }
 
       // Process the bot's turn
-      const actionResult = await this.gameService.processBotTurn(
-        gameId,
-        currentGame
-      );
+      const actionResult = await this.gameService.processBotTurn(gameId, currentGame);
 
       if (!actionResult || !actionResult.game) {
         const result: BotActionResult = {
           gameId,
           botPlayerId,
           success: false,
-          message: actionResult?.message || "Failed to process bot turn",
+          message: actionResult?.message || 'Failed to process bot turn',
         };
         await this.publishResult(result);
         return result;
@@ -144,7 +139,7 @@ export class BotActionProcessor extends WorkerHost {
         game: actionResult.game,
         oldGame: actionResult.oldGame,
         message: actionResult.message,
-        isGameOver: actionResult.game.status === "finished",
+        isGameOver: actionResult.game.status === 'finished',
         winner: actionResult.game.winner,
       };
 
@@ -152,14 +147,14 @@ export class BotActionProcessor extends WorkerHost {
       await this.publishResult(result);
 
       this.logger.log(
-        `Bot ${botPlayerId} action completed in game ${gameId} (delay: ${Date.now() - timestamp}ms)`
+        `Bot ${botPlayerId} action completed in game ${gameId} (delay: ${Date.now() - timestamp}ms)`,
       );
 
       return result;
     } catch (error) {
       this.logger.error(
         `Error processing bot action for ${botPlayerId} in game ${gameId}:`,
-        error.message
+        error.message,
       );
 
       const result: BotActionResult = {
@@ -179,15 +174,10 @@ export class BotActionProcessor extends WorkerHost {
    */
   private async publishResult(result: BotActionResult): Promise<void> {
     try {
-      await this.redis.publish(
-        BOT_ACTION_RESULTS_CHANNEL,
-        JSON.stringify(result)
-      );
-      this.logger.debug(
-        `Published bot action result for game ${result.gameId}`
-      );
+      await this.redis.publish(BOT_ACTION_RESULTS_CHANNEL, JSON.stringify(result));
+      this.logger.debug(`Published bot action result for game ${result.gameId}`);
     } catch (error) {
-      this.logger.error("Failed to publish bot action result:", error);
+      this.logger.error('Failed to publish bot action result:', error);
     }
   }
 
@@ -195,9 +185,7 @@ export class BotActionProcessor extends WorkerHost {
    * Handle job completion
    */
   async onCompleted(job: Job<BotActionJob>) {
-    this.logger.debug(
-      `Bot action job ${job.id} completed for game ${job.data.gameId}`
-    );
+    this.logger.debug(`Bot action job ${job.id} completed for game ${job.data.gameId}`);
   }
 
   /**
@@ -205,7 +193,7 @@ export class BotActionProcessor extends WorkerHost {
    */
   async onFailed(job: Job<BotActionJob>, error: Error) {
     this.logger.error(
-      `Bot action job ${job.id} failed for game ${job.data.gameId}: ${error.message}`
+      `Bot action job ${job.id} failed for game ${job.data.gameId}: ${error.message}`,
     );
   }
 

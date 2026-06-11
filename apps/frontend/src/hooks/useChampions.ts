@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 export interface AttackProjectile {
-  shape: "bullet" | "arrow" | "orb" | "bolt" | "missile" | "spear";
+  shape: 'bullet' | 'arrow' | 'orb' | 'bolt' | 'missile' | 'spear';
   color: string;
   trailColor?: string;
   size?: number; // 0.5 to 2, default 1
@@ -63,7 +63,7 @@ export interface ChampionData {
   attackProjectile?: AttackProjectile;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const useChampions = () => {
   const [champions, setChampions] = useState<ChampionData[]>([]);
@@ -76,15 +76,13 @@ export const useChampions = () => {
         setLoading(true);
         const response = await fetch(`${API_URL}/games/champions`);
         if (!response.ok) {
-          throw new Error("Failed to fetch champions");
+          throw new Error('Failed to fetch champions');
         }
         const data = await response.json();
         setChampions(data);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch champions"
-        );
-        console.error("Error fetching champions:", err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch champions');
+        console.error('Error fetching champions:', err);
       } finally {
         setLoading(false);
       }

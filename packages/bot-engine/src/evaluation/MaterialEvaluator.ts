@@ -1,9 +1,4 @@
-import {
-  Chess,
-  ChessFactory,
-  Game,
-  getPlayerPieces,
-} from "@lolchess/game-engine";
+import { Chess, ChessFactory, Game, getPlayerPieces } from '@lolchess/game-engine';
 
 /**
  * Evaluates material (piece) value on the board
@@ -13,28 +8,28 @@ export class MaterialEvaluator {
   private static readonly PIECE_VALUES: Record<string, number> = {
     Poro: 1000, // King - extremely valuable
     Champion: 50, // Base champion value
-    "Siege Minion": 40,
-    "Super Minion": 60,
-    "Melee Minion": 20,
-    "Caster Minion": 25,
-    "Sand Soldier": 35,
-    "Baron Nashor": 200,
-    "Infernal Drake": 100,
-    "Mountain Drake": 100,
-    "Ocean Drake": 100,
-    "Chemtech Drake": 100,
-    "Hextech Drake": 100,
-    "Cloud Drake": 100,
-    "Elder Dragon": 250,
+    'Siege Minion': 40,
+    'Super Minion': 60,
+    'Melee Minion': 20,
+    'Caster Minion': 25,
+    'Sand Soldier': 35,
+    'Baron Nashor': 200,
+    'Infernal Drake': 100,
+    'Mountain Drake': 100,
+    'Ocean Drake': 100,
+    'Chemtech Drake': 100,
+    'Hextech Drake': 100,
+    'Cloud Drake': 100,
+    'Elder Dragon': 250,
   };
 
   // Minion types for identification
   private static readonly MINION_TYPES = [
-    "Melee Minion",
-    "Caster Minion",
-    "Siege Minion",
-    "Super Minion",
-    "Sand Soldier",
+    'Melee Minion',
+    'Caster Minion',
+    'Siege Minion',
+    'Super Minion',
+    'Sand Soldier',
   ];
 
   /**
@@ -60,7 +55,6 @@ export class MaterialEvaluator {
   evaluatePiece(piece: Chess, game: Game): number {
     let value = 0;
 
-
     const chessObject = ChessFactory.createChess(piece, game);
     // HP percentage factor - damaged pieces are worth less
     // Guard against division by zero or undefined maxHp
@@ -72,7 +66,6 @@ export class MaterialEvaluator {
       const hpPercent = Math.min(1, Math.max(0, hp / maxHp));
       value += materialValue * (0.6 + hpPercent * 0.4);
     }
-
 
     // Ensure we never return NaN
     const result = Math.floor(value);
@@ -93,8 +86,7 @@ export class MaterialEvaluator {
     const pieces = getPlayerPieces(game, playerId);
     return pieces.sort(
       (a, b) =>
-        this.evaluatePiece(b, game) - this.evaluatePiece(a, game) ||
-        a.name.localeCompare(b.name)
+        this.evaluatePiece(b, game) - this.evaluatePiece(a, game) || a.name.localeCompare(b.name),
     );
   }
 }

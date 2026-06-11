@@ -1,31 +1,18 @@
-import { Square } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { ChessFactory } from "../ChessFactory";
-import { getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { Square } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { ChessFactory } from '../ChessFactory';
+import { getAdjacentSquares, getChessAtPosition } from '../../utils/helpers';
 
 export class Blitzcrank extends ChessObject {
   skill(position?: Square): void {
     // Find the target chess piece to pull
-    const targetChess = getChessAtPosition(
-      this.game,
-      !this.chess.blue,
-      position
-    );
+    const targetChess = getChessAtPosition(this.game, !this.chess.blue, position);
 
     if (targetChess) {
-      const targetChessObject = ChessFactory.createChess(
-        targetChess,
-        this.game
-      );
+      const targetChessObject = ChessFactory.createChess(targetChess, this.game);
 
       // Deal magic damage
-      this.activeSkillDamage(
-        targetChessObject,
-        15 + this.ap * 0.8,
-        "magic",
-        this,
-        this.sunder
-      );
+      this.activeSkillDamage(targetChessObject, 15 + this.ap * 0.8, 'magic', this, this.sunder);
 
       // Store the original position for reference
       const originalPosition = { ...targetChess.position };
@@ -49,10 +36,7 @@ export class Blitzcrank extends ChessObject {
       const isAdjacentToBlitz =
         Math.abs(idealPosition.x - this.chess.position.x) <= 1 &&
         Math.abs(idealPosition.y - this.chess.position.y) <= 1 &&
-        !(
-          idealPosition.x === this.chess.position.x &&
-          idealPosition.y === this.chess.position.y
-        );
+        !(idealPosition.x === this.chess.position.x && idealPosition.y === this.chess.position.y);
 
       const isIdealEmpty =
         !getChessAtPosition(this.game, true, idealPosition) &&
@@ -67,7 +51,7 @@ export class Blitzcrank extends ChessObject {
         const emptyAdjacent = adjacentSquares.find(
           (square) =>
             !getChessAtPosition(this.game, true, square) &&
-            !getChessAtPosition(this.game, false, square)
+            !getChessAtPosition(this.game, false, square),
         );
 
         if (emptyAdjacent) {
@@ -87,7 +71,7 @@ export class Blitzcrank extends ChessObject {
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -102,7 +86,7 @@ export class Blitzcrank extends ChessObject {
 
   public getActiveSkillValue(targetPosition?: Square | null): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -132,7 +116,7 @@ export class Blitzcrank extends ChessObject {
     // Extra value if target is far away (hooks are more valuable for gap closing)
     const distance = Math.max(
       Math.abs(this.chess.position.x - target.chess.position.x),
-      Math.abs(this.chess.position.y - target.chess.position.y)
+      Math.abs(this.chess.position.y - target.chess.position.y),
     );
     const distanceBonus = distance > 2 ? 10 : 0;
 

@@ -1,12 +1,12 @@
-import React from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import styled from 'styled-components'
-import { motion } from 'framer-motion'
-import { Lock, ShieldCheck } from 'lucide-react'
-import { toast } from 'react-hot-toast'
-import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { resetPassword } from '../store/authSlice'
+import React from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import { Lock, ShieldCheck } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { useAppSelector, useAppDispatch } from '../hooks/redux';
+import { resetPassword } from '../store/authSlice';
 
 const Container = styled.div`
   min-height: calc(100vh - 200px);
@@ -14,7 +14,7 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   padding: 40px;
-`
+`;
 
 const Card = styled(motion.div)`
   background: var(--secondary-bg);
@@ -24,7 +24,7 @@ const Card = styled(motion.div)`
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   width: 100%;
   max-width: 400px;
-`
+`;
 
 const Title = styled.h1`
   text-align: center;
@@ -39,19 +39,19 @@ const Title = styled.h1`
   .icon {
     color: var(--gold);
   }
-`
+`;
 
 const Subtitle = styled.p`
   text-align: center;
   color: var(--secondary-text);
   margin-bottom: 30px;
-`
+`;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 20px;
-`
+`;
 
 const InputGroup = styled.div`
   display: flex;
@@ -69,7 +69,7 @@ const InputGroup = styled.div`
       color: var(--gold);
     }
   }
-`
+`;
 
 const Input = styled.input`
   padding: 12px 16px;
@@ -89,12 +89,12 @@ const Input = styled.input`
   &::placeholder {
     color: var(--secondary-text);
   }
-`
+`;
 
 const ErrorMessage = styled.span`
   color: var(--red);
   font-size: 14px;
-`
+`;
 
 const SubmitButton = styled(motion.button)`
   background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
@@ -111,7 +111,7 @@ const SubmitButton = styled(motion.button)`
     opacity: 0.6;
     cursor: not-allowed;
   }
-`
+`;
 
 const BackLink = styled.div`
   text-align: center;
@@ -127,37 +127,42 @@ const BackLink = styled.div`
       color: var(--hover);
     }
   }
-`
+`;
 
 const Notice = styled.p`
   text-align: center;
   color: var(--primary-text);
   line-height: 1.6;
-`
+`;
 
 interface ResetFormData {
-  newPassword: string
-  confirmPassword: string
+  newPassword: string;
+  confirmPassword: string;
 }
 
 const ResetPasswordPage: React.FC = () => {
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<ResetFormData>()
-  const { loading } = useAppSelector(state => state.auth)
-  const dispatch = useAppDispatch()
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const token = searchParams.get('token')
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<ResetFormData>();
+  const { loading } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
 
   const onSubmit = async (data: ResetFormData) => {
-    if (!token) return
+    if (!token) return;
     try {
-      await dispatch(resetPassword({ token, newPassword: data.newPassword })).unwrap()
-      toast.success('Password reset! Please log in with your new password.')
-      navigate('/login', { replace: true })
+      await dispatch(resetPassword({ token, newPassword: data.newPassword })).unwrap();
+      toast.success('Password reset! Please log in with your new password.');
+      navigate('/login', { replace: true });
     } catch (err) {
-      toast.error(typeof err === 'string' ? err : 'Password reset failed')
+      toast.error(typeof err === 'string' ? err : 'Password reset failed');
     }
-  }
+  };
 
   if (!token) {
     return (
@@ -171,15 +176,13 @@ const ResetPasswordPage: React.FC = () => {
             <ShieldCheck className="icon" size={32} />
             Reset Password
           </Title>
-          <Notice>
-            This password reset link is invalid or incomplete.
-          </Notice>
+          <Notice>This password reset link is invalid or incomplete.</Notice>
           <BackLink>
             <Link to="/forgot-password">Request a new link</Link>
           </BackLink>
         </Card>
       </Container>
-    )
+    );
   }
 
   return (
@@ -222,11 +225,12 @@ const ResetPasswordPage: React.FC = () => {
               placeholder="Re-enter your new password"
               {...register('confirmPassword', {
                 required: 'Please confirm your password',
-                validate: (value) =>
-                  value === watch('newPassword') || 'Passwords do not match',
+                validate: (value) => value === watch('newPassword') || 'Passwords do not match',
               })}
             />
-            {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword.message}</ErrorMessage>}
+            {errors.confirmPassword && (
+              <ErrorMessage>{errors.confirmPassword.message}</ErrorMessage>
+            )}
           </InputGroup>
 
           <SubmitButton
@@ -244,7 +248,7 @@ const ResetPasswordPage: React.FC = () => {
         </BackLink>
       </Card>
     </Container>
-  )
-}
+  );
+};
 
-export default ResetPasswordPage
+export default ResetPasswordPage;

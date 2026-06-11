@@ -1,7 +1,7 @@
-import { ChessObject } from "../ChessObject";
-import { Square } from "../../types";
-import { ChessFactory } from "../ChessFactory";
-import { getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { ChessObject } from '../ChessObject';
+import { Square } from '../../types';
+import { ChessFactory } from '../ChessFactory';
+import { getAdjacentSquares, getChessAtPosition } from '../../utils/helpers';
 
 export class Garen extends ChessObject {
   /**
@@ -12,7 +12,7 @@ export class Garen extends ChessObject {
   skill(position?: Square): void {
     // Apply shield: 20 base + 100% AP for 2 turns
     const shieldAmount = 20 + this.ap * 0.6;
-    this.applyShield(shieldAmount, 2, "garen_judgment_shield");
+    this.applyShield(shieldAmount, 2, 'garen_judgment_shield');
 
     // Deal immediate damage to all adjacent enemies on activation
     this.dealSpinDamage();
@@ -26,34 +26,21 @@ export class Garen extends ChessObject {
 
     adjacentSquares.forEach((square) => {
       // Get enemy pieces (opposite team)
-      const targetChess = getChessAtPosition(
-        this.game,
-        !this.chess.blue,
-        square
-      );
+      const targetChess = getChessAtPosition(this.game, !this.chess.blue, square);
 
       if (targetChess) {
-        const targetChessObject = ChessFactory.createChess(
-          targetChess,
-          this.game
-        );
+        const targetChessObject = ChessFactory.createChess(targetChess, this.game);
 
         // Deal 100% AD as physical damage
         const damage = this.ad;
-        this.activeSkillDamage(
-          targetChessObject,
-          damage,
-          "physical",
-          this,
-          this.sunder
-        );
+        this.activeSkillDamage(targetChessObject, damage, 'physical', this, this.sunder);
       }
     });
   }
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -73,7 +60,7 @@ export class Garen extends ChessObject {
 
   public getActiveSkillValue(targetPosition?: Square | null): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -82,17 +69,18 @@ export class Garen extends ChessObject {
     if (!targetPosition) {
       return 35; // Good value for AOE damage
     }
-    
+
     const targetPiece = getChessAtPosition(this.game, this.chess.blue, targetPosition);
     if (!targetPiece) {
       return 0;
     }
     const target = ChessFactory.createChess(targetPiece, this.game);
-    
+
     // Check if target is adjacent and enemy
-    const isAdjacent = Math.abs(this.chess.position.x - target.chess.position.x) <= 1 &&
-                      Math.abs(this.chess.position.y - target.chess.position.y) <= 1;
-    
+    const isAdjacent =
+      Math.abs(this.chess.position.x - target.chess.position.x) <= 1 &&
+      Math.abs(this.chess.position.y - target.chess.position.y) <= 1;
+
     if (!isAdjacent || target.chess.blue === this.chess.blue) {
       return 0; // Target not in AOE range or is ally
     }

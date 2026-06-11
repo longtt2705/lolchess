@@ -1,7 +1,7 @@
-import { Square } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { ChessFactory } from "../ChessFactory";
-import { getChessAtPosition } from "../../utils/helpers";
+import { Square } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { ChessFactory } from '../ChessFactory';
+import { getChessAtPosition } from '../../utils/helpers';
 
 // We need to access getPieceBaseStats from GameLogic, but to avoid circular dependency,
 // we define the Sand Soldier stats inline here
@@ -29,9 +29,9 @@ const SAND_SOLDIER_STATS = {
   lifesteal: 0,
   durability: 0,
   attackProjectile: {
-    shape: "spear",
-    color: "#DAA520",
-    trailColor: "#F4A460",
+    shape: 'spear',
+    color: '#DAA520',
+    trailColor: '#F4A460',
     size: 1.0,
     speed: 1.2,
   },
@@ -49,9 +49,9 @@ export class Azir extends ChessObject {
   private countSandSoldiers(): number {
     return this.game.board.filter(
       (chess) =>
-        chess.name === "Sand Soldier" &&
+        chess.name === 'Sand Soldier' &&
         chess.skill?.payload?.azirId === this.chess.id &&
-        chess.stats.hp > 0
+        chess.stats.hp > 0,
     ).length;
   }
 
@@ -67,21 +67,14 @@ export class Azir extends ChessObject {
     }
 
     // Find the target ally minion at the position
-    const targetChess = getChessAtPosition(
-      this.game,
-      this.chess.blue,
-      position
-    );
+    const targetChess = getChessAtPosition(this.game, this.chess.blue, position);
 
     if (!targetChess) {
       return;
     }
 
     // Validate that target is a Melee Minion or Caster Minion
-    if (
-      targetChess.name !== "Melee Minion" &&
-      targetChess.name !== "Caster Minion"
-    ) {
+    if (targetChess.name !== 'Melee Minion' && targetChess.name !== 'Caster Minion') {
       return;
     }
 
@@ -94,7 +87,7 @@ export class Azir extends ChessObject {
    */
   private promoteMinionToSandSoldier(minion: any): void {
     // Transform to Sand Soldier
-    minion.name = "Sand Soldier";
+    minion.name = 'Sand Soldier';
 
     // Update stats to Sand Soldier base stats
     const sandSoldierStats = SAND_SOLDIER_STATS;
@@ -117,14 +110,14 @@ export class Azir extends ChessObject {
     // This allows the Sand Soldier to find Azir for bonus damage calculation
     if (!minion.skill) {
       minion.skill = {
-        name: "Sand Soldier",
+        name: 'Sand Soldier',
         description:
           "This unit deals additional (15 + 35% of Azir's AP) magic damage to their target, also, apply the Azir's attack effects after attacking. When a Sand Soldier attacks, other Sand Soldiers within 2 squares of the target will also attack the target (ignoring the attack direction) but deal less than 40% of the Sand Soldier's damage.",
         cooldown: 0,
         currentCooldown: 0,
-        type: "passive",
+        type: 'passive',
         attackRange: sandSoldierStats.attackRange,
-        targetTypes: "none",
+        targetTypes: 'none',
         payload: {},
       };
     }
@@ -136,7 +129,7 @@ export class Azir extends ChessObject {
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -169,7 +162,7 @@ export class Azir extends ChessObject {
 
   public getActiveSkillValue(targetPosition?: Square | null): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -194,7 +187,7 @@ export class Azir extends ChessObject {
     }
 
     // Only works on Melee Minion or Caster Minion
-    if (target.chess.name !== "Melee Minion" && target.chess.name !== "Caster Minion") {
+    if (target.chess.name !== 'Melee Minion' && target.chess.name !== 'Caster Minion') {
       return 0;
     }
 
@@ -224,7 +217,7 @@ export class Azir extends ChessObject {
       if (enemy.blue !== this.chess.blue && enemy.stats.hp > 0) {
         const distance = Math.max(
           Math.abs(target.chess.position.x - enemy.position.x),
-          Math.abs(target.chess.position.y - enemy.position.y)
+          Math.abs(target.chess.position.y - enemy.position.y),
         );
         if (distance <= 3) {
           positionalBonus = 10;

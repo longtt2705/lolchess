@@ -1,18 +1,18 @@
-import { ChessObject } from "../ChessObject";
-import { Debuff } from "../../types";
+import { ChessObject } from '../ChessObject';
+import { Debuff } from '../../types';
 
 export class Teemo extends ChessObject {
   // Create the Toxic Shot debuff
   createToxicShotDebuff(casterPlayerId: string): Debuff {
     return {
-      id: "toxic_shot",
-      name: "Toxic Shot",
+      id: 'toxic_shot',
+      name: 'Toxic Shot',
       description: "Poisoned by Teemo's toxic darts, taking damage each turn",
       duration: 2,
       maxDuration: 2,
       effects: [],
       damagePerTurn: 10 + this.ap * 0.1,
-      damageType: "magic",
+      damageType: 'magic',
       healPerTurn: 0,
       stun: false,
       unique: false, // Multiple toxic shots can stack
@@ -35,7 +35,7 @@ export class Teemo extends ChessObject {
 
     // Apply Toxic Shot debuff on every basic attack
     this.applyToxicShot(chess, this.chess.ownerId);
-    this.damage(chess, 5 + this.ap * 0.4, "magic", this, this.sunder);
+    this.damage(chess, 5 + this.ap * 0.4, 'magic', this, this.sunder);
     return baseDamage;
   }
 

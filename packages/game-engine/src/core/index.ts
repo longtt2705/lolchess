@@ -25,12 +25,7 @@ export {
   // Constants
   SHOP_ITEMS_COUNT,
   SHOP_REFRESH_INTERVAL,
-} from "./GameEngine";
+} from './GameEngine';
 
 // Export GameLogic for direct access (backward compatibility)
-export {
-  GameLogic,
-  setDevelopmentMode,
-  isDevelopmentMode,
-} from "./GameLogic";
-
+export { GameLogic, setDevelopmentMode, isDevelopmentMode } from './GameLogic';

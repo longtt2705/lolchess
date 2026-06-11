@@ -1,8 +1,8 @@
-import { Square, Debuff } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { ChessFactory } from "../ChessFactory";
-import { getChessAtPosition } from "../../utils/helpers";
-import { getGameRng } from "../../utils/SeededRandom";
+import { Square, Debuff } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { ChessFactory } from '../ChessFactory';
+import { getChessAtPosition } from '../../utils/helpers';
+import { getGameRng } from '../../utils/SeededRandom';
 
 export class Viktor extends ChessObject {
   // Check if Viktor has a specific module (modules are stored as items)
@@ -30,20 +30,20 @@ export class Viktor extends ChessObject {
   // Create empowered attack debuff for Superconductive Coil module
   private createEmpoweredAttackDebuff(): Debuff {
     return {
-      id: "viktor_empowered",
-      name: "Empowered Attack",
+      id: 'viktor_empowered',
+      name: 'Empowered Attack',
       description: `Viktor's next attack deals bonus (10 + 50% of AP) magic damage`,
       duration: 3,
       maxDuration: 3,
       effects: [
         {
-          stat: "ad",
+          stat: 'ad',
           modifier: 10 + this.ap * 0.5,
-          type: "add",
+          type: 'add',
         },
       ],
       damagePerTurn: 0,
-      damageType: "magic",
+      damageType: 'magic',
       healPerTurn: 0,
       unique: true,
       currentStacks: 1,
@@ -57,20 +57,20 @@ export class Viktor extends ChessObject {
   // Create stun debuff for Neutralizing Bolt module
   private createStunDebuff(): Debuff {
     return {
-      id: "viktor_stun",
-      name: "Stunned",
+      id: 'viktor_stun',
+      name: 'Stunned',
       description: "Stunned by Viktor's Neutralizing Bolt",
       duration: 2,
       maxDuration: 2,
       effects: [
         {
-          stat: "speed",
+          stat: 'speed',
           modifier: 0,
-          type: "set",
+          type: 'set',
         },
       ],
       damagePerTurn: 0,
-      damageType: "magic",
+      damageType: 'magic',
       healPerTurn: 0,
       unique: true,
       currentStacks: 1,
@@ -85,20 +85,20 @@ export class Viktor extends ChessObject {
   // Create speed buff debuff for Energy Capacitor module
   private createSpeedBuffDebuff(): Debuff {
     return {
-      id: "viktor_speed_buff",
-      name: "Energy Surge",
-      description: "Gained +1 speed from Energy Capacitor",
+      id: 'viktor_speed_buff',
+      name: 'Energy Surge',
+      description: 'Gained +1 speed from Energy Capacitor',
       duration: 2,
       maxDuration: 2,
       effects: [
         {
-          stat: "speed",
+          stat: 'speed',
           modifier: 1,
-          type: "add",
+          type: 'add',
         },
       ],
       damagePerTurn: 0,
-      damageType: "magic",
+      damageType: 'magic',
       healPerTurn: 0,
       unique: true,
       currentStacks: 1,
@@ -137,11 +137,7 @@ export class Viktor extends ChessObject {
 
   skill(position?: Square): void {
     // Find the target enemy chess piece
-    const targetChess = getChessAtPosition(
-      this.game,
-      !this.chess.blue,
-      position
-    );
+    const targetChess = getChessAtPosition(this.game, !this.chess.blue, position);
 
     if (!targetChess) return;
 
@@ -166,11 +162,9 @@ export class Viktor extends ChessObject {
     };
 
     // MODULE 4: Disruptor - Execute if target below 5% HP (check BEFORE damage)
-    if (this.hasModule("viktor_module_4")) {
+    if (this.hasModule('viktor_module_4')) {
       const targetHpPercent =
-        (targetChessObject.chess.stats.hp /
-          targetChessObject.chess.stats.maxHp) *
-        100;
+        (targetChessObject.chess.stats.hp / targetChessObject.chess.stats.maxHp) * 100;
       if (targetHpPercent < 5) {
         // Execute the target instantly - track as full HP damage for module unlock
         const executeDamage = targetChessObject.chess.stats.hp;
@@ -182,9 +176,7 @@ export class Viktor extends ChessObject {
 
         targetChessObject.chess.stats.hp = 0;
         // Remove from board
-        const targetIndex = this.game.board.findIndex(
-          (c) => c.id === targetChess.id
-        );
+        const targetIndex = this.game.board.findIndex((c) => c.id === targetChess.id);
         if (targetIndex !== -1) {
           this.game.board.splice(targetIndex, 1);
         }
@@ -196,10 +188,9 @@ export class Viktor extends ChessObject {
     let baseDamage = 10 + this.ap * 0.5;
 
     // MODULE 1: Neutralizing Bolt - 25% chance for bonus damage + stun
-    if (this.hasModule("viktor_module_1")) {
+    if (this.hasModule('viktor_module_1')) {
       // Bonus damage: (15 + 10% of AP)% of current target's HP
-      const bonusDamage =
-        (15 + this.ap * 0.1) * (targetChessObject.chess.stats.hp / 100);
+      const bonusDamage = (15 + this.ap * 0.1) * (targetChessObject.chess.stats.hp / 100);
       baseDamage += bonusDamage;
 
       const rng = getGameRng();
@@ -216,13 +207,7 @@ export class Viktor extends ChessObject {
     const hpBefore = targetChessObject.chess.stats.hp;
 
     // Deal the main skill damage
-    this.activeSkillDamage(
-      targetChessObject,
-      baseDamage,
-      "magic",
-      this,
-      this.sunder
-    );
+    this.activeSkillDamage(targetChessObject, baseDamage, 'magic', this, this.sunder);
 
     // Calculate actual damage dealt and add to cumulative
     const hpAfter = Math.max(0, targetChessObject.chess.stats.hp);
@@ -231,7 +216,7 @@ export class Viktor extends ChessObject {
     this.updateUnlockedModulesCount();
 
     // MODULE 2: Superconductive Coil - Empower next basic attack
-    if (this.hasModule("viktor_module_2")) {
+    if (this.hasModule('viktor_module_2')) {
       const empowermentDebuff = this.createEmpoweredAttackDebuff();
       this.applyDebuff(this, empowermentDebuff);
 
@@ -243,10 +228,10 @@ export class Viktor extends ChessObject {
     }
 
     // MODULE 3: Energy Capacitor - Gain shield and speed buff
-    if (this.hasModule("viktor_module_3")) {
+    if (this.hasModule('viktor_module_3')) {
       // Shield: (10 + 30% of AP)
       const shieldAmount = Math.floor(10 + this.ap * 0.3);
-      this.applyShield(shieldAmount, 2, "viktor_energy_shield");
+      this.applyShield(shieldAmount, 2, 'viktor_energy_shield');
 
       // Speed buff: +1 speed for 2 turns
       this.applyDebuff(this, this.createSpeedBuffDebuff());
@@ -256,7 +241,7 @@ export class Viktor extends ChessObject {
     }
 
     // MODULE 5: Electrical Overload - AOE damage to adjacent enemies
-    if (this.hasModule("viktor_module_5") && position) {
+    if (this.hasModule('viktor_module_5') && position) {
       const aoeDamage = 5 + this.ap * 0.25;
       const adjacentEnemies = this.getAdjacentEnemies(position);
 
@@ -264,7 +249,7 @@ export class Viktor extends ChessObject {
         // Don't double-damage the main target
         if (enemy.chess.id === targetChess.id) continue;
 
-        this.activeSkillDamage(enemy, aoeDamage, "magic", this, this.sunder);
+        this.activeSkillDamage(enemy, aoeDamage, 'magic', this, this.sunder);
 
         // Track AOE target for animation
         this.chess.skill.payload.viktorModules.aoeTargets.push({
@@ -281,13 +266,13 @@ export class Viktor extends ChessObject {
     // Reset empowerment after attack (for Module 2)
     if (this.chess.skill?.payload?.nextAttackEmpowered) {
       this.chess.skill.payload.nextAttackEmpowered = false;
-      this.removeDebuff(this, "viktor_empowered");
+      this.removeDebuff(this, 'viktor_empowered');
     }
     return baseDamage;
   }
 
   protected getAttackPotential(): number {
-    if (this.hasDebuff("viktor_empowered")) {
+    if (this.hasDebuff('viktor_empowered')) {
       return super.getAttackPotential() + 10 + this.ap * 0.5;
     }
     return super.getAttackPotential();
@@ -295,7 +280,7 @@ export class Viktor extends ChessObject {
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -303,35 +288,35 @@ export class Viktor extends ChessObject {
     let value = 10 + this.ap * 0.5;
 
     // Module bonuses (assume some modules are equipped for higher value)
-    const moduleCount = this.chess.items.filter(item =>
-      item.id.startsWith("viktor_module_")
+    const moduleCount = this.chess.items.filter((item) =>
+      item.id.startsWith('viktor_module_'),
     ).length;
 
     // Each module adds significant value
     value += moduleCount * 8;
 
     // Module 1 (Neutralizing Bolt): bonus damage + potential stun
-    if (this.hasModule("viktor_module_1")) {
+    if (this.hasModule('viktor_module_1')) {
       value += 10; // Stun value
     }
 
     // Module 2 (Superconductive Coil): empowered attack
-    if (this.hasModule("viktor_module_2")) {
+    if (this.hasModule('viktor_module_2')) {
       value += 5;
     }
 
     // Module 3 (Energy Capacitor): shield + speed
-    if (this.hasModule("viktor_module_3")) {
+    if (this.hasModule('viktor_module_3')) {
       value += 5;
     }
 
     // Module 4 (Disruptor): execute potential
-    if (this.hasModule("viktor_module_4")) {
+    if (this.hasModule('viktor_module_4')) {
       value += 15; // High value for execute mechanic
     }
 
     // Module 5 (Electrical Overload): AOE damage
-    if (this.hasModule("viktor_module_5")) {
+    if (this.hasModule('viktor_module_5')) {
       value += 10; // AOE damage to adjacent enemies
     }
 
@@ -340,7 +325,7 @@ export class Viktor extends ChessObject {
 
   public getActiveSkillValue(targetPosition?: Square | null): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -362,7 +347,7 @@ export class Viktor extends ChessObject {
     let totalValue = 0;
 
     // MODULE 4: Disruptor - Execute if target below 5% HP
-    if (this.hasModule("viktor_module_4")) {
+    if (this.hasModule('viktor_module_4')) {
       const targetHpPercent = (target.chess.stats.hp / target.chess.stats.maxHp) * 100;
       if (targetHpPercent < 5) {
         // Execute is extremely valuable - instant kill
@@ -371,11 +356,11 @@ export class Viktor extends ChessObject {
     }
 
     // Base skill damage: (10 + 50% of AP)
-    let damage = this.calculateActiveSkillDamage(target);
+    const damage = this.calculateActiveSkillDamage(target);
     totalValue += damage;
 
     // MODULE 1: Neutralizing Bolt - bonus damage + 25% stun chance
-    if (this.hasModule("viktor_module_1")) {
+    if (this.hasModule('viktor_module_1')) {
       const bonusDamagePercent = 15 + this.ap * 0.1;
       const bonusDamage = (bonusDamagePercent / 100) * target.chess.stats.hp;
       totalValue += bonusDamage;
@@ -385,20 +370,20 @@ export class Viktor extends ChessObject {
     }
 
     // MODULE 2: Superconductive Coil - empowers next attack
-    if (this.hasModule("viktor_module_2")) {
+    if (this.hasModule('viktor_module_2')) {
       const empowermentValue = 10 + this.ap * 0.5;
       totalValue += empowermentValue * 0.5; // Worth ~50% since it buffs future attack
     }
 
     // MODULE 3: Energy Capacitor - shield + speed buff
-    if (this.hasModule("viktor_module_3")) {
+    if (this.hasModule('viktor_module_3')) {
       const shieldAmount = 10 + this.ap * 0.3;
       totalValue += shieldAmount * 0.5; // Shield value
       totalValue += 5; // Speed buff value
     }
 
     // MODULE 5: Electrical Overload - AOE to adjacent enemies
-    if (this.hasModule("viktor_module_5")) {
+    if (this.hasModule('viktor_module_5')) {
       // Assume 1-2 adjacent enemies get hit
       const aoeDamage = (5 + this.ap * 0.25) * 1.5;
       totalValue += aoeDamage;

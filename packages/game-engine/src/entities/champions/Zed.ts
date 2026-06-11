@@ -1,21 +1,20 @@
-import { AttackRange, Debuff, Square } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { ChessFactory } from "../ChessFactory";
-import { getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { AttackRange, Debuff, Square } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { ChessFactory } from '../ChessFactory';
+import { getAdjacentSquares, getChessAtPosition } from '../../utils/helpers';
 
 export class Zed extends ChessObject {
   // Create Death Mark debuff
   private createDeathMarkDebuff(targetId: string): Debuff {
     return {
       id: `death_mark_${this.chess.id}_${targetId}`,
-      name: "Death Mark",
-      description:
-        "Marked for death. Zed can attack from any position and will teleport on hit.",
+      name: 'Death Mark',
+      description: 'Marked for death. Zed can attack from any position and will teleport on hit.',
       duration: 3,
       maxDuration: 3,
       effects: [],
       damagePerTurn: 0,
-      damageType: "physical",
+      damageType: 'physical',
       healPerTurn: 0,
       unique: true,
       appliedAt: Date.now(),
@@ -28,11 +27,7 @@ export class Zed extends ChessObject {
 
   skill(position?: Square): void {
     // Find the target enemy chess piece
-    const targetChess = getChessAtPosition(
-      this.game,
-      !this.chess.blue,
-      position
-    );
+    const targetChess = getChessAtPosition(this.game, !this.chess.blue, position);
 
     if (!targetChess) {
       return;
@@ -48,26 +43,17 @@ export class Zed extends ChessObject {
   // Override validateAttack to allow attacks on marked targets from any position
   validateAttack(position: Square, attackRange: AttackRange): boolean {
     // Find if there's a chess piece at the target position
-    const targetChess = getChessAtPosition(
-      this.game,
-      !this.chess.blue,
-      position
-    );
+    const targetChess = getChessAtPosition(this.game, !this.chess.blue, position);
 
     // Check if target has Death Mark from this Zed
     if (targetChess) {
       const deathMarkId = `death_mark_${this.chess.id}_${targetChess.id}`;
-      const hasDeathMark = targetChess.debuffs.some(
-        (debuff) => debuff.id === deathMarkId
-      );
+      const hasDeathMark = targetChess.debuffs.some((debuff) => debuff.id === deathMarkId);
 
       // If target has Death Mark, allow attack from any position
       if (hasDeathMark) {
         // Only check that we're not attacking ourselves
-        if (
-          this.chess.position.x === position.x &&
-          this.chess.position.y === position.y
-        ) {
+        if (this.chess.position.x === position.x && this.chess.position.y === position.y) {
           return false;
         }
         return true;
@@ -87,9 +73,7 @@ export class Zed extends ChessObject {
     for (const square of adjacentSquares) {
       const occupyingChess = this.game.board.find(
         (piece) =>
-          piece.position.x === square.x &&
-          piece.position.y === square.y &&
-          piece.stats.hp > 0
+          piece.position.x === square.x && piece.position.y === square.y && piece.stats.hp > 0,
       );
 
       if (!occupyingChess) {
@@ -126,9 +110,7 @@ export class Zed extends ChessObject {
   attack(chess: ChessObject): number {
     // Check if target has Death Mark from this Zed
     const deathMarkId = `death_mark_${this.chess.id}_${chess.chess.id}`;
-    const deathMarkIndex = chess.chess.debuffs.findIndex(
-      (debuff) => debuff.id === deathMarkId
-    );
+    const deathMarkIndex = chess.chess.debuffs.findIndex((debuff) => debuff.id === deathMarkId);
     const hasDeathMark = deathMarkIndex !== -1;
 
     // Call parent attack for normal damage
@@ -138,12 +120,10 @@ export class Zed extends ChessObject {
     if (hasDeathMark) {
       // Deal bonus physical damage: 10 + 15% AD + 30% AP
       const bonusDamage = 30 + this.ad * 0.15 + this.ap * 0.15;
-      this.damage(chess, bonusDamage, "physical", this, this.sunder);
+      this.damage(chess, bonusDamage, 'physical', this, this.sunder);
 
       // Find nearest adjacent empty square to target
-      const adjacentSquare = this.findNearestAdjacentSquare(
-        chess.chess.position
-      );
+      const adjacentSquare = this.findNearestAdjacentSquare(chess.chess.position);
 
       // Teleport Zed to adjacent square (if available)
       if (adjacentSquare) {
@@ -166,7 +146,7 @@ export class Zed extends ChessObject {
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -193,7 +173,7 @@ export class Zed extends ChessObject {
 
   public getActiveSkillValue(targetPosition?: Square | null): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -233,7 +213,7 @@ export class Zed extends ChessObject {
     // Distance bonus - more valuable for far targets
     const distance = Math.max(
       Math.abs(this.chess.position.x - target.chess.position.x),
-      Math.abs(this.chess.position.y - target.chess.position.y)
+      Math.abs(this.chess.position.y - target.chess.position.y),
     );
     const distanceBonus = distance > 3 ? 15 : 5;
 
@@ -241,6 +221,8 @@ export class Zed extends ChessObject {
     const targetHpPercent = target.chess.stats.hp / target.chess.stats.maxHp;
     const lowHpBonus = targetHpPercent < 0.4 ? 20 : 0;
 
-    return rangeBypassValue + bonusDamage + mobilityValue + targetValue + distanceBonus + lowHpBonus;
+    return (
+      rangeBypassValue + bonusDamage + mobilityValue + targetValue + distanceBonus + lowHpBonus
+    );
   }
 }

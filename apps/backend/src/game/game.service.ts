@@ -1,41 +1,35 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleInit,
-  Inject,
-  forwardRef,
-} from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
-import { GameDocument, GAME_MODEL_NAME } from "./game.schema";
-import { Chess, Game } from "./types";
-import { GameLogic, setDevelopmentMode } from "./game.logic";
-import { RedisGameCacheService } from "../redis/redis-game-cache.service";
+import { Injectable, Logger, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { GameDocument, GAME_MODEL_NAME } from './game.schema';
+import { Chess, Game } from './types';
+import { GameLogic, setDevelopmentMode } from './game.logic';
+import { RedisGameCacheService } from '../redis/redis-game-cache.service';
 import {
   ChessObject,
   ChessFactory,
   getCurrentPlayerId,
   SummonerSpellType,
   SUMMONER_SPELL_TYPES,
-} from "@lolchess/game-engine";
-import { SimpleBotService } from "./simple-bot.service";
+} from '@lolchess/game-engine';
+import { SimpleBotService } from './simple-bot.service';
 
 // Ban/Pick patterns from RULE.md
 // 4 total bans (2 per player)
-const BAN_ORDER: ("blue" | "red")[] = ["blue", "red", "blue", "red"];
+const BAN_ORDER: ('blue' | 'red')[] = ['blue', 'red', 'blue', 'red'];
 
 // Pick order for 10 total picks (5 per player) - snake draft
-const PICK_ORDER: ("blue" | "red")[] = [
-  "blue",
-  "red",
-  "red",
-  "blue",
-  "blue",
-  "red",
-  "red",
-  "blue",
-  "blue",
-  "red",
+const PICK_ORDER: ('blue' | 'red')[] = [
+  'blue',
+  'red',
+  'red',
+  'blue',
+  'blue',
+  'red',
+  'red',
+  'blue',
+  'blue',
+  'red',
 ];
 
 @Injectable()
@@ -46,8 +40,8 @@ export class GameService implements OnModuleInit {
     @InjectModel(GAME_MODEL_NAME) private gameModel: Model<GameDocument>,
     private readonly redisCache: RedisGameCacheService,
     @Inject(forwardRef(() => SimpleBotService))
-    private readonly simpleBotService: SimpleBotService
-  ) { }
+    private readonly simpleBotService: SimpleBotService,
+  ) {}
 
   /**
    * Check if a player ID belongs to a bot
@@ -68,9 +62,9 @@ export class GameService implements OnModuleInit {
    * Returns the bot action or null if it's not a bot's turn
    */
   async getBotActionIfBotTurn(
-    game: Game
+    game: Game,
   ): Promise<{ isBotTurn: boolean; botAction?: any; botPlayerId?: string }> {
-    if (game.status !== "in_progress" || game.phase !== "gameplay") {
+    if (game.status !== 'in_progress' || game.phase !== 'gameplay') {
       return { isBotTurn: false };
     }
 
@@ -82,10 +76,7 @@ export class GameService implements OnModuleInit {
     this.logger.log(`Bot turn detected for player: ${currentPlayerId}`);
 
     try {
-      const botAction = this.simpleBotService.getAction(
-        game as any,
-        currentPlayerId
-      );
+      const botAction = this.simpleBotService.getAction(game as any, currentPlayerId);
       if (botAction) {
         return {
           isBotTurn: true,
@@ -106,18 +97,15 @@ export class GameService implements OnModuleInit {
    */
   async processBotTurn(
     gameId: string,
-    game: Game
+    game: Game,
   ): Promise<{ game: Game; oldGame?: Game; message: string } | null> {
-    const { isBotTurn, botAction, botPlayerId } =
-      await this.getBotActionIfBotTurn(game);
+    const { isBotTurn, botAction, botPlayerId } = await this.getBotActionIfBotTurn(game);
 
     if (!isBotTurn || !botAction) {
       return null;
     }
 
-    this.logger.log(
-      `Bot ${botPlayerId} executing action: ${JSON.stringify(botAction)}`
-    );
+    this.logger.log(`Bot ${botPlayerId} executing action: ${JSON.stringify(botAction)}`);
 
     // Execute the bot's action
     return this.executeAction(gameId, {
@@ -130,11 +118,9 @@ export class GameService implements OnModuleInit {
    * Initialize the game engine with environment-specific settings
    */
   onModuleInit() {
-    const isDevelopment = process.env.NODE_ENV === "development";
+    const isDevelopment = process.env.NODE_ENV === 'development';
     setDevelopmentMode(isDevelopment);
-    this.logger.log(
-      `Game engine initialized (development mode: ${isDevelopment})`
-    );
+    this.logger.log(`Game engine initialized (development mode: ${isDevelopment})`);
   }
 
   /**
@@ -142,7 +128,7 @@ export class GameService implements OnModuleInit {
    */
   private async getGameState(gameId: string): Promise<Game | null> {
     // Try Redis cache first
-    let game = await this.redisCache.getGameState(gameId);
+    const game = await this.redisCache.getGameState(gameId);
 
     if (game) {
       this.logger.debug(`Game ${gameId} retrieved from Redis cache`);
@@ -172,11 +158,9 @@ export class GameService implements OnModuleInit {
     gameId: string,
     game: any, // Using any to handle cleaned board data
     priority: number = 5,
-    waitForPersistence: boolean = false
+    waitForPersistence: boolean = false,
   ): Promise<void> {
-    this.logger.debug(
-      `Saving game ${gameId} to Redis with priority ${priority}`
-    );
+    this.logger.debug(`Saving game ${gameId} to Redis with priority ${priority}`);
     await this.redisCache.setGameState(gameId, game as Game, { priority });
 
     // For critical game states (like initialization), wait for MongoDB persistence
@@ -221,7 +205,7 @@ export class GameService implements OnModuleInit {
               elderDrakeKillerTeam: game.elderDrakeKillerTeam,
             },
           },
-          { new: true }
+          { new: true },
         )
         .exec();
       this.logger.debug(`Game ${gameId} persisted to MongoDB immediately`);
@@ -235,7 +219,7 @@ export class GameService implements OnModuleInit {
     const games = await this.gameModel.find().exec();
     return {
       games,
-      message: "LOL Chess games retrieved successfully",
+      message: 'LOL Chess games retrieved successfully',
     };
   }
 
@@ -243,7 +227,7 @@ export class GameService implements OnModuleInit {
     const game = await this.getGameState(id);
     return {
       game: { ...game, board: this.cleanBoard(game) },
-      message: game ? "Game found" : "Game not found",
+      message: game ? 'Game found' : 'Game not found',
     };
   }
 
@@ -257,7 +241,7 @@ export class GameService implements OnModuleInit {
     const gameDoc = await this.gameModel
       .findOne({
         $or: [{ bluePlayer: userId }, { redPlayer: userId }],
-        status: { $in: ["ban_pick", "in_progress"] },
+        status: { $in: ['ban_pick', 'in_progress'] },
       })
       .exec();
 
@@ -274,14 +258,14 @@ export class GameService implements OnModuleInit {
       return {
         game,
         hasActiveGame: true,
-        message: "Active game found",
+        message: 'Active game found',
       };
     }
 
     return {
       game: null,
       hasActiveGame: false,
-      message: "No active game found",
+      message: 'No active game found',
     };
   }
 
@@ -289,8 +273,8 @@ export class GameService implements OnModuleInit {
     const newGame = new this.gameModel({
       ...createGameDto,
       maxPlayers: 2, // 1v1 game
-      status: "ban_pick", // Start with ban/pick phase
-      phase: "ban_phase",
+      status: 'ban_pick', // Start with ban/pick phase
+      phase: 'ban_phase',
       players: [],
     });
 
@@ -298,7 +282,7 @@ export class GameService implements OnModuleInit {
 
     return {
       game: savedGame,
-      message: "1v1 game created successfully",
+      message: '1v1 game created successfully',
     };
   }
 
@@ -309,14 +293,14 @@ export class GameService implements OnModuleInit {
   async createGameVsBot(userId: string, username: string) {
     // Generate unique bot player ID
     const botPlayerId = `bot-player-${Date.now()}`;
-    const botUsername = "AI Bot";
+    const botUsername = 'AI Bot';
 
     // Create the game
     const newGame = new this.gameModel({
       name: `${username} vs ${botUsername}`,
       maxPlayers: 2,
-      status: "ban_pick",
-      phase: "ban_phase",
+      status: 'ban_pick',
+      phase: 'ban_phase',
       players: [],
       gameSettings: {
         roundTime: 60,
@@ -338,18 +322,14 @@ export class GameService implements OnModuleInit {
 
     return {
       game: gameResult.game,
-      message: "Bot game created successfully",
+      message: 'Bot game created successfully',
     };
   }
 
-  async initializeBanPickPhase(
-    gameId: string,
-    bluePlayerId: string,
-    redPlayerId: string
-  ) {
+  async initializeBanPickPhase(gameId: string, bluePlayerId: string, redPlayerId: string) {
     const game = await this.gameModel.findById(gameId).exec();
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     // Set up players with sides
@@ -359,10 +339,10 @@ export class GameService implements OnModuleInit {
     // Update player objects
     game.players = game.players.map((player) => {
       if (player.userId === bluePlayerId) {
-        player.side = "blue";
+        player.side = 'blue';
         player.position = 0;
       } else if (player.userId === redPlayerId) {
-        player.side = "red";
+        player.side = 'red';
         player.position = 1;
       }
       return player;
@@ -370,8 +350,8 @@ export class GameService implements OnModuleInit {
 
     // Initialize ban/pick state
     game.banPickState = {
-      phase: "ban",
-      currentTurn: "blue", // Blue always starts
+      phase: 'ban',
+      currentTurn: 'blue', // Blue always starts
       turnNumber: 1,
       bannedChampions: [],
       blueBans: [],
@@ -389,8 +369,8 @@ export class GameService implements OnModuleInit {
       turnTimeLimit: 30, // 30 seconds per turn
     };
 
-    game.status = "ban_pick";
-    game.phase = "ban_phase";
+    game.status = 'ban_pick';
+    game.phase = 'ban_phase';
 
     await game.save();
     return game;
@@ -399,21 +379,20 @@ export class GameService implements OnModuleInit {
   async processSkipBan(gameId: string, playerId: string) {
     const game = await this.gameModel.findById(gameId);
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
-    if (game.phase !== "ban_phase") {
-      throw new Error("Not in ban phase");
+    if (game.phase !== 'ban_phase') {
+      throw new Error('Not in ban phase');
     }
 
     const banPickState = game.banPickState;
-    if (!banPickState || banPickState.phase !== "ban") {
-      throw new Error("Not in ban phase");
+    if (!banPickState || banPickState.phase !== 'ban') {
+      throw new Error('Not in ban phase');
     }
 
     // Verify it's the player's turn
-    const playerSide =
-      game.bluePlayer?.toString() === playerId ? "blue" : "red";
+    const playerSide = game.bluePlayer?.toString() === playerId ? 'blue' : 'red';
     if (banPickState.currentTurn !== playerSide) {
       throw new Error("It's not your turn");
     }
@@ -422,7 +401,7 @@ export class GameService implements OnModuleInit {
     // But we still need to track this as a ban turn for phase advancement
 
     // Add "SKIPPED" to ban history to track this turn
-    banPickState.banHistory.push("SKIPPED");
+    banPickState.banHistory.push('SKIPPED');
 
     // Advance to next turn
     banPickState.turnNumber++;
@@ -430,14 +409,13 @@ export class GameService implements OnModuleInit {
     // Check if we need to switch phases (4 total ban turns)
     if (banPickState.turnNumber > 4) {
       // Switch to pick phase
-      banPickState.phase = "pick";
-      banPickState.currentTurn = "blue"; // Blue starts picks
+      banPickState.phase = 'pick';
+      banPickState.currentTurn = 'blue'; // Blue starts picks
       banPickState.turnNumber = 1;
-      game.phase = "pick_phase";
+      game.phase = 'pick_phase';
     } else {
       // Continue in ban phase - alternating bans
-      const nextTurn =
-        BAN_ORDER[(banPickState.turnNumber - 1) % BAN_ORDER.length];
+      const nextTurn = BAN_ORDER[(banPickState.turnNumber - 1) % BAN_ORDER.length];
       banPickState.currentTurn = nextTurn;
     }
 
@@ -460,30 +438,28 @@ export class GameService implements OnModuleInit {
     gameId: string,
     playerId: string,
     championId: string,
-    actionType: "ban" | "pick"
+    actionType: 'ban' | 'pick',
   ) {
     const game = await this.gameModel.findById(gameId).exec();
     if (!game || !game.banPickState) {
-      throw new Error("Game or ban/pick state not found");
+      throw new Error('Game or ban/pick state not found');
     }
 
     const player = game.players.find((p) => p.userId === playerId);
     if (!player || !player.side) {
-      throw new Error("Player not found or side not assigned");
+      throw new Error('Player not found or side not assigned');
     }
 
     const banPickState = game.banPickState;
 
     // Validate turn
     if (banPickState.currentTurn !== player.side) {
-      throw new Error("Not your turn");
+      throw new Error('Not your turn');
     }
 
     // Validate action type matches current phase
     if (actionType !== banPickState.phase) {
-      throw new Error(
-        `Current phase is ${banPickState.phase}, not ${actionType}`
-      );
+      throw new Error(`Current phase is ${banPickState.phase}, not ${actionType}`);
     }
 
     // Validate champion not already banned/picked (skip this check if championId is null for skip)
@@ -493,16 +469,16 @@ export class GameService implements OnModuleInit {
         banPickState.bluePicks.includes(championId) ||
         banPickState.redPicks.includes(championId))
     ) {
-      throw new Error("Champion already banned or picked");
+      throw new Error('Champion already banned or picked');
     }
 
     // Process the action
-    if (actionType === "ban") {
+    if (actionType === 'ban') {
       if (championId) {
         banPickState.bannedChampions.push(championId);
         banPickState.banHistory.push(championId); // Track in ban history
 
-        if (player.side === "blue") {
+        if (player.side === 'blue') {
           banPickState.blueBans.push(championId);
         } else {
           banPickState.redBans.push(championId);
@@ -510,14 +486,14 @@ export class GameService implements OnModuleInit {
         player.bannedChampions.push(championId);
       } else {
         // Skip ban
-        banPickState.banHistory.push("SKIPPED");
+        banPickState.banHistory.push('SKIPPED');
       }
-    } else if (actionType === "pick") {
+    } else if (actionType === 'pick') {
       if (!championId) {
-        throw new Error("Champion ID is required for pick action");
+        throw new Error('Champion ID is required for pick action');
       }
 
-      if (player.side === "blue") {
+      if (player.side === 'blue') {
         banPickState.bluePicks.push(championId);
       } else {
         banPickState.redPicks.push(championId);
@@ -529,19 +505,19 @@ export class GameService implements OnModuleInit {
     banPickState.turnNumber++;
 
     // Check if we need to switch phases
-    if (banPickState.phase === "ban" && banPickState.turnNumber > 4) {
+    if (banPickState.phase === 'ban' && banPickState.turnNumber > 4) {
       // Switch to pick phase after 4 ban turns
-      banPickState.phase = "pick";
-      banPickState.currentTurn = "blue"; // Blue starts picks
+      banPickState.phase = 'pick';
+      banPickState.currentTurn = 'blue'; // Blue starts picks
       banPickState.turnNumber = 1;
-      game.phase = "pick_phase";
+      game.phase = 'pick_phase';
     } else if (
-      banPickState.phase === "pick" &&
+      banPickState.phase === 'pick' &&
       banPickState.bluePicks.length + banPickState.redPicks.length >= 10
     ) {
       // Picks complete - transition to reorder phase
 
-      banPickState.phase = "reorder";
+      banPickState.phase = 'reorder';
       banPickState.blueChampionOrder = [...banPickState.bluePicks];
       banPickState.redChampionOrder = [...banPickState.redPicks];
       banPickState.blueReady = false;
@@ -549,15 +525,13 @@ export class GameService implements OnModuleInit {
       // Keep game.phase as "pick_phase" and status as "ban_pick"
     } else {
       // Continue in current phase
-      if (banPickState.phase === "ban") {
+      if (banPickState.phase === 'ban') {
         // Alternating bans
-        const nextTurn =
-          BAN_ORDER[(banPickState.turnNumber - 1) % BAN_ORDER.length];
+        const nextTurn = BAN_ORDER[(banPickState.turnNumber - 1) % BAN_ORDER.length];
         banPickState.currentTurn = nextTurn;
-      } else if (banPickState.phase === "pick") {
+      } else if (banPickState.phase === 'pick') {
         // Snake draft picks
-        const pickIndex =
-          banPickState.bluePicks.length + banPickState.redPicks.length;
+        const pickIndex = banPickState.bluePicks.length + banPickState.redPicks.length;
         if (pickIndex < PICK_ORDER.length) {
           banPickState.currentTurn = PICK_ORDER[pickIndex];
         }
@@ -579,53 +553,44 @@ export class GameService implements OnModuleInit {
     return gameObject;
   }
 
-  async processReorderAction(
-    gameId: string,
-    playerId: string,
-    newOrder: string[]
-  ) {
+  async processReorderAction(gameId: string, playerId: string, newOrder: string[]) {
     // Get Mongoose document (not cached object) so we can save
     const game = await this.gameModel.findById(gameId).exec();
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     const banPickState = game.banPickState;
     if (!banPickState) {
-      throw new Error("Ban/pick state not found");
+      throw new Error('Ban/pick state not found');
     }
 
-    if (banPickState.phase !== "reorder") {
-      throw new Error("Cannot reorder champions - not in reorder phase");
+    if (banPickState.phase !== 'reorder') {
+      throw new Error('Cannot reorder champions - not in reorder phase');
     }
 
     // Find player's side
     const player = game.players.find((p) => p.userId === playerId);
     if (!player || !player.side) {
-      throw new Error("Player not found or side not assigned");
+      throw new Error('Player not found or side not assigned');
     }
 
     // Validate the new order contains the same champions as the original picks
-    const originalPicks =
-      player.side === "blue" ? banPickState.bluePicks : banPickState.redPicks;
+    const originalPicks = player.side === 'blue' ? banPickState.bluePicks : banPickState.redPicks;
 
     if (newOrder.length !== originalPicks.length) {
-      throw new Error(
-        `Invalid champion order - expected ${originalPicks.length} champions`
-      );
+      throw new Error(`Invalid champion order - expected ${originalPicks.length} champions`);
     }
 
     // Check that all champions in newOrder are in originalPicks
     const sortedOriginal = [...originalPicks].sort();
     const sortedNew = [...newOrder].sort();
     if (JSON.stringify(sortedOriginal) !== JSON.stringify(sortedNew)) {
-      throw new Error(
-        "Invalid champion order - champions don't match original picks"
-      );
+      throw new Error("Invalid champion order - champions don't match original picks");
     }
 
     // Update the champion order
-    if (player.side === "blue") {
+    if (player.side === 'blue') {
       banPickState.blueChampionOrder = newOrder;
     } else {
       banPickState.redChampionOrder = newOrder;
@@ -646,40 +611,36 @@ export class GameService implements OnModuleInit {
   async setSummonerSpells(
     gameId: string,
     playerId: string,
-    spellAssignments: Record<string, SummonerSpellType>
+    spellAssignments: Record<string, SummonerSpellType>,
   ) {
     const game = await this.gameModel.findById(gameId).exec();
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     const banPickState = game.banPickState;
     if (!banPickState) {
-      throw new Error("Ban/pick state not found");
+      throw new Error('Ban/pick state not found');
     }
 
-    if (banPickState.phase !== "reorder") {
-      throw new Error("Cannot set summoner spells - not in reorder phase");
+    if (banPickState.phase !== 'reorder') {
+      throw new Error('Cannot set summoner spells - not in reorder phase');
     }
 
     // Find player's side
     const player = game.players.find((p) => p.userId === playerId);
     if (!player || !player.side) {
-      throw new Error("Player not found or side not assigned");
+      throw new Error('Player not found or side not assigned');
     }
 
     // Validate spell assignments
     const championOrder =
-      player.side === "blue"
-        ? banPickState.blueChampionOrder
-        : banPickState.redChampionOrder;
+      player.side === 'blue' ? banPickState.blueChampionOrder : banPickState.redChampionOrder;
 
     // Check that all assigned champions are in the player's champion list
     for (const championName of Object.keys(spellAssignments)) {
       if (!championOrder.includes(championName)) {
-        throw new Error(
-          `Champion ${championName} is not in player's champion list`
-        );
+        throw new Error(`Champion ${championName} is not in player's champion list`);
       }
     }
 
@@ -694,11 +655,11 @@ export class GameService implements OnModuleInit {
     // Check for duplicate spells
     const uniqueSpells = new Set(assignedSpells);
     if (uniqueSpells.size !== assignedSpells.length) {
-      throw new Error("Each summoner spell can only be assigned once");
+      throw new Error('Each summoner spell can only be assigned once');
     }
 
     // Update spell assignments
-    if (player.side === "blue") {
+    if (player.side === 'blue') {
       banPickState.blueSummonerSpells = spellAssignments;
     } else {
       banPickState.redSummonerSpells = spellAssignments;
@@ -719,53 +680,45 @@ export class GameService implements OnModuleInit {
   async setPlayerReady(
     gameId: string,
     playerId: string,
-    ready: boolean
+    ready: boolean,
   ): Promise<{ game: Game; shouldStartGame: boolean }> {
     // Get Mongoose document (not cached object) so we can save
     const game = await this.gameModel.findById(gameId).exec();
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     const banPickState = game.banPickState;
     if (!banPickState) {
-      throw new Error("Ban/pick state not found");
+      throw new Error('Ban/pick state not found');
     }
 
-    if (banPickState.phase !== "reorder") {
-      throw new Error("Cannot set ready - not in reorder phase");
+    if (banPickState.phase !== 'reorder') {
+      throw new Error('Cannot set ready - not in reorder phase');
     }
 
     // Find player's side
     const player = game.players.find((p) => p.userId === playerId);
     if (!player || !player.side) {
-      throw new Error("Player not found or side not assigned");
+      throw new Error('Player not found or side not assigned');
     }
 
     // If setting ready to true, validate summoner spells
     if (ready) {
       const championOrder =
-        player.side === "blue"
-          ? banPickState.blueChampionOrder
-          : banPickState.redChampionOrder;
+        player.side === 'blue' ? banPickState.blueChampionOrder : banPickState.redChampionOrder;
       const spellAssignments =
-        player.side === "blue"
-          ? banPickState.blueSummonerSpells
-          : banPickState.redSummonerSpells;
+        player.side === 'blue' ? banPickState.blueSummonerSpells : banPickState.redSummonerSpells;
 
       // Check that all 5 champions have spells assigned
       if (!spellAssignments || Object.keys(spellAssignments).length !== 5) {
-        throw new Error(
-          "All 5 champions must have summoner spells assigned before ready"
-        );
+        throw new Error('All 5 champions must have summoner spells assigned before ready');
       }
 
       // Check that all champions in the order have spells
       for (const championName of championOrder) {
         if (!spellAssignments[championName]) {
-          throw new Error(
-            `Champion ${championName} must have a summoner spell assigned`
-          );
+          throw new Error(`Champion ${championName} must have a summoner spell assigned`);
         }
       }
 
@@ -773,14 +726,12 @@ export class GameService implements OnModuleInit {
       const assignedSpells = Object.values(spellAssignments);
       const uniqueSpells = new Set(assignedSpells);
       if (uniqueSpells.size !== 5) {
-        throw new Error(
-          "Each of the 5 summoner spells must be used exactly once"
-        );
+        throw new Error('Each of the 5 summoner spells must be used exactly once');
       }
     }
 
     // Update ready status
-    if (player.side === "blue") {
+    if (player.side === 'blue') {
       banPickState.blueReady = ready;
     } else {
       banPickState.redReady = ready;
@@ -791,13 +742,13 @@ export class GameService implements OnModuleInit {
     // Check if both players are ready
     if (banPickState.blueReady && banPickState.redReady) {
       // Transition to complete phase
-      banPickState.phase = "complete";
-      game.phase = "gameplay";
-      game.status = "in_progress";
+      banPickState.phase = 'complete';
+      game.phase = 'gameplay';
+      game.status = 'in_progress';
 
       // Update player.selectedChampions from the final champion orders
-      const bluePlayer = game.players.find((p) => p.side === "blue");
-      const redPlayer = game.players.find((p) => p.side === "red");
+      const bluePlayer = game.players.find((p) => p.side === 'blue');
+      const redPlayer = game.players.find((p) => p.side === 'red');
 
       if (bluePlayer) {
         bluePlayer.selectedChampions = banPickState.blueChampionOrder;
@@ -824,11 +775,11 @@ export class GameService implements OnModuleInit {
   async addPlayerToGame(gameId: string, playerId: string, username: string) {
     const game = await this.gameModel.findById(gameId).exec();
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     if (game.players.length >= game.maxPlayers) {
-      throw new Error("Game is full");
+      throw new Error('Game is full');
     }
 
     const newPlayer = {
@@ -865,17 +816,14 @@ export class GameService implements OnModuleInit {
   }
 
   // Add multiple players to a game in one operation to avoid version conflicts
-  async addPlayersToGame(
-    gameId: string,
-    players: Array<{ userId: string; username: string }>
-  ) {
+  async addPlayersToGame(gameId: string, players: Array<{ userId: string; username: string }>) {
     const game = await this.gameModel.findById(gameId).exec();
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     if (game.players.length + players.length > game.maxPlayers) {
-      throw new Error("Adding these players would exceed game capacity");
+      throw new Error('Adding these players would exceed game capacity');
     }
 
     // Add all players
@@ -916,13 +864,13 @@ export class GameService implements OnModuleInit {
 
   async addPlayersToGameForQueue(
     gameId: string,
-    players: Array<{ userId: string; username: string }>
+    players: Array<{ userId: string; username: string }>,
   ): Promise<{ game: Game; message: string }> {
     const game = await this.gameModel.findById(gameId).exec();
     if (!game) {
       return {
         game: null,
-        message: "Game not found",
+        message: 'Game not found',
       };
     }
 
@@ -940,7 +888,7 @@ export class GameService implements OnModuleInit {
         lastRoundDamage: 0,
         selectedChampions: [],
         bannedChampions: [],
-        side: game.players.length === 0 ? "blue" : "red", // First player is blue, second is red
+        side: game.players.length === 0 ? 'blue' : 'red', // First player is blue, second is red
         itemsBought: 0,
         baseItemCost: 25,
         inflationStep: 15,
@@ -950,8 +898,8 @@ export class GameService implements OnModuleInit {
 
     // Set player IDs for the game
     if (game.players.length >= 2) {
-      game.bluePlayer = game.players.find((p) => p.side === "blue")?.userId;
-      game.redPlayer = game.players.find((p) => p.side === "red")?.userId;
+      game.bluePlayer = game.players.find((p) => p.side === 'blue')?.userId;
+      game.redPlayer = game.players.find((p) => p.side === 'red')?.userId;
     }
 
     await game.save();
@@ -965,28 +913,26 @@ export class GameService implements OnModuleInit {
 
     return {
       game,
-      message: "Players added successfully",
+      message: 'Players added successfully',
     };
   }
 
-  async initializeGameplay(
-    gameId: string
-  ): Promise<{ game: Game; message: string }> {
+  async initializeGameplay(gameId: string): Promise<{ game: Game; message: string }> {
     const game = await this.getGameState(gameId);
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
-    if (!game.banPickState || game.banPickState.phase !== "complete") {
+    if (!game.banPickState || game.banPickState.phase !== 'complete') {
       throw new Error(
-        "Game is not ready for gameplay initialization - ban/pick phase must be complete"
+        'Game is not ready for gameplay initialization - ban/pick phase must be complete',
       );
     }
 
     try {
       // Extract champion selections from players (not banPickState)
-      const bluePlayer = game.players.find((p) => p.side === "blue");
-      const redPlayer = game.players.find((p) => p.side === "red");
+      const bluePlayer = game.players.find((p) => p.side === 'blue');
+      const redPlayer = game.players.find((p) => p.side === 'red');
 
       const blueChampions = bluePlayer?.selectedChampions || [];
       const redChampions = redPlayer?.selectedChampions || [];
@@ -995,7 +941,7 @@ export class GameService implements OnModuleInit {
       const blueSummonerSpells = game.banPickState?.blueSummonerSpells || {};
       const redSummonerSpells = game.banPickState?.redSummonerSpells || {};
 
-      this.logger.log("Initializing with champions:", {
+      this.logger.log('Initializing with champions:', {
         blueChampions,
         redChampions,
         blueSummonerSpells,
@@ -1008,14 +954,10 @@ export class GameService implements OnModuleInit {
         blueChampions,
         redChampions,
         blueSummonerSpells,
-        redSummonerSpells
+        redSummonerSpells,
       );
 
-      this.logger.log(
-        "Initialized game board:",
-        initializedGame.board.length,
-        "pieces"
-      );
+      this.logger.log('Initialized game board:', initializedGame.board.length, 'pieces');
 
       // Save to Redis cache and MongoDB immediately (wait for persistence)
       // This is critical - we need MongoDB to have the initialized state
@@ -1024,7 +966,7 @@ export class GameService implements OnModuleInit {
 
       return {
         game: initializedGame,
-        message: "Game successfully initialized for gameplay",
+        message: 'Game successfully initialized for gameplay',
       };
     } catch (error) {
       return {
@@ -1036,21 +978,21 @@ export class GameService implements OnModuleInit {
 
   async executeAction(
     gameId: string,
-    actionData: any
+    actionData: any,
   ): Promise<{ game: Game; oldGame?: Game; message: string }> {
     // Get game from Redis cache first
     const game = await this.getGameState(gameId);
     if (!game) {
       return {
         game: null,
-        message: "Game not found",
+        message: 'Game not found',
       };
     }
 
-    if (game.status !== "in_progress" || game.phase !== "gameplay") {
+    if (game.status !== 'in_progress' || game.phase !== 'gameplay') {
       return {
         game,
-        message: "Game is not in progress or not in gameplay phase",
+        message: 'Game is not in progress or not in gameplay phase',
       };
     }
 
@@ -1080,7 +1022,7 @@ export class GameService implements OnModuleInit {
         oldGame: updatedGame.lastAction
           ? ({ ...oldGame, board: this.cleanBoard(oldGame) } as any)
           : undefined,
-        message: "Action executed successfully",
+        message: 'Action executed successfully',
       };
     } catch (error) {
       this.logger.error(`Error executing action: ${error.message}`);
@@ -1108,9 +1050,9 @@ export class GameService implements OnModuleInit {
         },
         startingPosition: piece.startingPosition
           ? {
-            x: piece.startingPosition.x,
-            y: piece.startingPosition.y,
-          }
+              x: piece.startingPosition.x,
+              y: piece.startingPosition.y,
+            }
           : undefined,
         cannotMoveBackward: piece.cannotMoveBackward,
         canOnlyMoveVertically: piece.canOnlyMoveVertically || false,
@@ -1171,92 +1113,92 @@ export class GameService implements OnModuleInit {
         blue: piece.blue,
         items: piece.items
           ? piece.items.map((item) => ({
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            payload: item.payload,
-            unique: item.unique,
-            cooldown: item.cooldown,
-            currentCooldown: item.currentCooldown,
-          }))
+              id: item.id,
+              name: item.name,
+              description: item.description,
+              payload: item.payload,
+              unique: item.unique,
+              cooldown: item.cooldown,
+              currentCooldown: item.currentCooldown,
+            }))
           : [],
         debuffs: piece.debuffs
           ? piece.debuffs.map((debuff) => ({
-            id: debuff.id,
-            name: debuff.name,
-            description: debuff.description,
-            duration: debuff.duration,
-            maxDuration: debuff.maxDuration,
-            effects: debuff.effects
-              ? debuff.effects.map((effect) => ({
-                stat: effect.stat,
-                modifier: effect.modifier,
-                type: effect.type,
-              }))
-              : [],
-            damagePerTurn: debuff.damagePerTurn || 0,
-            damageType: debuff.damageType || "0",
-            healPerTurn: debuff.healPerTurn || 0,
-            unique: debuff.unique || false,
-            appliedAt: debuff.appliedAt,
-            casterPlayerId: debuff.casterPlayerId,
-            casterName: debuff.casterName,
-            payload: debuff.payload || {},
-            isTransformation: debuff.isTransformation || false,
-            onExpireId: debuff.onExpireId,
-          }))
+              id: debuff.id,
+              name: debuff.name,
+              description: debuff.description,
+              duration: debuff.duration,
+              maxDuration: debuff.maxDuration,
+              effects: debuff.effects
+                ? debuff.effects.map((effect) => ({
+                    stat: effect.stat,
+                    modifier: effect.modifier,
+                    type: effect.type,
+                  }))
+                : [],
+              damagePerTurn: debuff.damagePerTurn || 0,
+              damageType: debuff.damageType || '0',
+              healPerTurn: debuff.healPerTurn || 0,
+              unique: debuff.unique || false,
+              appliedAt: debuff.appliedAt,
+              casterPlayerId: debuff.casterPlayerId,
+              casterName: debuff.casterName,
+              payload: debuff.payload || {},
+              isTransformation: debuff.isTransformation || false,
+              onExpireId: debuff.onExpireId,
+            }))
           : [],
         auras: piece.auras
           ? piece.auras.map((aura) => ({
-            id: aura.id,
-            name: aura.name,
-            description: aura.description,
-            range: aura.range,
-            effects: aura.effects
-              ? aura.effects.map((effect) => ({
-                stat: effect.stat,
-                modifier: effect.modifier,
-                type: effect.type,
-                target: effect.target,
-              }))
-              : [],
-            active: aura.active,
-            requiresAlive: aura.requiresAlive,
-            duration: aura.duration,
-          }))
+              id: aura.id,
+              name: aura.name,
+              description: aura.description,
+              range: aura.range,
+              effects: aura.effects
+                ? aura.effects.map((effect) => ({
+                    stat: effect.stat,
+                    modifier: effect.modifier,
+                    type: effect.type,
+                    target: effect.target,
+                  }))
+                : [],
+              active: aura.active,
+              requiresAlive: aura.requiresAlive,
+              duration: aura.duration,
+            }))
           : [],
         shields: piece.shields
           ? piece.shields.map((shield) => ({
-            id: shield.id,
-            amount: shield.amount,
-            duration: shield.duration,
-          }))
+              id: shield.id,
+              amount: shield.amount,
+              duration: shield.duration,
+            }))
           : [],
         skill: piece.skill
           ? {
-            name: piece.skill.name,
-            description: piece.skill.description,
-            cooldown: piece.skill.cooldown,
-            attackRange: piece.skill.attackRange
-              ? {
-                diagonal: piece.skill.attackRange.diagonal,
-                horizontal: piece.skill.attackRange.horizontal,
-                vertical: piece.skill.attackRange.vertical,
-                range: piece.skill.attackRange.range,
-                lShape: piece.skill.attackRange.lShape,
-              }
-              : {
-                diagonal: false,
-                horizontal: false,
-                vertical: false,
-                range: 1,
-                lShape: false,
-              },
-            targetTypes: piece.skill.targetTypes,
-            currentCooldown: piece.skill.currentCooldown,
-            type: piece.skill.type,
-            payload: piece.skill.payload,
-          }
+              name: piece.skill.name,
+              description: piece.skill.description,
+              cooldown: piece.skill.cooldown,
+              attackRange: piece.skill.attackRange
+                ? {
+                    diagonal: piece.skill.attackRange.diagonal,
+                    horizontal: piece.skill.attackRange.horizontal,
+                    vertical: piece.skill.attackRange.vertical,
+                    range: piece.skill.attackRange.range,
+                    lShape: piece.skill.attackRange.lShape,
+                  }
+                : {
+                    diagonal: false,
+                    horizontal: false,
+                    vertical: false,
+                    range: 1,
+                    lShape: false,
+                  },
+              targetTypes: piece.skill.targetTypes,
+              currentCooldown: piece.skill.currentCooldown,
+              type: piece.skill.type,
+              payload: piece.skill.payload,
+            }
           : undefined,
         deadAtRound: piece.deadAtRound,
         respawnAtRound: piece.respawnAtRound,
@@ -1271,31 +1213,29 @@ export class GameService implements OnModuleInit {
   async resetGameplay(
     gameId: string,
     customBlueChampions?: string[],
-    customRedChampions?: string[]
+    customRedChampions?: string[],
   ): Promise<{ game: Game; message: string }> {
     // Get game from Redis cache first
     const game = await this.getGameState(gameId);
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
-    game.phase = "gameplay";
+    game.phase = 'gameplay';
     game.board = [];
     // Extract champion selections from players (not banPickState)
-    const bluePlayer = game.players.find((p) => p.side === "blue");
-    const redPlayer = game.players.find((p) => p.side === "red");
+    const bluePlayer = game.players.find((p) => p.side === 'blue');
+    const redPlayer = game.players.find((p) => p.side === 'red');
 
     // Use custom champions if provided, otherwise fall back to player's selected champions
-    const blueChampions =
-      customBlueChampions || bluePlayer?.selectedChampions || [];
-    const redChampions =
-      customRedChampions || redPlayer?.selectedChampions || [];
+    const blueChampions = customBlueChampions || bluePlayer?.selectedChampions || [];
+    const redChampions = customRedChampions || redPlayer?.selectedChampions || [];
 
     // Extract summoner spell assignments from banPickState
     const blueSummonerSpells = game.banPickState?.blueSummonerSpells || {};
     const redSummonerSpells = game.banPickState?.redSummonerSpells || {};
 
-    this.logger.log("Resetting gameplay with champions and summoner spells:", {
+    this.logger.log('Resetting gameplay with champions and summoner spells:', {
       blueChampions,
       redChampions,
       blueSummonerSpells,
@@ -1308,7 +1248,7 @@ export class GameService implements OnModuleInit {
       blueChampions,
       redChampions,
       blueSummonerSpells,
-      redSummonerSpells
+      redSummonerSpells,
     );
     // Save to Redis cache and MongoDB immediately (wait for persistence)
     // High priority (8) for gameplay reset
@@ -1316,14 +1256,14 @@ export class GameService implements OnModuleInit {
 
     return {
       game: initializedGame,
-      message: "Gameplay reset successfully",
+      message: 'Gameplay reset successfully',
     };
   }
 
   async restoreHp(gameId: string): Promise<{ game: Game; message: string }> {
     const game = await this.getGameState(gameId);
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     // Restore all pieces to full HP
@@ -1340,16 +1280,14 @@ export class GameService implements OnModuleInit {
 
     return {
       game,
-      message: "All chess pieces restored to full HP",
+      message: 'All chess pieces restored to full HP',
     };
   }
 
-  async restoreCooldown(
-    gameId: string
-  ): Promise<{ game: Game; message: string }> {
+  async restoreCooldown(gameId: string): Promise<{ game: Game; message: string }> {
     const game = await this.getGameState(gameId);
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     // Reset all skill cooldowns to 0
@@ -1357,21 +1295,21 @@ export class GameService implements OnModuleInit {
       ...piece,
       skill: piece.skill
         ? {
-          ...piece.skill,
-          currentCooldown: 0,
-        }
+            ...piece.skill,
+            currentCooldown: 0,
+          }
         : piece.skill,
       items: piece.items
         ? piece.items.map((item) => ({
-          ...item,
-          currentCooldown: 0,
-        }))
+            ...item,
+            currentCooldown: 0,
+          }))
         : piece.items,
       summonerSpell: piece.summonerSpell
         ? {
-          ...piece.summonerSpell,
-          currentCooldown: 0,
-        }
+            ...piece.summonerSpell,
+            currentCooldown: 0,
+          }
         : piece.summonerSpell,
     }));
 
@@ -1380,7 +1318,7 @@ export class GameService implements OnModuleInit {
 
     return {
       game,
-      message: "All skill cooldowns reset to 0",
+      message: 'All skill cooldowns reset to 0',
     };
   }
 
@@ -1388,14 +1326,14 @@ export class GameService implements OnModuleInit {
     // Get game from Redis cache first
     const game = await this.getGameState(gameId);
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     // Reset ban/pick state to initial state
-    game.status = "ban_pick";
+    game.status = 'ban_pick';
     game.banPickState = {
-      phase: "ban",
-      currentTurn: "blue",
+      phase: 'ban',
+      currentTurn: 'blue',
       turnNumber: 1,
       turnStartTime: Date.now(),
       turnTimeLimit: 30,
@@ -1425,26 +1363,26 @@ export class GameService implements OnModuleInit {
 
     return {
       game,
-      message: "Ban/Pick phase reset successfully",
+      message: 'Ban/Pick phase reset successfully',
     };
   }
 
   async buyItem(
     gameId: string,
-    buyItemData: { itemId: string; championId: string }
+    buyItemData: { itemId: string; championId: string },
   ): Promise<{ game: Game; oldGame?: Game; message: string }> {
     const game = await this.getGameState(gameId);
     if (!game) {
       return {
         game: null,
-        message: "Game not found",
+        message: 'Game not found',
       };
     }
 
-    if (game.status !== "in_progress" || game.phase !== "gameplay") {
+    if (game.status !== 'in_progress' || game.phase !== 'gameplay') {
       return {
         game,
-        message: "Game is not in progress or not in gameplay phase",
+        message: 'Game is not in progress or not in gameplay phase',
       };
     }
 
@@ -1454,11 +1392,9 @@ export class GameService implements OnModuleInit {
 
       // Get the current user from the request (would need to be passed in properly)
       // For now, we'll determine from the championId ownership
-      const champion = game.board.find(
-        (piece) => piece.id === buyItemData.championId
-      );
+      const champion = game.board.find((piece) => piece.id === buyItemData.championId);
       if (!champion) {
-        throw new Error("Champion not found");
+        throw new Error('Champion not found');
       }
 
       const playerId = champion.ownerId;
@@ -1466,7 +1402,7 @@ export class GameService implements OnModuleInit {
       // Create BUY_ITEM event
       const eventPayload = {
         playerId: playerId,
-        event: "buy_item" as any,
+        event: 'buy_item' as any,
         itemId: buyItemData.itemId,
         targetChampionId: buyItemData.championId,
       };
@@ -1486,7 +1422,7 @@ export class GameService implements OnModuleInit {
         oldGame: updatedGame.lastAction
           ? ({ ...oldGame, board: this.cleanBoard(oldGame) } as any)
           : undefined,
-        message: "Item purchased successfully",
+        message: 'Item purchased successfully',
       };
     } catch (error) {
       this.logger.error(`Error buying item: ${error.message}`);
@@ -1500,39 +1436,37 @@ export class GameService implements OnModuleInit {
   async resign(gameId: string, userId: string) {
     const game = await this.getGameState(gameId);
     if (!game) {
-      return { success: false, message: "Game not found" };
+      return { success: false, message: 'Game not found' };
     }
 
-    if (game.status === "finished") {
-      return { success: false, message: "Game already finished" };
+    if (game.status === 'finished') {
+      return { success: false, message: 'Game already finished' };
     }
 
     try {
       // Determine winner (the other player)
       let winner: string;
       if (userId === game.bluePlayer) {
-        winner = "red";
+        winner = 'red';
       } else if (userId === game.redPlayer) {
-        winner = "blue";
+        winner = 'blue';
       } else {
-        return { success: false, message: "User is not a player in this game" };
+        return { success: false, message: 'User is not a player in this game' };
       }
 
       // Update game state
-      game.status = "finished";
+      game.status = 'finished';
       game.winner = winner;
 
       // Save to database
       await this.saveGameState(gameId, game);
 
-      this.logger.log(
-        `Game ${gameId}: Player ${userId} resigned. Winner: ${winner}`
-      );
+      this.logger.log(`Game ${gameId}: Player ${userId} resigned. Winner: ${winner}`);
 
       return {
         success: true,
         game,
-        message: `Player resigned. ${winner === "blue" ? "Blue" : "Red"} player wins!`,
+        message: `Player resigned. ${winner === 'blue' ? 'Blue' : 'Red'} player wins!`,
       };
     } catch (error) {
       this.logger.error(`Error processing resignation: ${error.message}`);
@@ -1543,16 +1477,16 @@ export class GameService implements OnModuleInit {
   async acceptDraw(gameId: string) {
     const game = await this.getGameState(gameId);
     if (!game) {
-      return { success: false, message: "Game not found" };
+      return { success: false, message: 'Game not found' };
     }
 
-    if (game.status === "finished") {
-      return { success: false, message: "Game already finished" };
+    if (game.status === 'finished') {
+      return { success: false, message: 'Game already finished' };
     }
 
     try {
       // End game as draw
-      game.status = "finished";
+      game.status = 'finished';
       game.winner = null;
 
       // Save to database
@@ -1563,7 +1497,7 @@ export class GameService implements OnModuleInit {
       return {
         success: true,
         game,
-        message: "Game ended in a draw by mutual agreement",
+        message: 'Game ended in a draw by mutual agreement',
       };
     } catch (error) {
       this.logger.error(`Error accepting draw: ${error.message}`);

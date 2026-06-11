@@ -1,9 +1,9 @@
-import { Game, EventPayload, Chess, Square } from "@lolchess/game-engine";
+import { Game, EventPayload, Chess, Square } from '@lolchess/game-engine';
 
 /**
  * Bot difficulty levels
  */
-export type BotDifficulty = "easy" | "medium" | "hard" | "expert";
+export type BotDifficulty = 'easy' | 'medium' | 'hard' | 'expert';
 
 /**
  * Configuration for the bot engine
@@ -18,7 +18,7 @@ export interface BotConfig {
   /** Randomness factor (0-1), adds variance to prevent predictability */
   randomness?: number;
   /** Search engine: the alpha-beta rework (default) or the legacy greedy search (benchmark only) */
-  engine?: "alphabeta" | "legacy";
+  engine?: 'alphabeta' | 'legacy';
 }
 
 /**
@@ -116,13 +116,7 @@ export interface ScoredAction {
 /**
  * Champion role for team composition
  */
-export type ChampionRole =
-  | "assassin"
-  | "mage"
-  | "support"
-  | "marksman"
-  | "tank"
-  | "fighter";
+export type ChampionRole = 'assassin' | 'mage' | 'support' | 'marksman' | 'tank' | 'fighter';
 
 /**
  * Team composition analysis
@@ -207,7 +201,7 @@ export interface PositionThreatScore {
 /**
  * Action category for two-phase search
  */
-export type ActionCategory = "positioning" | "combat" | "utility";
+export type ActionCategory = 'positioning' | 'combat' | 'utility';
 
 /**
  * Passed pawn evaluation score

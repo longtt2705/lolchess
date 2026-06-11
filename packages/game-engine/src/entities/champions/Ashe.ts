@@ -1,7 +1,7 @@
-import { ChessObject } from "../ChessObject";
-import { Debuff } from "../../types";
-import { getGameRng } from "../../utils/SeededRandom";
-import { ChessFactory } from "../ChessFactory";
+import { ChessObject } from '../ChessObject';
+import { Debuff } from '../../types';
+import { getGameRng } from '../../utils/SeededRandom';
+import { ChessFactory } from '../ChessFactory';
 
 export class Ashe extends ChessObject {
   // Create the Frost Shot debuff
@@ -9,20 +9,20 @@ export class Ashe extends ChessObject {
     const rng = getGameRng();
     const isCritical = rng.chance(this.criticalChance);
     return {
-      id: "frost_shot",
-      name: "Frost Shot",
+      id: 'frost_shot',
+      name: 'Frost Shot',
       description: "Slowed by Ashe's frost arrows, taking increased damage",
       duration: 3,
       maxDuration: 3,
       effects: [
         {
-          stat: "speed",
+          stat: 'speed',
           modifier: isCritical ? -2 : -1,
-          type: "add",
+          type: 'add',
         },
       ],
       damagePerTurn: 0,
-      damageType: "physical",
+      damageType: 'physical',
       healPerTurn: 0,
       unique: true,
       appliedAt: Date.now(),
@@ -45,18 +45,10 @@ export class Ashe extends ChessObject {
     let baseDamage = super.attack(chess);
 
     // Apply Frost Shot debuff
-    if (chess.hasDebuff("frost_shot")) {
-      const damageBonus = Math.floor(
-        chess.maxHp * (0.15 + (this.ap * 0.1) / 100)
-      );
-      baseDamage += this.damage(
-        chess,
-        damageBonus,
-        "physical",
-        this,
-        this.sunder
-      );
-      this.removeDebuff(chess, "frost_shot");
+    if (chess.hasDebuff('frost_shot')) {
+      const damageBonus = Math.floor(chess.maxHp * (0.15 + (this.ap * 0.1) / 100));
+      baseDamage += this.damage(chess, damageBonus, 'physical', this, this.sunder);
+      this.removeDebuff(chess, 'frost_shot');
     } else {
       this.applyFrostShot(chess, this.chess.ownerId);
     }

@@ -5,9 +5,9 @@ import {
   getItemById,
   getPlayerPieces,
   combinedItems,
-} from "@lolchess/game-engine";
+} from '@lolchess/game-engine';
 
-type GamePhase = "early" | "mid" | "late";
+type GamePhase = 'early' | 'mid' | 'late';
 
 /**
  * Strategy for item purchases
@@ -16,91 +16,91 @@ export class ItemStrategy {
   // Item recipe mapping (combined item -> [basic, basic])
   private static readonly ITEM_RECIPES: Record<string, [string, string]> = {
     // B.F. Sword Combinations
-    infinity_edge: ["bf_sword", "sparring_gloves"],
-    giant_slayer: ["bf_sword", "recurve_bow"],
-    hextech_gunblade: ["bf_sword", "needlessly_rod"],
-    bloodthirster: ["bf_sword", "negatron_cloak"],
-    deaths_dance: ["bf_sword", "chain_vest"],
-    sterak_gage: ["bf_sword", "giants_belt"],
-    spear_of_shojin: ["bf_sword", "tear"],
-    deathblade: ["bf_sword", "bf_sword"],
+    infinity_edge: ['bf_sword', 'sparring_gloves'],
+    giant_slayer: ['bf_sword', 'recurve_bow'],
+    hextech_gunblade: ['bf_sword', 'needlessly_rod'],
+    bloodthirster: ['bf_sword', 'negatron_cloak'],
+    deaths_dance: ['bf_sword', 'chain_vest'],
+    sterak_gage: ['bf_sword', 'giants_belt'],
+    spear_of_shojin: ['bf_sword', 'tear'],
+    deathblade: ['bf_sword', 'bf_sword'],
 
     // Recurve Bow Combinations
-    rapid_firecannon: ["recurve_bow", "recurve_bow"],
-    guinsoo_rageblade: ["recurve_bow", "needlessly_rod"],
-    titans_resolve: ["recurve_bow", "chain_vest"],
-    wit_s_end: ["recurve_bow", "negatron_cloak"],
-    void_staff: ["recurve_bow", "tear"],
-    last_whisper: ["recurve_bow", "sparring_gloves"],
-    nashors_tooth: ["recurve_bow", "giants_belt"],
+    rapid_firecannon: ['recurve_bow', 'recurve_bow'],
+    guinsoo_rageblade: ['recurve_bow', 'needlessly_rod'],
+    titans_resolve: ['recurve_bow', 'chain_vest'],
+    wit_s_end: ['recurve_bow', 'negatron_cloak'],
+    void_staff: ['recurve_bow', 'tear'],
+    last_whisper: ['recurve_bow', 'sparring_gloves'],
+    nashors_tooth: ['recurve_bow', 'giants_belt'],
 
     // Needlessly Large Rod Combinations
-    rabadon_deathcap: ["needlessly_rod", "needlessly_rod"],
-    archangel_staff: ["needlessly_rod", "tear"],
-    crownguard: ["needlessly_rod", "chain_vest"],
-    ionic_spark: ["needlessly_rod", "negatron_cloak"],
-    morellonomicon: ["needlessly_rod", "giants_belt"],
-    jeweled_gauntlet: ["needlessly_rod", "sparring_gloves"],
+    rabadon_deathcap: ['needlessly_rod', 'needlessly_rod'],
+    archangel_staff: ['needlessly_rod', 'tear'],
+    crownguard: ['needlessly_rod', 'chain_vest'],
+    ionic_spark: ['needlessly_rod', 'negatron_cloak'],
+    morellonomicon: ['needlessly_rod', 'giants_belt'],
+    jeweled_gauntlet: ['needlessly_rod', 'sparring_gloves'],
 
     // Chain Vest Combinations
-    bramble_vest: ["chain_vest", "chain_vest"],
-    gargoyle_stoneplate: ["chain_vest", "negatron_cloak"],
-    sunfire_cape: ["chain_vest", "giants_belt"],
-    steadfast_heart: ["chain_vest", "sparring_gloves"],
+    bramble_vest: ['chain_vest', 'chain_vest'],
+    gargoyle_stoneplate: ['chain_vest', 'negatron_cloak'],
+    sunfire_cape: ['chain_vest', 'giants_belt'],
+    steadfast_heart: ['chain_vest', 'sparring_gloves'],
 
     // Negatron Cloak Combinations
-    dragon_claw: ["negatron_cloak", "negatron_cloak"],
-    evenshroud: ["giants_belt", "negatron_cloak"],
-    quicksilver: ["sparring_gloves", "negatron_cloak"],
+    dragon_claw: ['negatron_cloak', 'negatron_cloak'],
+    evenshroud: ['giants_belt', 'negatron_cloak'],
+    quicksilver: ['sparring_gloves', 'negatron_cloak'],
 
     // Giant's Belt Combinations
-    warmog_armor: ["giants_belt", "giants_belt"],
-    strikers_flail: ["giants_belt", "sparring_gloves"],
+    warmog_armor: ['giants_belt', 'giants_belt'],
+    strikers_flail: ['giants_belt', 'sparring_gloves'],
 
     // Tear Combinations
-    blue_buff: ["tear", "tear"],
-    protectors_vow: ["tear", "chain_vest"],
-    hand_of_justice: ["tear", "sparring_gloves"],
-    adaptive_helm: ["tear", "negatron_cloak"],
-    spirit_visage: ["tear", "giants_belt"],
+    blue_buff: ['tear', 'tear'],
+    protectors_vow: ['tear', 'chain_vest'],
+    hand_of_justice: ['tear', 'sparring_gloves'],
+    adaptive_helm: ['tear', 'negatron_cloak'],
+    spirit_visage: ['tear', 'giants_belt'],
 
     // Sparring Gloves
-    serpents_fang: ["sparring_gloves", "sparring_gloves"],
+    serpents_fang: ['sparring_gloves', 'sparring_gloves'],
   };
 
   // Role-based fallback priorities with correct item IDs
   private static readonly ROLE_ITEM_PRIORITY: Record<string, string[]> = {
     // Assassin: High burst damage (AD + crit for early power)
-    assassin: ["bf_sword", "sparring_gloves", "needlessly_rod"],
+    assassin: ['bf_sword', 'sparring_gloves', 'needlessly_rod'],
 
     // Marksman: Sustained damage (sunder + AD + crit)
-    marksman: ["recurve_bow", "bf_sword", "sparring_gloves"],
+    marksman: ['recurve_bow', 'bf_sword', 'sparring_gloves'],
 
     // Mage: Ability damage (AP + cooldown)
-    mage: ["needlessly_rod", "tear", "giants_belt"],
+    mage: ['needlessly_rod', 'tear', 'giants_belt'],
 
     // Fighter: Hybrid (AD + HP + survivability)
-    fighter: ["bf_sword", "giants_belt", "chain_vest"],
+    fighter: ['bf_sword', 'giants_belt', 'chain_vest'],
 
     // Tank: Pure survivability (HP + resistances)
-    tank: ["giants_belt", "chain_vest", "negatron_cloak"],
+    tank: ['giants_belt', 'chain_vest', 'negatron_cloak'],
 
     // Support: Utility (AP for shields/heals + survivability)
-    support: ["needlessly_rod", "tear", "giants_belt"],
+    support: ['needlessly_rod', 'tear', 'giants_belt'],
   };
 
   // Role priority by game phase (higher index = higher priority)
   private static readonly ROLE_PRIORITY_BY_PHASE: Record<GamePhase, Record<string, number>> = {
     early: {
-      assassin: 5,    // Strongest early
+      assassin: 5, // Strongest early
       fighter: 4,
       marksman: 3,
       mage: 2,
       support: 3,
-      tank: 1,        // Weakest early (don't need items)
+      tank: 1, // Weakest early (don't need items)
     },
     mid: {
-      fighter: 5,     // Strongest mid-game
+      fighter: 5, // Strongest mid-game
       assassin: 4,
       marksman: 4,
       mage: 3,
@@ -108,29 +108,22 @@ export class ItemStrategy {
       tank: 1,
     },
     late: {
-      marksman: 5,    // Strongest late (carries)
+      marksman: 5, // Strongest late (carries)
       mage: 5,
       fighter: 3,
-      assassin: 2,    // Falls off late
+      assassin: 2, // Falls off late
       support: 3,
       tank: 1,
     },
   };
 
   // Default item priority
-  private static readonly DEFAULT_PRIORITY = [
-    "bf_sword",
-    "giants_belt",
-    "needlessly_rod",
-  ];
+  private static readonly DEFAULT_PRIORITY = ['bf_sword', 'giants_belt', 'needlessly_rod'];
 
   /**
    * Recommend an item purchase
    */
-  recommendPurchase(
-    game: Game,
-    playerId: string
-  ): { itemId: string; championId: string } | null {
+  recommendPurchase(game: Game, playerId: string): { itemId: string; championId: string } | null {
     const player = game.players.find((p) => p.userId === playerId);
     if (!player) return null;
 
@@ -151,7 +144,9 @@ export class ItemStrategy {
 
     // Rank champions by who should get items first
     const rankedChampions = this.rankChampionsForItems(eligibleChampions, gamePhase);
-    console.log(`[ItemStrategy] Ranked champions: ${rankedChampions.map(c => c.name).join(", ")}`);
+    console.log(
+      `[ItemStrategy] Ranked champions: ${rankedChampions.map((c) => c.name).join(', ')}`,
+    );
 
     for (const champion of rankedChampions) {
       // Try to find best item based on champion's suggestions
@@ -191,21 +186,19 @@ export class ItemStrategy {
    */
   private getEligibleChampions(pieces: Chess[]): Chess[] {
     const nonChampionTypes = [
-      "Poro",
-      "Melee Minion",
-      "Caster Minion",
-      "Siege Minion",
-      "Super Minion",
-      "Drake",
-      "Baron Nashor",
-      "Sand Soldier",
+      'Poro',
+      'Melee Minion',
+      'Caster Minion',
+      'Siege Minion',
+      'Super Minion',
+      'Drake',
+      'Baron Nashor',
+      'Sand Soldier',
     ];
 
     return pieces.filter(
       (p) =>
-        p.stats.hp > 0 &&
-        !nonChampionTypes.includes(p.name) &&
-        (!p.items || p.items.length < 3)
+        p.stats.hp > 0 && !nonChampionTypes.includes(p.name) && (!p.items || p.items.length < 3),
     );
   }
 
@@ -225,7 +218,7 @@ export class ItemStrategy {
 
     // Filter out items the champion already owns
     return championData.items_suggestions.filter(
-      (itemId) => !existingCombinedItemIds.includes(itemId)
+      (itemId) => !existingCombinedItemIds.includes(itemId),
     );
   }
 
@@ -233,10 +226,7 @@ export class ItemStrategy {
    * Find best basic item to complete a recipe
    * Returns the component needed to complete a recipe if champion has one component
    */
-  private findRecipeCompletion(
-    champion: Chess,
-    availableItemIds: string[]
-  ): string | null {
+  private findRecipeCompletion(champion: Chess, availableItemIds: string[]): string | null {
     const existingBasicItems = (champion.items || [])
       .map((item) => item.id)
       .filter((itemId) => {
@@ -273,10 +263,7 @@ export class ItemStrategy {
   /**
    * Find best basic item to start building toward a suggested item
    */
-  private findBestComponentToBuy(
-    champion: Chess,
-    availableItemIds: string[]
-  ): string | null {
+  private findBestComponentToBuy(champion: Chess, availableItemIds: string[]): string | null {
     const availableSuggestions = this.getAvailableSuggestions(champion);
     const existingBasicItemIds = (champion.items || [])
       .map((item) => item.id)
@@ -292,10 +279,7 @@ export class ItemStrategy {
 
       // Try to buy first available component of this item
       for (const component of recipe) {
-        if (
-          availableItemIds.includes(component) &&
-          !existingBasicItemIds.includes(component)
-        ) {
+        if (availableItemIds.includes(component) && !existingBasicItemIds.includes(component)) {
           return component;
         }
       }
@@ -316,7 +300,7 @@ export class ItemStrategy {
       allChampions.push(...champions);
     }
 
-    if (allChampions.length === 0) return "early";
+    if (allChampions.length === 0) return 'early';
 
     // Count total combined items (not basic items)
     const totalCombinedItems = allChampions.reduce((sum, champ) => {
@@ -329,9 +313,9 @@ export class ItemStrategy {
 
     const avgCombinedItems = totalCombinedItems / allChampions.length;
 
-    if (avgCombinedItems < 0.5) return "early";   // 0-0.5 combined items avg
-    if (avgCombinedItems < 1.5) return "mid";     // 0.5-1.5 combined items avg
-    return "late";                                 // 1.5+ combined items avg
+    if (avgCombinedItems < 0.5) return 'early'; // 0-0.5 combined items avg
+    if (avgCombinedItems < 1.5) return 'mid'; // 0.5-1.5 combined items avg
+    return 'late'; // 1.5+ combined items avg
   }
 
   /**
@@ -406,7 +390,7 @@ export class ItemStrategy {
    */
   private getChampionRole(championName: string): string {
     const data = champions.find((c) => c.name === championName);
-    return data?.role || "fighter";
+    return data?.role || 'fighter';
   }
 
   /**
@@ -415,19 +399,15 @@ export class ItemStrategy {
   private getBestItemForRole(
     role: string,
     availableItemIds: string[],
-    champion: Chess
+    champion: Chess,
   ): string | null {
-    const priority =
-      ItemStrategy.ROLE_ITEM_PRIORITY[role] || ItemStrategy.DEFAULT_PRIORITY;
+    const priority = ItemStrategy.ROLE_ITEM_PRIORITY[role] || ItemStrategy.DEFAULT_PRIORITY;
 
     // Check existing items to avoid duplicates
     const existingItemIds = (champion.items || []).map((i) => i.id);
 
     for (const itemId of priority) {
-      if (
-        availableItemIds.includes(itemId) &&
-        !existingItemIds.includes(itemId)
-      ) {
+      if (availableItemIds.includes(itemId) && !existingItemIds.includes(itemId)) {
         return itemId;
       }
     }
@@ -494,55 +474,41 @@ export class ItemStrategy {
     }
 
     for (const effect of item.effects) {
-      if (effect.type !== "add") continue;
+      if (effect.type !== 'add') continue;
 
       switch (effect.stat) {
-        case "ad":
+        case 'ad':
           // AD is better for physical damage dealers
           synergy +=
-            role === "marksman" || role === "fighter" || role === "assassin"
+            role === 'marksman' || role === 'fighter' || role === 'assassin'
               ? effect.value * 1.5
               : effect.value;
           break;
-        case "ap":
+        case 'ap':
           // AP is better for mages and supports
-          synergy +=
-            role === "mage" || role === "support"
-              ? effect.value * 1.5
-              : effect.value;
+          synergy += role === 'mage' || role === 'support' ? effect.value * 1.5 : effect.value;
           break;
-        case "maxHp":
+        case 'maxHp':
           // HP is better for tanks and fighters
           synergy +=
-            role === "tank" || role === "fighter"
-              ? effect.value * 0.5
-              : effect.value * 0.3;
+            role === 'tank' || role === 'fighter' ? effect.value * 0.5 : effect.value * 0.3;
           break;
-        case "physicalResistance":
-        case "magicResistance":
+        case 'physicalResistance':
+        case 'magicResistance':
           // Resistances are better for tanks
-          synergy += role === "tank" ? effect.value * 2 : effect.value;
+          synergy += role === 'tank' ? effect.value * 2 : effect.value;
           break;
-        case "criticalChance":
+        case 'criticalChance':
           // Crit is better for AD carries
-          synergy +=
-            role === "marksman" || role === "assassin"
-              ? effect.value * 2
-              : effect.value;
+          synergy += role === 'marksman' || role === 'assassin' ? effect.value * 2 : effect.value;
           break;
-        case "sunder":
+        case 'sunder':
           // Sunder is better for marksmen and fighters
-          synergy +=
-            role === "marksman" || role === "fighter"
-              ? effect.value * 1.5
-              : effect.value;
+          synergy += role === 'marksman' || role === 'fighter' ? effect.value * 1.5 : effect.value;
           break;
-        case "cooldownReduction":
+        case 'cooldownReduction':
           // CDR is better for mages and supports
-          synergy +=
-            role === "mage" || role === "support"
-              ? effect.value * 2
-              : effect.value;
+          synergy += role === 'mage' || role === 'support' ? effect.value * 2 : effect.value;
           break;
       }
     }

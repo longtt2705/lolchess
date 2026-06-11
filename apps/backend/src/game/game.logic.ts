@@ -11,4 +11,4 @@ export {
   SHOP_REFRESH_INTERVAL,
   setDevelopmentMode,
   isDevelopmentMode,
-} from "@lolchess/game-engine";
+} from '@lolchess/game-engine';

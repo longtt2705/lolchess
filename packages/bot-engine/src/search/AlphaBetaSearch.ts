@@ -6,11 +6,11 @@ import {
   cloneGameState,
   getCurrentPlayerId,
   getPieceAtPosition,
-} from "@lolchess/game-engine";
-import { PositionEvaluator } from "../evaluation/PositionEvaluator";
-import { SearchResult } from "../types";
-import { ActionGenerator } from "./ActionGenerator";
-import { MoveOrdering } from "./MoveOrdering";
+} from '@lolchess/game-engine';
+import { PositionEvaluator } from '../evaluation/PositionEvaluator';
+import { SearchResult } from '../types';
+import { ActionGenerator } from './ActionGenerator';
+import { MoveOrdering } from './MoveOrdering';
 
 const MATE_SCORE = 100000;
 const ROOT_CANDIDATES = 24;
@@ -51,7 +51,7 @@ export class AlphaBetaSearch {
     private gameEngine: GameEngine,
     private evaluator: PositionEvaluator,
     private actionGenerator: ActionGenerator,
-    private moveOrdering: MoveOrdering
+    private moveOrdering: MoveOrdering,
   ) {}
 
   search(game: Game, rootPlayerId: string, options: AlphaBetaOptions): SearchResult {
@@ -61,9 +61,7 @@ export class AlphaBetaSearch {
     // always false, which would disable checkTime entirely and let the
     // search run unbounded to maxDepth.
     this.timeLimit =
-      isFinite(options.timeLimit) && options.timeLimit > 0
-        ? options.timeLimit
-        : 3000;
+      isFinite(options.timeLimit) && options.timeLimit > 0 ? options.timeLimit : 3000;
 
     const root = cloneGameState(game);
     root.gameSettings = { ...root.gameSettings, disableCrit: true };
@@ -160,7 +158,7 @@ export class AlphaBetaSearch {
     alpha: number,
     beta: number,
     rootPlayerId: string,
-    ply: number
+    ply: number,
   ): number {
     this.checkTime();
 
@@ -220,7 +218,7 @@ export class AlphaBetaSearch {
     beta: number,
     rootPlayerId: string,
     ply: number,
-    remaining: number
+    remaining: number,
   ): number {
     this.checkTime();
 
@@ -279,7 +277,7 @@ export class AlphaBetaSearch {
         (a) =>
           a.event === GameEvent.MOVE_CHESS ||
           a.event === GameEvent.ATTACK_CHESS ||
-          a.event === GameEvent.SKILL
+          a.event === GameEvent.SKILL,
       );
 
     const scored = this.moveOrdering.orderActions(game, all, playerId);
@@ -307,11 +305,7 @@ export class AlphaBetaSearch {
     // unable to walk its king out of a mating attack.
     for (const s of rest) {
       if (selected.has(s.action)) continue;
-      if (
-        s.isKiller ||
-        this.targetsPoro(game, s.action) ||
-        this.movesOwnPoro(game, s.action)
-      ) {
+      if (s.isKiller || this.targetsPoro(game, s.action) || this.movesOwnPoro(game, s.action)) {
         top.push(s);
         selected.add(s.action);
       }
@@ -325,15 +319,13 @@ export class AlphaBetaSearch {
       return false;
     }
     const caster = getPieceAtPosition(game, action.casterPosition);
-    return !!caster && caster.name === "Poro";
+    return !!caster && caster.name === 'Poro';
   }
 
   private forcingActions(game: Game, playerId: string): EventPayload[] {
     const combat = this.actionGenerator
       .generateAll(game, playerId)
-      .filter(
-        (a) => a.event === GameEvent.ATTACK_CHESS || a.event === GameEvent.SKILL
-      );
+      .filter((a) => a.event === GameEvent.ATTACK_CHESS || a.event === GameEvent.SKILL);
     const scored = this.moveOrdering.orderActions(game, combat, playerId);
     return scored
       .filter((s) => s.isKiller || this.targetsPoro(game, s.action))
@@ -344,7 +336,7 @@ export class AlphaBetaSearch {
   private targetsPoro(game: Game, action: EventPayload): boolean {
     if (!action.targetPosition) return false;
     const target = getPieceAtPosition(game, action.targetPosition);
-    return !!target && target.name === "Poro";
+    return !!target && target.name === 'Poro';
   }
 
   private putFirst(actions: EventPayload[], first: EventPayload | null): EventPayload[] {
