@@ -1,5 +1,6 @@
 import {
   Chess,
+  ChessFactory,
   Game,
   GameEngine,
   getPlayerPieces,
@@ -408,21 +409,75 @@ export class PositionEvaluator {
    * Sum of per-piece safety (negative when pieces stand in enemy fire).
    * The Poro is weighted heavily but linearly — lethal sequences are the
    * search's job to find, not the evaluation's job to panic about.
+   *
+   * Performance: ThreatEvaluator.evaluatePositionSafety recomputes every
+   * enemy's attack/skill squares for every queried piece, which made safety
+   * O(pieces x enemies x getValidAttacks) — the single hottest part of the
+   * eval. Here the enemy attack/skill maps are computed once per call and
+   * reused for all pieces; the per-piece numbers are identical.
    */
   private calculatePlayerSafety(game: Game, playerId: string): number {
-    let safety = 0;
     const pieces = getPlayerPieces(game, playerId);
-    for (const piece of pieces) {
-      const pieceSafety = this.threatEvaluator.evaluatePositionSafety(
-        game,
-        piece,
-        playerId
-      );
-      if (piece.name === "Poro") {
-        safety += pieceSafety * 3;
-      } else {
-        safety += pieceSafety * 0.5;
+    if (pieces.length === 0) return 0;
+    const isBlue = game.bluePlayer === playerId;
+
+    // Build per-enemy threat info once.
+    const enemies: {
+      object: ReturnType<typeof ChessFactory.createChess>;
+      attackSquares: Set<string>;
+      skillSquares: Set<string>;
+    }[] = [];
+    for (const enemy of game.board) {
+      if (enemy.stats.hp <= 0) continue;
+      if (enemy.blue === isBlue) continue;
+
+      const attackSquares = new Set<string>();
+      if (!enemy.cannotAttack) {
+        for (const pos of this.gameEngine.getValidAttacks(game, enemy.id)) {
+          attackSquares.add(`${pos.x},${pos.y}`);
+        }
       }
+      const skillSquares = new Set<string>();
+      if (enemy.skill && enemy.skill.currentCooldown === 0) {
+        for (const pos of this.gameEngine.getValidSkillTargets(game, enemy.id)) {
+          skillSquares.add(`${pos.x},${pos.y}`);
+        }
+      }
+      if (attackSquares.size === 0 && skillSquares.size === 0) continue;
+      enemies.push({
+        object: ChessFactory.createChess(enemy, game),
+        attackSquares,
+        skillSquares,
+      });
+    }
+
+    let safety = 0;
+    for (const piece of pieces) {
+      const key = `${piece.position.x},${piece.position.y}`;
+      let pieceSafety = 0;
+      let pieceObject: ReturnType<typeof ChessFactory.createChess> | null = null;
+
+      for (const enemy of enemies) {
+        if (enemy.attackSquares.has(key)) {
+          pieceObject ??= ChessFactory.createChess(piece, game);
+          const potentialDamage = enemy.object.calculateDamageAttack(pieceObject);
+          pieceSafety -= potentialDamage;
+          if (piece.stats.hp <= potentialDamage) {
+            pieceSafety -= 200;
+          }
+        }
+        if (enemy.skillSquares.has(key)) {
+          const skillValue = enemy.object.getActiveSkillValue(piece.position);
+          if (skillValue > 0) {
+            pieceSafety -= skillValue;
+            if (piece.stats.hp <= skillValue) {
+              pieceSafety -= 200;
+            }
+          }
+        }
+      }
+
+      safety += piece.name === "Poro" ? pieceSafety * 3 : pieceSafety * 0.5;
     }
     return safety;
   }
