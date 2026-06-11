@@ -62,6 +62,13 @@ describe('AuthService — password reset', () => {
       expect(usersService.update).not.toHaveBeenCalled();
       expect(mailService.sendPasswordResetEmail).not.toHaveBeenCalled();
     });
+
+    it('does not throw when sending the email fails (enumeration-safety)', async () => {
+      usersService.findByEmail.mockResolvedValue({ _id: 'u1', email: 'a@b.com' });
+      mailService.sendPasswordResetEmail.mockRejectedValue(new Error('smtp down'));
+
+      await expect(authService.forgotPassword('a@b.com')).resolves.toBeUndefined();
+    });
   });
 
   describe('resetPassword', () => {
