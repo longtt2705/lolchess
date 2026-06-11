@@ -107,6 +107,32 @@ describe("AlphaBetaSearch", () => {
     expect(result.score).toBeGreaterThan(50000); // mate-range score
   });
 
+  it("walks its Poro out of a mating attack even with a full board", () => {
+    const { engine, search } = makeSearch();
+    const game = makeGame(engine);
+
+    // Full armies stay on the board so the candidate cut (24/16) is
+    // saturated with forward/center moves. The blue Poro stands on the edge,
+    // one hit from death, attacked by red Garen; its only saves are
+    // backward/edge moves that order terribly. Regression: these used to be
+    // pruned out of the candidate list, so the search shuffled an unrelated
+    // piece while seeing the forced loss.
+    const bluePoro = findPiece(game, "Poro", true);
+    const redGaren = findPiece(game, "Garen", false);
+    bluePoro.position = { x: 0, y: 4 };
+    bluePoro.stats.hp = 20;
+    redGaren.position = { x: 0, y: 5 };
+    game.currentRound = 1; // blue to move
+
+    const result = search.search(game, BLUE, { maxDepth: 2, timeLimit: 20000 });
+
+    expect(result.bestAction).not.toBeNull();
+    expect(result.bestAction!.event).toBe(GameEvent.MOVE_CHESS);
+    expect(result.bestAction!.casterPosition).toEqual({ x: 0, y: 4 });
+    // Not a mate score: the escape line survives the horizon.
+    expect(result.score).toBeGreaterThan(-50000);
+  });
+
   it("is deterministic: same position, same chosen action", () => {
     const { engine, search } = makeSearch();
     const game = makeGame(engine, 99);
