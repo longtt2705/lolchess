@@ -15,6 +15,7 @@ describe('AuthService — password reset', () => {
   beforeEach(async () => {
     usersService = {
       findByEmail: jest.fn(),
+      findByUsernameOrEmail: jest.fn(),
       findByResetTokenHash: jest.fn(),
       update: jest.fn().mockResolvedValue({}),
     };
@@ -33,6 +34,40 @@ describe('AuthService — password reset', () => {
     }).compile();
 
     authService = moduleRef.get(AuthService);
+  });
+
+  describe('validateUser (login by username OR email)', () => {
+    it('authenticates a correct password when the identifier is the email, not the username', async () => {
+      const password = 'secret123';
+      const hash = await bcrypt.hash(password, 10);
+      usersService.findByUsernameOrEmail.mockResolvedValue({
+        _id: 'u1',
+        username: 'ysvjppro',
+        email: 'a@b.com',
+        password: hash,
+      });
+
+      const result = await authService.validateUser('a@b.com', password);
+
+      expect(usersService.findByUsernameOrEmail).toHaveBeenCalledWith('a@b.com');
+      expect(result).toBeTruthy();
+      expect(result.username).toBe('ysvjppro');
+      expect(result.password).toBeUndefined();
+    });
+
+    it('returns null when the password does not match', async () => {
+      const hash = await bcrypt.hash('secret123', 10);
+      usersService.findByUsernameOrEmail.mockResolvedValue({
+        _id: 'u1',
+        username: 'ysvjppro',
+        email: 'a@b.com',
+        password: hash,
+      });
+
+      const result = await authService.validateUser('a@b.com', 'wrong-password');
+
+      expect(result).toBeNull();
+    });
   });
 
   describe('forgotPassword', () => {

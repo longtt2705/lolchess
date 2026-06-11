@@ -28,6 +28,17 @@ export class UsersService {
     return this.userModel.findOne({ email }).exec();
   }
 
+  // Login accepts either a username or an email. Username takes precedence so a
+  // username login stays deterministic even in the unlikely event a username
+  // collides with another account's email.
+  async findByUsernameOrEmail(identifier: string): Promise<UserDocument | null> {
+    const byUsername = await this.userModel.findOne({ username: identifier }).exec();
+    if (byUsername) {
+      return byUsername;
+    }
+    return this.userModel.findOne({ email: identifier }).exec();
+  }
+
   async findByResetTokenHash(tokenHash: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ resetPasswordTokenHash: tokenHash }).exec();
   }

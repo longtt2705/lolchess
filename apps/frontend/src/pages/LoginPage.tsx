@@ -184,14 +184,14 @@ const LoginPage: React.FC = () => {
           <InputGroup>
             <label>
               <User className="icon" size={18} />
-              Username
+              Username or Email
             </label>
             <Input
               type="text"
-              placeholder="Enter your username"
+              placeholder="Enter your username or email"
               {...register('username', {
-                required: 'Username is required',
-                minLength: { value: 3, message: 'Username must be at least 3 characters' }
+                required: 'Username or email is required',
+                minLength: { value: 3, message: 'Username or email must be at least 3 characters' }
               })}
             />
             {errors.username && <ErrorMessage>{errors.username.message}</ErrorMessage>}
