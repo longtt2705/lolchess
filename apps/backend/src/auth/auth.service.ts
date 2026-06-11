@@ -17,8 +17,9 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<any> {
-    const user = await this.usersService.findByUsername(username);
+  async validateUser(identifier: string, password: string): Promise<any> {
+    // `identifier` may be a username or an email — login accepts either.
+    const user = await this.usersService.findByUsernameOrEmail(identifier);
 
     if (user && await bcrypt.compare(password, user.password)) {
       // Convert Mongoose document to plain object if needed
