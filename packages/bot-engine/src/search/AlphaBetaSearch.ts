@@ -273,15 +273,31 @@ export class AlphaBetaSearch {
       }
     }
 
-    // Forcing actions (kills, Poro attacks) are never pruned away.
+    // Forcing actions (kills, Poro attacks) and own-Poro moves are never
+    // pruned away. Poro escape moves order terribly (backward, toward the
+    // edge) so the top-N cut starves them — leaving the search literally
+    // unable to walk its king out of a mating attack.
     for (const s of rest) {
       if (selected.has(s.action)) continue;
-      if (s.isKiller || this.targetsPoro(game, s.action)) {
+      if (
+        s.isKiller ||
+        this.targetsPoro(game, s.action) ||
+        this.movesOwnPoro(game, s.action)
+      ) {
         top.push(s);
         selected.add(s.action);
       }
     }
     return top.map((s) => s.action);
+  }
+
+  /** True when the action moves the acting player's own Poro (king safety). */
+  private movesOwnPoro(game: Game, action: EventPayload): boolean {
+    if (action.event !== GameEvent.MOVE_CHESS || !action.casterPosition) {
+      return false;
+    }
+    const caster = getPieceAtPosition(game, action.casterPosition);
+    return !!caster && caster.name === "Poro";
   }
 
   private forcingActions(game: Game, playerId: string): EventPayload[] {
