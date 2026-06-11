@@ -6,14 +6,14 @@ import {
   getCurrentPlayerId,
   ChessFactory,
   Square,
-} from "@lolchess/game-engine";
+} from '@lolchess/game-engine';
 
 /**
  * Monster info for evaluation
  */
 interface MonsterInfo {
   piece: Chess;
-  type: "drake" | "baron" | "elder";
+  type: 'drake' | 'baron' | 'elder';
   hpPercent: number;
 }
 
@@ -28,25 +28,25 @@ export class NeutralMonsterEvaluator {
 
   // Drake type names for identification
   private static readonly DRAKE_TYPES = [
-    "Infernal Drake",
-    "Cloud Drake",
-    "Mountain Drake",
-    "Hextech Drake",
-    "Ocean Drake",
-    "Chemtech Drake",
-    "Elder Dragon",
+    'Infernal Drake',
+    'Cloud Drake',
+    'Mountain Drake',
+    'Hextech Drake',
+    'Ocean Drake',
+    'Chemtech Drake',
+    'Elder Dragon',
   ];
 
   // Base buff values for different monster types
   private static readonly BUFF_VALUES: Record<string, number> = {
-    "Infernal Drake": 1.4, // +15% AD/AP is strong
-    "Cloud Drake": 1.2, // +1 speed is useful
-    "Mountain Drake": 1.3, // +25 PR/MR is good for defense
-    "Hextech Drake": 1.3, // +10 CDR is great for skills
-    "Ocean Drake": 1.1, // +5 HP regen is moderate
-    "Chemtech Drake": 1.1, // +10 durability is moderate
-    "Elder Dragon": 2.0, // Execute mechanic is extremely valuable
-    "Baron Nashor": 1.5, // Team-wide buff is very strong
+    'Infernal Drake': 1.4, // +15% AD/AP is strong
+    'Cloud Drake': 1.2, // +1 speed is useful
+    'Mountain Drake': 1.3, // +25 PR/MR is good for defense
+    'Hextech Drake': 1.3, // +10 CDR is great for skills
+    'Ocean Drake': 1.1, // +5 HP regen is moderate
+    'Chemtech Drake': 1.1, // +10 durability is moderate
+    'Elder Dragon': 2.0, // Execute mechanic is extremely valuable
+    'Baron Nashor': 1.5, // Team-wide buff is very strong
   };
 
   // Control scoring weights
@@ -81,13 +81,13 @@ export class NeutralMonsterEvaluator {
         game,
         monster,
         playerId,
-        currentTurnPlayerId === playerId
+        currentTurnPlayerId === playerId,
       );
       const opponentControl = this.evaluateControlScore(
         game,
         monster,
         opponentId,
-        currentTurnPlayerId === opponentId
+        currentTurnPlayerId === opponentId,
       );
 
       const controlDiff = playerControl - opponentControl;
@@ -114,13 +114,13 @@ export class NeutralMonsterEvaluator {
       if (NeutralMonsterEvaluator.DRAKE_TYPES.includes(piece.name)) {
         monsters.push({
           piece,
-          type: piece.name === "Elder Dragon" ? "elder" : "drake",
+          type: piece.name === 'Elder Dragon' ? 'elder' : 'drake',
           hpPercent: piece.stats.hp / piece.stats.maxHp,
         });
-      } else if (piece.name === "Baron Nashor") {
+      } else if (piece.name === 'Baron Nashor') {
         monsters.push({
           piece,
-          type: "baron",
+          type: 'baron',
           hpPercent: piece.stats.hp / piece.stats.maxHp,
         });
       }
@@ -136,7 +136,7 @@ export class NeutralMonsterEvaluator {
     game: Game,
     monster: MonsterInfo,
     playerId: string,
-    isCurrentTurn: boolean
+    isCurrentTurn: boolean,
   ): number {
     let score = 0;
     const pieces = getPlayerPieces(game, playerId);
@@ -149,7 +149,7 @@ export class NeutralMonsterEvaluator {
       // Check if piece can attack the monster
       const validAttacks = this.gameEngine.getValidAttacks(game, piece.id);
       const canAttackMonster = validAttacks.some(
-        (pos) => pos.x === monsterPosition.x && pos.y === monsterPosition.y
+        (pos) => pos.x === monsterPosition.x && pos.y === monsterPosition.y,
       );
 
       if (canAttackMonster) {
@@ -202,10 +202,7 @@ export class NeutralMonsterEvaluator {
     const pieces = getPlayerPieces(game, playerId);
 
     for (const piece of pieces) {
-      if (
-        piece.summonerSpell?.type === "Smite" &&
-        piece.summonerSpell.currentCooldown === 0
-      ) {
+      if (piece.summonerSpell?.type === 'Smite' && piece.summonerSpell.currentCooldown === 0) {
         return true;
       }
     }
@@ -250,9 +247,7 @@ export class NeutralMonsterEvaluator {
     } else {
       // Check if drake exists
       const hasDrake = game.board.some(
-        (p) =>
-          NeutralMonsterEvaluator.DRAKE_TYPES.includes(p.name) &&
-          p.stats.hp > 0
+        (p) => NeutralMonsterEvaluator.DRAKE_TYPES.includes(p.name) && p.stats.hp > 0,
       );
       if (!hasDrake) {
         // Next respawn is at next multiple of 5 after round 5
@@ -267,9 +262,7 @@ export class NeutralMonsterEvaluator {
       baronRound = 20;
     } else {
       // Check if baron exists
-      const hasBaron = game.board.some(
-        (p) => p.name === "Baron Nashor" && p.stats.hp > 0
-      );
+      const hasBaron = game.board.some((p) => p.name === 'Baron Nashor' && p.stats.hp > 0);
       if (!hasBaron) {
         // Next respawn is at next multiple of 10 after round 20
         baronRound = Math.ceil((currentRound + 1) / 10) * 10;

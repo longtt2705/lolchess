@@ -1,6 +1,6 @@
-import { Chess, Square } from "../../types";
-import { ChessFactory } from "../ChessFactory";
-import { ChessObject } from "../ChessObject";
+import { Chess, Square } from '../../types';
+import { ChessFactory } from '../ChessFactory';
+import { ChessObject } from '../ChessObject';
 
 export class SandSoldier extends ChessObject {
   /**
@@ -40,7 +40,7 @@ export class SandSoldier extends ChessObject {
 
     return this.game.board.filter((chess) => {
       // Must be a Sand Soldier linked to the same Azir
-      if (chess.name !== "Sand Soldier") return false;
+      if (chess.name !== 'Sand Soldier') return false;
       if (chess.skill?.payload?.azirId !== azirId) return false;
       if (chess.stats.hp <= 0) return false;
       // Exclude self
@@ -82,10 +82,7 @@ export class SandSoldier extends ChessObject {
       }
 
       // Create soldier object and mark as chain attack
-      const soldierObject = ChessFactory.createChess(
-        soldier,
-        this.game
-      ) as SandSoldier;
+      const soldierObject = ChessFactory.createChess(soldier, this.game) as SandSoldier;
       soldierObject.isChainAttack = true;
 
       // Ignore the attack direction
@@ -111,7 +108,7 @@ export class SandSoldier extends ChessObject {
   protected attack(
     chess: ChessObject,
     forceCritical: boolean = false,
-    damageMultiplier: number = 1
+    damageMultiplier: number = 1,
   ): number {
     const baseDamage = super.attack(chess, forceCritical, damageMultiplier);
 
@@ -121,13 +118,7 @@ export class SandSoldier extends ChessObject {
     if (azir || azir.chess.stats.hp <= 0) {
       bonusDamage = 15 + azir.ap * 0.35;
       if (bonusDamage > 0) {
-        azir.dealDamage(
-          chess,
-          bonusDamage * damageMultiplier,
-          "magic",
-          azir.sunder,
-          true
-        );
+        azir.dealDamage(chess, bonusDamage * damageMultiplier, 'magic', azir.sunder, true);
       }
     }
 
@@ -152,14 +143,11 @@ export class SandSoldier extends ChessObject {
 
       // Special handling for Azir's Guinsoo's Rageblade
       // When Azir has Guinsoo's Rageblade, the Sand Soldier should perform the additional attack
-      if (azir.chess.items.some((item) => item.id === "guinsoo_rageblade")) {
-        const guinsooRageblade = azir.chess.items.find(
-          (item) => item.id === "guinsoo_rageblade"
-        );
+      if (azir.chess.items.some((item) => item.id === 'guinsoo_rageblade')) {
+        const guinsooRageblade = azir.chess.items.find((item) => item.id === 'guinsoo_rageblade');
         if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
           // Set Guinsoo's cooldown on Azir
-          guinsooRageblade.currentCooldown =
-            azir.getItemCooldown(guinsooRageblade);
+          guinsooRageblade.currentCooldown = azir.getItemCooldown(guinsooRageblade);
           // Trigger Sand Soldier's additional attack (not Azir's)
           this.executeAttack(chess, false, 0.6);
         }
@@ -175,12 +163,8 @@ export class SandSoldier extends ChessObject {
   protected getAttackPotential(): number {
     const azir = this.getAzirChess();
     if (azir) {
-      const guinsooRageblade = azir.chess.items.find(
-        (item) => item.id === "guinsoo_rageblade"
-      );
-      const numberOfSandSoldiers = this.findNearbySandSoldiers(
-        this.chess.position
-      ).length;
+      const guinsooRageblade = azir.chess.items.find((item) => item.id === 'guinsoo_rageblade');
+      const numberOfSandSoldiers = this.findNearbySandSoldiers(this.chess.position).length;
       const damage = super.getAttackPotential() + 15 + azir.ap * 0.35;
       if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
         return damage * 1.5 + damage * numberOfSandSoldiers * 0.6;

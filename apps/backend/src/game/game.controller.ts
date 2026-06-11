@@ -1,14 +1,14 @@
-import { Controller, Get, Post, Body, Param, Query } from "@nestjs/common";
-import { GameService } from "./game.service";
+import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { GameService } from './game.service';
 import {
   champions,
   basicItems,
   combinedItems,
   allItems,
   viktorModules,
-} from "@lolchess/game-engine";
+} from '@lolchess/game-engine';
 
-@Controller("games")
+@Controller('games')
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
@@ -17,7 +17,7 @@ export class GameController {
     return this.gameService.findAll();
   }
 
-  @Get("champions")
+  @Get('champions')
   getChampions() {
     return champions
       .map((champion) => ({
@@ -34,9 +34,9 @@ export class GameController {
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  @Get("items")
-  getItems(@Query("type") type?: string) {
-    if (type === "basic") {
+  @Get('items')
+  getItems(@Query('type') type?: string) {
+    if (type === 'basic') {
       return {
         items: basicItems.map((item) => ({
           ...item,
@@ -46,7 +46,7 @@ export class GameController {
           })),
         })),
       };
-    } else if (type === "combined") {
+    } else if (type === 'combined') {
       return {
         items: combinedItems.map((item) => ({
           ...item,
@@ -69,7 +69,7 @@ export class GameController {
     }
   }
 
-  @Get("items/basic")
+  @Get('items/basic')
   getBasicItems() {
     return {
       items: basicItems.map((item) => ({
@@ -82,18 +82,18 @@ export class GameController {
     };
   }
 
-  @Get("active-game")
-  getActiveGame(@Query("userId") userId: string) {
+  @Get('active-game')
+  getActiveGame(@Query('userId') userId: string) {
     return this.gameService.getActiveGameForUser(userId);
   }
 
-  @Get(":id")
-  findOne(@Param("id") id: string) {
+  @Get(':id')
+  findOne(@Param('id') id: string) {
     return this.gameService.findOne(id);
   }
 
-  @Get(":gameId/ban-pick-state")
-  async getBanPickState(@Param("gameId") gameId: string) {
+  @Get(':gameId/ban-pick-state')
+  async getBanPickState(@Param('gameId') gameId: string) {
     const gameResult = await this.gameService.findOneById(gameId);
     if (gameResult && gameResult.banPickState) {
       return {
@@ -104,7 +104,7 @@ export class GameController {
     return {
       game: null,
       banPickState: null,
-      message: "Game not found or not in ban/pick phase",
+      message: 'Game not found or not in ban/pick phase',
     };
   }
 
@@ -113,78 +113,71 @@ export class GameController {
     return this.gameService.create(createGameDto);
   }
 
-  @Post("create-vs-bot")
+  @Post('create-vs-bot')
   async createGameVsBot(@Body() body: { userId: string; username: string }) {
     return this.gameService.createGameVsBot(body.userId, body.username);
   }
 
-  @Post(":gameId/initialize-gameplay")
-  async initializeGameplay(@Param("gameId") gameId: string) {
+  @Post(':gameId/initialize-gameplay')
+  async initializeGameplay(@Param('gameId') gameId: string) {
     return this.gameService.initializeGameplay(gameId);
   }
 
-  @Post(":gameId/action")
-  async executeAction(
-    @Param("gameId") gameId: string,
-    @Body() actionData: any
-  ) {
+  @Post(':gameId/action')
+  async executeAction(@Param('gameId') gameId: string, @Body() actionData: any) {
     return this.gameService.executeAction(gameId, actionData);
   }
 
-  @Post(":gameId/reset-gameplay")
+  @Post(':gameId/reset-gameplay')
   async resetGameplay(
-    @Param("gameId") gameId: string,
-    @Body() body?: { blueChampions?: string[]; redChampions?: string[] }
+    @Param('gameId') gameId: string,
+    @Body() body?: { blueChampions?: string[]; redChampions?: string[] },
   ) {
-    const isDevelopment = process.env.NODE_ENV === "development";
+    const isDevelopment = process.env.NODE_ENV === 'development';
     if (!isDevelopment) {
       return {
-        message: "This action is only available in development mode",
+        message: 'This action is only available in development mode',
       };
     }
-    return this.gameService.resetGameplay(
-      gameId,
-      body?.blueChampions,
-      body?.redChampions
-    );
+    return this.gameService.resetGameplay(gameId, body?.blueChampions, body?.redChampions);
   }
 
-  @Post(":gameId/restore-hp")
-  async restoreHp(@Param("gameId") gameId: string) {
-    const isDevelopment = process.env.NODE_ENV === "development";
+  @Post(':gameId/restore-hp')
+  async restoreHp(@Param('gameId') gameId: string) {
+    const isDevelopment = process.env.NODE_ENV === 'development';
     if (!isDevelopment) {
       return {
-        message: "This action is only available in development mode",
+        message: 'This action is only available in development mode',
       };
     }
     return this.gameService.restoreHp(gameId);
   }
 
-  @Post(":gameId/restore-cooldown")
-  async restoreCooldown(@Param("gameId") gameId: string) {
-    const isDevelopment = process.env.NODE_ENV === "development";
+  @Post(':gameId/restore-cooldown')
+  async restoreCooldown(@Param('gameId') gameId: string) {
+    const isDevelopment = process.env.NODE_ENV === 'development';
     if (!isDevelopment) {
       return {
-        message: "This action is only available in development mode",
+        message: 'This action is only available in development mode',
       };
     }
     return this.gameService.restoreCooldown(gameId);
   }
 
-  @Post(":gameId/reset-ban-pick")
-  async resetBanPick(@Param("gameId") gameId: string) {
+  @Post(':gameId/reset-ban-pick')
+  async resetBanPick(@Param('gameId') gameId: string) {
     return this.gameService.resetBanPick(gameId);
   }
 
-  @Post(":gameId/buy-item")
+  @Post(':gameId/buy-item')
   async buyItem(
-    @Param("gameId") gameId: string,
-    @Body() buyItemData: { itemId: string; championId: string }
+    @Param('gameId') gameId: string,
+    @Body() buyItemData: { itemId: string; championId: string },
   ) {
     return this.gameService.buyItem(gameId, buyItemData);
   }
 
-  @Get("items/viktor-modules")
+  @Get('items/viktor-modules')
   getViktorModules() {
     return { modules: viktorModules };
   }

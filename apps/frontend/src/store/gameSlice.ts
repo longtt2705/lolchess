@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export interface QueueState {
   inQueue: boolean;
@@ -17,8 +17,8 @@ export interface QueueState {
 interface Game {
   id: string;
   name: string;
-  status: "waiting" | "ban_pick" | "in_progress" | "finished";
-  phase?: "ban_phase" | "pick_phase" | "gameplay";
+  status: 'waiting' | 'ban_pick' | 'in_progress' | 'finished';
+  phase?: 'ban_phase' | 'pick_phase' | 'gameplay';
   players: any[];
   maxPlayers: number;
   createdAt: string;
@@ -82,8 +82,8 @@ const initialState: GameState = {
 };
 
 // Async thunks
-export const fetchGames = createAsyncThunk("game/fetchGames", async () => {
-  const token = localStorage.getItem("token");
+export const fetchGames = createAsyncThunk('game/fetchGames', async () => {
+  const token = localStorage.getItem('token');
   const response = await axios.get(`${API_URL}/games`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -93,54 +93,47 @@ export const fetchGames = createAsyncThunk("game/fetchGames", async () => {
 });
 
 export const createGame = createAsyncThunk(
-  "game/createGame",
+  'game/createGame',
   async (gameData: { name: string; maxPlayers: number }) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     const response = await axios.post(`${API_URL}/games`, gameData, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     return response.data;
-  }
+  },
 );
 
 export const createGameVsBot = createAsyncThunk(
-  "game/createGameVsBot",
+  'game/createGameVsBot',
   async (userData: { userId: string; username: string }) => {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
-      `${API_URL}/games/create-vs-bot`,
-      userData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const token = localStorage.getItem('token');
+    const response = await axios.post(`${API_URL}/games/create-vs-bot`, userData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
-  }
+  },
 );
 
-export const joinGame = createAsyncThunk(
-  "game/joinGame",
-  async (gameId: string) => {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
-      `${API_URL}/games/${gameId}/join`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  }
-);
+export const joinGame = createAsyncThunk('game/joinGame', async (gameId: string) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.post(
+    `${API_URL}/games/${gameId}/join`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  return response.data;
+});
 
 export const resetGameplay = createAsyncThunk(
-  "game/resetGameplay",
+  'game/resetGameplay',
   async ({
     gameId,
     blueChampions,
@@ -150,7 +143,7 @@ export const resetGameplay = createAsyncThunk(
     blueChampions?: string[];
     redChampions?: string[];
   }) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     const response = await axios.post(
       `${API_URL}/games/${gameId}/reset-gameplay`,
       { blueChampions, redChampions },
@@ -158,79 +151,67 @@ export const resetGameplay = createAsyncThunk(
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
-  }
+  },
 );
 
-export const restoreHp = createAsyncThunk(
-  "game/restoreHp",
-  async (gameId: string) => {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
-      `${API_URL}/games/${gameId}/restore-hp`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  }
-);
-
-export const restoreCooldown = createAsyncThunk(
-  "game/restoreCooldown",
-  async (gameId: string) => {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
-      `${API_URL}/games/${gameId}/restore-cooldown`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  }
-);
-
-export const resetBanPick = createAsyncThunk(
-  "game/resetBanPick",
-  async (gameId: string) => {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
-      `${API_URL}/games/${gameId}/reset-ban-pick`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  }
-);
-
-export const fetchActiveGame = createAsyncThunk(
-  "game/fetchActiveGame",
-  async (userId: string) => {
-    const token = localStorage.getItem("token");
-    const response = await axios.get(`${API_URL}/games/active-game`, {
-      params: { userId },
+export const restoreHp = createAsyncThunk('game/restoreHp', async (gameId: string) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.post(
+    `${API_URL}/games/${gameId}/restore-hp`,
+    {},
+    {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    });
-    return response.data;
-  }
-);
+    },
+  );
+  return response.data;
+});
+
+export const restoreCooldown = createAsyncThunk('game/restoreCooldown', async (gameId: string) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.post(
+    `${API_URL}/games/${gameId}/restore-cooldown`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  return response.data;
+});
+
+export const resetBanPick = createAsyncThunk('game/resetBanPick', async (gameId: string) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.post(
+    `${API_URL}/games/${gameId}/reset-ban-pick`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  return response.data;
+});
+
+export const fetchActiveGame = createAsyncThunk('game/fetchActiveGame', async (userId: string) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.get(`${API_URL}/games/active-game`, {
+    params: { userId },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+});
 
 export const buyItem = createAsyncThunk(
-  "game/buyItem",
+  'game/buyItem',
   async ({
     gameId,
     itemId,
@@ -240,7 +221,7 @@ export const buyItem = createAsyncThunk(
     itemId: string;
     championId: string;
   }) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     const response = await axios.post(
       `${API_URL}/games/${gameId}/buy-item`,
       { itemId, championId },
@@ -248,49 +229,40 @@ export const buyItem = createAsyncThunk(
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
-  }
+  },
 );
 
-export const fetchChampions = createAsyncThunk(
-  "game/fetchChampions",
-  async () => {
-    const response = await axios.get(`${API_URL}/games/champions`);
-    return response.data;
-  }
-);
+export const fetchChampions = createAsyncThunk('game/fetchChampions', async () => {
+  const response = await axios.get(`${API_URL}/games/champions`);
+  return response.data;
+});
 
-export const fetchBasicItems = createAsyncThunk(
-  "game/fetchBasicItems",
-  async () => {
-    const response = await axios.get(`${API_URL}/games/items?type=basic`);
-    return response.data;
-  }
-);
+export const fetchBasicItems = createAsyncThunk('game/fetchBasicItems', async () => {
+  const response = await axios.get(`${API_URL}/games/items?type=basic`);
+  return response.data;
+});
 
-export const fetchCombinedItems = createAsyncThunk(
-  "game/fetchCombinedItems",
-  async () => {
-    const response = await axios.get(`${API_URL}/games/items?type=combined`);
-    return response.data;
-  }
-);
+export const fetchCombinedItems = createAsyncThunk('game/fetchCombinedItems', async () => {
+  const response = await axios.get(`${API_URL}/games/items?type=combined`);
+  return response.data;
+});
 
 export const fetchDatabaseData = createAsyncThunk(
-  "game/fetchDatabaseData",
+  'game/fetchDatabaseData',
   async (_, { dispatch }) => {
     await Promise.all([
       dispatch(fetchChampions()),
       dispatch(fetchBasicItems()),
       dispatch(fetchCombinedItems()),
     ]);
-  }
+  },
 );
 
 const gameSlice = createSlice({
-  name: "game",
+  name: 'game',
   initialState,
   reducers: {
     setCurrentGame: (state, action: PayloadAction<Game>) => {
@@ -302,10 +274,7 @@ const gameSlice = createSlice({
     setConnected: (state, action: PayloadAction<boolean>) => {
       state.connected = action.payload;
     },
-    updateGameStatus: (
-      state,
-      action: PayloadAction<{ gameId: string; status: string }>
-    ) => {
+    updateGameStatus: (state, action: PayloadAction<{ gameId: string; status: string }>) => {
       if (state.currentGame && state.currentGame.id === action.payload.gameId) {
         state.currentGame.status = action.payload.status as any;
       }
@@ -318,7 +287,7 @@ const gameSlice = createSlice({
     removePlayerFromCurrentGame: (state, action: PayloadAction<string>) => {
       if (state.currentGame) {
         state.currentGame.players = state.currentGame.players.filter(
-          (player) => player.id !== action.payload
+          (player) => player.id !== action.payload,
         );
       }
     },
@@ -343,7 +312,7 @@ const gameSlice = createSlice({
       action: PayloadAction<{
         game: any;
         opponent: { id: string; username: string };
-      }>
+      }>,
     ) => {
       state.queue.matchFound = true;
       state.queue.inQueue = false;
@@ -368,7 +337,7 @@ const gameSlice = createSlice({
       })
       .addCase(fetchGames.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to fetch games";
+        state.error = action.error.message || 'Failed to fetch games';
       })
       // Create game
       .addCase(createGame.pending, (state) => {
@@ -382,7 +351,7 @@ const gameSlice = createSlice({
       })
       .addCase(createGame.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to create game";
+        state.error = action.error.message || 'Failed to create game';
       })
       // Create game vs bot
       .addCase(createGameVsBot.pending, (state) => {
@@ -396,7 +365,7 @@ const gameSlice = createSlice({
       })
       .addCase(createGameVsBot.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to create bot game";
+        state.error = action.error.message || 'Failed to create bot game';
       })
       // Join game
       .addCase(joinGame.pending, (state) => {
@@ -409,7 +378,7 @@ const gameSlice = createSlice({
       })
       .addCase(joinGame.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to join game";
+        state.error = action.error.message || 'Failed to join game';
       })
       // Reset gameplay
       .addCase(resetGameplay.pending, (state) => {
@@ -424,7 +393,7 @@ const gameSlice = createSlice({
       })
       .addCase(resetGameplay.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to reset gameplay";
+        state.error = action.error.message || 'Failed to reset gameplay';
       })
       // Restore HP
       .addCase(restoreHp.pending, (state) => {
@@ -439,7 +408,7 @@ const gameSlice = createSlice({
       })
       .addCase(restoreHp.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to restore HP";
+        state.error = action.error.message || 'Failed to restore HP';
       })
       // Restore Cooldown
       .addCase(restoreCooldown.pending, (state) => {
@@ -454,7 +423,7 @@ const gameSlice = createSlice({
       })
       .addCase(restoreCooldown.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to restore cooldowns";
+        state.error = action.error.message || 'Failed to restore cooldowns';
       })
       // Reset ban/pick
       .addCase(resetBanPick.pending, (state) => {
@@ -469,7 +438,7 @@ const gameSlice = createSlice({
       })
       .addCase(resetBanPick.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to reset ban/pick";
+        state.error = action.error.message || 'Failed to reset ban/pick';
       })
       // Fetch active game
       .addCase(fetchActiveGame.pending, (state) => {
@@ -486,7 +455,7 @@ const gameSlice = createSlice({
       })
       .addCase(fetchActiveGame.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to fetch active game";
+        state.error = action.error.message || 'Failed to fetch active game';
       })
       // Buy item
       .addCase(buyItem.pending, (state) => {
@@ -498,7 +467,7 @@ const gameSlice = createSlice({
       })
       .addCase(buyItem.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to buy item";
+        state.error = action.error.message || 'Failed to buy item';
       })
       // Fetch champions
       .addCase(fetchChampions.pending, (state) => {
@@ -509,8 +478,7 @@ const gameSlice = createSlice({
         state.champions = action.payload;
       })
       .addCase(fetchChampions.rejected, (state, action) => {
-        state.databaseError =
-          action.error.message || "Failed to fetch champions";
+        state.databaseError = action.error.message || 'Failed to fetch champions';
       })
       // Fetch basic items
       .addCase(fetchBasicItems.pending, (state) => {
@@ -521,8 +489,7 @@ const gameSlice = createSlice({
         state.basicItems = action.payload.items || [];
       })
       .addCase(fetchBasicItems.rejected, (state, action) => {
-        state.databaseError =
-          action.error.message || "Failed to fetch basic items";
+        state.databaseError = action.error.message || 'Failed to fetch basic items';
       })
       // Fetch combined items
       .addCase(fetchCombinedItems.pending, (state) => {
@@ -533,8 +500,7 @@ const gameSlice = createSlice({
         state.combinedItems = action.payload.items || [];
       })
       .addCase(fetchCombinedItems.rejected, (state, action) => {
-        state.databaseError =
-          action.error.message || "Failed to fetch combined items";
+        state.databaseError = action.error.message || 'Failed to fetch combined items';
       })
       // Fetch all database data
       .addCase(fetchDatabaseData.pending, (state) => {
@@ -546,7 +512,7 @@ const gameSlice = createSlice({
       })
       .addCase(fetchDatabaseData.rejected, (state, action) => {
         state.databaseLoading = false;
-        state.databaseError = action.error.message || "Failed to load database";
+        state.databaseError = action.error.message || 'Failed to load database';
       });
   },
 });

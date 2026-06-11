@@ -1,2 +1,2 @@
-export { BanPickStrategy } from "./BanPickStrategy";
-export { ItemStrategy } from "./ItemStrategy";
+export { BanPickStrategy } from './BanPickStrategy';
+export { ItemStrategy } from './ItemStrategy';

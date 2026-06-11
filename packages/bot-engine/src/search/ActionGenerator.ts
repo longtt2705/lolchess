@@ -8,12 +8,12 @@ import {
   getPlayerPieces,
   getItemById,
   Square,
-} from "@lolchess/game-engine";
-import { ScoredAction, LoSClearingMove, ActionCategory, ThreatInfo } from "../types";
-import { LoSEvaluator } from "../evaluation/LoSEvaluator";
+} from '@lolchess/game-engine';
+import { ScoredAction, LoSClearingMove, ActionCategory, ThreatInfo } from '../types';
+import { LoSEvaluator } from '../evaluation/LoSEvaluator';
 
 /** Mobility skills that reposition the caster (targetTypes === "squareInRange") */
-const MOBILITY_SKILL_TARGET_TYPE = "squareInRange";
+const MOBILITY_SKILL_TARGET_TYPE = 'squareInRange';
 
 /**
  * Generates all possible legal actions for a player
@@ -81,7 +81,7 @@ export class ActionGenerator {
     game: Game,
     piece: Chess,
     playerId: string,
-    actions: EventPayload[]
+    actions: EventPayload[],
   ): void {
     const validMoves = this.gameEngine.getValidMoves(game, piece.id);
     for (const target of validMoves) {
@@ -101,7 +101,7 @@ export class ActionGenerator {
     game: Game,
     piece: Chess,
     playerId: string,
-    actions: EventPayload[]
+    actions: EventPayload[],
   ): void {
     const validAttacks = this.gameEngine.getValidAttacks(game, piece.id);
     for (const target of validAttacks) {
@@ -121,15 +121,12 @@ export class ActionGenerator {
     game: Game,
     piece: Chess,
     playerId: string,
-    actions: EventPayload[]
+    actions: EventPayload[],
   ): void {
-    const validSkillTargets = this.gameEngine.getValidSkillTargets(
-      game,
-      piece.id
-    );
+    const validSkillTargets = this.gameEngine.getValidSkillTargets(game, piece.id);
 
     // Handle self-cast skills
-    if (piece.skill!.targetTypes === "none") {
+    if (piece.skill!.targetTypes === 'none') {
       actions.push({
         playerId,
         event: GameEvent.SKILL,
@@ -154,13 +151,13 @@ export class ActionGenerator {
     game: Game,
     piece: Chess,
     playerId: string,
-    actions: EventPayload[]
+    actions: EventPayload[],
   ): void {
     const spell = piece.summonerSpell;
     if (!spell || spell.currentCooldown > 0) return;
 
     switch (spell.type) {
-      case "Flash": {
+      case 'Flash': {
         // Flash: Can target any empty square within range 2
         for (let x = -1; x <= 8; x++) {
           for (let y = 0; y <= 7; y++) {
@@ -176,7 +173,7 @@ export class ActionGenerator {
 
             // Check if square is empty
             const occupiedBy = game.board.find(
-              (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0
+              (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0,
             );
 
             if (!occupiedBy) {
@@ -192,9 +189,9 @@ export class ActionGenerator {
         break;
       }
 
-      case "Ghost":
-      case "Heal":
-      case "Barrier": {
+      case 'Ghost':
+      case 'Heal':
+      case 'Barrier': {
         // Self-cast spells
         actions.push({
           playerId,
@@ -205,7 +202,7 @@ export class ActionGenerator {
         break;
       }
 
-      case "Smite": {
+      case 'Smite': {
         // Smite: Target enemy minions or neutral monsters within range 2
         for (const target of game.board) {
           if (target.stats.hp <= 0) continue;
@@ -219,15 +216,14 @@ export class ActionGenerator {
 
           // Check if it's a neutral monster
           const isNeutralMonster =
-            target.ownerId === "neutral" ||
-            target.name.includes("Drake") ||
-            target.name === "Baron Nashor" ||
-            target.name === "Elder Dragon";
+            target.ownerId === 'neutral' ||
+            target.name.includes('Drake') ||
+            target.name === 'Baron Nashor' ||
+            target.name === 'Elder Dragon';
 
           // Check if it's an ENEMY minion (not ally minion)
           const isEnemyMinion =
-            (target.name.includes("Minion") ||
-              target.name === "Super Minion") &&
+            (target.name.includes('Minion') || target.name === 'Super Minion') &&
             target.ownerId !== piece.ownerId;
 
           if (isEnemyMinion || isNeutralMonster) {
@@ -254,7 +250,7 @@ export class ActionGenerator {
     game: Game,
     playerId: string,
     playerPieces: Chess[],
-    actions: EventPayload[]
+    actions: EventPayload[],
   ): void {
     const player = game.players.find((p) => p.userId === playerId);
     if (!player || player.gold <= 0 || !game.shopItems) return;
@@ -272,13 +268,13 @@ export class ActionGenerator {
 
         // Only champions can receive items
         const nonChampionTypes = [
-          "Poro",
-          "Melee Minion",
-          "Caster Minion",
-          "Siege Minion",
-          "Super Minion",
-          "Drake",
-          "Baron Nashor",
+          'Poro',
+          'Melee Minion',
+          'Caster Minion',
+          'Siege Minion',
+          'Super Minion',
+          'Drake',
+          'Baron Nashor',
         ];
         if (nonChampionTypes.includes(piece.name)) continue;
 
@@ -362,8 +358,7 @@ export class ActionGenerator {
 
     for (const piece of playerPieces) {
       if (piece.stats.hp <= 0) continue;
-      if (!piece.summonerSpell || piece.summonerSpell.currentCooldown !== 0)
-        continue;
+      if (!piece.summonerSpell || piece.summonerSpell.currentCooldown !== 0) continue;
       const isStunned = piece.debuffs?.some((d) => d.stun) ?? false;
       if (isStunned) continue;
 
@@ -408,7 +403,7 @@ export class ActionGenerator {
   isPositioningSummonerSpell(piece: Chess): boolean {
     if (!piece.summonerSpell) return false;
     if (piece.summonerSpell.currentCooldown !== 0) return false;
-    return piece.summonerSpell.type === "Flash";
+    return piece.summonerSpell.type === 'Flash';
   }
 
   /**
@@ -417,44 +412,42 @@ export class ActionGenerator {
   categorizeAction(game: Game, action: EventPayload): ActionCategory {
     switch (action.event) {
       case GameEvent.MOVE_CHESS:
-        return "positioning";
+        return 'positioning';
 
       case GameEvent.USE_SUMMONER_SPELL: {
         // Find the piece
-        if (!action.casterPosition) return "utility";
+        if (!action.casterPosition) return 'utility';
         const piece = game.board.find(
           (p) =>
             p.position.x === action.casterPosition!.x &&
             p.position.y === action.casterPosition!.y &&
-            p.stats.hp > 0
+            p.stats.hp > 0,
         );
-        if (!piece?.summonerSpell) return "utility";
+        if (!piece?.summonerSpell) return 'utility';
         // Flash is positioning, others are utility
-        return piece.summonerSpell.type === "Flash" ? "positioning" : "utility";
+        return piece.summonerSpell.type === 'Flash' ? 'positioning' : 'utility';
       }
 
       case GameEvent.SKILL: {
         // Find the piece
-        if (!action.casterPosition) return "combat";
+        if (!action.casterPosition) return 'combat';
         const piece = game.board.find(
           (p) =>
             p.position.x === action.casterPosition!.x &&
             p.position.y === action.casterPosition!.y &&
-            p.stats.hp > 0
+            p.stats.hp > 0,
         );
-        if (!piece?.skill) return "combat";
+        if (!piece?.skill) return 'combat';
         // Mobility skills are positioning, others are combat
-        return piece.skill.targetTypes === MOBILITY_SKILL_TARGET_TYPE
-          ? "positioning"
-          : "combat";
+        return piece.skill.targetTypes === MOBILITY_SKILL_TARGET_TYPE ? 'positioning' : 'combat';
       }
 
       case GameEvent.ATTACK_CHESS:
-        return "combat";
+        return 'combat';
 
       case GameEvent.BUY_ITEM:
       default:
-        return "utility";
+        return 'utility';
     }
   }
 
@@ -501,12 +494,9 @@ export class ActionGenerator {
     game: Game,
     piece: Chess,
     playerId: string,
-    actions: EventPayload[]
+    actions: EventPayload[],
   ): void {
-    const validSkillTargets = this.gameEngine.getValidSkillTargets(
-      game,
-      piece.id
-    );
+    const validSkillTargets = this.gameEngine.getValidSkillTargets(game, piece.id);
 
     for (const target of validSkillTargets) {
       actions.push({
@@ -525,10 +515,10 @@ export class ActionGenerator {
     game: Game,
     piece: Chess,
     playerId: string,
-    actions: EventPayload[]
+    actions: EventPayload[],
   ): void {
     const spell = piece.summonerSpell;
-    if (!spell || spell.type !== "Flash" || spell.currentCooldown > 0) return;
+    if (!spell || spell.type !== 'Flash' || spell.currentCooldown > 0) return;
 
     // Flash: Can target any empty square within range 2
     for (let x = -1; x <= 8; x++) {
@@ -545,7 +535,7 @@ export class ActionGenerator {
 
         // Check if square is empty
         const occupiedBy = game.board.find(
-          (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0
+          (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0,
         );
 
         if (!occupiedBy) {
@@ -584,11 +574,7 @@ export class ActionGenerator {
         }
 
         // Generate non-mobility skill actions (damage/utility skills)
-        if (
-          piece.skill &&
-          piece.skill.currentCooldown === 0 &&
-          !this.isMobilitySkill(piece)
-        ) {
+        if (piece.skill && piece.skill.currentCooldown === 0 && !this.isMobilitySkill(piece)) {
           // Check if skill has value > 0 (filter out skills with no tactical value)
           // This matches the ThreatEvaluator logic and prevents bot from using
           // skills that provide no immediate benefit

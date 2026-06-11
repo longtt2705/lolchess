@@ -1,7 +1,7 @@
-import { Square } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { ChessFactory } from "../ChessFactory";
-import { getChessAtPosition, isValidBoardPosition } from "../../utils/helpers";
+import { Square } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { ChessFactory } from '../ChessFactory';
+import { getChessAtPosition, isValidBoardPosition } from '../../utils/helpers';
 
 export class Yasuo extends ChessObject {
   get criticalChance(): number {
@@ -22,7 +22,7 @@ export class Yasuo extends ChessObject {
     this.applyShield(
       Math.floor((this.maxHp * (10 + this.ap * 0.1)) / 100),
       3,
-      "yasuo_critical_strike_shield"
+      'yasuo_critical_strike_shield',
     );
 
     // Fire whirlwind in the target direction
@@ -60,26 +60,13 @@ export class Yasuo extends ChessObject {
       const currentSquare: Square = { x: currentX, y: currentY };
 
       // Find enemy at this position
-      const enemyChess = getChessAtPosition(
-        this.game,
-        !this.chess.blue,
-        currentSquare
-      );
+      const enemyChess = getChessAtPosition(this.game, !this.chess.blue, currentSquare);
 
       if (enemyChess) {
-        const enemyChessObject = ChessFactory.createChess(
-          enemyChess,
-          this.game
-        );
+        const enemyChessObject = ChessFactory.createChess(enemyChess, this.game);
 
         // Deal magic damage to enemy
-        this.damage(
-          enemyChessObject,
-          whirlwindDamage,
-          "magic",
-          this,
-          this.sunder
-        );
+        this.damage(enemyChessObject, whirlwindDamage, 'magic', this, this.sunder);
 
         // Track target for animation
         whirlwindTargets.push({

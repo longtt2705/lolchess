@@ -1,12 +1,12 @@
-import { Game, Chess, Square, ChessFactory } from "@lolchess/game-engine";
-import { GameLogic } from "../game.logic";
+import { Game, Chess, Square, ChessFactory } from '@lolchess/game-engine';
+import { GameLogic } from '../game.logic';
 
 // Utility function to create a test game with chess pieces
 export function createTestGame(): Game {
   const game: Game = {
-    name: "Aura Test Game",
-    status: "in_progress",
-    phase: "gameplay",
+    name: 'Aura Test Game',
+    status: 'in_progress',
+    phase: 'gameplay',
     players: [],
     maxPlayers: 2,
     currentRound: 1,
@@ -19,12 +19,12 @@ export function createTestGame(): Game {
 
   // Create Janna (will have speed aura)
   const janna: Chess = {
-    id: "janna-1",
-    name: "Janna",
+    id: 'janna-1',
+    name: 'Janna',
     position: { x: 2, y: 2 },
     cannotMoveBackward: false,
     cannotAttack: false,
-    ownerId: "player1",
+    ownerId: 'player1',
     blue: true,
     stats: {
       hp: 300,
@@ -49,12 +49,12 @@ export function createTestGame(): Game {
 
   // Create an ally adjacent to Janna (should get +2 speed)
   const ally: Chess = {
-    id: "ally-1",
-    name: "Aatrox",
+    id: 'ally-1',
+    name: 'Aatrox',
     position: { x: 3, y: 2 }, // Adjacent to Janna
     cannotMoveBackward: false,
     cannotAttack: false,
-    ownerId: "player1",
+    ownerId: 'player1',
     blue: true,
     stats: {
       hp: 400,
@@ -79,12 +79,12 @@ export function createTestGame(): Game {
 
   // Create an enemy (should not get speed boost)
   const enemy: Chess = {
-    id: "enemy-1",
-    name: "Garen",
+    id: 'enemy-1',
+    name: 'Garen',
     position: { x: 1, y: 2 }, // Adjacent to Janna but different team
     cannotMoveBackward: false,
     cannotAttack: false,
-    ownerId: "player2",
+    ownerId: 'player2',
     blue: false, // Different team
     stats: {
       hp: 500,
@@ -109,12 +109,12 @@ export function createTestGame(): Game {
 
   // Create a distant ally (should not get speed boost due to range)
   const distantAlly: Chess = {
-    id: "distant-ally-1",
-    name: "Ahri",
+    id: 'distant-ally-1',
+    name: 'Ahri',
     position: { x: 5, y: 2 }, // Too far from Janna
     cannotMoveBackward: false,
     cannotAttack: false,
-    ownerId: "player1",
+    ownerId: 'player1',
     blue: true,
     stats: {
       hp: 350,
@@ -147,7 +147,7 @@ export function createTestGame(): Game {
 
 // Test function to demonstrate aura effects
 export function testAuraSystem(): void {
-  console.log("=== Testing Aura System ===\n");
+  console.log('=== Testing Aura System ===\n');
 
   const game = createTestGame();
 
@@ -164,17 +164,15 @@ export function testAuraSystem(): void {
     const effectiveSpeed = chessObject.speed;
 
     console.log(
-      `${chess.name} (${chess.blue ? "Blue" : "Red"}) at position (${chess.position.x}, ${chess.position.y}):`
+      `${chess.name} (${chess.blue ? 'Blue' : 'Red'}) at position (${chess.position.x}, ${chess.position.y}):`,
     );
     console.log(`  Base Speed: ${baseSpeed}`);
     console.log(`  Effective Speed: ${effectiveSpeed}`);
     console.log(`  Speed Difference: ${effectiveSpeed - baseSpeed}`);
-    console.log(
-      `  Debuffs: ${chess.debuffs.map((d) => d.name).join(", ") || "None"}\n`
-    );
+    console.log(`  Debuffs: ${chess.debuffs.map((d) => d.name).join(', ') || 'None'}\n`);
   });
 
-  console.log("=== Active Auras in Game ===");
+  console.log('=== Active Auras in Game ===');
   const activeAuras = GameLogic.getActiveAuras(game);
   activeAuras.forEach((aura) => {
     console.log(`${aura.chessName} has auras:`);
@@ -184,14 +182,14 @@ export function testAuraSystem(): void {
     });
   });
 
-  console.log("\n=== Aura Targets ===");
-  const janna = game.board.find((c) => c.name === "Janna");
+  console.log('\n=== Aura Targets ===');
+  const janna = game.board.find((c) => c.name === 'Janna');
   if (janna) {
     const targets = GameLogic.getAuraTargets(game, janna);
     console.log(`Janna's auras affect:`);
     targets.forEach((target) => {
       console.log(
-        `  - ${target.targetName} receives ${target.auraName}: ${target.effect.stat} ${target.effect.modifier > 0 ? "+" : ""}${target.effect.modifier}`
+        `  - ${target.targetName} receives ${target.auraName}: ${target.effect.stat} ${target.effect.modifier > 0 ? '+' : ''}${target.effect.modifier}`,
       );
     });
   }
@@ -200,15 +198,10 @@ export function testAuraSystem(): void {
   const jannaObject = ChessFactory.createChess(janna!, game);
 
   // Test Janna's skill (applies temporary speed boost)
-  console.log(
-    "Before skill: Janna's aura range =",
-    janna!.auras[0]?.range || "No aura"
-  );
+  console.log("Before skill: Janna's aura range =", janna!.auras[0]?.range || 'No aura');
   try {
     jannaObject.executeSkill();
-    console.log(
-      "After skill: Applied temporary speed boosts to adjacent allies"
-    );
+    console.log('After skill: Applied temporary speed boosts to adjacent allies');
 
     // Re-apply aura debuffs after skill
     game.board.forEach((chess) => {
@@ -217,17 +210,15 @@ export function testAuraSystem(): void {
     });
 
     // Check debuffs on ally
-    const ally = game.board.find((c) => c.name === "Aatrox");
+    const ally = game.board.find((c) => c.name === 'Aatrox');
     if (ally) {
       console.log(`\nAlly (Aatrox) debuffs after skill:`);
       ally.debuffs.forEach((d) => {
-        console.log(
-          `  - ${d.name}: ${d.description} (duration: ${d.duration})`
-        );
+        console.log(`  - ${d.name}: ${d.description} (duration: ${d.duration})`);
       });
     }
   } catch (error) {
-    console.log("Skill failed:", error.message);
+    console.log('Skill failed:', error.message);
   }
 }
 

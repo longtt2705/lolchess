@@ -28,12 +28,12 @@ export interface ChampionStats {
 }
 
 export interface ChampionSkill {
-  type?: "active" | "passive";
+  type?: 'active' | 'passive';
   name?: string;
   description?: string;
   cooldown?: number;
   attackRange?: AttackRange;
-  targetTypes?: "square" | "squareInRange" | "ally" | "allyMinion" | "enemy" | "none";
+  targetTypes?: 'square' | 'squareInRange' | 'ally' | 'allyMinion' | 'enemy' | 'none';
 }
 
 export interface AuraEffect {
@@ -55,7 +55,7 @@ export interface ChampionAura {
 }
 
 export interface AttackProjectile {
-  shape: "bullet" | "arrow" | "orb" | "bolt" | "missile" | "spear";
+  shape: 'bullet' | 'arrow' | 'orb' | 'bolt' | 'missile' | 'spear';
   color: string;
   trailColor?: string;
   size?: number; // 0.5 to 2, default 1
@@ -74,7 +74,7 @@ export interface ChampionData {
 export interface ItemEffect {
   stat: string;
   value: number;
-  type: "add" | "multiply";
+  type: 'add' | 'multiply';
   conditional?: boolean;
 }
 

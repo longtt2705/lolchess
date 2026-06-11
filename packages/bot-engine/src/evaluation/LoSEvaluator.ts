@@ -4,7 +4,7 @@ import {
   getPlayerPieces,
   ChessFactory,
   getPieceAtPosition,
-} from "@lolchess/game-engine";
+} from '@lolchess/game-engine';
 /**
  * Evaluates Line of Sight (LoS) for ranged pieces
  *
@@ -14,7 +14,7 @@ import {
  * 3. Avoid creating new blocks when moving
  */
 export class LoSEvaluator {
-  constructor() { }
+  constructor() {}
 
   evaluateLoS(game: Game, playerId: string): number {
     let score = 0;
@@ -24,7 +24,10 @@ export class LoSEvaluator {
     // Dedupe by coordinate key — Set<Square> would compare object references
     const uniqueAttackSquares = new Map<string, Square>();
     for (const piece of pieces) {
-      const availableAttackSquares = ChessFactory.createChess(piece, game).getAvailableAttackSquares();
+      const availableAttackSquares = ChessFactory.createChess(
+        piece,
+        game,
+      ).getAvailableAttackSquares();
       for (const square of availableAttackSquares) {
         uniqueAttackSquares.set(`${square.x},${square.y}`, square);
       }

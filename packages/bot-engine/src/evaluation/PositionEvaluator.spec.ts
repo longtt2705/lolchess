@@ -1,10 +1,10 @@
-import { GameEngine } from "@lolchess/game-engine";
-import { PositionEvaluator } from "./PositionEvaluator";
-import { NeutralMonsterEvaluator } from "./NeutralMonsterEvaluator";
+import { GameEngine } from '@lolchess/game-engine';
+import { PositionEvaluator } from './PositionEvaluator';
+import { NeutralMonsterEvaluator } from './NeutralMonsterEvaluator';
 
-const CHAMPS = ["Garen", "Ahri", "Ashe", "Aatrox", "Janna"];
-const BLUE = "blue-player";
-const RED = "red-player";
+const CHAMPS = ['Garen', 'Ahri', 'Ashe', 'Aatrox', 'Janna'];
+const BLUE = 'blue-player';
+const RED = 'red-player';
 
 function makeGame(seed: number) {
   const engine = new GameEngine();
@@ -19,8 +19,8 @@ function makeGame(seed: number) {
   return { engine, game };
 }
 
-describe("PositionEvaluator symmetry", () => {
-  it("evaluates the starting position as a zero-sum mirror", () => {
+describe('PositionEvaluator symmetry', () => {
+  it('evaluates the starting position as a zero-sum mirror', () => {
     const { engine, game } = makeGame(42);
     const evaluator = new PositionEvaluator(engine);
 
@@ -30,7 +30,7 @@ describe("PositionEvaluator symmetry", () => {
     expect(blueScore).toBeCloseTo(-redScore, 3);
   });
 
-  it("stays symmetric after some moves have been played", () => {
+  it('stays symmetric after some moves have been played', () => {
     const { engine, game } = makeGame(7);
     const evaluator = new PositionEvaluator(engine);
 
@@ -45,7 +45,7 @@ describe("PositionEvaluator symmetry", () => {
     for (const m of moves) {
       const result = engine.processAction(state, {
         playerId: m.playerId,
-        event: "move_chess" as any,
+        event: 'move_chess' as any,
         casterPosition: m.casterPosition,
         targetPosition: m.targetPosition,
       });
@@ -53,13 +53,10 @@ describe("PositionEvaluator symmetry", () => {
       state = result.game;
     }
 
-    expect(evaluator.evaluate(state, BLUE)).toBeCloseTo(
-      -evaluator.evaluate(state, RED),
-      3
-    );
+    expect(evaluator.evaluate(state, BLUE)).toBeCloseTo(-evaluator.evaluate(state, RED), 3);
   });
 
-  it("is symmetric when a neutral monster (Drake) is on the board (exposes turn-bonus asymmetry)", () => {
+  it('is symmetric when a neutral monster (Drake) is on the board (exposes turn-bonus asymmetry)', () => {
     const { engine, game } = makeGame(42);
     const evaluator = new PositionEvaluator(engine);
 
@@ -68,9 +65,9 @@ describe("PositionEvaluator symmetry", () => {
     const template = game.board[0];
     const fakeDrake = {
       ...JSON.parse(JSON.stringify(template)),
-      id: "test-drake",
-      name: "Infernal Drake",
-      ownerId: "neutral",
+      id: 'test-drake',
+      name: 'Infernal Drake',
+      ownerId: 'neutral',
       blue: undefined,
       position: { x: 4, y: 3 },
       stats: { ...JSON.parse(JSON.stringify(template.stats)), hp: 250, maxHp: 250 },
@@ -79,15 +76,11 @@ describe("PositionEvaluator symmetry", () => {
 
     // Move a blue piece to be adjacent (y=2, same file) so it can attack the Drake.
     // Find an existing blue piece and teleport it.
-    const bluePiece = game.board.find(
-      (p) => p.ownerId === BLUE && p.stats.hp > 0
-    )!;
+    const bluePiece = game.board.find((p) => p.ownerId === BLUE && p.stats.hp > 0)!;
     bluePiece.position = { x: 4, y: 2 };
 
     // Move a red piece to also be adjacent (y=4) so both sides have range.
-    const redPiece = game.board.find(
-      (p) => p.ownerId === RED && p.stats.hp > 0
-    )!;
+    const redPiece = game.board.find((p) => p.ownerId === RED && p.stats.hp > 0)!;
     redPiece.position = { x: 4, y: 4 };
 
     // Set round to an even number so it is RED's turn.
@@ -102,7 +95,7 @@ describe("PositionEvaluator symmetry", () => {
     expect(blueScore).toBeCloseTo(-redScore, 3);
   });
 
-  it("NeutralMonsterEvaluator.evaluate is anti-symmetric: evaluate(A,B) === -evaluate(B,A)", () => {
+  it('NeutralMonsterEvaluator.evaluate is anti-symmetric: evaluate(A,B) === -evaluate(B,A)', () => {
     const { engine, game } = makeGame(42);
     const neutralEvaluator = new NeutralMonsterEvaluator(engine);
 
@@ -110,9 +103,9 @@ describe("PositionEvaluator symmetry", () => {
     const template = game.board[0];
     const fakeDrake = {
       ...JSON.parse(JSON.stringify(template)),
-      id: "test-drake",
-      name: "Infernal Drake",
-      ownerId: "neutral",
+      id: 'test-drake',
+      name: 'Infernal Drake',
+      ownerId: 'neutral',
       blue: undefined,
       position: { x: 4, y: 3 },
       stats: { ...JSON.parse(JSON.stringify(template.stats)), hp: 250, maxHp: 250 },
@@ -120,14 +113,10 @@ describe("PositionEvaluator symmetry", () => {
     (game.board as any[]).push(fakeDrake);
 
     // Teleport one blue piece and one red piece adjacent to the Drake.
-    const bluePiece = game.board.find(
-      (p) => p.ownerId === BLUE && p.stats.hp > 0
-    )!;
+    const bluePiece = game.board.find((p) => p.ownerId === BLUE && p.stats.hp > 0)!;
     bluePiece.position = { x: 4, y: 2 };
 
-    const redPiece = game.board.find(
-      (p) => p.ownerId === RED && p.stats.hp > 0
-    )!;
+    const redPiece = game.board.find((p) => p.ownerId === RED && p.stats.hp > 0)!;
     redPiece.position = { x: 4, y: 4 };
 
     // Use an even round so it's RED's turn — the bug gives blue a free +50
@@ -140,7 +129,7 @@ describe("PositionEvaluator symmetry", () => {
     expect(blueScore).toBeCloseTo(-redScore, 3);
   });
 
-  it("is symmetric when blue has a passed pawn and red does not (exposes passed-pawn asymmetry bug)", () => {
+  it('is symmetric when blue has a passed pawn and red does not (exposes passed-pawn asymmetry bug)', () => {
     // Arrange: teleport a blue Melee Minion deep into red territory and clear
     // all red minions (Melee, Caster, Siege) from files 0-2 so the blue minion
     // at (1,5) passes the isPassedPawnCheck and gets a nonzero passedPawn score.
@@ -149,7 +138,7 @@ describe("PositionEvaluator symmetry", () => {
 
     // Teleport the blue Melee Minion on file 1 to y=5 (deep into red territory)
     const blueMinion = game.board.find(
-      (p) => p.name === "Melee Minion" && p.ownerId === BLUE && p.position.x === 1
+      (p) => p.name === 'Melee Minion' && p.ownerId === BLUE && p.position.x === 1,
     )!;
     blueMinion.position = { x: 1, y: 5 };
 
@@ -157,7 +146,7 @@ describe("PositionEvaluator symmetry", () => {
     // passed-pawn check on the same/adjacent files ahead of the blue minion.
     game.board.forEach((p) => {
       if (
-        ["Melee Minion", "Caster Minion", "Siege Minion"].includes(p.name) &&
+        ['Melee Minion', 'Caster Minion', 'Siege Minion'].includes(p.name) &&
         p.ownerId === RED &&
         p.position.x >= 0 &&
         p.position.x <= 2
@@ -176,7 +165,7 @@ describe("PositionEvaluator symmetry", () => {
     expect(blueScore).toBeCloseTo(-redScore, 3);
   });
 
-  it("is symmetric in a mid-game position where pieces threaten each other (exposes safety sign bug)", () => {
+  it('is symmetric in a mid-game position where pieces threaten each other (exposes safety sign bug)', () => {
     // seed=42: blue pieces start at y=0..1, red at y=6..7
     // Advance blue minion e2->e3->e4 and mirror for red f7->f6->f5
     // This puts two minions adjacent (y=3 vs y=4), making safety non-zero
@@ -188,7 +177,7 @@ describe("PositionEvaluator symmetry", () => {
     // Blue minion e-file: x=4, y=1 -> y=2
     let result = engine.processAction(state, {
       playerId: BLUE,
-      event: "move_chess" as any,
+      event: 'move_chess' as any,
       casterPosition: { x: 4, y: 1 },
       targetPosition: { x: 4, y: 2 },
     });
@@ -198,7 +187,7 @@ describe("PositionEvaluator symmetry", () => {
     // Red minion e-file mirror: x=4, y=6 -> y=5
     result = engine.processAction(state, {
       playerId: RED,
-      event: "move_chess" as any,
+      event: 'move_chess' as any,
       casterPosition: { x: 4, y: 6 },
       targetPosition: { x: 4, y: 5 },
     });
@@ -208,7 +197,7 @@ describe("PositionEvaluator symmetry", () => {
     // Blue advances again: x=4, y=2 -> y=3
     result = engine.processAction(state, {
       playerId: BLUE,
-      event: "move_chess" as any,
+      event: 'move_chess' as any,
       casterPosition: { x: 4, y: 2 },
       targetPosition: { x: 4, y: 3 },
     });
@@ -218,7 +207,7 @@ describe("PositionEvaluator symmetry", () => {
     // Red advances again: x=4, y=5 -> y=4
     result = engine.processAction(state, {
       playerId: RED,
-      event: "move_chess" as any,
+      event: 'move_chess' as any,
       casterPosition: { x: 4, y: 5 },
       targetPosition: { x: 4, y: 4 },
     });
@@ -234,7 +223,7 @@ describe("PositionEvaluator symmetry", () => {
   });
 });
 
-describe("PositionEvaluator Poro execution pricing", () => {
+describe('PositionEvaluator Poro execution pricing', () => {
   // Regression for the seed-1014 loss mode: a legacy Siege Minion parked next
   // to the castled Poro executed it 10 HP at a time over 10 turns while the
   // bot was ahead on total HP. The flat -damage safety pricing (~-15 eval
@@ -255,18 +244,14 @@ describe("PositionEvaluator Poro execution pricing", () => {
     // Keep only the two Poros and one red Siege Minion bearing on the blue
     // Poro along an open file.
     const siege = game.board.find(
-      (p) => p.name === "Siege Minion" && p.ownerId === RED && p.stats.hp > 0
+      (p) => p.name === 'Siege Minion' && p.ownerId === RED && p.stats.hp > 0,
     )!;
     for (const p of game.board) {
-      if (p.name === "Poro" || p.id === siege.id) continue;
+      if (p.name === 'Poro' || p.id === siege.id) continue;
       p.stats.hp = 0;
     }
-    const bluePoro = game.board.find(
-      (p) => p.name === "Poro" && p.ownerId === BLUE
-    )!;
-    const redPoro = game.board.find(
-      (p) => p.name === "Poro" && p.ownerId === RED
-    )!;
+    const bluePoro = game.board.find((p) => p.name === 'Poro' && p.ownerId === BLUE)!;
+    const redPoro = game.board.find((p) => p.name === 'Poro' && p.ownerId === RED)!;
     bluePoro.position = { x: 1, y: 0 }; // castled corner
     bluePoro.stats.hp = poroHp;
     redPoro.position = { x: 7, y: 7 };
@@ -279,44 +264,37 @@ describe("PositionEvaluator Poro execution pricing", () => {
     const atFull = setupExecution(200);
     const atLow = setupExecution(60);
 
-    const safetyFull =
-      atFull.evaluator.evaluateWithBreakdown(atFull.game, BLUE).breakdown.safety;
-    const safetyLow =
-      atLow.evaluator.evaluateWithBreakdown(atLow.game, BLUE).breakdown.safety;
+    const safetyFull = atFull.evaluator.evaluateWithBreakdown(atFull.game, BLUE).breakdown.safety;
+    const safetyLow = atLow.evaluator.evaluateWithBreakdown(atLow.game, BLUE).breakdown.safety;
 
     // Same attacker, same damage per hit — but the low-HP Poro is closer to
     // execution, so the threat must price substantially worse.
     expect(safetyLow).toBeLessThan(safetyFull - 100);
   });
 
-  it("prices Poro chip threats above the castle walk-out cost while escape is still possible", () => {
+  it('prices Poro chip threats above the castle walk-out cost while escape is still possible', () => {
     // Walking out of the castled corner costs ~115 positional points
     // (+100 castle bonus lost, -15 step-out penalty). With several turns
     // still available to escape (hp well above per-hit damage), the safety
     // penalty (weighted 0.5 in the total) must already exceed that, or the
     // search will always prefer to stand and die slowly.
     const { evaluator, game } = setupExecution(100);
-    const withAttacker =
-      evaluator.evaluateWithBreakdown(game, BLUE).breakdown.safety;
+    const withAttacker = evaluator.evaluateWithBreakdown(game, BLUE).breakdown.safety;
 
     const noAttacker = setupExecution(100);
     const siege = noAttacker.game.board.find(
-      (p) => p.name === "Siege Minion" && p.ownerId === RED && p.stats.hp > 0
+      (p) => p.name === 'Siege Minion' && p.ownerId === RED && p.stats.hp > 0,
     )!;
     siege.stats.hp = 0;
-    const withoutAttacker =
-      noAttacker.evaluator.evaluateWithBreakdown(noAttacker.game, BLUE)
-        .breakdown.safety;
+    const withoutAttacker = noAttacker.evaluator.evaluateWithBreakdown(noAttacker.game, BLUE)
+      .breakdown.safety;
 
     const weightedPenalty = (withoutAttacker - withAttacker) * 0.5; // safety weight
     expect(weightedPenalty).toBeGreaterThan(115);
   });
 
-  it("stays anti-symmetric with the execution escalation active", () => {
+  it('stays anti-symmetric with the execution escalation active', () => {
     const { evaluator, game } = setupExecution(60);
-    expect(evaluator.evaluate(game, BLUE)).toBeCloseTo(
-      -evaluator.evaluate(game, RED),
-      3
-    );
+    expect(evaluator.evaluate(game, BLUE)).toBeCloseTo(-evaluator.evaluate(game, RED), 3);
   });
 });

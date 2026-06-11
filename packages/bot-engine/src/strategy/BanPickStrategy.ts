@@ -1,5 +1,5 @@
-import { champions } from "@lolchess/game-engine";
-import { ChampionRole, TeamComposition } from "../types";
+import { champions } from '@lolchess/game-engine';
+import { ChampionRole, TeamComposition } from '../types';
 
 /**
  * Strategy for champion banning, picking, and ordering
@@ -7,39 +7,33 @@ import { ChampionRole, TeamComposition } from "../types";
 export class BanPickStrategy {
   // High-priority champions to ban
   private static readonly PRIORITY_BANS = [
-    "Yasuo",
-    "Zed",
-    "Jhin",
+    'Yasuo',
+    'Zed',
+    'Jhin',
     "Kha'Zix",
-    "Viktor",
-    "Tristana",
-    "Blitzcrank",
-    "Malphite",
-    "Sion",
-    "Aatrox",
+    'Viktor',
+    'Tristana',
+    'Blitzcrank',
+    'Malphite',
+    'Sion',
+    'Aatrox',
   ];
 
   // Ideal team composition (roles to fill)
   private static readonly IDEAL_COMPOSITION: ChampionRole[] = [
-    "tank",      // 1st - frontline
-    "fighter",   // 2nd - damage + sustain
-    "marksman",  // 3rd - ranged damage
-    "mage",      // 4th - magic damage
-    "support",   // 5th - utility (or another damage if needed)
+    'tank', // 1st - frontline
+    'fighter', // 2nd - damage + sustain
+    'marksman', // 3rd - ranged damage
+    'mage', // 4th - magic damage
+    'support', // 5th - utility (or another damage if needed)
   ];
 
   /**
    * Get a champion to ban
    */
-  getBan(
-    bannedChampions: string[],
-    _blueBans?: string[],
-    _redBans?: string[]
-  ): string | null {
+  getBan(bannedChampions: string[], _blueBans?: string[], _redBans?: string[]): string | null {
     const allChampionNames = champions.map((c) => c.name);
-    const available = allChampionNames.filter(
-      (name) => !bannedChampions.includes(name)
-    );
+    const available = allChampionNames.filter((name) => !bannedChampions.includes(name));
 
     if (available.length === 0) return null;
 
@@ -57,11 +51,7 @@ export class BanPickStrategy {
   /**
    * Get a champion to pick
    */
-  getPick(
-    bannedChampions: string[],
-    alreadyPicked: string[],
-    botPicks: string[]
-  ): string | null {
+  getPick(bannedChampions: string[], alreadyPicked: string[], botPicks: string[]): string | null {
     const unavailable = [...bannedChampions, ...alreadyPicked];
     const available = champions.filter((c) => !unavailable.includes(c.name));
 
@@ -93,15 +83,13 @@ export class BanPickStrategy {
       return BanPickStrategy.IDEAL_COMPOSITION[pickIndex];
     }
     // Default to fighter for extra picks
-    return "fighter";
+    return 'fighter';
   }
 
   /**
    * Rank champions by overall strength
    */
-  private rankChampionsByStrength(
-    championList: typeof champions
-  ): typeof champions {
+  private rankChampionsByStrength(championList: typeof champions): typeof champions {
     return [...championList].sort((a, b) => {
       const scoreA = this.calculateChampionScore(a);
       const scoreB = this.calculateChampionScore(b);
@@ -112,9 +100,7 @@ export class BanPickStrategy {
   /**
    * Calculate a champion's overall strength score
    */
-  private calculateChampionScore(
-    champion: (typeof champions)[0]
-  ): number {
+  private calculateChampionScore(champion: (typeof champions)[0]): number {
     let score = 0;
 
     const stats = champion.stats;
@@ -149,13 +135,13 @@ export class BanPickStrategy {
 
     // Role-based adjustments
     switch (champion.role) {
-      case "assassin":
+      case 'assassin':
         score *= 1.15; // Assassins are strong in this game
         break;
-      case "marksman":
+      case 'marksman':
         score *= 1.1;
         break;
-      case "mage":
+      case 'mage':
         score *= 1.05;
         break;
     }
@@ -181,17 +167,17 @@ export class BanPickStrategy {
 
     for (const champ of championData) {
       switch (champ.role) {
-        case "tank":
+        case 'tank':
           tanks.push(champ.name);
           break;
-        case "fighter":
+        case 'fighter':
           fighters.push(champ.name);
           break;
-        case "support":
+        case 'support':
           supports.push(champ.name);
           break;
-        case "marksman":
-        case "mage":
+        case 'marksman':
+        case 'mage':
           ranged.push(champ.name);
           break;
         default:
@@ -210,7 +196,7 @@ export class BanPickStrategy {
   suggestCounter(
     opponentPicks: string[],
     bannedChampions: string[],
-    alreadyPicked: string[]
+    alreadyPicked: string[],
   ): string | null {
     const unavailable = [...bannedChampions, ...alreadyPicked];
     const available = champions.filter((c) => !unavailable.includes(c.name));
@@ -224,13 +210,12 @@ export class BanPickStrategy {
 
     // Counter logic
     const hasManySquishy =
-      opponentRoles.filter((r) => r === "mage" || r === "marksman").length >= 2;
-    const hasManyTanks =
-      opponentRoles.filter((r) => r === "tank" || r === "fighter").length >= 2;
+      opponentRoles.filter((r) => r === 'mage' || r === 'marksman').length >= 2;
+    const hasManyTanks = opponentRoles.filter((r) => r === 'tank' || r === 'fighter').length >= 2;
 
     if (hasManySquishy) {
       // Pick assassins to dive squishies
-      const assassins = available.filter((c) => c.role === "assassin");
+      const assassins = available.filter((c) => c.role === 'assassin');
       if (assassins.length > 0) {
         return this.rankChampionsByStrength(assassins)[0].name;
       }
@@ -240,8 +225,8 @@ export class BanPickStrategy {
       // Pick champions with %hp damage or armor pen
       const tankBusters = available.filter(
         (c) =>
-          c.name === "Aatrox" || // % hp damage
-          (c.stats.sunder && c.stats.sunder > 0) // Armor pen
+          c.name === 'Aatrox' || // % hp damage
+          (c.stats.sunder && c.stats.sunder > 0), // Armor pen
       );
       if (tankBusters.length > 0) {
         return this.rankChampionsByStrength(tankBusters)[0].name;

@@ -12,7 +12,7 @@ export interface Debuff {
   maxDuration: number; // original duration
   effects: DebuffEffect[]; // stat modifications
   damagePerTurn: number; // damage dealt each turn
-  damageType: "physical" | "magic" | "true" | "non-lethal"; // 'physical', 'magic', 'true', 'non-lethal'
+  damageType: 'physical' | 'magic' | 'true' | 'non-lethal'; // 'physical', 'magic', 'true', 'non-lethal'
   stun?: boolean; // whether the debuff is a stun
   healPerTurn: number; // heal each turn
   unique: boolean; // can only have one instance

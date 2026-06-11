@@ -44,7 +44,10 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: any): Promise<User> {
-    return this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).select('-password').exec();
+    return this.userModel
+      .findByIdAndUpdate(id, updateUserDto, { new: true })
+      .select('-password')
+      .exec();
   }
 
   async remove(id: string): Promise<User> {
@@ -52,14 +55,23 @@ export class UsersService {
   }
 
   async updateRating(id: string, newRating: number): Promise<User> {
-    return this.userModel.findByIdAndUpdate(id, { rating: newRating }, { new: true }).select('-password').exec();
+    return this.userModel
+      .findByIdAndUpdate(id, { rating: newRating }, { new: true })
+      .select('-password')
+      .exec();
   }
 
   async incrementWins(id: string): Promise<User> {
-    return this.userModel.findByIdAndUpdate(id, { $inc: { wins: 1 } }, { new: true }).select('-password').exec();
+    return this.userModel
+      .findByIdAndUpdate(id, { $inc: { wins: 1 } }, { new: true })
+      .select('-password')
+      .exec();
   }
 
   async incrementLosses(id: string): Promise<User> {
-    return this.userModel.findByIdAndUpdate(id, { $inc: { losses: 1 } }, { new: true }).select('-password').exec();
+    return this.userModel
+      .findByIdAndUpdate(id, { $inc: { losses: 1 } }, { new: true })
+      .select('-password')
+      .exec();
   }
 }

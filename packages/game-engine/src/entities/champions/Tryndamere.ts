@@ -1,19 +1,19 @@
-import { Debuff } from "../../types";
-import { ChessObject } from "../ChessObject";
+import { Debuff } from '../../types';
+import { ChessObject } from '../ChessObject';
 
 export class Tryndamere extends ChessObject {
   private createUndyingRageDebuff(): Debuff {
     return {
-      id: "undying_rage",
-      name: "Undying Rage",
-      description: "Survive with 1 HP for 2 turns.",
+      id: 'undying_rage',
+      name: 'Undying Rage',
+      description: 'Survive with 1 HP for 2 turns.',
       duration: 2,
       maxDuration: 2,
       effects: [
         {
-          stat: "hp",
+          stat: 'hp',
           modifier: 0,
-          type: "add",
+          type: 'add',
         },
       ],
       damagePerTurn: 0,
@@ -23,10 +23,10 @@ export class Tryndamere extends ChessObject {
   protected postTakenDamage(
     attacker: ChessObject,
     damage: number,
-    damageType: "physical" | "magic" | "true"
+    damageType: 'physical' | 'magic' | 'true',
   ): void {
     super.postTakenDamage(attacker, damage, damageType);
-    if (this.hasDebuff("undying_rage")) {
+    if (this.hasDebuff('undying_rage')) {
       if (this.chess.stats.hp <= 0) {
         this.chess.stats.hp = 1;
       }
@@ -43,9 +43,6 @@ export class Tryndamere extends ChessObject {
   }
 
   get ad(): number {
-    return (
-      super.ad +
-      Math.floor((this.maxHp - this.chess.stats.hp) / 5) * (1 + this.ap * 0.05)
-    );
+    return super.ad + Math.floor((this.maxHp - this.chess.stats.hp) / 5) * (1 + this.ap * 0.05);
   }
 }

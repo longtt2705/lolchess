@@ -1,19 +1,9 @@
-import { ChessObject } from "../entities/ChessObject";
-import { ChessFactory } from "../entities/ChessFactory";
-import { ChampionData, champions } from "../data/champions";
-import {
-  basicItems,
-  getViktorModulesCount,
-  getItemById,
-  findCombinedItem,
-} from "../data/items";
-import { getAdjacentSquares as getAdjacentSquaresHelper, getPieceById } from "../utils/helpers";
-import {
-  SeededRandom,
-  clearGameRng,
-  getGameRng,
-  setGameRng,
-} from "../utils/SeededRandom";
+import { ChessObject } from '../entities/ChessObject';
+import { ChessFactory } from '../entities/ChessFactory';
+import { ChampionData, champions } from '../data/champions';
+import { basicItems, getViktorModulesCount, getItemById, findCombinedItem } from '../data/items';
+import { getAdjacentSquares as getAdjacentSquaresHelper, getPieceById } from '../utils/helpers';
+import { SeededRandom, clearGameRng, getGameRng, setGameRng } from '../utils/SeededRandom';
 import {
   ActionDetails,
   Chess,
@@ -26,7 +16,7 @@ import {
   SummonerSpellType,
   createSummonerSpell,
   SUMMONER_SPELLS,
-} from "../types";
+} from '../types';
 
 // Shop rotation constants
 export const SHOP_ITEMS_COUNT = 3; // Number of items displayed in shop
@@ -53,7 +43,7 @@ export function isDevelopmentMode(): boolean {
 export class GameLogic {
   public static processGame(game: Game, event: EventPayload): Game {
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     // Initialize RNG from game state
@@ -69,25 +59,19 @@ export class GameLogic {
     }
   }
 
-  private static _processGameInternal(
-    game: Game,
-    event: EventPayload,
-    rng: SeededRandom
-  ): Game {
+  private static _processGameInternal(game: Game, event: EventPayload, rng: SeededRandom): Game {
     const isBlue = event.playerId === game.bluePlayer;
 
     let casterChess: Chess | null = null;
     if (event.event === GameEvent.BUY_ITEM) {
       casterChess = game.board.find(
-        (chess) =>
-          chess.id === event.targetChampionId &&
-          chess.ownerId === event.playerId
+        (chess) => chess.id === event.targetChampionId && chess.ownerId === event.playerId,
       );
     } else {
       casterChess = this.getChess(game, isBlue, event.casterPosition);
     }
     if (!casterChess) {
-      throw new Error("Caster not found");
+      throw new Error('Caster not found');
     }
 
     // Initialize action details
@@ -120,49 +104,31 @@ export class GameLogic {
     });
 
     // Check if the caster is stunned (cannot perform move, attack, or skill actions)
-    const isStunned =
-      casterChess.debuffs?.some((debuff) => debuff.stun) ?? false;
+    const isStunned = casterChess.debuffs?.some((debuff) => debuff.stun) ?? false;
 
     switch (event.event) {
       case GameEvent.MOVE_CHESS:
         if (isStunned) {
-          throw new Error("Stunned unit cannot move");
+          throw new Error('Stunned unit cannot move');
         }
-        this.processMoveChess(
-          game,
-          isBlue,
-          casterChess,
-          event.targetPosition,
-          actionDetails
-        );
+        this.processMoveChess(game, isBlue, casterChess, event.targetPosition, actionDetails);
         // Mark that a board action has been performed
         game.hasPerformedActionThisTurn = true;
         break;
       case GameEvent.ATTACK_CHESS: {
         if (isStunned) {
-          throw new Error("Stunned unit cannot attack");
+          throw new Error('Stunned unit cannot attack');
         }
-        this.processAttackChess(
-          game,
-          isBlue,
-          casterChess,
-          event.targetPosition,
-          actionDetails
-        );
+        this.processAttackChess(game, isBlue, casterChess, event.targetPosition, actionDetails);
         // Mark that a board action has been performed
         game.hasPerformedActionThisTurn = true;
         break;
       }
       case GameEvent.SKILL: {
         if (isStunned) {
-          throw new Error("Stunned unit cannot use skills");
+          throw new Error('Stunned unit cannot use skills');
         }
-        this.processSkill(
-          game,
-          casterChess,
-          event.targetPosition,
-          actionDetails
-        );
+        this.processSkill(game, casterChess, event.targetPosition, actionDetails);
         // Mark that a board action has been performed
         game.hasPerformedActionThisTurn = true;
         break;
@@ -173,20 +139,20 @@ export class GameLogic {
           event.playerId,
           event.itemId!,
           event.targetChampionId,
-          actionDetails
+          actionDetails,
         );
         break;
       }
       case GameEvent.USE_SUMMONER_SPELL: {
         if (isStunned) {
-          throw new Error("Stunned unit cannot use summoner spells");
+          throw new Error('Stunned unit cannot use summoner spells');
         }
         this.processUseSummonerSpell(
           game,
           isBlue,
           casterChess,
           event.targetPosition,
-          actionDetails
+          actionDetails,
         );
         // Summoner spells do NOT count as a board action - can still move/attack/skill after
         break;
@@ -210,19 +176,17 @@ export class GameLogic {
           }
         }
         // Track other stat changes
-        ["ad", "ap", "speed", "physicalResistance", "magicResistance"].forEach(
-          (stat) => {
-            if (before[stat] !== piece.stats[stat]) {
-              actionDetails.statChanges![`${piece.id}.${stat}`] = {
-                oldValue: before[stat],
-                newValue: piece.stats[stat],
-              };
-              if (!actionDetails.affectedPieceIds.includes(piece.id)) {
-                actionDetails.affectedPieceIds.push(piece.id);
-              }
+        ['ad', 'ap', 'speed', 'physicalResistance', 'magicResistance'].forEach((stat) => {
+          if (before[stat] !== piece.stats[stat]) {
+            actionDetails.statChanges![`${piece.id}.${stat}`] = {
+              oldValue: before[stat],
+              newValue: piece.stats[stat],
+            };
+            if (!actionDetails.affectedPieceIds.includes(piece.id)) {
+              actionDetails.affectedPieceIds.push(piece.id);
             }
           }
-        );
+        });
       }
     });
 
@@ -238,10 +202,7 @@ export class GameLogic {
 
     // Only post-process (end turn) for board actions (move, attack, skill)
     // Buy item and summoner spells do not end the turn
-    if (
-      event.event !== GameEvent.BUY_ITEM &&
-      event.event !== GameEvent.USE_SUMMONER_SPELL
-    ) {
+    if (event.event !== GameEvent.BUY_ITEM && event.event !== GameEvent.USE_SUMMONER_SPELL) {
       this.postProcessGame(game);
     }
     return game;
@@ -257,16 +218,10 @@ export class GameLogic {
     return game;
   }
 
-  public static getChess(
-    game: Game,
-    isBlue: boolean,
-    square: Square
-  ): Chess | null {
+  public static getChess(game: Game, isBlue: boolean, square: Square): Chess | null {
     const chess = game.board.find(
       (chess) =>
-        chess.position.x === square.x &&
-        chess.position.y === square.y &&
-        chess.stats.hp > 0
+        chess.position.x === square.x && chess.position.y === square.y && chess.stats.hp > 0,
     );
     if (!chess) {
       return null;
@@ -290,11 +245,11 @@ export class GameLogic {
     isBlue: boolean,
     casterChess: Chess,
     targetPosition: Square,
-    actionDetails: ActionDetails
+    actionDetails: ActionDetails,
   ): Game {
     const targetChess = this.getChess(game, isBlue, targetPosition);
     if (targetChess) {
-      throw new Error("Target is already occupied");
+      throw new Error('Target is already occupied');
     }
 
     actionDetails.fromPosition = {
@@ -314,7 +269,7 @@ export class GameLogic {
     isBlue: boolean,
     casterChess: Chess,
     targetPosition: Square,
-    actionDetails: ActionDetails
+    actionDetails: ActionDetails,
   ): Game {
     // First try to find an enemy piece
     let targetChess = this.getChess(game, !isBlue, targetPosition);
@@ -327,12 +282,12 @@ export class GameLogic {
             chess.position.x === targetPosition.x &&
             chess.position.y === targetPosition.y &&
             chess.stats.hp > 0 &&
-            chess.ownerId === "neutral"
+            chess.ownerId === 'neutral',
         ) || null;
     }
 
     if (!targetChess) {
-      throw new Error("Target not found");
+      throw new Error('Target not found');
     }
 
     actionDetails.targetId = targetChess.id;
@@ -341,18 +296,15 @@ export class GameLogic {
     // Check if Guinsoo's Rageblade will proc on this attack (before executing the attack)
     // For Sand Soldiers, check Azir's items instead
     let guinsooRageblade;
-    if (
-      casterChess.name === "Sand Soldier" &&
-      casterChess.skill?.payload?.azirId
-    ) {
+    if (casterChess.name === 'Sand Soldier' && casterChess.skill?.payload?.azirId) {
       // Find Azir on the board
       const azir = getPieceById(game, casterChess.skill.payload?.azirId);
       if (azir) {
-        guinsooRageblade = ChessFactory.createChess(azir, game).getItem("guinsoo_rageblade");
+        guinsooRageblade = ChessFactory.createChess(azir, game).getItem('guinsoo_rageblade');
       }
     } else {
       // Normal chess pieces - check their own items
-      guinsooRageblade = ChessFactory.createChess(casterChess, game).getItem("guinsoo_rageblade");
+      guinsooRageblade = ChessFactory.createChess(casterChess, game).getItem('guinsoo_rageblade');
     }
 
     if (guinsooRageblade && guinsooRageblade.currentCooldown <= 0) {
@@ -372,22 +324,21 @@ export class GameLogic {
     if (casterChess.skill?.payload) {
       // Yasuo's Way of the Wanderer: whirlwindTargets (triggered on critical strike)
       if (casterChess.skill.payload?.whirlwindTargets !== undefined) {
-        actionDetails.whirlwindTargets =
-          casterChess.skill.payload?.whirlwindTargets;
+        actionDetails.whirlwindTargets = casterChess.skill.payload?.whirlwindTargets;
         // Clear the payload after copying so it doesn't persist to next attack
         delete casterChess.skill.payload?.whirlwindTargets;
       }
 
       // Jhin and Tristana's 4th shot detection
       if (
-        (casterChess.name === "Jhin" || casterChess.name === "Tristana") &&
+        (casterChess.name === 'Jhin' || casterChess.name === 'Tristana') &&
         casterChess.skill.payload?.attackCount !== undefined &&
         casterChess.skill.payload?.attackCount % 4 === 0
       ) {
         actionDetails.fourthShotProc = true;
 
         // For Tristana, collect AOE targets (adjacent enemies hit by explosion)
-        if (casterChess.name === "Tristana") {
+        if (casterChess.name === 'Tristana') {
           const adjacentSquares = this.getAdjacentSquares(targetPosition);
           const aoeTargets: Array<{
             targetId: string;
@@ -418,7 +369,7 @@ export class GameLogic {
     game: Game,
     casterChess: Chess,
     skillPosition?: Square,
-    actionDetails?: ActionDetails
+    actionDetails?: ActionDetails,
   ): Game {
     if (actionDetails && casterChess.skill) {
       actionDetails.skillName = casterChess.skill.name;
@@ -427,8 +378,7 @@ export class GameLogic {
       // Set targetId if there's a piece at the target position
       if (skillPosition) {
         const targetChess =
-          this.getChess(game, true, skillPosition) ||
-          this.getChess(game, false, skillPosition);
+          this.getChess(game, true, skillPosition) || this.getChess(game, false, skillPosition);
         if (targetChess) {
           actionDetails.targetId = targetChess.id;
         }
@@ -443,13 +393,11 @@ export class GameLogic {
       (piece) =>
         piece.blue !== casterChess.blue && // Enemy team
         piece.stats.hp > 0 &&
-        piece.items.some((item) => item.id === "ionic_spark")
+        piece.items.some((item) => item.id === 'ionic_spark'),
     );
 
     for (const holder of ionicSparkHolders) {
-      const ionicSparkItem = holder.items.find(
-        (item) => item.id === "ionic_spark"
-      );
+      const ionicSparkItem = holder.items.find((item) => item.id === 'ionic_spark');
       if (ionicSparkItem && ionicSparkItem.currentCooldown <= 0) {
         // Calculate damage: 5x skill cooldown
         const skillCooldown = casterChess.skill?.cooldown || 0;
@@ -457,12 +405,7 @@ export class GameLogic {
 
         // Deal magic damage from Ionic Spark holder to caster
         const holderObject = ChessFactory.createChess(holder, game);
-        holderObject.dealDamage(
-          chessObject,
-          damage,
-          "magic",
-          holderObject.sunder
-        );
+        holderObject.dealDamage(chessObject, damage, 'magic', holderObject.sunder);
 
         // Set item on cooldown
         ionicSparkItem.currentCooldown = ionicSparkItem.cooldown || 7;
@@ -473,30 +416,25 @@ export class GameLogic {
     if (actionDetails && casterChess.skill?.payload) {
       // Blitzcrank's Rocket Grab: pulledToPosition
       if (casterChess.skill.payload?.pulledToPosition) {
-        actionDetails.pulledToPosition =
-          casterChess.skill.payload?.pulledToPosition;
+        actionDetails.pulledToPosition = casterChess.skill.payload?.pulledToPosition;
       }
 
       // Twisted Fate's Pick a Card: cardTargets
       if (casterChess.skill.payload?.cardTargets) {
-        (actionDetails as any).cardTargets =
-          casterChess.skill.payload?.cardTargets;
+        (actionDetails as any).cardTargets = casterChess.skill.payload?.cardTargets;
       }
       if (casterChess.skill.payload?.totalCardCount) {
-        (actionDetails as any).totalCardCount =
-          casterChess.skill.payload?.totalCardCount;
+        (actionDetails as any).totalCardCount = casterChess.skill.payload?.totalCardCount;
       }
 
       // Viktor's Siphon Power: viktorModules
       if (casterChess.skill.payload?.viktorModules) {
-        (actionDetails as any).viktorModules =
-          casterChess.skill.payload?.viktorModules;
+        (actionDetails as any).viktorModules = casterChess.skill.payload?.viktorModules;
       }
 
       // Leona's Solar Flare: sunlightTargets
       if (casterChess.skill.payload?.sunlightTargets) {
-        (actionDetails as any).sunlightTargets =
-          casterChess.skill.payload?.sunlightTargets;
+        (actionDetails as any).sunlightTargets = casterChess.skill.payload?.sunlightTargets;
       }
     }
 
@@ -533,16 +471,11 @@ export class GameLogic {
     // Refresh shop items after red player's turn every SHOP_REFRESH_INTERVAL rounds
     // (currentRound - 1) is the just-completed round; check if it's a refresh interval
     const justCompletedRound = game.currentRound - 1;
-    if (
-      justCompletedRound > 0 &&
-      justCompletedRound % SHOP_REFRESH_INTERVAL === 0
-    ) {
+    if (justCompletedRound > 0 && justCompletedRound % SHOP_REFRESH_INTERVAL === 0) {
       this.shuffleShopItems(game);
     }
 
-    const currentPlayerId = this.isBlueTurn(game)
-      ? game.bluePlayer
-      : game.redPlayer;
+    const currentPlayerId = this.isBlueTurn(game) ? game.bluePlayer : game.redPlayer;
 
     // Reset turn action flags for the new turn
     game.hasBoughtItemThisTurn = false;
@@ -550,9 +483,7 @@ export class GameLogic {
     game.hasPerformedActionThisTurn = false;
 
     // Find the player by index to ensure proper mutation
-    const playerIndex = game.players.findIndex(
-      (p) => p.userId === currentPlayerId
-    );
+    const playerIndex = game.players.findIndex((p) => p.userId === currentPlayerId);
     if (playerIndex !== -1) {
       game.players[playerIndex].gold += 5;
     }
@@ -581,9 +512,7 @@ export class GameLogic {
   }
 
   // Debug method to show all active auras in the game
-  public static getActiveAuras(
-    game: Game
-  ): Array<{ chessName: string; auras: any[] }> {
+  public static getActiveAuras(game: Game): Array<{ chessName: string; auras: any[] }> {
     const result: Array<{ chessName: string; auras: any[] }> = [];
 
     game.board.forEach((chess) => {
@@ -619,17 +548,9 @@ export class GameLogic {
         if (!targetChess || targetChess === sourceChess) return;
         if (targetChess.stats.hp <= 0) return;
 
-        if (
-          sourceChessObject.isInAuraRange(sourceChess, targetChess, aura.range)
-        ) {
+        if (sourceChessObject.isInAuraRange(sourceChess, targetChess, aura.range)) {
           aura.effects.forEach((effect: any) => {
-            if (
-              sourceChessObject.shouldAuraAffectTarget(
-                sourceChess,
-                targetChess,
-                effect.target
-              )
-            ) {
+            if (sourceChessObject.shouldAuraAffectTarget(sourceChess, targetChess, effect.target)) {
               targets.push({
                 targetName: targetChess.name,
                 auraName: aura.name,
@@ -646,9 +567,7 @@ export class GameLogic {
 
   // Check for pawn promotion according to RULE.md
   private static checkPawnPromotion(game: Game): Game {
-    const meleeMinions = game.board.filter(
-      (chess) => chess.name === "Melee Minion"
-    );
+    const meleeMinions = game.board.filter((chess) => chess.name === 'Melee Minion');
 
     meleeMinions.forEach((minion) => {
       const shouldPromote = this.shouldPromoteMinion(minion);
@@ -674,7 +593,7 @@ export class GameLogic {
 
   private static promoteMinion(minion: Chess): void {
     // Transform Melee Minion into Super Minion with enhanced stats
-    minion.name = "Super Minion";
+    minion.name = 'Super Minion';
     minion.stats.maxHp = 300;
     minion.stats.hp = 300; // Full health on promotion
     minion.stats.ad = 100;
@@ -693,10 +612,10 @@ export class GameLogic {
     blueChampions?: string[],
     redChampions?: string[],
     blueSummonerSpells?: Record<string, SummonerSpellType>,
-    redSummonerSpells?: Record<string, SummonerSpellType>
+    redSummonerSpells?: Record<string, SummonerSpellType>,
   ): Game {
     if (!game.bluePlayer || !game.redPlayer) {
-      throw new Error("Both players must be assigned before initializing game");
+      throw new Error('Both players must be assigned before initializing game');
     }
 
     game.board = [];
@@ -708,27 +627,21 @@ export class GameLogic {
     this.initRedPieces(game, redChampions, redSummonerSpells);
 
     // Set initial game state
-    game.status = "in_progress";
+    game.status = 'in_progress';
     game.currentRound = 1;
-    game.phase = "gameplay";
+    game.phase = 'gameplay';
     game.hasBoughtItemThisTurn = false;
     game.hasPerformedActionThisTurn = false;
 
     // Initialize player gold (starting gold from game settings)
-    const bluePlayerIndex = game.players.findIndex(
-      (p) => p.userId === game.bluePlayer
-    );
-    const redPlayerIndex = game.players.findIndex(
-      (p) => p.userId === game.redPlayer
-    );
+    const bluePlayerIndex = game.players.findIndex((p) => p.userId === game.bluePlayer);
+    const redPlayerIndex = game.players.findIndex((p) => p.userId === game.redPlayer);
     const devModeGold = isDevelopmentMode() ? 1000 : 0;
     if (bluePlayerIndex !== -1) {
-      game.players[bluePlayerIndex].gold =
-        devModeGold || game.gameSettings?.startingGold || 0;
+      game.players[bluePlayerIndex].gold = devModeGold || game.gameSettings?.startingGold || 0;
     }
     if (redPlayerIndex !== -1) {
-      game.players[redPlayerIndex].gold =
-        devModeGold || game.gameSettings?.startingGold || 0;
+      game.players[redPlayerIndex].gold = devModeGold || game.gameSettings?.startingGold || 0;
     }
 
     // Initialize shop items with random selection
@@ -742,109 +655,77 @@ export class GameLogic {
   private static initBluePieces(
     game: Game,
     champions?: string[],
-    summonerSpells?: Record<string, SummonerSpellType>
+    summonerSpells?: Record<string, SummonerSpellType>,
   ): void {
     const bluePlayerId = game.bluePlayer!;
 
     // Rank 1 (y=0): Back rank pieces
     // a1 & h1: Siege Minions (Rooks)
-    game.board.push(
-      this.createPiece("Siege Minion", { x: 0, y: 0 }, bluePlayerId, true)
-    );
-    game.board.push(
-      this.createPiece("Siege Minion", { x: 7, y: 0 }, bluePlayerId, true)
-    );
+    game.board.push(this.createPiece('Siege Minion', { x: 0, y: 0 }, bluePlayerId, true));
+    game.board.push(this.createPiece('Siege Minion', { x: 7, y: 0 }, bluePlayerId, true));
 
     // e1: Poro (King)
-    game.board.push(
-      this.createPiece("Poro", { x: 4, y: 0 }, bluePlayerId, true)
-    );
+    game.board.push(this.createPiece('Poro', { x: 4, y: 0 }, bluePlayerId, true));
 
     // b1, c1, d1, f1, g1: Champions (from ban/pick phase)
     const championPositions = [1, 2, 3, 5, 6]; // b1, c1, d1, f1, g1
     championPositions.forEach((x, index) => {
-      const championName =
-        champions && champions[index] ? champions[index] : "Garen"; // Default champion
+      const championName = champions && champions[index] ? champions[index] : 'Garen'; // Default champion
       const spellType = summonerSpells?.[championName];
       const champion = this.createChampionPiece(
         championName,
         { x, y: 0 },
         bluePlayerId,
         true,
-        spellType
+        spellType,
       );
       game.board.push(champion);
     });
 
     // Rank 2 (y=1): Minions
     // a2 & h2: Caster Minions
-    game.board.push(
-      this.createPiece("Caster Minion", { x: 0, y: 1 }, bluePlayerId, true)
-    );
-    game.board.push(
-      this.createPiece("Caster Minion", { x: 7, y: 1 }, bluePlayerId, true)
-    );
+    game.board.push(this.createPiece('Caster Minion', { x: 0, y: 1 }, bluePlayerId, true));
+    game.board.push(this.createPiece('Caster Minion', { x: 7, y: 1 }, bluePlayerId, true));
 
     // b2 through g2: Melee Minions
     for (let x = 1; x <= 6; x++) {
-      game.board.push(
-        this.createPiece("Melee Minion", { x, y: 1 }, bluePlayerId, true)
-      );
+      game.board.push(this.createPiece('Melee Minion', { x, y: 1 }, bluePlayerId, true));
     }
   }
 
   private static initRedPieces(
     game: Game,
     champions?: string[],
-    summonerSpells?: Record<string, SummonerSpellType>
+    summonerSpells?: Record<string, SummonerSpellType>,
   ): void {
     const redPlayerId = game.redPlayer!;
 
     // Rank 8 (y=7): Back rank pieces
     // a8 & h8: Siege Minions (Rooks)
-    game.board.push(
-      this.createPiece("Siege Minion", { x: 0, y: 7 }, redPlayerId, false)
-    );
-    game.board.push(
-      this.createPiece("Siege Minion", { x: 7, y: 7 }, redPlayerId, false)
-    );
+    game.board.push(this.createPiece('Siege Minion', { x: 0, y: 7 }, redPlayerId, false));
+    game.board.push(this.createPiece('Siege Minion', { x: 7, y: 7 }, redPlayerId, false));
 
     // e8: Poro (King)
-    game.board.push(
-      this.createPiece("Poro", { x: 4, y: 7 }, redPlayerId, false)
-    );
+    game.board.push(this.createPiece('Poro', { x: 4, y: 7 }, redPlayerId, false));
 
     // b8, c8, d8, f8, g8: Champions (from ban/pick phase)
     const championPositions = [1, 2, 3, 5, 6]; // b8, c8, d8, f8, g8
     championPositions.forEach((x, index) => {
-      const championName =
-        champions && champions[index] ? champions[index] : "Aatrox"; // Default champion
+      const championName = champions && champions[index] ? champions[index] : 'Aatrox'; // Default champion
       const spellType = summonerSpells?.[championName];
       game.board.push(
-        this.createChampionPiece(
-          championName,
-          { x, y: 7 },
-          redPlayerId,
-          false,
-          spellType
-        )
+        this.createChampionPiece(championName, { x, y: 7 }, redPlayerId, false, spellType),
       );
     });
 
     // Rank 7 (y=6): Minions
     // a7 & h7: Caster Minions
-    game.board.push(
-      this.createPiece("Caster Minion", { x: 0, y: 6 }, redPlayerId, false)
-    );
-    game.board.push(
-      this.createPiece("Caster Minion", { x: 7, y: 6 }, redPlayerId, false)
-    );
+    game.board.push(this.createPiece('Caster Minion', { x: 0, y: 6 }, redPlayerId, false));
+    game.board.push(this.createPiece('Caster Minion', { x: 7, y: 6 }, redPlayerId, false));
 
     // b7 through g7: Melee Minions
     for (let x = 1; x <= 6; x++) {
-      game.board.push(
-        this.createPiece("Melee Minion", { x, y: 6 }, redPlayerId, false)
-      );
+      game.board.push(this.createPiece('Melee Minion', { x, y: 6 }, redPlayerId, false));
     }
   }
 
@@ -852,9 +733,9 @@ export class GameLogic {
     type: string,
     position: Square,
     ownerId: string,
-    isBlue: boolean
+    isBlue: boolean,
   ): Chess {
-    const pieceId = `${type.toLowerCase().replace(/\s+/g, "_")}_${position.x}_${position.y}_${Date.now()}`;
+    const pieceId = `${type.toLowerCase().replace(/\s+/g, '_')}_${position.x}_${position.y}_${Date.now()}`;
 
     const baseStats = this.getPieceBaseStats(type);
     const { attackProjectile, ...statsOnly } = baseStats;
@@ -864,21 +745,17 @@ export class GameLogic {
       name: type,
       position,
       startingPosition: { x: position.x, y: position.y },
-      cannotMoveBackward: type === "Melee Minion" || type === "Caster Minion",
-      canOnlyMoveVertically:
-        type === "Melee Minion" || type === "Caster Minion",
+      cannotMoveBackward: type === 'Melee Minion' || type === 'Caster Minion',
+      canOnlyMoveVertically: type === 'Melee Minion' || type === 'Caster Minion',
       hasMovedBefore: false,
-      cannotAttack: type === "Poro",
+      cannotAttack: type === 'Poro',
       ownerId,
       blue: isBlue,
       stats: {
         ...statsOnly,
         hp: statsOnly.maxHp, // Start with full HP
       },
-      skill:
-        type !== "Poro" && !type.includes("Minion")
-          ? this.getDefaultSkill(type)
-          : undefined,
+      skill: type !== 'Poro' && !type.includes('Minion') ? this.getDefaultSkill(type) : undefined,
       attackProjectile: attackProjectile, // Add attackProjectile at the piece level
       items: [],
       debuffs: [],
@@ -913,13 +790,12 @@ export class GameLogic {
         lifesteal: 0,
         durability: 0,
         skill: {
-          type: "passive",
-          name: "Poro Resilience",
-          description:
-            "Cannot take more than 50% of max HP as damage from a single source.",
+          type: 'passive',
+          name: 'Poro Resilience',
+          description: 'Cannot take more than 50% of max HP as damage from a single source.',
           cooldown: 0,
           currentCooldown: 0,
-          targetTypes: "none",
+          targetTypes: 'none',
           attackRange: {
             range: 0,
             diagonal: false,
@@ -953,7 +829,7 @@ export class GameLogic {
         lifesteal: 0,
         durability: 0,
       },
-      "Siege Minion": {
+      'Siege Minion': {
         maxHp: 200,
         ad: 40,
         ap: 0,
@@ -977,15 +853,15 @@ export class GameLogic {
         lifesteal: 0,
         durability: 0,
         attackProjectile: {
-          shape: "missile",
-          color: "#FF6600",
-          trailColor: "#FF9944",
+          shape: 'missile',
+          color: '#FF6600',
+          trailColor: '#FF9944',
           size: 1.2,
           speed: 0.9,
-          icon: "💣",
+          icon: '💣',
         },
       },
-      "Melee Minion": {
+      'Melee Minion': {
         maxHp: 100,
         ad: 25,
         ap: 0,
@@ -1009,7 +885,7 @@ export class GameLogic {
         lifesteal: 0,
         durability: 0,
       },
-      "Caster Minion": {
+      'Caster Minion': {
         maxHp: 50,
         ad: 35,
         ap: 0,
@@ -1033,15 +909,15 @@ export class GameLogic {
         lifesteal: 0,
         durability: 0,
         attackProjectile: {
-          shape: "orb",
-          color: "#9966FF",
-          trailColor: "#BB99FF",
+          shape: 'orb',
+          color: '#9966FF',
+          trailColor: '#BB99FF',
           size: 0.6,
           speed: 1.2,
-          icon: "⚫",
+          icon: '⚫',
         },
       },
-      "Super Minion": {
+      'Super Minion': {
         maxHp: 500,
         ad: 50,
         ap: 0,
@@ -1065,7 +941,7 @@ export class GameLogic {
         lifesteal: 0,
         durability: 0,
       },
-      "Sand Soldier": {
+      'Sand Soldier': {
         maxHp: 100,
         ad: 10,
         ap: 10,
@@ -1089,16 +965,16 @@ export class GameLogic {
         lifesteal: 0,
         durability: 0,
         attackProjectile: {
-          shape: "spear",
-          color: "#DAA520",
-          trailColor: "#F4A460",
+          shape: 'spear',
+          color: '#DAA520',
+          trailColor: '#F4A460',
           size: 1.0,
           speed: 1.2,
         },
       },
     };
 
-    return stats[type] || stats["Champion"];
+    return stats[type] || stats['Champion'];
   }
 
   private static createChampionPiece(
@@ -1106,19 +982,17 @@ export class GameLogic {
     position: Square,
     ownerId: string,
     isBlue: boolean,
-    summonerSpellType?: SummonerSpellType
+    summonerSpellType?: SummonerSpellType,
   ): Chess {
     // Import champion data to get accurate stats
-    const championData = champions.find(
-      (c: ChampionData) => c.name === championName
-    );
+    const championData = champions.find((c: ChampionData) => c.name === championName);
 
     if (!championData) {
       // Fallback to default champion
-      return this.createPiece("Champion", position, ownerId, isBlue);
+      return this.createPiece('Champion', position, ownerId, isBlue);
     }
 
-    const pieceId = `${championName.toLowerCase().replace(/\s+/g, "_")}_${position.x}_${position.y}_${Date.now()}`;
+    const pieceId = `${championName.toLowerCase().replace(/\s+/g, '_')}_${position.x}_${position.y}_${Date.now()}`;
 
     const result = {
       id: pieceId,
@@ -1161,32 +1035,30 @@ export class GameLogic {
       },
       skill: championData.skill
         ? {
-          type: championData.skill.type,
-          name: championData.skill.name,
-          description: championData.skill.description,
-          cooldown: championData.skill.cooldown,
-          currentCooldown: championData.skill.currentCooldown || 0,
-          attackRange: championData.skill.attackRange ||
-            championData.stats.attackRange || {
-            range: 1,
-            diagonal: true,
-            horizontal: true,
-            vertical: true,
-          },
-          targetTypes: championData.skill.targetTypes || "none",
-        }
+            type: championData.skill.type,
+            name: championData.skill.name,
+            description: championData.skill.description,
+            cooldown: championData.skill.cooldown,
+            currentCooldown: championData.skill.currentCooldown || 0,
+            attackRange: championData.skill.attackRange ||
+              championData.stats.attackRange || {
+                range: 1,
+                diagonal: true,
+                horizontal: true,
+                vertical: true,
+              },
+            targetTypes: championData.skill.targetTypes || 'none',
+          }
         : undefined,
       items: [],
       debuffs: [],
       auras: championData.aura ? [championData.aura] : [],
       shields: [],
-      summonerSpell: summonerSpellType
-        ? createSummonerSpell(summonerSpellType)
-        : undefined,
+      summonerSpell: summonerSpellType ? createSummonerSpell(summonerSpellType) : undefined,
     } as Chess;
 
     // Initialize Viktor's module data in skill.payload if this is Viktor
-    if (championName === "Viktor") {
+    if (championName === 'Viktor') {
       const rng = getGameRng();
       result.skill.payload = {
         currentModuleIndex: rng.nextInt(0, getViktorModulesCount()), // Random starting module (deterministic)
@@ -1201,9 +1073,9 @@ export class GameLogic {
   private static getDefaultSkill(type: string): any {
     // Return a basic skill structure - would be replaced with actual champion skills
     return {
-      type: "passive",
-      name: "Default Skill",
-      description: "Default skill for " + type,
+      type: 'passive',
+      name: 'Default Skill',
+      description: 'Default skill for ' + type,
       cooldown: 0,
       currentCooldown: 0,
       attackRange: {
@@ -1213,7 +1085,7 @@ export class GameLogic {
         vertical: true,
         lShape: false,
       },
-      targetTypes: "none",
+      targetTypes: 'none',
     };
   }
 
@@ -1237,29 +1109,25 @@ export class GameLogic {
 
   // Drake type names for checking if any drake exists
   private static readonly DRAKE_TYPES = [
-    "Infernal Drake",
-    "Cloud Drake",
-    "Mountain Drake",
-    "Hextech Drake",
-    "Ocean Drake",
-    "Chemtech Drake",
-    "Elder Dragon",
+    'Infernal Drake',
+    'Cloud Drake',
+    'Mountain Drake',
+    'Hextech Drake',
+    'Ocean Drake',
+    'Chemtech Drake',
+    'Elder Dragon',
   ];
 
   private static spawnDrake(game: Game): void {
     // Check if any Drake already exists on the board
-    const existingDrake = game.board.find((chess) =>
-      this.DRAKE_TYPES.includes(chess.name)
-    );
+    const existingDrake = game.board.find((chess) => this.DRAKE_TYPES.includes(chess.name));
     if (existingDrake) return;
 
     const drakePosition = { x: 8, y: 3 }; // i4 position (i=8, 4=3 in 0-indexed)
 
     // Check if position is occupied by another piece
     const occupiedByPiece = game.board.find(
-      (chess) =>
-        chess.position.x === drakePosition.x &&
-        chess.position.y === drakePosition.y
+      (chess) => chess.position.x === drakePosition.x && chess.position.y === drakePosition.y,
     );
 
     // If position is occupied, don't spawn yet (will retry next turn)
@@ -1274,21 +1142,14 @@ export class GameLogic {
 
     if (game.drakesKilled >= 4) {
       // After 4 drakes killed, only Elder Dragon spawns
-      drakeName = "Elder Dragon";
+      drakeName = 'Elder Dragon';
       drakeHp = 250;
       drakeResistance = 30;
     } else {
       // Ensure drake pool exists and is not empty
       if (!game.drakePool || game.drakePool.length === 0) {
         // Reinitialize pool if it's empty or undefined
-        game.drakePool = [
-          "Infernal",
-          "Cloud",
-          "Mountain",
-          "Hextech",
-          "Ocean",
-          "Chemtech",
-        ];
+        game.drakePool = ['Infernal', 'Cloud', 'Mountain', 'Hextech', 'Ocean', 'Chemtech'];
       }
 
       // Pick a random drake type from the remaining pool
@@ -1309,7 +1170,7 @@ export class GameLogic {
       position: drakePosition,
       cannotMoveBackward: false,
       cannotAttack: false,
-      ownerId: "neutral",
+      ownerId: 'neutral',
       blue: false, // Neutral
       stats: {
         hp: drakeHp,
@@ -1348,18 +1209,14 @@ export class GameLogic {
 
   private static spawnBaron(game: Game): void {
     // Check if Baron already exists
-    const existingBaron = game.board.find(
-      (chess) => chess.name === "Baron Nashor"
-    );
+    const existingBaron = game.board.find((chess) => chess.name === 'Baron Nashor');
     if (existingBaron) return;
 
     const baronPosition = { x: -1, y: 4 }; // z5 position (z=-1, 5=4 in 0-indexed)
 
     // Check if position is occupied by another piece
     const occupiedByPiece = game.board.find(
-      (chess) =>
-        chess.position.x === baronPosition.x &&
-        chess.position.y === baronPosition.y
+      (chess) => chess.position.x === baronPosition.x && chess.position.y === baronPosition.y,
     );
 
     // If position is occupied, don't spawn yet (will retry next turn)
@@ -1369,11 +1226,11 @@ export class GameLogic {
 
     const baron: Chess = {
       id: `baron_${game.currentRound}`,
-      name: "Baron Nashor",
+      name: 'Baron Nashor',
       position: baronPosition,
       cannotMoveBackward: false,
       cannotAttack: false,
-      ownerId: "neutral",
+      ownerId: 'neutral',
       blue: false, // Neutral
       stats: {
         hp: 300,
@@ -1417,9 +1274,7 @@ export class GameLogic {
     // Check for Drake respawn (every 5 turns after initial spawn if dead)
     if (game.currentRound > 5 && (game.currentRound - 5) % 5 === 0) {
       // Check if any drake type exists on the board
-      const drake = game.board.find((chess) =>
-        this.DRAKE_TYPES.includes(chess.name)
-      );
+      const drake = game.board.find((chess) => this.DRAKE_TYPES.includes(chess.name));
       if (!drake) {
         this.spawnDrake(game);
       }
@@ -1427,7 +1282,7 @@ export class GameLogic {
 
     // Check for Baron respawn (every 10 turns after initial spawn if dead)
     if (game.currentRound > 20 && (game.currentRound - 20) % 10 === 0) {
-      const baron = game.board.find((chess) => chess.name === "Baron Nashor");
+      const baron = game.board.find((chess) => chess.name === 'Baron Nashor');
       if (!baron) {
         this.spawnBaron(game);
       }
@@ -1440,15 +1295,15 @@ export class GameLogic {
     isBlue: boolean,
     caster: Chess,
     targetPosition: Square | undefined,
-    actionDetails: ActionDetails
+    actionDetails: ActionDetails,
   ): Game {
     // Check if caster has a summoner spell
     if (!caster.summonerSpell) {
-      throw new Error("This champion does not have a summoner spell");
+      throw new Error('This champion does not have a summoner spell');
     }
 
     if (game.hasUsedSummonerSpellThisTurn) {
-      throw new Error("Cannot use a summoner spell after using another one");
+      throw new Error('Cannot use a summoner spell after using another one');
     }
 
     const spell = caster.summonerSpell;
@@ -1456,7 +1311,7 @@ export class GameLogic {
     // Check if spell is on cooldown
     if (spell.currentCooldown > 0) {
       throw new Error(
-        `Summoner spell ${spell.type} is on cooldown (${spell.currentCooldown} turns remaining)`
+        `Summoner spell ${spell.type} is on cooldown (${spell.currentCooldown} turns remaining)`,
       );
     }
 
@@ -1487,15 +1342,15 @@ export class GameLogic {
     playerId: string,
     itemId: string,
     championId?: string,
-    actionDetails?: ActionDetails
+    actionDetails?: ActionDetails,
   ): Game {
     // Validate purchase timing
     if (game.hasBoughtItemThisTurn) {
-      throw new Error("Already bought an item this turn");
+      throw new Error('Already bought an item this turn');
     }
 
     if (game.hasPerformedActionThisTurn) {
-      throw new Error("Cannot buy items after performing a board action");
+      throw new Error('Cannot buy items after performing a board action');
     }
 
     if (actionDetails) {
@@ -1504,7 +1359,7 @@ export class GameLogic {
     }
     const playerIndex = game.players.findIndex((p) => p.userId === playerId);
     if (playerIndex === -1) {
-      throw new Error("Player not found");
+      throw new Error('Player not found');
     }
     const player = game.players[playerIndex];
 
@@ -1512,7 +1367,7 @@ export class GameLogic {
     const itemData = getItemById(itemId);
 
     if (!itemData) {
-      throw new Error("Item not found");
+      throw new Error('Item not found');
     }
 
     // Check if this is a Viktor module
@@ -1520,35 +1375,31 @@ export class GameLogic {
 
     // Only basic items OR Viktor modules can be purchased directly
     if (!itemData.isBasic && !isViktorModule) {
-      throw new Error(
-        "Can only purchase basic items. Combined items are created automatically."
-      );
+      throw new Error('Can only purchase basic items. Combined items are created automatically.');
     }
 
     // Calculate current item price with inflation (only for basic items, not Viktor modules)
-    const itemCost = isViktorModule
-      ? itemData.cost
-      : this.getCurrentItemPrice(player);
+    const itemCost = isViktorModule ? itemData.cost : this.getCurrentItemPrice(player);
 
     if (player.gold < itemCost) {
-      throw new Error("Insufficient gold");
+      throw new Error('Insufficient gold');
     }
 
     if (!championId) {
-      throw new Error("Must specify a champion to give the item to");
+      throw new Error('Must specify a champion to give the item to');
     }
 
     const champion = game.board.find(
-      (chess) => chess.id === championId && chess.ownerId === playerId
+      (chess) => chess.id === championId && chess.ownerId === playerId,
     );
     if (!champion) {
-      throw new Error("Champion not found or not owned by player");
+      throw new Error('Champion not found or not owned by player');
     }
 
     // Viktor modules can only be bought for Viktor
     if (isViktorModule) {
-      if (champion.name !== "Viktor") {
-        throw new Error("Viktor modules can only be equipped by Viktor");
+      if (champion.name !== 'Viktor') {
+        throw new Error('Viktor modules can only be equipped by Viktor');
       }
 
       // Initialize Viktor's module data in skill.payload if not present
@@ -1565,46 +1416,44 @@ export class GameLogic {
       const currentModuleIndex = champion.skill.payload?.currentModuleIndex;
       const expectedModuleId = `viktor_module_${(currentModuleIndex % 5) + 1}`;
       if (itemId !== expectedModuleId) {
-        throw new Error(
-          "This module is not currently available in Viktor's shop"
-        );
+        throw new Error("This module is not currently available in Viktor's shop");
       }
 
       // Check damage thresholds: 50/150/300 for 1st/2nd/3rd modules
       const modulesPurchased = champion.items.filter(
-        (item) => getItemById(item.id)?.isViktorModule
+        (item) => getItemById(item.id)?.isViktorModule,
       ).length;
       const damageThresholds = [50, 150, 300];
       const requiredDamage = damageThresholds[modulesPurchased] || 9999;
 
       if (champion.skill.payload?.cumulativeDamage < requiredDamage) {
         throw new Error(
-          `Need ${requiredDamage} cumulative Siphon Power damage to unlock this module (current: ${champion.skill.payload?.cumulativeDamage})`
+          `Need ${requiredDamage} cumulative Siphon Power damage to unlock this module (current: ${champion.skill.payload?.cumulativeDamage})`,
         );
       }
     }
 
     // Only champions can receive items (not minions, Poro, or neutral monsters)
     const nonChampionTypes = [
-      "Poro",
-      "Melee Minion",
-      "Caster Minion",
-      "Siege Minion",
-      "Super Minion",
-      "Drake",
-      "Baron Nashor",
+      'Poro',
+      'Melee Minion',
+      'Caster Minion',
+      'Siege Minion',
+      'Super Minion',
+      'Drake',
+      'Baron Nashor',
     ];
     if (nonChampionTypes.includes(champion.name)) {
-      throw new Error("Only champions can equip items");
+      throw new Error('Only champions can equip items');
     }
 
     if (champion.items.length >= 3) {
       if (champion.items.length === 3) {
         if (champion.items.every((item) => !getItemById(item.id)?.isBasic)) {
-          throw new Error("Champion already has maximum items (3)");
+          throw new Error('Champion already has maximum items (3)');
         }
       } else {
-        throw new Error("Champion already has maximum items (3)");
+        throw new Error('Champion already has maximum items (3)');
       }
     }
 
@@ -1620,7 +1469,7 @@ export class GameLogic {
     };
 
     const championObject = ChessFactory.createChess(champion, game);
-    let maxHpBefore = championObject.maxHp;
+    const maxHpBefore = championObject.maxHp;
     championObject.acquireItem(newItem);
 
     // Check for item combining (TFT-style) - but not for Viktor modules
@@ -1630,44 +1479,43 @@ export class GameLogic {
 
     // After combining, check if champion has more than 3 items
     if (championObject.chess.items.length > 3) {
-      throw new Error("Champion already has maximum items (3)");
+      throw new Error('Champion already has maximum items (3)');
     }
 
-    let maxHpAfter = championObject.maxHp;
-    let hpIncrease = maxHpAfter - maxHpBefore;
+    const maxHpAfter = championObject.maxHp;
+    const hpIncrease = maxHpAfter - maxHpBefore;
     championObject.chess.stats.hp += hpIncrease;
 
     // For Viktor modules, shuffle to next module in rotation
     if (isViktorModule && champion.skill?.payload) {
       champion.skill.payload.currentModuleIndex =
-        (champion.skill.payload.currentModuleIndex + 1) %
-        getViktorModulesCount();
+        (champion.skill.payload.currentModuleIndex + 1) % getViktorModulesCount();
 
       // Check if Viktor now has 3 modules (all item slots are modules)
       const moduleCount = champion.items.filter(
-        (item) => getItemById(item.id)?.isViktorModule
+        (item) => getItemById(item.id)?.isViktorModule,
       ).length;
       if (moduleCount >= 3) {
         // Apply permanent 50% AP bonus as a debuff
         const hasGloriousEvolution = champion.debuffs?.some(
-          (d) => d.id === "viktor_glorious_evolution"
+          (d) => d.id === 'viktor_glorious_evolution',
         );
         if (!hasGloriousEvolution) {
           const apBonusDebuff = {
-            id: "viktor_glorious_evolution",
-            name: "Glorious Evolution",
-            description: "Viktor has fully evolved, gaining 50% bonus AP.",
+            id: 'viktor_glorious_evolution',
+            name: 'Glorious Evolution',
+            description: 'Viktor has fully evolved, gaining 50% bonus AP.',
             duration: -1,
             maxDuration: -1,
             effects: [
               {
-                stat: "ap",
+                stat: 'ap',
                 modifier: 1.5,
-                type: "multiply",
+                type: 'multiply',
               },
             ],
             damagePerTurn: 0,
-            damageType: "magic" as const,
+            damageType: 'magic' as const,
             healPerTurn: 0,
             stun: false,
             unique: true,
@@ -1675,7 +1523,7 @@ export class GameLogic {
             maximumStacks: 1,
             appliedAt: Date.now(),
             casterPlayerId: playerId,
-            casterName: "Viktor",
+            casterName: 'Viktor',
           };
           if (!champion.debuffs) {
             champion.debuffs = [];
@@ -1702,17 +1550,14 @@ export class GameLogic {
    * Price = baseItemCost + (itemsBought * inflationStep)
    */
   public static getCurrentItemPrice(player: Player): number {
-    return (
-      player.baseItemCost +
-      Math.min(player.itemsBought, 4) * player.inflationStep
-    );
+    return player.baseItemCost + Math.min(player.itemsBought, 4) * player.inflationStep;
   }
 
   // Convert item effects to ChessStats format
   private static convertItemEffectsToStats(effects: any[]): any {
     const stats: any = {};
     effects.forEach((effect) => {
-      if (effect.type === "add") {
+      if (effect.type === 'add') {
         stats[effect.stat] = effect.value;
       }
     });
@@ -1723,9 +1568,7 @@ export class GameLogic {
   private static checkAndCombineItems(champion: ChessObject): void {
     if (champion.chess.items.length < 2) return;
 
-    const championBasicItems = champion.chess.items.filter(
-      (item) => getItemById(item.id)?.isBasic
-    );
+    const championBasicItems = champion.chess.items.filter((item) => getItemById(item.id)?.isBasic);
 
     // Check all pairs of items for possible combinations
     for (let i = 0; i < championBasicItems.length - 1; i++) {
@@ -1738,9 +1581,7 @@ export class GameLogic {
         if (combinedItemData) {
           // Check if champion already has this unique item
           if (combinedItemData.unique) {
-            const hasUnique = champion.chess.items.some(
-              (item) => item.id === combinedItemData.id
-            );
+            const hasUnique = champion.chess.items.some((item) => item.id === combinedItemData.id);
             if (hasUnique) continue; // Skip if already has this unique item
           }
 
@@ -1772,20 +1613,16 @@ export class GameLogic {
 
   private static isMinion(name: string): boolean {
     return (
-      name === "Melee Minion" ||
-      name === "Caster Minion" ||
-      name === "Siege Minion" ||
-      name === "Super Minion"
+      name === 'Melee Minion' ||
+      name === 'Caster Minion' ||
+      name === 'Siege Minion' ||
+      name === 'Super Minion'
     );
   }
 
-  private static applyDrakeSoulBuff(
-    game: Game,
-    playerId: string,
-    drakeName: string
-  ): void {
+  private static applyDrakeSoulBuff(game: Game, playerId: string, drakeName: string): void {
     const playerPieces = game.board.filter(
-      (chess) => chess.ownerId === playerId && !this.isMinion(chess.name)
+      (chess) => chess.ownerId === playerId && !this.isMinion(chess.name),
     );
 
     playerPieces.forEach((chess) => {
@@ -1793,149 +1630,149 @@ export class GameLogic {
       let debuff: Debuff | null = null;
 
       switch (drakeName) {
-        case "Infernal Drake":
+        case 'Infernal Drake':
           // +15% AD and AP (as percentage multiplier)
           debuff = {
-            id: "infernal_drake_buff",
-            name: "Infernal Drake",
-            description: "+15% AD and AP",
+            id: 'infernal_drake_buff',
+            name: 'Infernal Drake',
+            description: '+15% AD and AP',
             duration: -1, // Permanent
             maxDuration: -1,
             effects: [
-              { stat: "ad", modifier: 15, type: "percentAdd" },
-              { stat: "ap", modifier: 15, type: "percentAdd" },
+              { stat: 'ad', modifier: 15, type: 'percentAdd' },
+              { stat: 'ap', modifier: 15, type: 'percentAdd' },
             ],
             damagePerTurn: 0,
-            damageType: "physical",
+            damageType: 'physical',
             healPerTurn: 0,
             unique: true,
             appliedAt: Date.now(),
             casterPlayerId: playerId,
-            casterName: "Infernal Drake",
-            cause: "infernal_drake_buff",
+            casterName: 'Infernal Drake',
+            cause: 'infernal_drake_buff',
           } as Debuff;
           break;
 
-        case "Cloud Drake":
+        case 'Cloud Drake':
           // +1 move speed
           debuff = {
-            id: "cloud_drake_buff",
-            name: "Cloud Drake",
-            description: "+1 move speed",
+            id: 'cloud_drake_buff',
+            name: 'Cloud Drake',
+            description: '+1 move speed',
             duration: -1, // Permanent
             maxDuration: -1,
-            effects: [{ stat: "speed", modifier: 1, type: "add" }],
+            effects: [{ stat: 'speed', modifier: 1, type: 'add' }],
             damagePerTurn: 0,
-            damageType: "physical",
+            damageType: 'physical',
             healPerTurn: 0,
             unique: true,
             appliedAt: Date.now(),
             casterPlayerId: playerId,
-            casterName: "Cloud Drake",
-            cause: "cloud_drake_buff",
+            casterName: 'Cloud Drake',
+            cause: 'cloud_drake_buff',
           } as Debuff;
           break;
 
-        case "Mountain Drake":
+        case 'Mountain Drake':
           // +25 physical and magic resistance
           debuff = {
-            id: "mountain_drake_buff",
-            name: "Mountain Drake",
-            description: "+25 physical and magic resistance",
+            id: 'mountain_drake_buff',
+            name: 'Mountain Drake',
+            description: '+25 physical and magic resistance',
             duration: -1, // Permanent
             maxDuration: -1,
             effects: [
-              { stat: "physicalResistance", modifier: 25, type: "add" },
-              { stat: "magicResistance", modifier: 25, type: "add" },
+              { stat: 'physicalResistance', modifier: 25, type: 'add' },
+              { stat: 'magicResistance', modifier: 25, type: 'add' },
             ],
             damagePerTurn: 0,
-            damageType: "physical",
+            damageType: 'physical',
             healPerTurn: 0,
             unique: true,
             appliedAt: Date.now(),
             casterPlayerId: playerId,
-            casterName: "Mountain Drake",
-            cause: "mountain_drake_buff",
+            casterName: 'Mountain Drake',
+            cause: 'mountain_drake_buff',
           } as Debuff;
           break;
 
-        case "Hextech Drake":
+        case 'Hextech Drake':
           // +10 cooldown reduction
           debuff = {
-            id: "hextech_drake_buff",
-            name: "Hextech Drake",
-            description: "+10 cooldown reduction",
+            id: 'hextech_drake_buff',
+            name: 'Hextech Drake',
+            description: '+10 cooldown reduction',
             duration: -1, // Permanent
             maxDuration: -1,
-            effects: [{ stat: "cooldownReduction", modifier: 10, type: "add" }],
+            effects: [{ stat: 'cooldownReduction', modifier: 10, type: 'add' }],
             damagePerTurn: 0,
-            damageType: "physical",
+            damageType: 'physical',
             healPerTurn: 0,
             unique: true,
             appliedAt: Date.now(),
             casterPlayerId: playerId,
-            casterName: "Hextech Drake",
-            cause: "hextech_drake_buff",
+            casterName: 'Hextech Drake',
+            cause: 'hextech_drake_buff',
           } as Debuff;
           break;
 
-        case "Ocean Drake":
+        case 'Ocean Drake':
           // +5 HP regen
           debuff = {
-            id: "ocean_drake_buff",
-            name: "Ocean Drake",
-            description: "+5 HP regen per turn",
+            id: 'ocean_drake_buff',
+            name: 'Ocean Drake',
+            description: '+5 HP regen per turn',
             duration: -1, // Permanent
             maxDuration: -1,
-            effects: [{ stat: "hpRegen", modifier: 5, type: "add" }],
+            effects: [{ stat: 'hpRegen', modifier: 5, type: 'add' }],
             damagePerTurn: 0,
-            damageType: "physical",
+            damageType: 'physical',
             healPerTurn: 0,
             unique: true,
             appliedAt: Date.now(),
             casterPlayerId: playerId,
-            casterName: "Ocean Drake",
-            cause: "ocean_drake_buff",
+            casterName: 'Ocean Drake',
+            cause: 'ocean_drake_buff',
           } as Debuff;
           break;
 
-        case "Chemtech Drake":
+        case 'Chemtech Drake':
           // +10 durability
           debuff = {
-            id: "chemtech_drake_buff",
-            name: "Chemtech Drake",
-            description: "+10 durability",
+            id: 'chemtech_drake_buff',
+            name: 'Chemtech Drake',
+            description: '+10 durability',
             duration: -1, // Permanent
             maxDuration: -1,
-            effects: [{ stat: "durability", modifier: 10, type: "add" }],
+            effects: [{ stat: 'durability', modifier: 10, type: 'add' }],
             damagePerTurn: 0,
-            damageType: "physical",
+            damageType: 'physical',
             healPerTurn: 0,
             unique: true,
             appliedAt: Date.now(),
             casterPlayerId: playerId,
-            casterName: "Chemtech Drake",
-            cause: "chemtech_drake_buff",
+            casterName: 'Chemtech Drake',
+            cause: 'chemtech_drake_buff',
           } as Debuff;
           break;
 
-        case "Elder Dragon":
+        case 'Elder Dragon':
           // Grant Elder buff - execute enemies below 15% HP (6 turns)
           debuff = {
-            id: "elder_drake_buff",
-            name: "Elder Dragon",
-            description: "Execute enemies below 15% HP",
+            id: 'elder_drake_buff',
+            name: 'Elder Dragon',
+            description: 'Execute enemies below 15% HP',
             duration: 6,
             maxDuration: 6,
             effects: [], // No stat effects, execution is handled in damage logic
             damagePerTurn: 0,
-            damageType: "physical",
+            damageType: 'physical',
             healPerTurn: 0,
             unique: true,
             appliedAt: Date.now(),
             casterPlayerId: playerId,
-            casterName: "Elder Dragon",
-            cause: "elder_drake_buff",
+            casterName: 'Elder Dragon',
+            cause: 'elder_drake_buff',
           } as Debuff;
           break;
       }
@@ -1950,9 +1787,7 @@ export class GameLogic {
     // Hand of Baron Buff:
     // - Minions and Siege Minions: +40 AD and +40 Physical Resistance
     // - Champions: +20 AP, +20 AD, +20 Physical Resistance, +20 Magic Resistance
-    const playerPieces = game.board.filter(
-      (chess) => chess.ownerId === playerId
-    );
+    const playerPieces = game.board.filter((chess) => chess.ownerId === playerId);
 
     playerPieces.forEach((chess) => {
       const chessObject = ChessFactory.createChess(chess, game);
@@ -1961,49 +1796,48 @@ export class GameLogic {
 
       if (isMinion) {
         chessObject.applyDebuff(chessObject, {
-          id: "baron_buff",
-          name: "Baron Buff",
+          id: 'baron_buff',
+          name: 'Baron Buff',
           description:
-            "Gain +20 AD and +20 AP, and +20 Physical and Magic Resistance. Minions cannot be affected by diagonal execution.",
+            'Gain +20 AD and +20 AP, and +20 Physical and Magic Resistance. Minions cannot be affected by diagonal execution.',
           duration: 8,
           maxDuration: 8,
           effects: [
-            { stat: "ad", modifier: 20, type: "add" },
-            { stat: "ap", modifier: 20, type: "add" },
-            { stat: "physicalResistance", modifier: 20, type: "add" },
-            { stat: "magicResistance", modifier: 20, type: "add" },
+            { stat: 'ad', modifier: 20, type: 'add' },
+            { stat: 'ap', modifier: 20, type: 'add' },
+            { stat: 'physicalResistance', modifier: 20, type: 'add' },
+            { stat: 'magicResistance', modifier: 20, type: 'add' },
           ],
           damagePerTurn: 0,
-          damageType: "physical",
+          damageType: 'physical',
           healPerTurn: 0,
           unique: true,
           appliedAt: Date.now(),
           casterPlayerId: playerId,
-          casterName: "Baron",
-          cause: "baron_buff",
+          casterName: 'Baron',
+          cause: 'baron_buff',
         } as Debuff);
       } else if (isChampion) {
         chessObject.applyDebuff(chessObject, {
-          id: "baron_buff",
-          name: "Baron Buff",
-          description:
-            "Gain +20 AP, +20 AD, +20 Physical and Magic Resistance.",
+          id: 'baron_buff',
+          name: 'Baron Buff',
+          description: 'Gain +20 AP, +20 AD, +20 Physical and Magic Resistance.',
           duration: 8,
           maxDuration: 8,
           effects: [
-            { stat: "ap", modifier: 20, type: "add" },
-            { stat: "ad", modifier: 20, type: "add" },
-            { stat: "physicalResistance", modifier: 20, type: "add" },
-            { stat: "magicResistance", modifier: 20, type: "add" },
+            { stat: 'ap', modifier: 20, type: 'add' },
+            { stat: 'ad', modifier: 20, type: 'add' },
+            { stat: 'physicalResistance', modifier: 20, type: 'add' },
+            { stat: 'magicResistance', modifier: 20, type: 'add' },
           ],
           damagePerTurn: 0,
-          damageType: "physical",
+          damageType: 'physical',
           healPerTurn: 0,
           unique: true,
           appliedAt: Date.now(),
           casterPlayerId: playerId,
-          casterName: "Baron",
-          cause: "baron_buff",
+          casterName: 'Baron',
+          cause: 'baron_buff',
         } as Debuff);
       }
     });
@@ -2014,26 +1848,26 @@ export class GameLogic {
    */
   private static isChampion(chess: Chess): boolean {
     const nonChampions = [
-      "Poro",
-      "Melee Minion",
-      "Caster Minion",
-      "Siege Minion",
-      "Super Minion",
-      "Sand Soldier",
+      'Poro',
+      'Melee Minion',
+      'Caster Minion',
+      'Siege Minion',
+      'Super Minion',
+      'Sand Soldier',
     ];
     const drakeNames = [
-      "Infernal Drake",
-      "Cloud Drake",
-      "Mountain Drake",
-      "Hextech Drake",
-      "Ocean Drake",
-      "Chemtech Drake",
-      "Elder Dragon",
+      'Infernal Drake',
+      'Cloud Drake',
+      'Mountain Drake',
+      'Hextech Drake',
+      'Ocean Drake',
+      'Chemtech Drake',
+      'Elder Dragon',
     ];
     return (
       !nonChampions.includes(chess.name) &&
       !drakeNames.includes(chess.name) &&
-      chess.name !== "Baron Nashor"
+      chess.name !== 'Baron Nashor'
     );
   }
 
@@ -2041,14 +1875,10 @@ export class GameLogic {
    * Find the nearest empty square to the team's Poro
    * Uses BFS to find the closest available position
    */
-  private static findNearestEmptySquareToPoro(
-    game: Game,
-    isBlue: boolean
-  ): Square | null {
+  private static findNearestEmptySquareToPoro(game: Game, isBlue: boolean): Square | null {
     // Find the team's Poro
     const poro = game.board.find(
-      (chess) =>
-        chess.name === "Poro" && chess.blue === isBlue && chess.stats.hp > 0
+      (chess) => chess.name === 'Poro' && chess.blue === isBlue && chess.stats.hp > 0,
     );
     if (!poro) return null;
 
@@ -2063,9 +1893,7 @@ export class GameLogic {
       // Check if this square is empty (no living piece)
       const isOccupied = game.board.some(
         (chess) =>
-          chess.position.x === current.x &&
-          chess.position.y === current.y &&
-          chess.stats.hp > 0
+          chess.position.x === current.x && chess.position.y === current.y && chess.stats.hp > 0,
       );
 
       if (!isOccupied) {
@@ -2091,9 +1919,7 @@ export class GameLogic {
    * Champions respawn at the nearest empty square to their team's Poro
    */
   private static processChampionRespawns(game: Game): void {
-    const currentPlayerId = this.isBlueTurn(game)
-      ? game.bluePlayer
-      : game.redPlayer;
+    const currentPlayerId = this.isBlueTurn(game) ? game.bluePlayer : game.redPlayer;
     const isBlue = currentPlayerId === game.bluePlayer;
 
     // Find dead champions ready to respawn for the current player
@@ -2104,7 +1930,7 @@ export class GameLogic {
           chess.stats.hp <= 0 &&
           chess.respawnAtRound !== undefined &&
           chess.respawnAtRound <= game.currentRound &&
-          this.isChampion(chess)
+          this.isChampion(chess),
       )
       .forEach((chess) => {
         const respawnPosition = this.findNearestEmptySquareToPoro(game, isBlue);
@@ -2122,20 +1948,18 @@ export class GameLogic {
 
   // Enhanced game over detection with stalemate
   private static checkGameOver(game: Game): Game {
-    const poros = game.board.filter(
-      (chess) => chess.name === "Poro" && chess.stats.hp > 0
-    );
+    const poros = game.board.filter((chess) => chess.name === 'Poro' && chess.stats.hp > 0);
 
     // Check if a Poro is killed
     if (poros.length === 1) {
-      game.status = "finished";
-      game.winner = poros[0].ownerId === game.bluePlayer ? "blue" : "red";
+      game.status = 'finished';
+      game.winner = poros[0].ownerId === game.bluePlayer ? 'blue' : 'red';
       return game;
     }
 
     // Draw if both sides have only Poro left
     if (poros.length === 2 && game.board.length === 2) {
-      game.status = "finished";
+      game.status = 'finished';
       game.winner = null;
     }
 

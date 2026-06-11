@@ -1,14 +1,11 @@
-import { Square } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { ChessFactory } from "../ChessFactory";
-import { getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { Square } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { ChessFactory } from '../ChessFactory';
+import { getAdjacentSquares, getChessAtPosition } from '../../utils/helpers';
 
 export class KhaZix extends ChessObject {
   // Check if a target is isolated (no allied pieces adjacent)
-  private isTargetIsolated(
-    targetPosition: Square,
-    targetIsBlue: boolean
-  ): boolean {
+  private isTargetIsolated(targetPosition: Square, targetIsBlue: boolean): boolean {
     const adjacentSquares = getAdjacentSquares(targetPosition);
 
     for (const square of adjacentSquares) {
@@ -23,17 +20,10 @@ export class KhaZix extends ChessObject {
 
   skill(position?: Square): void {
     // Find the target chess piece
-    const targetChess = getChessAtPosition(
-      this.game,
-      !this.chess.blue,
-      position
-    );
+    const targetChess = getChessAtPosition(this.game, !this.chess.blue, position);
 
     if (targetChess) {
-      const targetChessObject = ChessFactory.createChess(
-        targetChess,
-        this.game
-      );
+      const targetChessObject = ChessFactory.createChess(targetChess, this.game);
 
       // Base damage
       let damage = 65 + this.ad * 0.15 + this.ap * 0.15;
@@ -44,19 +34,13 @@ export class KhaZix extends ChessObject {
       }
 
       // Deal physical damage
-      this.activeSkillDamage(
-        targetChessObject,
-        damage,
-        "physical",
-        this,
-        this.sunder
-      );
+      this.activeSkillDamage(targetChessObject, damage, 'physical', this, this.sunder);
     }
   }
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -72,7 +56,7 @@ export class KhaZix extends ChessObject {
 
   public getActiveSkillValue(targetPosition?: Square | null): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 

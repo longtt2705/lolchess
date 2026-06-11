@@ -1,7 +1,7 @@
-import { Debuff, Square } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { ChessFactory } from "../ChessFactory";
-import { getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { Debuff, Square } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { ChessFactory } from '../ChessFactory';
+import { getAdjacentSquares, getChessAtPosition } from '../../utils/helpers';
 
 export class Ezreal extends ChessObject {
   skill(position?: Square): void {
@@ -16,20 +16,20 @@ export class Ezreal extends ChessObject {
 
     // Apply sunder buff to Ezreal for 3 turns
     this.applyDebuff(this, {
-      id: "arcane_shift_sunder",
-      name: "Arcane Shift",
+      id: 'arcane_shift_sunder',
+      name: 'Arcane Shift',
       description: `Increases sunder by ${Math.floor(sunderBonus)} for 3 turns.`,
       duration: 3,
       maxDuration: 3,
       effects: [
         {
-          stat: "sunder",
+          stat: 'sunder',
           modifier: sunderBonus,
-          type: "add",
+          type: 'add',
         },
       ],
       damagePerTurn: 0,
-      damageType: "magic",
+      damageType: 'magic',
       healPerTurn: 0,
       unique: true,
       appliedAt: Date.now(),
@@ -53,16 +53,9 @@ export class Ezreal extends ChessObject {
     }> = [];
 
     adjacentSquares.forEach((square) => {
-      const targetChess = getChessAtPosition(
-        this.game,
-        !this.chess.blue,
-        square
-      );
+      const targetChess = getChessAtPosition(this.game, !this.chess.blue, square);
       if (targetChess) {
-        const targetChessObject = ChessFactory.createChess(
-          targetChess,
-          this.game
-        );
+        const targetChessObject = ChessFactory.createChess(targetChess, this.game);
         adjacentEnemies.push({
           chess: targetChess,
           chessObject: targetChessObject,
@@ -73,18 +66,16 @@ export class Ezreal extends ChessObject {
     // Find the lowest health adjacent enemy
     if (adjacentEnemies.length > 0) {
       const lowestHealthEnemy = adjacentEnemies.reduce((lowest, current) => {
-        return current.chess.stats.hp < lowest.chess.stats.hp
-          ? current
-          : lowest;
+        return current.chess.stats.hp < lowest.chess.stats.hp ? current : lowest;
       });
 
       // Deal (10 + 40% AP + 10% AD) magic damage to the lowest health enemy
       this.activeSkillDamage(
         lowestHealthEnemy.chessObject,
         10 + this.ap * 0.4 + this.ad * 0.1,
-        "magic",
+        'magic',
         this,
-        this.sunder
+        this.sunder,
       );
 
       // Track this enemy for animation
@@ -106,7 +97,7 @@ export class Ezreal extends ChessObject {
   }
 
   protected getAttackPotential(): number {
-    if (this.hasDebuff("arcane_shift_sunder")) {
+    if (this.hasDebuff('arcane_shift_sunder')) {
       return super.getAttackPotential() + 10;
     }
     return super.getAttackPotential();
@@ -114,7 +105,7 @@ export class Ezreal extends ChessObject {
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -137,7 +128,7 @@ export class Ezreal extends ChessObject {
 
   public getActiveSkillValue(targetPosition?: Square | null): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 

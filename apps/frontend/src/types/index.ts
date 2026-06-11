@@ -14,7 +14,7 @@ export interface User {
 export interface Game {
   id: string;
   name: string;
-  status: "waiting" | "in_progress" | "finished";
+  status: 'waiting' | 'in_progress' | 'finished';
   players: Player[];
   maxPlayers: number;
   createdAt: string;
@@ -85,26 +85,26 @@ export interface GameSettings {
 
 export interface SocketEvents {
   // Client to server
-  "join-game": { gameId: string; playerId: string };
-  "leave-game": { gameId: string; playerId: string };
-  "buy-champion": { gameId: string; playerId: string; championId: string };
-  "sell-champion": { gameId: string; playerId: string; championId: string };
-  "move-champion": {
+  'join-game': { gameId: string; playerId: string };
+  'leave-game': { gameId: string; playerId: string };
+  'buy-champion': { gameId: string; playerId: string; championId: string };
+  'sell-champion': { gameId: string; playerId: string; championId: string };
+  'move-champion': {
     gameId: string;
     playerId: string;
     championId: string;
     from: string;
     to: string;
   };
-  "level-up": { gameId: string; playerId: string };
-  "refresh-shop": { gameId: string; playerId: string };
+  'level-up': { gameId: string; playerId: string };
+  'refresh-shop': { gameId: string; playerId: string };
 
   // Server to client
-  "game-state": { game: Game };
-  "player-joined": { player: Player };
-  "player-left": { playerId: string };
-  "round-started": { round: number };
-  "round-ended": { results: any[] };
-  "game-ended": { winner: Player };
+  'game-state': { game: Game };
+  'player-joined': { player: Player };
+  'player-left': { playerId: string };
+  'round-started': { round: number };
+  'round-ended': { results: any[] };
+  'game-ended': { winner: Player };
   error: { message: string };
 }

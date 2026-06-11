@@ -1,4 +1,4 @@
-import { SummonerSpellType } from "./SummonerSpell";
+import { SummonerSpellType } from './SummonerSpell';
 
 export interface BanPickState {
   phase: string;
@@ -19,4 +19,3 @@ export interface BanPickState {
   turnStartTime: number;
   turnTimeLimit: number;
 }
-

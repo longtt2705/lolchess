@@ -5,13 +5,13 @@ import {
   GameEngine,
   getPlayerPieces,
   getPieceAtPosition,
-} from "@lolchess/game-engine";
-import { EvaluationResult, EvaluationBreakdown } from "../types";
-import { MaterialEvaluator } from "./MaterialEvaluator";
-import { ThreatEvaluator } from "./ThreatEvaluator";
-import { LoSEvaluator } from "./LoSEvaluator";
-import { PassedPawnEvaluator } from "./PassedPawnEvaluator";
-import { NeutralMonsterEvaluator } from "./NeutralMonsterEvaluator";
+} from '@lolchess/game-engine';
+import { EvaluationResult, EvaluationBreakdown } from '../types';
+import { MaterialEvaluator } from './MaterialEvaluator';
+import { ThreatEvaluator } from './ThreatEvaluator';
+import { LoSEvaluator } from './LoSEvaluator';
+import { PassedPawnEvaluator } from './PassedPawnEvaluator';
+import { NeutralMonsterEvaluator } from './NeutralMonsterEvaluator';
 
 /**
  * Main position evaluator that combines all evaluation aspects
@@ -26,23 +26,20 @@ export class PositionEvaluator {
 
   // Evaluation weights
   private static readonly WEIGHTS = {
-    material: 0.8,    // Increased from 0.3 (rewards kills)
-    position: 1,    // Decreased from 0.6 (less emphasis on structure)
-    threats: 0.7,     // Increased from 1 (rewards attack potential)
-    safety: 0.5,      // Increased from 0.5 (prioritize survival, especially Poro)
+    material: 0.8, // Increased from 0.3 (rewards kills)
+    position: 1, // Decreased from 0.6 (less emphasis on structure)
+    threats: 0.7, // Increased from 1 (rewards attack potential)
+    safety: 0.5, // Increased from 0.5 (prioritize survival, especially Poro)
     mobility: 0.2,
     lineOfSight: 1, // Decreased from 1 (less emphasis on perfect positioning)
     passedPawn: 1.2, // High weight for promotion potential
     neutralMonster: 0.8, // Neutral monster control (Drake, Baron)
-    economy: 0.3,   // Gold-in-bank and skill-readiness advantage
+    economy: 0.3, // Gold-in-bank and skill-readiness advantage
   };
 
   constructor(private gameEngine: GameEngine) {
     this.materialEvaluator = new MaterialEvaluator();
-    this.threatEvaluator = new ThreatEvaluator(
-      gameEngine,
-      this.materialEvaluator
-    );
+    this.threatEvaluator = new ThreatEvaluator(gameEngine, this.materialEvaluator);
     this.losEvaluator = new LoSEvaluator();
     this.passedPawnEvaluator = new PassedPawnEvaluator(gameEngine);
     this.neutralMonsterEvaluator = new NeutralMonsterEvaluator(gameEngine);
@@ -63,7 +60,9 @@ export class PositionEvaluator {
     const lineOfSight = this.sanitizeNumber(this.evaluateLineOfSight(game, playerId, opponentId));
     const safety = this.sanitizeNumber(this.evaluateSafety(game, playerId, opponentId));
     const passedPawn = this.sanitizeNumber(this.evaluatePassedPawns(game, playerId, opponentId));
-    const neutralMonster = this.sanitizeNumber(this.evaluateNeutralMonsters(game, playerId, opponentId));
+    const neutralMonster = this.sanitizeNumber(
+      this.evaluateNeutralMonsters(game, playerId, opponentId),
+    );
     const economy = this.sanitizeNumber(this.evaluateEconomy(game, playerId, opponentId));
 
     const losPhaseMult = !this.gameEngine.isOpeningPhase(game) ? 0.3 : 1;
@@ -96,16 +95,8 @@ export class PositionEvaluator {
   /**
    * Evaluate material difference
    */
-  private evaluateMaterial(
-    game: Game,
-    playerId: string,
-    opponentId: string
-  ): number {
-    return this.materialEvaluator.evaluateDifference(
-      game,
-      playerId,
-      opponentId
-    );
+  private evaluateMaterial(game: Game, playerId: string, opponentId: string): number {
+    return this.materialEvaluator.evaluateDifference(game, playerId, opponentId);
   }
 
   /**
@@ -115,28 +106,20 @@ export class PositionEvaluator {
     game: Game,
     playerId: string,
     opponentId: string,
-    isBlue: boolean
+    isBlue: boolean,
   ): number {
     const playerPieces = getPlayerPieces(game, playerId);
     const opponentPieces = getPlayerPieces(game, opponentId);
 
-    const playerScore = this.calculatePositionalScore(
-      playerPieces,
-      opponentPieces,
-      isBlue
-    );
-    const opponentScore = this.calculatePositionalScore(
-      opponentPieces,
-      playerPieces,
-      !isBlue
-    );
+    const playerScore = this.calculatePositionalScore(playerPieces, opponentPieces, isBlue);
+    const opponentScore = this.calculatePositionalScore(opponentPieces, playerPieces, !isBlue);
     return playerScore - opponentScore;
   }
 
   private calculatePositionalScore(
     pieces: Chess[],
     opponentPieces: Chess[],
-    isBlue: boolean
+    isBlue: boolean,
   ): number {
     let score = 0;
 
@@ -180,17 +163,14 @@ export class PositionEvaluator {
       score += advancement * 2;
 
       // Champions in attacking positions worth more
-      if (
-        !this.materialEvaluator.isMinion(piece.name) &&
-        piece.name !== "Poro"
-      ) {
+      if (!this.materialEvaluator.isMinion(piece.name) && piece.name !== 'Poro') {
         score += advancement * 1.5;
       }
 
       // --- PORO LOGIC ---
 
       // 1. Poro Logic: Prioritize Castling (Safe Corners)
-      if (piece.name === "Poro") {
+      if (piece.name === 'Poro') {
         const safeRow = isBlue ? 0 : 7;
         const isBackRank = piece.position.y === safeRow;
 
@@ -217,12 +197,8 @@ export class PositionEvaluator {
         const supportY = isBlue ? piece.position.y - 1 : piece.position.y + 1;
 
         // Check diagonals behind for a friend (pawn chain)
-        const hasLeftSupport = piecePositions.has(
-          `${piece.position.x - 1},${supportY}`
-        );
-        const hasRightSupport = piecePositions.has(
-          `${piece.position.x + 1},${supportY}`
-        );
+        const hasLeftSupport = piecePositions.has(`${piece.position.x - 1},${supportY}`);
+        const hasRightSupport = piecePositions.has(`${piece.position.x + 1},${supportY}`);
         const hasBothSupport = hasLeftSupport && hasRightSupport;
         const isSupported = hasLeftSupport || hasRightSupport;
 
@@ -256,11 +232,7 @@ export class PositionEvaluator {
 
         // D. Passed Pawn Bonus
         // Bonus for minions with no enemy minions ahead in same/adjacent files
-        const isPassedPawn = this.isPassedPawn(
-          piece,
-          opponentMinionPositions,
-          isBlue
-        );
+        const isPassedPawn = this.isPassedPawn(piece, opponentMinionPositions, isBlue);
         if (isPassedPawn) {
           // Passed pawn bonus scales with advancement
           score += 50 + advancement * 10;
@@ -277,10 +249,7 @@ export class PositionEvaluator {
       // --- CHAMPION DEVELOPMENT LOGIC ---
 
       // 3. Champion Development: Reward moving pieces from starting position
-      if (
-        !this.materialEvaluator.isMinion(piece.name) &&
-        piece.name !== "Poro"
-      ) {
+      if (!this.materialEvaluator.isMinion(piece.name) && piece.name !== 'Poro') {
         if (piece.hasMovedBefore && piece.startingPosition) {
           score += 30; // Development bonus for having moved
 
@@ -307,15 +276,13 @@ export class PositionEvaluator {
   private isPassedPawn(
     piece: Chess,
     opponentMinionPositions: Set<string>,
-    isBlue: boolean
+    isBlue: boolean,
   ): boolean {
     const file = piece.position.x;
     const rank = piece.position.y;
 
     // Check all squares ahead in same file and adjacent files
-    const filesToCheck = [file - 1, file, file + 1].filter(
-      (f) => f >= -1 && f <= 8
-    );
+    const filesToCheck = [file - 1, file, file + 1].filter((f) => f >= -1 && f <= 8);
 
     for (const f of filesToCheck) {
       // Check all ranks ahead
@@ -342,42 +309,26 @@ export class PositionEvaluator {
   /**
    * Evaluate threat potential
    */
-  private evaluateThreats(
-    game: Game,
-    playerId: string,
-    opponentId: string
-  ): number {
+  private evaluateThreats(game: Game, playerId: string, opponentId: string): number {
     const ourThreats = this.threatEvaluator.evaluateThreatScore(game, playerId);
-    const theirThreats = this.threatEvaluator.evaluateThreatScore(
-      game,
-      opponentId
-    );
+    const theirThreats = this.threatEvaluator.evaluateThreatScore(game, opponentId);
     return ourThreats - theirThreats;
   }
 
   /**
-  * Evaluate Line of Sight for ranged carries
-  * Positive = good LoS (clear lanes to enemies)
-  * Negative = bad LoS (blocked by allies)
-  */
-  private evaluateLineOfSight(
-    game: Game,
-    playerId: string,
-    opponentId: string
-  ): number {
+   * Evaluate Line of Sight for ranged carries
+   * Positive = good LoS (clear lanes to enemies)
+   * Negative = bad LoS (blocked by allies)
+   */
+  private evaluateLineOfSight(game: Game, playerId: string, opponentId: string): number {
     const ourLoS = this.losEvaluator.evaluateLoS(game, playerId);
     const theirLoS = this.losEvaluator.evaluateLoS(game, opponentId);
     return ourLoS - theirLoS;
   }
 
-  private evaluateSafety(
-    game: Game,
-    playerId: string,
-    opponentId: string
-  ): number {
+  private evaluateSafety(game: Game, playerId: string, opponentId: string): number {
     return (
-      this.calculatePlayerSafety(game, playerId) -
-      this.calculatePlayerSafety(game, opponentId)
+      this.calculatePlayerSafety(game, playerId) - this.calculatePlayerSafety(game, opponentId)
     );
   }
 
@@ -385,24 +336,18 @@ export class PositionEvaluator {
    * Economy: gold lead plus a small premium per ready (off-cooldown) skill.
    * Symmetric: my economy minus theirs.
    */
-  private evaluateEconomy(
-    game: Game,
-    playerId: string,
-    opponentId: string
-  ): number {
+  private evaluateEconomy(game: Game, playerId: string, opponentId: string): number {
     const me = game.players.find((p) => p.userId === playerId);
     const them = game.players.find((p) => p.userId === opponentId);
     const goldDiff = (me?.gold ?? 0) - (them?.gold ?? 0);
     const readyDiff =
-      this.countReadySkills(game, playerId) -
-      this.countReadySkills(game, opponentId);
+      this.countReadySkills(game, playerId) - this.countReadySkills(game, opponentId);
     return goldDiff * 0.5 + readyDiff * 5;
   }
 
   private countReadySkills(game: Game, playerId: string): number {
-    return getPlayerPieces(game, playerId).filter(
-      (p) => p.skill && p.skill.currentCooldown === 0
-    ).length;
+    return getPlayerPieces(game, playerId).filter((p) => p.skill && p.skill.currentCooldown === 0)
+      .length;
   }
 
   /**
@@ -490,12 +435,12 @@ export class PositionEvaluator {
       // the threat at a fraction of the Poro's strategic value proportional
       // to incoming-damage / current-hp (capped at 1), so the eval starts
       // screaming while there is still time to escape or kill the attacker.
-      if (piece.name === "Poro" && incomingDamage > 0) {
+      if (piece.name === 'Poro' && incomingDamage > 0) {
         const lethality = Math.min(1, incomingDamage / Math.max(1, piece.stats.hp));
         pieceSafety -= 800 * lethality;
       }
 
-      safety += piece.name === "Poro" ? pieceSafety * 3 : pieceSafety * 0.5;
+      safety += piece.name === 'Poro' ? pieceSafety * 3 : pieceSafety * 0.5;
     }
     return safety;
   }
@@ -505,11 +450,7 @@ export class PositionEvaluator {
    * Returns the symmetric my-minus-their difference so that
    * evaluatePassedPawns(game, A, B) === -evaluatePassedPawns(game, B, A).
    */
-  private evaluatePassedPawns(
-    game: Game,
-    playerId: string,
-    opponentId: string
-  ): number {
+  private evaluatePassedPawns(game: Game, playerId: string, opponentId: string): number {
     return (
       this.passedPawnEvaluator.evaluate(game, playerId, opponentId) -
       this.passedPawnEvaluator.evaluate(game, opponentId, playerId)
@@ -519,11 +460,7 @@ export class PositionEvaluator {
   /**
    * Evaluate neutral monster control (Drake, Baron)
    */
-  private evaluateNeutralMonsters(
-    game: Game,
-    playerId: string,
-    opponentId: string
-  ): number {
+  private evaluateNeutralMonsters(game: Game, playerId: string, opponentId: string): number {
     return this.neutralMonsterEvaluator.evaluate(game, playerId, opponentId);
   }
 
@@ -591,8 +528,7 @@ export class PositionEvaluator {
     const threats = this.evaluateThreats(game, playerId, opponentId);
 
     return (
-      material * PositionEvaluator.WEIGHTS.material +
-      threats * PositionEvaluator.WEIGHTS.threats
+      material * PositionEvaluator.WEIGHTS.material + threats * PositionEvaluator.WEIGHTS.threats
     );
   }
 
@@ -622,8 +558,7 @@ export class PositionEvaluator {
 
     // Check if we won
     const isBlue = game.bluePlayer === playerId;
-    const weWon =
-      (isBlue && winner === "blue") || (!isBlue && winner === "red");
+    const weWon = (isBlue && winner === 'blue') || (!isBlue && winner === 'red');
 
     return weWon ? 100000 : -100000;
   }

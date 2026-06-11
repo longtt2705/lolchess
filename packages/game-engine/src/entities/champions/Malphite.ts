@@ -1,4 +1,4 @@
-import { ChessObject } from "../ChessObject";
+import { ChessObject } from '../ChessObject';
 
 export class Malphite extends ChessObject {
   preEnterTurn(isBlueTurn: boolean): void {
@@ -12,14 +12,14 @@ export class Malphite extends ChessObject {
     this.applyShield(
       (this.chess.stats.maxHp * (10 + this.ap * 0.4)) / 100,
       Number.MAX_SAFE_INTEGER,
-      "granite_shield"
+      'granite_shield',
     );
   }
 
   protected postTakenDamage(
     attacker: ChessObject,
     damage: number,
-    damageType: "physical" | "magic" | "true"
+    damageType: 'physical' | 'magic' | 'true',
   ): void {
     super.postTakenDamage(attacker, damage, damageType);
     this.chess.skill.currentCooldown = this.skillCooldown;

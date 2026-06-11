@@ -1,120 +1,123 @@
-import React, { useState, useEffect } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import styled, { keyframes } from 'styled-components'
-import { ChessPosition } from '../hooks/useGame'
-import { AttackProjectile } from '../hooks/useChampions'
-import { getPixelPosition, ImpactEffect } from './types'
+import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import styled, { keyframes } from 'styled-components';
+import { ChessPosition } from '../hooks/useGame';
+import { AttackProjectile } from '../hooks/useChampions';
+import { getPixelPosition, ImpactEffect } from './types';
 
 export interface AttackProjectileConfig {
-  attackerPosition: ChessPosition
-  targetPosition: ChessPosition
-  projectile: AttackProjectile
-  boardRef: React.RefObject<HTMLDivElement>
-  isRedPlayer?: boolean
-  onComplete?: () => void
-  guinsooProc?: boolean // Indicates Guinsoo's Rageblade triggered a double attack
-  fourthShotProc?: boolean // Indicates Jhin or Tristana's 4th shot
+  attackerPosition: ChessPosition;
+  targetPosition: ChessPosition;
+  projectile: AttackProjectile;
+  boardRef: React.RefObject<HTMLDivElement>;
+  isRedPlayer?: boolean;
+  onComplete?: () => void;
+  guinsooProc?: boolean; // Indicates Guinsoo's Rageblade triggered a double attack
+  fourthShotProc?: boolean; // Indicates Jhin or Tristana's 4th shot
   fourthShotAoeTargets?: Array<{
-    targetId: string
-    targetPosition: ChessPosition
-  }> // For Tristana: adjacent targets hit by explosion
-  attackerName?: string // Champion name to determine special effects
+    targetId: string;
+    targetPosition: ChessPosition;
+  }>; // For Tristana: adjacent targets hit by explosion
+  attackerName?: string; // Champion name to determine special effects
 }
 
 // Animation keyframes
 const pulseGlow = keyframes`
   0%, 100% { filter: brightness(1) drop-shadow(0 0 8px currentColor); }
   50% { filter: brightness(1.5) drop-shadow(0 0 16px currentColor); }
-`
+`;
 
 const shimmer = keyframes`
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
-`
+`;
 
 const sparkle = keyframes`
   0%, 100% { opacity: 0; transform: scale(0); }
   50% { opacity: 1; transform: scale(1); }
-`
+`;
 
 // Pre-fire charging effect
-const ChargingEffect = styled(motion.div) <{ $color: string }>`
+const ChargingEffect = styled(motion.div)<{ $color: string }>`
   position: absolute;
   width: 60px;
   height: 60px;
   border-radius: 50%;
   pointer-events: none;
   z-index: 101;
-  
+
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: radial-gradient(circle, ${props => props.$color}80 0%, transparent 70%);
+    background: radial-gradient(circle, ${(props) => props.$color}80 0%, transparent 70%);
     animation: ${pulseGlow} 0.3s ease-in-out infinite;
   }
-  
+
   &::after {
     content: '';
     position: absolute;
     inset: -5px;
     border-radius: 50%;
-    border: 2px solid ${props => props.$color};
+    border: 2px solid ${(props) => props.$color};
     opacity: 0.6;
   }
-`
+`;
 
-const ChargingRing = styled(motion.div) <{ $color: string; $delay: number }>`
+const ChargingRing = styled(motion.div)<{ $color: string; $delay: number }>`
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 2px solid ${props => props.$color};
+  border: 2px solid ${(props) => props.$color};
   opacity: 0;
-`
+`;
 
-const ChargingParticle = styled(motion.div) <{ $color: string }>`
+const ChargingParticle = styled(motion.div)<{ $color: string }>`
   position: absolute;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: ${props => props.$color};
-  box-shadow: 0 0 8px ${props => props.$color}, 0 0 16px ${props => props.$color};
-`
+  background: ${(props) => props.$color};
+  box-shadow:
+    0 0 8px ${(props) => props.$color},
+    0 0 16px ${(props) => props.$color};
+`;
 
 // Styled components for different projectile shapes - ENHANCED
 const ProjectileWrapper = styled(motion.div)`
   position: absolute;
   pointer-events: none;
   z-index: 102;
-`
+`;
 
 const ProjectileGlow = styled.div<{ $color: string; $size: number }>`
   position: absolute;
-  inset: ${props => -20 * props.$size}px;
+  inset: ${(props) => -20 * props.$size}px;
   border-radius: 50%;
-  background: radial-gradient(circle, ${props => props.$color}40 0%, transparent 70%);
-  filter: blur(${props => 8 * props.$size}px);
-`
+  background: radial-gradient(circle, ${(props) => props.$color}40 0%, transparent 70%);
+  filter: blur(${(props) => 8 * props.$size}px);
+`;
 
-const BulletProjectile = styled(motion.div) <{ $color: string; $size: number }>`
+const BulletProjectile = styled(motion.div)<{ $color: string; $size: number }>`
   position: relative;
-  width: ${props => 32 * props.$size}px;
-  height: ${props => 20 * props.$size}px;
+  width: ${(props) => 32 * props.$size}px;
+  height: ${(props) => 20 * props.$size}px;
   border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
   background: linear-gradient(
-    135deg, 
-    white 0%, 
-    ${props => props.$color} 30%, 
-    ${props => adjustColor(props.$color, -40)} 100%
+    135deg,
+    white 0%,
+    ${(props) => props.$color} 30%,
+    ${(props) => adjustColor(props.$color, -40)} 100%
   );
-  box-shadow: 
-    0 0 ${props => 15 * props.$size}px ${props => props.$color},
-    0 0 ${props => 30 * props.$size}px ${props => props.$color}80,
-    0 0 ${props => 45 * props.$size}px ${props => props.$color}40,
-    inset 0 ${props => -3 * props.$size}px ${props => 6 * props.$size}px ${props => adjustColor(props.$color, -60)};
+  box-shadow:
+    0 0 ${(props) => 15 * props.$size}px ${(props) => props.$color},
+    0 0 ${(props) => 30 * props.$size}px ${(props) => props.$color}80,
+    0 0 ${(props) => 45 * props.$size}px ${(props) => props.$color}40,
+    inset 0 ${(props) => -3 * props.$size}px ${(props) => 6 * props.$size}px
+      ${(props) => adjustColor(props.$color, -60)};
   animation: ${pulseGlow} 0.15s ease-in-out infinite;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -126,27 +129,27 @@ const BulletProjectile = styled(motion.div) <{ $color: string; $size: number }>`
     background: rgba(255, 255, 255, 0.8);
     filter: blur(2px);
   }
-`
+`;
 
-const ArrowProjectile = styled(motion.div) <{ $color: string; $size: number }>`
+const ArrowProjectile = styled(motion.div)<{ $color: string; $size: number }>`
   position: relative;
-  width: ${props => 44 * props.$size}px;
-  height: ${props => 12 * props.$size}px;
+  width: ${(props) => 44 * props.$size}px;
+  height: ${(props) => 12 * props.$size}px;
   background: linear-gradient(
-    90deg, 
-    ${props => adjustColor(props.$color, -30)} 0%, 
-    ${props => props.$color} 40%,
+    90deg,
+    ${(props) => adjustColor(props.$color, -30)} 0%,
+    ${(props) => props.$color} 40%,
     white 50%,
-    ${props => props.$color} 60%,
-    ${props => adjustColor(props.$color, -20)} 100%
+    ${(props) => props.$color} 60%,
+    ${(props) => adjustColor(props.$color, -20)} 100%
   );
   background-size: 200% 100%;
   animation: ${shimmer} 0.5s linear infinite;
   clip-path: polygon(0 50%, 60% 0, 60% 25%, 100% 25%, 100% 75%, 60% 75%, 60% 100%);
-  box-shadow: 
-    0 0 ${props => 12 * props.$size}px ${props => props.$color},
-    0 0 ${props => 24 * props.$size}px ${props => props.$color}60;
-  
+  box-shadow:
+    0 0 ${(props) => 12 * props.$size}px ${(props) => props.$color},
+    0 0 ${(props) => 24 * props.$size}px ${(props) => props.$color}60;
+
   &::after {
     content: '';
     position: absolute;
@@ -157,27 +160,27 @@ const ArrowProjectile = styled(motion.div) <{ $color: string; $size: number }>`
     background: rgba(255, 255, 255, 0.6);
     filter: blur(1px);
   }
-`
+`;
 
-const OrbProjectile = styled(motion.div) <{ $color: string; $size: number }>`
+const OrbProjectile = styled(motion.div)<{ $color: string; $size: number }>`
   position: relative;
-  width: ${props => 28 * props.$size}px;
-  height: ${props => 28 * props.$size}px;
+  width: ${(props) => 28 * props.$size}px;
+  height: ${(props) => 28 * props.$size}px;
   border-radius: 50%;
   background: radial-gradient(
-    circle at 30% 30%, 
-    white 0%, 
-    ${props => adjustColor(props.$color, 40)} 20%,
-    ${props => props.$color} 50%, 
-    ${props => adjustColor(props.$color, -50)} 100%
+    circle at 30% 30%,
+    white 0%,
+    ${(props) => adjustColor(props.$color, 40)} 20%,
+    ${(props) => props.$color} 50%,
+    ${(props) => adjustColor(props.$color, -50)} 100%
   );
-  box-shadow: 
-    0 0 ${props => 20 * props.$size}px ${props => props.$color},
-    0 0 ${props => 40 * props.$size}px ${props => props.$color}80,
-    0 0 ${props => 60 * props.$size}px ${props => props.$color}40,
-    inset 0 0 ${props => 15 * props.$size}px ${props => props.$color}60;
+  box-shadow:
+    0 0 ${(props) => 20 * props.$size}px ${(props) => props.$color},
+    0 0 ${(props) => 40 * props.$size}px ${(props) => props.$color}80,
+    0 0 ${(props) => 60 * props.$size}px ${(props) => props.$color}40,
+    inset 0 0 ${(props) => 15 * props.$size}px ${(props) => props.$color}60;
   animation: ${pulseGlow} 0.2s ease-in-out infinite;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -189,7 +192,7 @@ const OrbProjectile = styled(motion.div) <{ $color: string; $size: number }>`
     background: rgba(255, 255, 255, 0.9);
     filter: blur(2px);
   }
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -201,59 +204,73 @@ const OrbProjectile = styled(motion.div) <{ $color: string; $size: number }>`
     background: rgba(255, 255, 255, 0.5);
     filter: blur(1px);
   }
-`
+`;
 
-const BoltProjectile = styled(motion.div) <{ $color: string; $size: number }>`
+const BoltProjectile = styled(motion.div)<{ $color: string; $size: number }>`
   position: relative;
-  width: ${props => 36 * props.$size}px;
-  height: ${props => 16 * props.$size}px;
+  width: ${(props) => 36 * props.$size}px;
+  height: ${(props) => 16 * props.$size}px;
   background: linear-gradient(
-    90deg, 
-    transparent 0%, 
-    ${props => props.$color}80 10%,
+    90deg,
+    transparent 0%,
+    ${(props) => props.$color}80 10%,
     white 30%,
-    ${props => props.$color} 50%,
+    ${(props) => props.$color} 50%,
     white 70%,
-    ${props => props.$color}80 90%,
+    ${(props) => props.$color}80 90%,
     transparent 100%
   );
   clip-path: polygon(
-    0 50%, 12% 20%, 20% 50%, 35% 0, 50% 50%, 65% 5%, 
-    80% 50%, 100% 25%, 88% 50%, 100% 75%, 80% 50%, 
-    65% 95%, 50% 50%, 35% 100%, 20% 50%, 12% 80%
+    0 50%,
+    12% 20%,
+    20% 50%,
+    35% 0,
+    50% 50%,
+    65% 5%,
+    80% 50%,
+    100% 25%,
+    88% 50%,
+    100% 75%,
+    80% 50%,
+    65% 95%,
+    50% 50%,
+    35% 100%,
+    20% 50%,
+    12% 80%
   );
-  box-shadow: 
-    0 0 ${props => 15 * props.$size}px ${props => props.$color},
-    0 0 ${props => 30 * props.$size}px ${props => props.$color}80;
+  box-shadow:
+    0 0 ${(props) => 15 * props.$size}px ${(props) => props.$color},
+    0 0 ${(props) => 30 * props.$size}px ${(props) => props.$color}80;
   animation: ${pulseGlow} 0.1s ease-in-out infinite;
-  
+
   &::before {
     content: '';
     position: absolute;
-    inset: -${props => 4 * props.$size}px;
+    inset: -${(props) => 4 * props.$size}px;
     background: inherit;
     opacity: 0.3;
-    filter: blur(${props => 4 * props.$size}px);
+    filter: blur(${(props) => 4 * props.$size}px);
   }
-`
+`;
 
-const MissileProjectile = styled(motion.div) <{ $color: string; $size: number }>`
+const MissileProjectile = styled(motion.div)<{ $color: string; $size: number }>`
   position: relative;
-  width: ${props => 38 * props.$size}px;
-  height: ${props => 18 * props.$size}px;
+  width: ${(props) => 38 * props.$size}px;
+  height: ${(props) => 18 * props.$size}px;
   background: linear-gradient(
-    135deg, 
+    135deg,
     white 0%,
-    ${props => props.$color} 30%, 
-    ${props => adjustColor(props.$color, -50)} 70%, 
+    ${(props) => props.$color} 30%,
+    ${(props) => adjustColor(props.$color, -50)} 70%,
     #222 100%
   );
-  border-radius: ${props => `${5 * props.$size}px ${15 * props.$size}px ${15 * props.$size}px ${5 * props.$size}px`};
-  box-shadow: 
-    0 0 ${props => 12 * props.$size}px ${props => props.$color},
-    0 0 ${props => 24 * props.$size}px ${props => props.$color}60,
-    0 ${props => 3 * props.$size}px ${props => 6 * props.$size}px rgba(0,0,0,0.4);
-  
+  border-radius: ${(props) =>
+    `${5 * props.$size}px ${15 * props.$size}px ${15 * props.$size}px ${5 * props.$size}px`};
+  box-shadow:
+    0 0 ${(props) => 12 * props.$size}px ${(props) => props.$color},
+    0 0 ${(props) => 24 * props.$size}px ${(props) => props.$color}60,
+    0 ${(props) => 3 * props.$size}px ${(props) => 6 * props.$size}px rgba(0, 0, 0, 0.4);
+
   &::before {
     content: '';
     position: absolute;
@@ -265,58 +282,65 @@ const MissileProjectile = styled(motion.div) <{ $color: string; $size: number }>
     background: rgba(255, 255, 255, 0.7);
     filter: blur(1px);
   }
-  
+
   &::after {
     content: '';
     position: absolute;
-    left: -${props => 12 * props.$size}px;
+    left: -${(props) => 12 * props.$size}px;
     top: 50%;
     transform: translateY(-50%);
-    width: ${props => 18 * props.$size}px;
-    height: ${props => 12 * props.$size}px;
-    background: radial-gradient(ellipse at right, #ff4500 0%, #ff6600 40%, #ffaa00 70%, transparent 100%);
+    width: ${(props) => 18 * props.$size}px;
+    height: ${(props) => 12 * props.$size}px;
+    background: radial-gradient(
+      ellipse at right,
+      #ff4500 0%,
+      #ff6600 40%,
+      #ffaa00 70%,
+      transparent 100%
+    );
     border-radius: 50%;
-    filter: blur(${props => 3 * props.$size}px);
+    filter: blur(${(props) => 3 * props.$size}px);
     animation: ${pulseGlow} 0.1s ease-in-out infinite;
   }
-`
+`;
 
 // Spear projectile for Sand Soldier - elongated stabbing spear
-const SpearProjectile = styled(motion.div) <{ $color: string; $size: number }>`
+const SpearProjectile = styled(motion.div)<{ $color: string; $size: number }>`
   position: relative;
-  width: ${props => 60 * props.$size}px;
-  height: ${props => 8 * props.$size}px;
-  
+  width: ${(props) => 60 * props.$size}px;
+  height: ${(props) => 8 * props.$size}px;
+
   /* Spear shaft */
   background: linear-gradient(
     90deg,
-    ${props => adjustColor(props.$color, -40)} 0%,
-    ${props => props.$color} 20%,
-    ${props => adjustColor(props.$color, 20)} 40%,
-    ${props => props.$color} 60%,
-    ${props => adjustColor(props.$color, -20)} 80%,
+    ${(props) => adjustColor(props.$color, -40)} 0%,
+    ${(props) => props.$color} 20%,
+    ${(props) => adjustColor(props.$color, 20)} 40%,
+    ${(props) => props.$color} 60%,
+    ${(props) => adjustColor(props.$color, -20)} 80%,
     transparent 100%
   );
-  border-radius: ${props => `${2 * props.$size}px ${4 * props.$size}px ${4 * props.$size}px ${2 * props.$size}px`};
-  box-shadow: 
-    0 0 ${props => 10 * props.$size}px ${props => props.$color},
-    0 0 ${props => 20 * props.$size}px ${props => props.$color}60;
-  
+  border-radius: ${(props) =>
+    `${2 * props.$size}px ${4 * props.$size}px ${4 * props.$size}px ${2 * props.$size}px`};
+  box-shadow:
+    0 0 ${(props) => 10 * props.$size}px ${(props) => props.$color},
+    0 0 ${(props) => 20 * props.$size}px ${(props) => props.$color}60;
+
   /* Spear tip (pointed head) */
   &::before {
     content: '';
     position: absolute;
-    right: -${props => 14 * props.$size}px;
+    right: -${(props) => 14 * props.$size}px;
     top: 50%;
     transform: translateY(-50%);
     width: 0;
     height: 0;
-    border-left: ${props => 16 * props.$size}px solid ${props => props.$color};
-    border-top: ${props => 8 * props.$size}px solid transparent;
-    border-bottom: ${props => 8 * props.$size}px solid transparent;
-    filter: drop-shadow(0 0 ${props => 6 * props.$size}px ${props => props.$color});
+    border-left: ${(props) => 16 * props.$size}px solid ${(props) => props.$color};
+    border-top: ${(props) => 8 * props.$size}px solid transparent;
+    border-bottom: ${(props) => 8 * props.$size}px solid transparent;
+    filter: drop-shadow(0 0 ${(props) => 6 * props.$size}px ${(props) => props.$color});
   }
-  
+
   /* Golden highlight on shaft */
   &::after {
     content: '';
@@ -325,40 +349,49 @@ const SpearProjectile = styled(motion.div) <{ $color: string; $size: number }>`
     left: 10%;
     width: 60%;
     height: 30%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6) 30%, rgba(255, 255, 255, 0.8) 50%, rgba(255, 255, 255, 0.6) 70%, transparent);
-    border-radius: ${props => 2 * props.$size}px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.6) 30%,
+      rgba(255, 255, 255, 0.8) 50%,
+      rgba(255, 255, 255, 0.6) 70%,
+      transparent
+    );
+    border-radius: ${(props) => 2 * props.$size}px;
     filter: blur(1px);
   }
-`
+`;
 
-const TrailParticle = styled(motion.div) <{ $color: string; $size: number }>`
+const TrailParticle = styled(motion.div)<{ $color: string; $size: number }>`
   position: absolute;
   pointer-events: none;
   z-index: 100;
   border-radius: 50%;
-  background: radial-gradient(circle, white 0%, ${props => props.$color} 50%, transparent 100%);
-  box-shadow: 0 0 ${props => 8 * props.$size}px ${props => props.$color};
-`
+  background: radial-gradient(circle, white 0%, ${(props) => props.$color} 50%, transparent 100%);
+  box-shadow: 0 0 ${(props) => 8 * props.$size}px ${(props) => props.$color};
+`;
 
-const SparkleEffect = styled(motion.div) <{ $color: string }>`
+const SparkleEffect = styled(motion.div)<{ $color: string }>`
   position: absolute;
   width: 4px;
   height: 4px;
   border-radius: 50%;
   background: white;
-  box-shadow: 0 0 6px ${props => props.$color}, 0 0 12px white;
-`
+  box-shadow:
+    0 0 6px ${(props) => props.$color},
+    0 0 12px white;
+`;
 
 const ProjectileIcon = styled.span<{ $size: number }>`
   position: relative;
   z-index: 2;
-  font-size: ${props => 18 * props.$size}px;
+  font-size: ${(props) => 18 * props.$size}px;
   filter: drop-shadow(0 0 6px white) drop-shadow(0 0 12px currentColor);
-`
+`;
 
 // Guinsoo's Rageblade ghost projectile styling
-const GUINSOO_COLOR = '#aa44ff' // Purple/magenta for Guinsoo's magic effect
-const GUINSOO_DELAY = 0.12 // 120ms delay for ghost projectile
+const GUINSOO_COLOR = '#aa44ff'; // Purple/magenta for Guinsoo's magic effect
+const GUINSOO_DELAY = 0.12; // 120ms delay for ghost projectile
 
 const GhostProjectileWrapper = styled(motion.div)`
   position: absolute;
@@ -366,24 +399,24 @@ const GhostProjectileWrapper = styled(motion.div)`
   z-index: 101;
   opacity: 0.6;
   filter: hue-rotate(45deg) brightness(1.2);
-`
+`;
 
-const GhostTrailParticle = styled(motion.div) <{ $size: number }>`
+const GhostTrailParticle = styled(motion.div)<{ $size: number }>`
   position: absolute;
   pointer-events: none;
   z-index: 99;
   border-radius: 50%;
   background: radial-gradient(circle, white 0%, ${GUINSOO_COLOR} 50%, transparent 100%);
-  box-shadow: 0 0 ${props => 8 * props.$size}px ${GUINSOO_COLOR};
+  box-shadow: 0 0 ${(props) => 8 * props.$size}px ${GUINSOO_COLOR};
   opacity: 0.7;
-`
+`;
 
 const GhostImpactEffect = styled(motion.div)`
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
   z-index: 148;
-`
+`;
 
 const GhostSparkleEffect = styled(motion.div)`
   position: absolute;
@@ -391,24 +424,26 @@ const GhostSparkleEffect = styled(motion.div)`
   height: 4px;
   border-radius: 50%;
   background: white;
-  box-shadow: 0 0 6px ${GUINSOO_COLOR}, 0 0 12px white;
+  box-shadow:
+    0 0 6px ${GUINSOO_COLOR},
+    0 0 12px white;
   opacity: 0.7;
-`
+`;
 
 // Helper function to adjust color brightness
 function adjustColor(color: string, amount: number): string {
   if (color.startsWith('#')) {
-    const num = parseInt(color.slice(1), 16)
-    const r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + amount))
-    const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount))
-    const b = Math.min(255, Math.max(0, (num & 0xff) + amount))
-    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`
+    const num = parseInt(color.slice(1), 16);
+    const r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + amount));
+    const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+    const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
   }
-  return color
+  return color;
 }
 
 // Animation phases
-type AnimationPhase = 'charging' | 'firing' | 'impact' | 'done'
+type AnimationPhase = 'charging' | 'firing' | 'impact' | 'done';
 
 const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
   attackerPosition,
@@ -420,99 +455,111 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
   guinsooProc = false,
   fourthShotProc = false,
   fourthShotAoeTargets = [],
-  attackerName = ''
+  attackerName = '',
 }) => {
-  const [phase, setPhase] = useState<AnimationPhase>('charging')
-  const [ghostPhase, setGhostPhase] = useState<AnimationPhase>('charging')
-  const [trails, setTrails] = useState<Array<{ id: number; x: number; y: number; size: number }>>([])
-  const [ghostTrails, setGhostTrails] = useState<Array<{ id: number; x: number; y: number; size: number }>>([])
-  const [sparkles, setSparkles] = useState<Array<{ id: number; x: number; y: number; angle: number }>>([])
+  const [phase, setPhase] = useState<AnimationPhase>('charging');
+  const [ghostPhase, setGhostPhase] = useState<AnimationPhase>('charging');
+  const [trails, setTrails] = useState<Array<{ id: number; x: number; y: number; size: number }>>(
+    [],
+  );
+  const [ghostTrails, setGhostTrails] = useState<
+    Array<{ id: number; x: number; y: number; size: number }>
+  >([]);
+  const [sparkles, setSparkles] = useState<
+    Array<{ id: number; x: number; y: number; angle: number }>
+  >([]);
 
   // Get pixel positions
-  const attackerPixels = getPixelPosition(attackerPosition, boardRef, isRedPlayer)
-  const targetPixels = getPixelPosition(targetPosition, boardRef, isRedPlayer)
+  const attackerPixels = getPixelPosition(attackerPosition, boardRef, isRedPlayer);
+  const targetPixels = getPixelPosition(targetPosition, boardRef, isRedPlayer);
 
   // Calculate angle and distance
-  const deltaX = targetPixels.x - attackerPixels.x
-  const deltaY = targetPixels.y - attackerPixels.y
-  const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI)
-  const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+  const deltaX = targetPixels.x - attackerPixels.x;
+  const deltaY = targetPixels.y - attackerPixels.y;
+  const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+  const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
   // Projectile properties with defaults
   // For Jhin's 4th shot, double the size
-  let size = projectile.size ?? 1
+  let size = projectile.size ?? 1;
   if (fourthShotProc && attackerName === 'Jhin') {
-    size = size * 2
+    size = size * 2;
   }
-  
-  const speed = projectile.speed ?? 1
-  const trailColor = projectile.trailColor ?? projectile.color
+
+  const speed = projectile.speed ?? 1;
+  const trailColor = projectile.trailColor ?? projectile.color;
 
   // Duration based on actual distance - minimum 0.25s, scales with distance
-  const flightDuration = Math.max(0.25, (distance / 400) / speed)
-  const chargeDuration = 0.2 // Pre-fire charging time
+  const flightDuration = Math.max(0.25, distance / 400 / speed);
+  const chargeDuration = 0.2; // Pre-fire charging time
 
   // Phase transitions
   useEffect(() => {
     if (phase === 'charging') {
-      const timer = setTimeout(() => setPhase('firing'), chargeDuration * 1000)
-      return () => clearTimeout(timer)
+      const timer = setTimeout(() => setPhase('firing'), chargeDuration * 1000);
+      return () => clearTimeout(timer);
     }
-  }, [phase])
+  }, [phase]);
 
   // Ghost projectile phase transitions (delayed for Guinsoo's Rageblade)
   useEffect(() => {
-    if (!guinsooProc) return
+    if (!guinsooProc) return;
 
     if (ghostPhase === 'charging') {
       // Ghost starts firing after main projectile + GUINSOO_DELAY
-      const timer = setTimeout(() => setGhostPhase('firing'), (chargeDuration + GUINSOO_DELAY) * 1000)
-      return () => clearTimeout(timer)
+      const timer = setTimeout(
+        () => setGhostPhase('firing'),
+        (chargeDuration + GUINSOO_DELAY) * 1000,
+      );
+      return () => clearTimeout(timer);
     }
-  }, [ghostPhase, guinsooProc, chargeDuration])
+  }, [ghostPhase, guinsooProc, chargeDuration]);
 
   // Generate charging particles
   useEffect(() => {
     if (phase === 'charging') {
       const interval = setInterval(() => {
-        const angle = Math.random() * Math.PI * 2
-        const dist = 30 + Math.random() * 20
-        setSparkles(prev => [...prev.slice(-6), {
-          id: Date.now() + Math.random(),
-          x: Math.cos(angle) * dist,
-          y: Math.sin(angle) * dist,
-          angle
-        }])
-      }, 40)
-      return () => clearInterval(interval)
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 30 + Math.random() * 20;
+        setSparkles((prev) => [
+          ...prev.slice(-6),
+          {
+            id: Date.now() + Math.random(),
+            x: Math.cos(angle) * dist,
+            y: Math.sin(angle) * dist,
+            angle,
+          },
+        ]);
+      }, 40);
+      return () => clearInterval(interval);
     } else {
-      setSparkles([])
+      setSparkles([]);
     }
-  }, [phase])
+  }, [phase]);
 
   const renderProjectile = () => {
     const commonStyle = {
       transform: `rotate(${angle}deg)`,
-    }
+    };
 
     const ProjectileComponent = (() => {
       switch (projectile.shape) {
         case 'bullet':
-          return <BulletProjectile $color={projectile.color} $size={size} style={commonStyle} />
+          return <BulletProjectile $color={projectile.color} $size={size} style={commonStyle} />;
         case 'arrow':
-          return <ArrowProjectile $color={projectile.color} $size={size} style={commonStyle} />
+          return <ArrowProjectile $color={projectile.color} $size={size} style={commonStyle} />;
         case 'orb':
-          return <OrbProjectile $color={projectile.color} $size={size} />
+          return <OrbProjectile $color={projectile.color} $size={size} />;
         case 'bolt':
-          return <BoltProjectile $color={projectile.color} $size={size} style={commonStyle} />
+          return <BoltProjectile $color={projectile.color} $size={size} style={commonStyle} />;
         case 'missile':
-          return <MissileProjectile $color={projectile.color} $size={size} style={commonStyle} />
+          return <MissileProjectile $color={projectile.color} $size={size} style={commonStyle} />;
         case 'spear':
-          return <SpearProjectile $color={projectile.color} $size={size} style={commonStyle} />
+          return <SpearProjectile $color={projectile.color} $size={size} style={commonStyle} />;
         default:
-          return <OrbProjectile $color={projectile.color} $size={size} />
+          return <OrbProjectile $color={projectile.color} $size={size} />;
       }
-    })()
+    })();
 
     return (
       <>
@@ -522,19 +569,21 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
             - All attacks if not Tristana
             - Tristana's 4th shot only (hide bomb icon on normal attacks) */}
         {projectile.icon && !(attackerName === 'Tristana' && !fourthShotProc) && (
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <ProjectileIcon $size={size}>{projectile.icon}</ProjectileIcon>
           </div>
         )}
       </>
-    )
-  }
+    );
+  };
 
   return (
     <>
@@ -553,7 +602,7 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
             transition={{ duration: chargeDuration, ease: 'easeOut' }}
           >
             {/* Converging rings */}
-            {[0, 1, 2].map(i => (
+            {[0, 1, 2].map((i) => (
               <ChargingRing
                 key={i}
                 $color={projectile.color}
@@ -563,13 +612,13 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
                 transition={{
                   duration: chargeDuration,
                   delay: i * 0.05,
-                  ease: 'easeIn'
+                  ease: 'easeIn',
                 }}
               />
             ))}
 
             {/* Charging particles converging to center */}
-            {sparkles.map(sparkle => (
+            {sparkles.map((sparkle) => (
               <ChargingParticle
                 key={sparkle.id}
                 $color={projectile.color}
@@ -581,13 +630,13 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
                   x: sparkle.x,
                   y: sparkle.y,
                   opacity: 1,
-                  scale: 1
+                  scale: 1,
                 }}
                 animate={{
                   x: 0,
                   y: 0,
                   opacity: 0,
-                  scale: 0.5
+                  scale: 0.5,
                 }}
                 transition={{ duration: 0.15, ease: 'easeIn' }}
               />
@@ -598,14 +647,14 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
 
       {/* Trail particles */}
       <AnimatePresence>
-        {trails.map(trail => (
+        {trails.map((trail) => (
           <TrailParticle
             key={trail.id}
             $color={trailColor}
             $size={size}
             style={{
-              left: trail.x - (6 * trail.size),
-              top: trail.y - (6 * trail.size),
+              left: trail.x - 6 * trail.size,
+              top: trail.y - 6 * trail.size,
               width: 12 * trail.size * size,
               height: 12 * trail.size * size,
             }}
@@ -621,40 +670,45 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
       {phase === 'firing' && (
         <ProjectileWrapper
           initial={{
-            left: attackerPixels.x - (18 * size),
-            top: attackerPixels.y - (14 * size),
+            left: attackerPixels.x - 18 * size,
+            top: attackerPixels.y - 14 * size,
             scale: 0.3,
-            opacity: 0
+            opacity: 0,
           }}
           animate={{
-            left: targetPixels.x - (18 * size),
-            top: targetPixels.y - (14 * size),
+            left: targetPixels.x - 18 * size,
+            top: targetPixels.y - 14 * size,
             scale: [0.3, 1.2, 1],
-            opacity: 1
+            opacity: 1,
           }}
           transition={{
             duration: flightDuration,
             ease: [0.2, 0.8, 0.3, 1], // Custom ease for snappy launch, smooth flight
-            scale: { duration: 0.15, ease: 'easeOut' }
+            scale: { duration: 0.15, ease: 'easeOut' },
           }}
           onUpdate={(latest) => {
             // Add trail particles during flight with varying sizes
             if (typeof latest.left === 'number' && typeof latest.top === 'number') {
-              const trailSize = 0.5 + Math.random() * 0.5
-              setTrails(prev => [...prev, {
-                id: Date.now() + Math.random(),
-                x: (latest.left as number) + (18 * size),
-                y: (latest.top as number) + (14 * size),
-                size: trailSize
-              }].slice(-12))
+              const trailSize = 0.5 + Math.random() * 0.5;
+              setTrails((prev) =>
+                [
+                  ...prev,
+                  {
+                    id: Date.now() + Math.random(),
+                    x: (latest.left as number) + 18 * size,
+                    y: (latest.top as number) + 14 * size,
+                    size: trailSize,
+                  },
+                ].slice(-12),
+              );
             }
           }}
           onAnimationComplete={() => {
-            setPhase('impact')
+            setPhase('impact');
             setTimeout(() => {
-              setPhase('done')
-              onComplete?.()
-            }, 300)
+              setPhase('done');
+              onComplete?.();
+            }, 300);
           }}
         >
           {renderProjectile()}
@@ -672,15 +726,15 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
                 top: targetPixels.y - (fourthShotProc ? 70 : 50),
                 width: fourthShotProc ? 140 : 100,
                 height: fourthShotProc ? 140 : 100,
-                background: fourthShotProc 
+                background: fourthShotProc
                   ? `radial-gradient(circle, white 0%, ${projectile.color} 20%, #FFD700 40%, ${projectile.color}80 70%, transparent 100%)`
                   : `radial-gradient(circle, white 0%, ${projectile.color} 30%, ${projectile.color}80 60%, transparent 100%)`,
                 zIndex: 150,
               }}
               initial={{ scale: 0, opacity: 1 }}
-              animate={{ 
-                scale: fourthShotProc ? [0, 2.2, 2.5] : [0, 1.8, 2], 
-                opacity: [1, 0.9, 0] 
+              animate={{
+                scale: fourthShotProc ? [0, 2.2, 2.5] : [0, 1.8, 2],
+                opacity: [1, 0.9, 0],
               }}
               exit={{ opacity: 0 }}
               transition={{ duration: fourthShotProc ? 0.4 : 0.3, ease: 'easeOut' }}
@@ -726,8 +780,8 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
 
             {/* Impact sparkles - more for 4th shots */}
             {[...Array(fourthShotProc ? 16 : 8)].map((_, i) => {
-              const sparkAngle = (i / (fourthShotProc ? 16 : 8)) * Math.PI * 2
-              const sparkDist = (fourthShotProc ? 60 : 40) + Math.random() * 20
+              const sparkAngle = (i / (fourthShotProc ? 16 : 8)) * Math.PI * 2;
+              const sparkDist = (fourthShotProc ? 60 : 40) + Math.random() * 20;
               return (
                 <SparkleEffect
                   key={i}
@@ -742,81 +796,83 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
                     x: Math.cos(sparkAngle) * sparkDist,
                     y: Math.sin(sparkAngle) * sparkDist,
                     scale: 0,
-                    opacity: 0
+                    opacity: 0,
                   }}
                   transition={{ duration: fourthShotProc ? 0.4 : 0.3, ease: 'easeOut' }}
                 />
-              )
+              );
             })}
 
             {/* Tristana's AOE explosions on adjacent targets */}
-            {fourthShotProc && attackerName === 'Tristana' && fourthShotAoeTargets.map((aoeTarget, idx) => {
-              const aoePixels = getPixelPosition(aoeTarget.targetPosition, boardRef, isRedPlayer)
-              return (
-                <React.Fragment key={`aoe_${aoeTarget.targetId}_${idx}`}>
-                  {/* AOE impact effect */}
-                  <motion.div
-                    style={{
-                      position: 'absolute',
-                      left: aoePixels.x - 40,
-                      top: aoePixels.y - 40,
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      background: `radial-gradient(circle, ${projectile.color} 0%, ${projectile.color}80 40%, transparent 100%)`,
-                      pointerEvents: 'none',
-                      zIndex: 148,
-                    }}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: [0, 1.5, 1.8], opacity: [0, 0.8, 0] }}
-                    transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
-                  />
-                  
-                  {/* AOE ring */}
-                  <motion.div
-                    style={{
-                      position: 'absolute',
-                      left: aoePixels.x - 30,
-                      top: aoePixels.y - 30,
-                      width: 60,
-                      height: 60,
-                      borderRadius: '50%',
-                      border: `2px solid ${projectile.color}`,
-                      pointerEvents: 'none',
-                      zIndex: 147,
-                    }}
-                    initial={{ scale: 0.5, opacity: 1 }}
-                    animate={{ scale: 2, opacity: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
-                  />
+            {fourthShotProc &&
+              attackerName === 'Tristana' &&
+              fourthShotAoeTargets.map((aoeTarget, idx) => {
+                const aoePixels = getPixelPosition(aoeTarget.targetPosition, boardRef, isRedPlayer);
+                return (
+                  <React.Fragment key={`aoe_${aoeTarget.targetId}_${idx}`}>
+                    {/* AOE impact effect */}
+                    <motion.div
+                      style={{
+                        position: 'absolute',
+                        left: aoePixels.x - 40,
+                        top: aoePixels.y - 40,
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        background: `radial-gradient(circle, ${projectile.color} 0%, ${projectile.color}80 40%, transparent 100%)`,
+                        pointerEvents: 'none',
+                        zIndex: 148,
+                      }}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: [0, 1.5, 1.8], opacity: [0, 0.8, 0] }}
+                      transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+                    />
 
-                  {/* AOE sparkles */}
-                  {[...Array(6)].map((_, i) => {
-                    const angle = (i / 6) * Math.PI * 2
-                    const dist = 30
-                    return (
-                      <SparkleEffect
-                        key={`aoe_sparkle_${i}`}
-                        $color={projectile.color}
-                        style={{
-                          left: aoePixels.x,
-                          top: aoePixels.y,
-                          zIndex: 149,
-                        }}
-                        initial={{ x: 0, y: 0, scale: 0.8, opacity: 1 }}
-                        animate={{
-                          x: Math.cos(angle) * dist,
-                          y: Math.sin(angle) * dist,
-                          scale: 0,
-                          opacity: 0
-                        }}
-                        transition={{ duration: 0.3, delay: 0.1, ease: 'easeOut' }}
-                      />
-                    )
-                  })}
-                </React.Fragment>
-              )
-            })}
+                    {/* AOE ring */}
+                    <motion.div
+                      style={{
+                        position: 'absolute',
+                        left: aoePixels.x - 30,
+                        top: aoePixels.y - 30,
+                        width: 60,
+                        height: 60,
+                        borderRadius: '50%',
+                        border: `2px solid ${projectile.color}`,
+                        pointerEvents: 'none',
+                        zIndex: 147,
+                      }}
+                      initial={{ scale: 0.5, opacity: 1 }}
+                      animate={{ scale: 2, opacity: 0 }}
+                      transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+                    />
+
+                    {/* AOE sparkles */}
+                    {[...Array(6)].map((_, i) => {
+                      const angle = (i / 6) * Math.PI * 2;
+                      const dist = 30;
+                      return (
+                        <SparkleEffect
+                          key={`aoe_sparkle_${i}`}
+                          $color={projectile.color}
+                          style={{
+                            left: aoePixels.x,
+                            top: aoePixels.y,
+                            zIndex: 149,
+                          }}
+                          initial={{ x: 0, y: 0, scale: 0.8, opacity: 1 }}
+                          animate={{
+                            x: Math.cos(angle) * dist,
+                            y: Math.sin(angle) * dist,
+                            scale: 0,
+                            opacity: 0,
+                          }}
+                          transition={{ duration: 0.3, delay: 0.1, ease: 'easeOut' }}
+                        />
+                      );
+                    })}
+                  </React.Fragment>
+                );
+              })}
           </>
         )}
       </AnimatePresence>
@@ -826,13 +882,13 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
         <>
           {/* Ghost trail particles */}
           <AnimatePresence>
-            {ghostTrails.map(trail => (
+            {ghostTrails.map((trail) => (
               <GhostTrailParticle
                 key={trail.id}
                 $size={size}
                 style={{
-                  left: trail.x - (6 * trail.size),
-                  top: trail.y - (6 * trail.size),
+                  left: trail.x - 6 * trail.size,
+                  top: trail.y - 6 * trail.size,
                   width: 12 * trail.size * size,
                   height: 12 * trail.size * size,
                 }}
@@ -848,39 +904,44 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
           {ghostPhase === 'firing' && (
             <GhostProjectileWrapper
               initial={{
-                left: attackerPixels.x - (18 * size),
-                top: attackerPixels.y - (14 * size),
+                left: attackerPixels.x - 18 * size,
+                top: attackerPixels.y - 14 * size,
                 scale: 0.3 * 0.9, // Slightly smaller
-                opacity: 0
+                opacity: 0,
               }}
               animate={{
-                left: targetPixels.x - (18 * size),
-                top: targetPixels.y - (14 * size),
+                left: targetPixels.x - 18 * size,
+                top: targetPixels.y - 14 * size,
                 scale: [0.27, 1.08, 0.9], // 90% of main projectile
-                opacity: 0.6
+                opacity: 0.6,
               }}
               transition={{
                 duration: flightDuration,
                 ease: [0.2, 0.8, 0.3, 1],
-                scale: { duration: 0.15, ease: 'easeOut' }
+                scale: { duration: 0.15, ease: 'easeOut' },
               }}
               onUpdate={(latest) => {
                 // Add ghost trail particles during flight
                 if (typeof latest.left === 'number' && typeof latest.top === 'number') {
-                  const trailSize = 0.4 + Math.random() * 0.4
-                  setGhostTrails(prev => [...prev, {
-                    id: Date.now() + Math.random(),
-                    x: (latest.left as number) + (18 * size),
-                    y: (latest.top as number) + (14 * size),
-                    size: trailSize
-                  }].slice(-10))
+                  const trailSize = 0.4 + Math.random() * 0.4;
+                  setGhostTrails((prev) =>
+                    [
+                      ...prev,
+                      {
+                        id: Date.now() + Math.random(),
+                        x: (latest.left as number) + 18 * size,
+                        y: (latest.top as number) + 14 * size,
+                        size: trailSize,
+                      },
+                    ].slice(-10),
+                  );
                 }
               }}
               onAnimationComplete={() => {
-                setGhostPhase('impact')
+                setGhostPhase('impact');
                 setTimeout(() => {
-                  setGhostPhase('done')
-                }, 300)
+                  setGhostPhase('done');
+                }, 300);
               }}
             >
               {renderProjectile()}
@@ -927,8 +988,8 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
 
                 {/* Ghost impact sparkles */}
                 {[...Array(6)].map((_, i) => {
-                  const sparkAngle = (i / 6) * Math.PI * 2
-                  const sparkDist = 30 + Math.random() * 15
+                  const sparkAngle = (i / 6) * Math.PI * 2;
+                  const sparkDist = 30 + Math.random() * 15;
                   return (
                     <GhostSparkleEffect
                       key={`ghost-sparkle-${i}`}
@@ -942,11 +1003,11 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
                         x: Math.cos(sparkAngle) * sparkDist,
                         y: Math.sin(sparkAngle) * sparkDist,
                         scale: 0,
-                        opacity: 0
+                        opacity: 0,
                       }}
                       transition={{ duration: 0.25, ease: 'easeOut' }}
                     />
-                  )
+                  );
                 })}
               </>
             )}
@@ -954,15 +1015,15 @@ const AttackProjectileAnimation: React.FC<AttackProjectileConfig> = ({
         </>
       )}
     </>
-  )
-}
+  );
+};
 
 export const AttackProjectileRenderer: React.FC<AttackProjectileConfig> = (props) => {
   return (
     <AnimatePresence>
       <AttackProjectileAnimation {...props} />
     </AnimatePresence>
-  )
-}
+  );
+};
 
-export default AttackProjectileRenderer
+export default AttackProjectileRenderer;

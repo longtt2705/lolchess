@@ -13,14 +13,14 @@ const VictoryOverlay = styled(motion.div)<{ isVictory: boolean }>`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: ${props => props.isVictory
-    ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(16, 185, 129, 0.95) 50%, rgba(5, 150, 105, 0.95) 100%)'
-    : 'linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 50%, rgba(185, 28, 28, 0.95) 100%)'
-  };
+  background: ${(props) =>
+    props.isVictory
+      ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(16, 185, 129, 0.95) 50%, rgba(5, 150, 105, 0.95) 100%)'
+      : 'linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 50%, rgba(185, 28, 28, 0.95) 100%)'};
   backdrop-filter: blur(10px);
   z-index: 1000;
   padding: 40px;
-`
+`;
 
 const VictoryContent = styled(motion.div)`
   display: flex;
@@ -29,7 +29,7 @@ const VictoryContent = styled(motion.div)`
   gap: 32px;
   max-width: 600px;
   text-align: center;
-`
+`;
 
 const VictoryTitle = styled(motion.h1)<{ isVictory: boolean }>`
   font-size: 72px;
@@ -39,8 +39,10 @@ const VictoryTitle = styled(motion.h1)<{ isVictory: boolean }>`
   text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   letter-spacing: 4px;
   text-transform: uppercase;
-  
-  ${props => props.isVictory && `
+
+  ${(props) =>
+    props.isVictory &&
+    `
     animation: victoryPulse 2s ease-in-out infinite;
     
     @keyframes victoryPulse {
@@ -54,14 +56,14 @@ const VictoryTitle = styled(motion.h1)<{ isVictory: boolean }>`
       }
     }
   `}
-`
+`;
 
 const VictorySubtitle = styled(motion.p)`
   font-size: 24px;
   color: rgba(255, 255, 255, 0.9);
   margin: 0;
   font-weight: 500;
-`
+`;
 
 const VictoryStats = styled(motion.div)`
   display: flex;
@@ -71,27 +73,27 @@ const VictoryStats = styled(motion.div)`
   border-radius: 16px;
   backdrop-filter: blur(5px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-`
+`;
 
 const StatItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  
+
   .stat-label {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.7);
     text-transform: uppercase;
     letter-spacing: 1px;
   }
-  
+
   .stat-value {
     font-size: 32px;
     font-weight: bold;
     color: white;
   }
-`
+`;
 
 const VictoryButton = styled(motion.button)`
   padding: 16px 48px;
@@ -106,13 +108,13 @@ const VictoryButton = styled(motion.button)`
   text-transform: uppercase;
   letter-spacing: 2px;
   backdrop-filter: blur(5px);
-  
+
   &:hover {
     background: rgba(0, 0, 0, 0.7);
     border-color: rgba(255, 255, 255, 0.6);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   }
-`
+`;
 
 const Confetti = styled(motion.div)`
   position: absolute;
@@ -123,7 +125,7 @@ const Confetti = styled(motion.div)`
     return colors[Math.floor(Math.random() * colors.length)];
   }};
   border-radius: 50%;
-`
+`;
 
 interface VictoryDefeatOverlayProps {
   gameState: GameState | null;
@@ -140,10 +142,11 @@ export const VictoryDefeatOverlay: React.FC<VictoryDefeatOverlayProps> = ({
 
   // Check if game is finished
   const isGameFinished = gameState.status === 'finished';
-  const isVictory = isGameFinished && gameState.winner && (
-    (gameState.winner === 'blue' && currentUserId === gameState.bluePlayer) ||
-    (gameState.winner === 'red' && currentUserId === gameState.redPlayer)
-  );
+  const isVictory =
+    isGameFinished &&
+    gameState.winner &&
+    ((gameState.winner === 'blue' && currentUserId === gameState.bluePlayer) ||
+      (gameState.winner === 'red' && currentUserId === gameState.redPlayer));
   const isDraw = isGameFinished && !gameState.winner;
 
   if (!isGameFinished) return null;
@@ -158,27 +161,28 @@ export const VictoryDefeatOverlay: React.FC<VictoryDefeatOverlayProps> = ({
         transition={{ duration: 0.5, ease: 'easeOut' }}
       >
         {/* Confetti for victory */}
-        {isVictory && Array.from({ length: 50 }).map((_, i) => (
-          <Confetti
-            key={i}
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: -20,
-              rotate: 0,
-              opacity: 1
-            }}
-            animate={{
-              y: window.innerHeight + 20,
-              rotate: 360,
-              opacity: 0
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              delay: Math.random() * 2,
-              repeat: Infinity
-            }}
-          />
-        ))}
+        {isVictory &&
+          Array.from({ length: 50 }).map((_, i) => (
+            <Confetti
+              key={i}
+              initial={{
+                x: Math.random() * window.innerWidth,
+                y: -20,
+                rotate: 0,
+                opacity: 1,
+              }}
+              animate={{
+                y: window.innerHeight + 20,
+                rotate: 360,
+                opacity: 0,
+              }}
+              transition={{
+                duration: 3 + Math.random() * 2,
+                delay: Math.random() * 2,
+                repeat: Infinity,
+              }}
+            />
+          ))}
 
         <VictoryContent>
           <VictoryTitle
@@ -209,16 +213,23 @@ export const VictoryDefeatOverlay: React.FC<VictoryDefeatOverlayProps> = ({
           >
             <StatItem>
               <span className="stat-label">Round</span>
-              <span className="stat-value">{Math.floor((gameState.currentRound || 0) / 2) + 1}</span>
+              <span className="stat-value">
+                {Math.floor((gameState.currentRound || 0) / 2) + 1}
+              </span>
             </StatItem>
             <StatItem>
               <span className="stat-label">Your Gold</span>
-              <span className="stat-value">{gameState.players.find(p => p.userId === currentUserId)?.gold || 0}</span>
+              <span className="stat-value">
+                {gameState.players.find((p) => p.userId === currentUserId)?.gold || 0}
+              </span>
             </StatItem>
             <StatItem>
               <span className="stat-label">Pieces Left</span>
               <span className="stat-value">
-                {gameState.board.filter(p => p.ownerId === currentUserId && p.stats.hp > 0).length}
+                {
+                  gameState.board.filter((p) => p.ownerId === currentUserId && p.stats.hp > 0)
+                    .length
+                }
               </span>
             </StatItem>
           </VictoryStats>

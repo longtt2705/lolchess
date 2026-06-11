@@ -4,7 +4,7 @@
  * without having side effects (like console.log)
  */
 
-import { Chess, Square, Item, Debuff } from "./index";
+import { Chess, Square, Item, Debuff } from './index';
 
 /**
  * Callback interface for game engine events
@@ -24,39 +24,22 @@ export interface GameEngineCallbacks {
   /**
    * Called when a piece is killed
    */
-  onPieceKilled?: (
-    killer: Chess,
-    victim: Chess,
-    goldAwarded: number
-  ) => void;
+  onPieceKilled?: (killer: Chess, victim: Chess, goldAwarded: number) => void;
 
   /**
    * Called when gold is awarded to a player
    */
-  onGoldAwarded?: (
-    playerId: string,
-    amount: number,
-    reason: string
-  ) => void;
+  onGoldAwarded?: (playerId: string, amount: number, reason: string) => void;
 
   /**
    * Called when an item is combined from components
    */
-  onItemCombined?: (
-    champion: Chess,
-    newItem: Item,
-    component1: Item,
-    component2: Item
-  ) => void;
+  onItemCombined?: (champion: Chess, newItem: Item, component1: Item, component2: Item) => void;
 
   /**
    * Called when a debuff is applied
    */
-  onDebuffApplied?: (
-    target: Chess,
-    debuff: Debuff,
-    source: Chess
-  ) => void;
+  onDebuffApplied?: (target: Chess, debuff: Debuff, source: Chess) => void;
 
   /**
    * Called when damage is dealt
@@ -65,7 +48,7 @@ export interface GameEngineCallbacks {
     source: Chess,
     target: Chess,
     damage: number,
-    damageType: "physical" | "magic" | "true" | "non-lethal"
+    damageType: 'physical' | 'magic' | 'true' | 'non-lethal',
   ) => void;
 
   /**
@@ -76,38 +59,22 @@ export interface GameEngineCallbacks {
   /**
    * Called when a shield is applied
    */
-  onShieldApplied?: (
-    target: Chess,
-    amount: number,
-    duration: number
-  ) => void;
+  onShieldApplied?: (target: Chess, amount: number, duration: number) => void;
 
   /**
    * Called when a piece moves
    */
-  onPieceMoved?: (
-    piece: Chess,
-    fromPosition: Square,
-    toPosition: Square
-  ) => void;
+  onPieceMoved?: (piece: Chess, fromPosition: Square, toPosition: Square) => void;
 
   /**
    * Called when a skill is used
    */
-  onSkillUsed?: (
-    caster: Chess,
-    skillName: string,
-    targetPosition?: Square
-  ) => void;
+  onSkillUsed?: (caster: Chess, skillName: string, targetPosition?: Square) => void;
 
   /**
    * Called when a critical strike occurs
    */
-  onCriticalStrike?: (
-    attacker: Chess,
-    target: Chess,
-    damage: number
-  ) => void;
+  onCriticalStrike?: (attacker: Chess, target: Chess, damage: number) => void;
 
   /**
    * Called when a minion is promoted to super minion
@@ -117,10 +84,7 @@ export interface GameEngineCallbacks {
   /**
    * Called when the game ends
    */
-  onGameOver?: (
-    winner: "blue" | "red" | null,
-    reason: string
-  ) => void;
+  onGameOver?: (winner: 'blue' | 'red' | null, reason: string) => void;
 
   /**
    * Called when a new round starts
@@ -135,30 +99,17 @@ export interface GameEngineCallbacks {
   /**
    * Called when an aura effect is applied
    */
-  onAuraApplied?: (
-    source: Chess,
-    target: Chess,
-    auraName: string
-  ) => void;
+  onAuraApplied?: (source: Chess, target: Chess, auraName: string) => void;
 
   /**
    * Called when an aura effect expires
    */
-  onAuraExpired?: (
-    source: Chess,
-    target: Chess,
-    auraName: string
-  ) => void;
+  onAuraExpired?: (source: Chess, target: Chess, auraName: string) => void;
 
   /**
    * Called when castling occurs
    */
-  onCastling?: (
-    king: Chess,
-    rook: Chess,
-    kingNewPosition: Square,
-    rookNewPosition: Square
-  ) => void;
+  onCastling?: (king: Chess, rook: Chess, kingNewPosition: Square, rookNewPosition: Square) => void;
 
   /**
    * Generic debug/log callback for development
@@ -173,4 +124,3 @@ export interface GameEngineCallbacks {
 export interface GameContext {
   callbacks?: GameEngineCallbacks;
 }
-

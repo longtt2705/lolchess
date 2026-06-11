@@ -3,7 +3,7 @@
  * These functions have no side effects and are framework-agnostic
  */
 
-import { Square, Chess, Game, Item } from "../types";
+import { Square, Chess, Game, Item } from '../types';
 
 /**
  * Get all adjacent squares (8-directional) from a given position
@@ -48,7 +48,12 @@ export function getSquaresInRange(square: Square, range: number): Square[] {
  * @param isBlue - The team of the enemies
  * @returns An array of enemies in the range
  */
-export function getEnemiesInRange(game: Game, square: Square, range: number, isBlue: boolean): Chess[] {
+export function getEnemiesInRange(
+  game: Game,
+  square: Square,
+  range: number,
+  isBlue: boolean,
+): Chess[] {
   const squares = getSquaresInRange(square, range);
   const enemies: Chess[] = [];
   for (const square of squares) {
@@ -68,7 +73,12 @@ export function getEnemiesInRange(game: Game, square: Square, range: number, isB
  * @param isBlue - The team of the allies
  * @returns An array of allies in the range
  */
-export function getAlliesInRange(game: Game, square: Square, range: number, isBlue: boolean): Chess[] {
+export function getAlliesInRange(
+  game: Game,
+  square: Square,
+  range: number,
+  isBlue: boolean,
+): Chess[] {
   const squares = getSquaresInRange(square, range);
   const allies: Chess[] = [];
   for (const square of squares) {
@@ -106,16 +116,9 @@ export function isValidBoardPosition(x: number, y: number): boolean {
  * Get a chess piece at a specific position for a specific team
  * Returns null if no piece found or piece is dead or wrong team
  */
-export function getChessAtPosition(
-  game: Game,
-  isBlue: boolean,
-  square: Square
-): Chess | null {
+export function getChessAtPosition(game: Game, isBlue: boolean, square: Square): Chess | null {
   const chess = game.board.find(
-    (chess) =>
-      chess.position.x === square.x &&
-      chess.position.y === square.y &&
-      chess.stats.hp > 0
+    (chess) => chess.position.x === square.x && chess.position.y === square.y && chess.stats.hp > 0,
   );
   if (!chess) {
     return null;
@@ -134,9 +137,7 @@ export function getAnyChessAtPosition(game: Game, square: Square): Chess | null 
   return (
     game.board.find(
       (chess) =>
-        chess.position.x === square.x &&
-        chess.position.y === square.y &&
-        chess.stats.hp > 0
+        chess.position.x === square.x && chess.position.y === square.y && chess.stats.hp > 0,
     ) || null
   );
 }
@@ -151,7 +152,7 @@ export function isPathClear(
   game: Game,
   from: Square,
   to: Square,
-  attackerOwnerId?: string
+  attackerOwnerId?: string,
 ): boolean {
   const deltaX = to.x - from.x;
   const deltaY = to.y - from.y;
@@ -168,16 +169,12 @@ export function isPathClear(
     // Check if there's a piece at this position
     const blockingPiece = game.board.find(
       (piece) =>
-        piece.position.x === currentX &&
-        piece.position.y === currentY &&
-        piece.stats.hp > 0
+        piece.position.x === currentX && piece.position.y === currentY && piece.stats.hp > 0,
     );
 
     if (blockingPiece) {
       // Check if the piece has Ghost debuff
-      const hasGhost = blockingPiece.debuffs?.some(
-        (d) => d.payload?.isGhost === true
-      );
+      const hasGhost = blockingPiece.debuffs?.some((d) => d.payload?.isGhost === true);
 
       if (attackerOwnerId) {
         // If attackerOwnerId is provided, only ally Ghost pieces don't block
@@ -205,11 +202,7 @@ export function isPathClear(
 /**
  * Get all enemy pieces adjacent to a position
  */
-export function getAdjacentEnemies(
-  game: Game,
-  position: Square,
-  isBlue: boolean
-): Chess[] {
+export function getAdjacentEnemies(game: Game, position: Square, isBlue: boolean): Chess[] {
   const adjacentSquares = getAdjacentSquares(position);
   const enemies: Chess[] = [];
 
@@ -226,11 +219,7 @@ export function getAdjacentEnemies(
 /**
  * Get all ally pieces adjacent to a position
  */
-export function getAdjacentAllies(
-  game: Game,
-  position: Square,
-  isBlue: boolean
-): Chess[] {
+export function getAdjacentAllies(game: Game, position: Square, isBlue: boolean): Chess[] {
   const adjacentSquares = getAdjacentSquares(position);
   const allies: Chess[] = [];
 
@@ -251,25 +240,20 @@ export function getAdjacentAllies(
 export function getPiecesInLine(
   game: Game,
   from: Square,
-  direction: "horizontal" | "vertical" | "diagonal" | "all",
-  maxRange?: number
+  direction: 'horizontal' | 'vertical' | 'diagonal' | 'all',
+  maxRange?: number,
 ): Chess[] {
   const pieces: Chess[] = [];
   const directions: Array<{ dx: number; dy: number }> = [];
 
-  if (direction === "horizontal" || direction === "all") {
+  if (direction === 'horizontal' || direction === 'all') {
     directions.push({ dx: 1, dy: 0 }, { dx: -1, dy: 0 });
   }
-  if (direction === "vertical" || direction === "all") {
+  if (direction === 'vertical' || direction === 'all') {
     directions.push({ dx: 0, dy: 1 }, { dx: 0, dy: -1 });
   }
-  if (direction === "diagonal" || direction === "all") {
-    directions.push(
-      { dx: 1, dy: 1 },
-      { dx: 1, dy: -1 },
-      { dx: -1, dy: 1 },
-      { dx: -1, dy: -1 }
-    );
+  if (direction === 'diagonal' || direction === 'all') {
+    directions.push({ dx: 1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: 1 }, { dx: -1, dy: -1 });
   }
 
   for (const dir of directions) {
@@ -279,7 +263,7 @@ export function getPiecesInLine(
 
     while (isValidBoardPosition(x, y) && (!maxRange || distance <= maxRange)) {
       const piece = game.board.find(
-        (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0
+        (p) => p.position.x === x && p.position.y === y && p.stats.hp > 0,
       );
       if (piece) {
         pieces.push(piece);

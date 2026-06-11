@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export interface ItemData {
   id: string;
@@ -47,47 +47,38 @@ const initialState: ItemsState = {
 };
 
 // Async thunks
-export const fetchBasicItems = createAsyncThunk(
-  "items/fetchBasicItems",
-  async () => {
-    const token = localStorage.getItem("token");
-    const response = await axios.get(`${API_URL}/games/items/basic`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data.items;
-  }
-);
+export const fetchBasicItems = createAsyncThunk('items/fetchBasicItems', async () => {
+  const token = localStorage.getItem('token');
+  const response = await axios.get(`${API_URL}/games/items/basic`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.items;
+});
 
-export const fetchAllItems = createAsyncThunk(
-  "items/fetchAllItems",
-  async () => {
-    const token = localStorage.getItem("token");
-    const response = await axios.get(`${API_URL}/games/items`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data.items;
-  }
-);
+export const fetchAllItems = createAsyncThunk('items/fetchAllItems', async () => {
+  const token = localStorage.getItem('token');
+  const response = await axios.get(`${API_URL}/games/items`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.items;
+});
 
-export const fetchViktorModules = createAsyncThunk(
-  "items/fetchViktorModules",
-  async () => {
-    const token = localStorage.getItem("token");
-    const response = await axios.get(`${API_URL}/games/items/viktor-modules`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data.modules;
-  }
-);
+export const fetchViktorModules = createAsyncThunk('items/fetchViktorModules', async () => {
+  const token = localStorage.getItem('token');
+  const response = await axios.get(`${API_URL}/games/items/viktor-modules`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data.modules;
+});
 
 const itemsSlice = createSlice({
-  name: "items",
+  name: 'items',
   initialState,
   reducers: {
     clearItems: (state) => {
@@ -109,7 +100,7 @@ const itemsSlice = createSlice({
       })
       .addCase(fetchBasicItems.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to fetch basic items";
+        state.error = action.error.message || 'Failed to fetch basic items';
       })
       // Fetch all items
       .addCase(fetchAllItems.pending, (state) => {
@@ -122,7 +113,7 @@ const itemsSlice = createSlice({
       })
       .addCase(fetchAllItems.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to fetch all items";
+        state.error = action.error.message || 'Failed to fetch all items';
       })
       // Fetch Viktor modules
       .addCase(fetchViktorModules.pending, (state) => {
@@ -135,7 +126,7 @@ const itemsSlice = createSlice({
       })
       .addCase(fetchViktorModules.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to fetch Viktor modules";
+        state.error = action.error.message || 'Failed to fetch Viktor modules';
       });
   },
 });

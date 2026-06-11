@@ -5,4 +5,3 @@ export interface AttackRange {
   range: number;
   lShape: boolean;
 }
-

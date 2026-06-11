@@ -1,9 +1,9 @@
-import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
-import { LogOut, User, Home, Gamepad2, BookOpen, Database } from 'lucide-react'
-import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { logout } from '../store/authSlice'
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import { LogOut, User, Home, Gamepad2, BookOpen, Database } from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '../hooks/redux';
+import { logout } from '../store/authSlice';
 
 const HeaderContainer = styled.header`
   background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--accent-bg) 100%);
@@ -13,7 +13,7 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-`
+`;
 
 const Logo = styled(Link)`
   font-size: 28px;
@@ -23,17 +23,17 @@ const Logo = styled(Link)`
   display: flex;
   align-items: center;
   gap: 12px;
-  
+
   &:hover {
     color: var(--hover);
   }
-`
+`;
 
 const Nav = styled.nav`
   display: flex;
   align-items: center;
   gap: 24px;
-`
+`;
 
 const NavLink = styled(Link)`
   color: var(--primary-text);
@@ -45,33 +45,33 @@ const NavLink = styled(Link)`
   align-items: center;
   gap: 8px;
   font-weight: 500;
-  
+
   &:hover {
     background: rgba(200, 155, 60, 0.1);
     color: var(--gold);
   }
-`
+`;
 
 const UserInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
   color: var(--primary-text);
-  
+
   .user-details {
     text-align: right;
-    
+
     .username {
       font-weight: bold;
       color: var(--gold);
     }
-    
+
     .rating {
       font-size: 14px;
       color: var(--secondary-text);
     }
   }
-`
+`;
 
 const LogoutButton = styled.button`
   background: transparent;
@@ -84,22 +84,22 @@ const LogoutButton = styled.button`
   align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: var(--red);
     color: var(--primary-bg);
   }
-`
+`;
 
 const Header: React.FC = () => {
-  const { isAuthenticated, user } = useAppSelector(state => state.auth)
-  const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    dispatch(logout())
-    navigate('/')
-  }
+    dispatch(logout());
+    navigate('/');
+  };
 
   return (
     <HeaderContainer>
@@ -151,7 +151,7 @@ const Header: React.FC = () => {
         )}
       </Nav>
     </HeaderContainer>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;

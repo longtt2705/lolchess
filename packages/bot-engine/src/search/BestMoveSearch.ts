@@ -3,13 +3,13 @@ import {
   Game,
   GameEngine,
   GameEvent,
-  getPieceAtPosition
-} from "@lolchess/game-engine";
-import { MaterialEvaluator } from "../evaluation/MaterialEvaluator";
-import { PositionEvaluator } from "../evaluation/PositionEvaluator";
-import { ThreatEvaluator } from "../evaluation/ThreatEvaluator";
-import { SearchResult } from "../types";
-import { ActionGenerator } from "./ActionGenerator";
+  getPieceAtPosition,
+} from '@lolchess/game-engine';
+import { MaterialEvaluator } from '../evaluation/MaterialEvaluator';
+import { PositionEvaluator } from '../evaluation/PositionEvaluator';
+import { ThreatEvaluator } from '../evaluation/ThreatEvaluator';
+import { SearchResult } from '../types';
+import { ActionGenerator } from './ActionGenerator';
 
 /**
  * Two-Phase Best Move Search
@@ -30,12 +30,9 @@ export class BestMoveSearch {
   constructor(
     private gameEngine: GameEngine,
     private evaluator: PositionEvaluator,
-    private actionGenerator: ActionGenerator
+    private actionGenerator: ActionGenerator,
   ) {
-    this.threatEvaluator = new ThreatEvaluator(
-      gameEngine,
-      new MaterialEvaluator()
-    );
+    this.threatEvaluator = new ThreatEvaluator(gameEngine, new MaterialEvaluator());
   }
 
   searchV2(game: Game, playerId: string, timeLimit: number = 5000): SearchResult {
@@ -61,7 +58,7 @@ export class BestMoveSearch {
 
     // Check current Poro safety for escape bonus calculation
     const isBlue = game.bluePlayer === playerId;
-    const poroPiece = game.board.find(p => p.name === "Poro" && p.blue === isBlue);
+    const poroPiece = game.board.find((p) => p.name === 'Poro' && p.blue === isBlue);
     const currentPoroSafety = poroPiece
       ? this.threatEvaluator.evaluatePositionSafety(game, poroPiece, playerId)
       : 0;
@@ -77,20 +74,21 @@ export class BestMoveSearch {
       let score = this.evaluator.evaluate(result.game, playerId);
 
       // EMERGENCY ESCAPE BONUS: If Poro is under threat and this move gets it to safety
-      if (action.event === GameEvent.MOVE_CHESS &&
+      if (
+        action.event === GameEvent.MOVE_CHESS &&
         action.casterPosition &&
         poroPiece &&
         action.casterPosition.x === poroPiece.position.x &&
         action.casterPosition.y === poroPiece.position.y &&
-        currentPoroSafety < -50) {
-
+        currentPoroSafety < -50
+      ) {
         // Calculate new Poro safety after the move
-        const newPoroPiece = result.game.board.find(p => p.name === "Poro" && p.blue === isBlue);
+        const newPoroPiece = result.game.board.find((p) => p.name === 'Poro' && p.blue === isBlue);
         if (newPoroPiece) {
           const newPoroSafety = this.threatEvaluator.evaluatePositionSafety(
             result.game,
             newPoroPiece,
-            playerId
+            playerId,
           );
 
           // If Poro escapes from danger, give huge bonus
@@ -120,11 +118,7 @@ export class BestMoveSearch {
    * Phase 1: Find optimal position (maximize threat potential)
    * Phase 2: Execute best combat action from that position
    */
-  search(
-    game: Game,
-    playerId: string,
-    timeLimit: number = 5000
-  ): SearchResult {
+  search(game: Game, playerId: string, timeLimit: number = 5000): SearchResult {
     this.nodesSearched = 0;
     this.startTime = Date.now();
     this.timeLimit = timeLimit;
@@ -137,16 +131,13 @@ export class BestMoveSearch {
       // Check if it's a free action (Flash, summoner spells)
       if (this.actionGenerator.isFreeAction(positioningResult.bestAction)) {
         // Apply the free action and continue searching
-        const result = this.gameEngine.processAction(
-          game,
-          positioningResult.bestAction
-        );
+        const result = this.gameEngine.processAction(game, positioningResult.bestAction);
         if (result.success) {
           // Recursively search from new position
           const continuedSearch = this.search(
             result.game,
             playerId,
-            this.timeLimit - (Date.now() - this.startTime)
+            this.timeLimit - (Date.now() - this.startTime),
           );
 
           // Return the chain starting with our positioning action
@@ -184,20 +175,14 @@ export class BestMoveSearch {
    */
   private searchPositioning(game: Game, playerId: string): SearchResult {
     // Get current threat score
-    const currentThreatScore = this.threatEvaluator.evaluateThreatScore(
-      game,
-      playerId
-    );
+    const currentThreatScore = this.threatEvaluator.evaluateThreatScore(game, playerId);
 
     // Generate positioning actions
-    const positioningActions = this.actionGenerator.generatePositioningActions(
-      game,
-      playerId
-    );
+    const positioningActions = this.actionGenerator.generatePositioningActions(game, playerId);
 
     let bestAction: EventPayload | null = null;
     let bestScore = currentThreatScore;
-    let bestThreatImprovement = 0;
+    const bestThreatImprovement = 0;
 
     // Evaluate each positioning action
     for (const action of positioningActions) {
@@ -209,10 +194,7 @@ export class BestMoveSearch {
       this.nodesSearched++;
 
       // Calculate threat score after positioning
-      const newThreatScore = this.threatEvaluator.evaluateThreatScore(
-        result.game,
-        playerId
-      );
+      const newThreatScore = this.threatEvaluator.evaluateThreatScore(result.game, playerId);
 
       // Bonus for first-move shield (25% max HP for 2 turns)
       let shieldBonus = 0;
@@ -221,7 +203,7 @@ export class BestMoveSearch {
         if (
           piece &&
           !piece.hasMovedBefore &&
-          (piece.name === "Melee Minion" || piece.name === "Caster Minion") &&
+          (piece.name === 'Melee Minion' || piece.name === 'Caster Minion') &&
           action.targetPosition
         ) {
           const deltaY = Math.abs(action.targetPosition.y - piece.position.y);
@@ -277,17 +259,13 @@ export class BestMoveSearch {
    * Assumes we're already in the optimal position
    */
   private searchCombat(game: Game, playerId: string): SearchResult | null {
-
     const threatInfo = this.threatEvaluator.getBestThreat(game, playerId);
     if (!threatInfo) {
       return null;
     }
 
     // Generate combat actions
-    const bestAction = this.actionGenerator.generateCombatActionFromThreat(
-      playerId,
-      threatInfo
-    );
+    const bestAction = this.actionGenerator.generateCombatActionFromThreat(playerId, threatInfo);
 
     return {
       bestAction,

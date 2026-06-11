@@ -1,24 +1,24 @@
-import { ChessObject } from "../ChessObject";
-import { Debuff } from "../../types";
+import { ChessObject } from '../ChessObject';
+import { Debuff } from '../../types';
 
 export class Jhin extends ChessObject {
   // Create speed boost debuff for after critical strike
   createSpeedBoostDebuff(): Debuff {
     return {
-      id: "jhin_whisper_speed",
-      name: "Whisper Speed Boost",
+      id: 'jhin_whisper_speed',
+      name: 'Whisper Speed Boost',
       description: "Increased speed from Jhin's critical strike",
       duration: 2,
       maxDuration: 2,
       effects: [
         {
-          stat: "speed",
+          stat: 'speed',
           modifier: 1,
-          type: "add",
+          type: 'add',
         },
       ],
       damagePerTurn: 0,
-      damageType: "physical",
+      damageType: 'physical',
       healPerTurn: 0,
       unique: true,
       appliedAt: Date.now(),
@@ -37,9 +37,8 @@ export class Jhin extends ChessObject {
     // Every 4th attack is critical
     const isCritical = this.chess.skill.payload.attackCount % 4 === 0;
     const baseDamage = super.attack(chess, isCritical);
-    const bonusDamage =
-      4 + this.ap * 0.44 + (this.ad - this.chess.stats.ad) * 0.44;
-    this.damage(chess, bonusDamage, "physical", this, this.sunder);
+    const bonusDamage = 4 + this.ap * 0.44 + (this.ad - this.chess.stats.ad) * 0.44;
+    this.damage(chess, bonusDamage, 'physical', this, this.sunder);
     if (this.willCrit) {
       const speedBoost = this.createSpeedBoostDebuff();
       this.applyDebuff(this, speedBoost);

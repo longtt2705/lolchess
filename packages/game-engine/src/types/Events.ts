@@ -1,11 +1,11 @@
-import { Square } from "./Square";
+import { Square } from './Square';
 
 export enum GameEvent {
-  MOVE_CHESS = "move_chess",
-  ATTACK_CHESS = "attack_chess",
-  BUY_ITEM = "buy_item",
-  SKILL = "skill",
-  USE_SUMMONER_SPELL = "use_summoner_spell",
+  MOVE_CHESS = 'move_chess',
+  ATTACK_CHESS = 'attack_chess',
+  BUY_ITEM = 'buy_item',
+  SKILL = 'skill',
+  USE_SUMMONER_SPELL = 'use_summoner_spell',
 }
 
 export interface EventPayload {
@@ -60,4 +60,3 @@ export interface ActionDetails {
     targetPosition: Square;
   }>; // For summoner spells that affect multiple targets (Heal, Barrier)
 }
-

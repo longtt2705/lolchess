@@ -21,25 +21,25 @@ export class AuthService {
     // `identifier` may be a username or an email — login accepts either.
     const user = await this.usersService.findByUsernameOrEmail(identifier);
 
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       // Convert Mongoose document to plain object if needed
       const userObj = (user as any).toObject ? (user as any).toObject() : user;
       const { password, ...result } = userObj;
       return result;
     }
-    
+
     return null;
   }
 
   async login(user: any) {
     const userId = user._id?.toString() || user.id?.toString();
-    
+
     if (!userId) {
       throw new Error('Invalid user object - no ID found');
     }
-    
+
     const payload = { username: user.username, sub: userId };
-    
+
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -89,7 +89,7 @@ export class AuthService {
           throw new UnauthorizedException('Account with this information already exists');
         }
       }
-      
+
       // Re-throw other errors
       throw error;
     }
@@ -132,11 +132,7 @@ export class AuthService {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const user = await this.usersService.findByResetTokenHash(tokenHash);
 
-    if (
-      !user ||
-      !user.resetPasswordExpires ||
-      user.resetPasswordExpires.getTime() < Date.now()
-    ) {
+    if (!user || !user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now()) {
       throw new BadRequestException('Invalid or expired password reset token');
     }
 

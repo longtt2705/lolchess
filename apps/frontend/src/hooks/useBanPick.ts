@@ -1,25 +1,25 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { io, Socket } from "socket.io-client";
-import { toast } from "react-hot-toast";
-import { useAppDispatch, useAppSelector } from "./redux";
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { io, Socket } from 'socket.io-client';
+import { toast } from 'react-hot-toast';
+import { useAppDispatch, useAppSelector } from './redux';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Summoner spell types
-export type SummonerSpellType = "Flash" | "Ghost" | "Heal" | "Barrier" | "Smite";
+export type SummonerSpellType = 'Flash' | 'Ghost' | 'Heal' | 'Barrier' | 'Smite';
 
 export const SUMMONER_SPELL_TYPES: SummonerSpellType[] = [
-  "Flash",
-  "Ghost",
-  "Heal",
-  "Barrier",
-  "Smite",
+  'Flash',
+  'Ghost',
+  'Heal',
+  'Barrier',
+  'Smite',
 ];
 
 interface BanPickState {
-  phase: "ban" | "pick" | "reorder" | "complete";
-  currentTurn: "blue" | "red";
+  phase: 'ban' | 'pick' | 'reorder' | 'complete';
+  currentTurn: 'blue' | 'red';
   turnNumber: number;
 
   // Ban phase data
@@ -48,7 +48,7 @@ interface BanPickState {
 }
 
 interface BanPickAction {
-  type: "ban" | "pick" | "skip_ban" | "reorder" | "setReady" | "setSummonerSpells";
+  type: 'ban' | 'pick' | 'skip_ban' | 'reorder' | 'setReady' | 'setSummonerSpells';
   championId?: string;
   playerId: string;
   ready?: boolean;
@@ -63,7 +63,7 @@ interface GameData {
     id: string;
     userId: string;
     username: string;
-    side?: "blue" | "red";
+    side?: 'blue' | 'red';
     selectedChampions: string[];
     bannedChampions: string[];
   }>;
@@ -80,7 +80,7 @@ export const useBanPick = (gameId: string) => {
   const [isConnected, setIsConnected] = useState(false);
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [banPickState, setBanPickState] = useState<BanPickState | null>(null);
-  const [playerSide, setPlayerSide] = useState<"blue" | "red" | null>(null);
+  const [playerSide, setPlayerSide] = useState<'blue' | 'red' | null>(null);
   const [lastAction, setLastAction] = useState<BanPickAction | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -93,8 +93,8 @@ export const useBanPick = (gameId: string) => {
 
     const fetchInitialState = async () => {
       try {
-        console.log("🔄 Fetching initial ban/pick state for game:", gameId);
-        const token = localStorage.getItem("token");
+        console.log('🔄 Fetching initial ban/pick state for game:', gameId);
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/games/${gameId}/ban-pick-state`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -102,27 +102,25 @@ export const useBanPick = (gameId: string) => {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch ban/pick state");
+          throw new Error('Failed to fetch ban/pick state');
         }
 
         const data = await response.json();
-        console.log("📊 Initial ban/pick state loaded:", data);
+        console.log('📊 Initial ban/pick state loaded:', data);
 
         if (data.game && data.banPickState) {
           setGameData(data.game);
           setBanPickState(data.banPickState);
 
           // Determine player's side
-          const currentPlayer = data.game.players.find(
-            (p: any) => p.userId === user.id
-          );
+          const currentPlayer = data.game.players.find((p: any) => p.userId === user.id);
           if (currentPlayer?.side) {
             setPlayerSide(currentPlayer.side);
           }
         }
       } catch (error) {
-        console.error("❌ Error fetching initial ban/pick state:", error);
-        toast.error("Failed to load ban/pick state");
+        console.error('❌ Error fetching initial ban/pick state:', error);
+        toast.error('Failed to load ban/pick state');
       } finally {
         setLoading(false);
       }
@@ -133,52 +131,48 @@ export const useBanPick = (gameId: string) => {
 
   useEffect(() => {
     if (!user || !gameId) {
-      console.log("useBanPick: No user or gameId available");
+      console.log('useBanPick: No user or gameId available');
       setIsConnected(false);
       return;
     }
 
-    console.log("useBanPick: Initializing socket connection for game:", gameId);
+    console.log('useBanPick: Initializing socket connection for game:', gameId);
 
     // Initialize socket connection
     const socket = io(API_URL, {
-      transports: ["websocket", "polling"],
+      transports: ['websocket', 'polling'],
       timeout: 10000,
     });
     socketRef.current = socket;
 
     // Socket event listeners
-    socket.on("connect", () => {
-      console.log("✅ Connected to ban/pick server");
+    socket.on('connect', () => {
+      console.log('✅ Connected to ban/pick server');
       setIsConnected(true);
 
       // Join the ban/pick phase for this game
-      socket.emit("joinBanPickPhase", {
+      socket.emit('joinBanPickPhase', {
         gameId,
         playerId: user.id,
       });
     });
 
-    socket.on("connect_error", (error) => {
-      console.error("❌ Ban/pick socket connection error:", error);
+    socket.on('connect_error', (error) => {
+      console.error('❌ Ban/pick socket connection error:', error);
       toast.error(`Failed to connect to ban/pick: ${error.message}`);
       setIsConnected(false);
     });
 
-    socket.on("disconnect", (reason) => {
-      console.log("🔌 Disconnected from ban/pick server. Reason:", reason);
+    socket.on('disconnect', (reason) => {
+      console.log('🔌 Disconnected from ban/pick server. Reason:', reason);
       setIsConnected(false);
     });
 
     // Ban/Pick specific events
     socket.on(
-      "banPickStateUpdate",
-      (data: {
-        game: GameData;
-        banPickState: BanPickState;
-        lastAction?: BanPickAction;
-      }) => {
-        console.log("📊 Ban/pick state updated:", data);
+      'banPickStateUpdate',
+      (data: { game: GameData; banPickState: BanPickState; lastAction?: BanPickAction }) => {
+        console.log('📊 Ban/pick state updated:', data);
 
         setGameData(data.game);
         setBanPickState(data.banPickState);
@@ -187,65 +181,57 @@ export const useBanPick = (gameId: string) => {
           setLastAction(data.lastAction);
 
           // Show appropriate toast based on action type
-          if (data.lastAction.type === "skip_ban") {
-            toast.success("Ban skipped");
-          } else if (data.lastAction.type === "ban") {
+          if (data.lastAction.type === 'skip_ban') {
+            toast.success('Ban skipped');
+          } else if (data.lastAction.type === 'ban') {
             toast.success(`Champion banned: ${data.lastAction.championId}`);
-          } else if (data.lastAction.type === "pick") {
+          } else if (data.lastAction.type === 'pick') {
             toast.success(`Champion picked: ${data.lastAction.championId}`);
-          } else if (data.lastAction.type === "reorder") {
+          } else if (data.lastAction.type === 'reorder') {
             // Don't show toast for reorder actions (too frequent while dragging)
-            console.log("🔄 Champion order updated");
-          } else if (data.lastAction.type === "setReady") {
+            console.log('🔄 Champion order updated');
+          } else if (data.lastAction.type === 'setReady') {
             // Only show toast if it's not the current user
             if (data.lastAction.playerId !== user.id) {
-              const readyText = data.lastAction.ready ? "is ready!" : "changed their order";
-              toast(`Opponent ${readyText}`, { icon: "👤" });
+              const readyText = data.lastAction.ready ? 'is ready!' : 'changed their order';
+              toast(`Opponent ${readyText}`, { icon: '👤' });
             }
           }
         }
 
         // Determine player's side
-        const currentPlayer = data.game.players.find(
-          (p) => p.userId === user.id
-        );
+        const currentPlayer = data.game.players.find((p) => p.userId === user.id);
         if (currentPlayer?.side) {
           setPlayerSide(currentPlayer.side);
         }
-      }
+      },
     );
 
-    socket.on(
-      "banPickComplete",
-      (data: { game: GameData; message: string }) => {
-        console.log("🎉 Ban/pick phase complete:", data);
-        toast.success(data.message);
+    socket.on('banPickComplete', (data: { game: GameData; message: string }) => {
+      console.log('🎉 Ban/pick phase complete:', data);
+      toast.success(data.message);
 
-        // Navigate to the actual game after a delay
-        setTimeout(() => {
-          navigate(`/game/${gameId}`);
-        }, 3000);
+      // Navigate to the actual game after a delay
+      setTimeout(() => {
+        navigate(`/game/${gameId}`);
+      }, 3000);
+    });
+
+    socket.on('playerJoinedBanPick', (data: { playerId: string; message: string }) => {
+      console.log('👤 Player joined ban/pick:', data);
+      if (data.playerId !== user.id) {
+        toast(`Player joined ban/pick phase`, { icon: '👤' });
       }
-    );
+    });
 
-    socket.on(
-      "playerJoinedBanPick",
-      (data: { playerId: string; message: string }) => {
-        console.log("👤 Player joined ban/pick:", data);
-        if (data.playerId !== user.id) {
-          toast(`Player joined ban/pick phase`, { icon: "👤" });
-        }
-      }
-    );
-
-    socket.on("error", (data: { message: string }) => {
-      console.error("❌ Ban/pick error:", data);
+    socket.on('error', (data: { message: string }) => {
+      console.error('❌ Ban/pick error:', data);
       toast.error(data.message);
     });
 
     // Cleanup on unmount
     return () => {
-      console.log("🧹 Cleaning up ban/pick socket connection");
+      console.log('🧹 Cleaning up ban/pick socket connection');
       setIsConnected(false);
       socket.disconnect();
     };
@@ -253,12 +239,12 @@ export const useBanPick = (gameId: string) => {
 
   const banChampion = (championId: string) => {
     if (!socketRef.current || !user || !gameId) {
-      toast.error("Not connected to ban/pick server");
+      toast.error('Not connected to ban/pick server');
       return;
     }
 
-    if (!banPickState || banPickState.phase !== "ban") {
-      toast.error("Not in ban phase");
+    if (!banPickState || banPickState.phase !== 'ban') {
+      toast.error('Not in ban phase');
       return;
     }
 
@@ -267,8 +253,8 @@ export const useBanPick = (gameId: string) => {
       return;
     }
 
-    console.log("🚫 Banning champion:", championId);
-    socketRef.current.emit("banChampion", {
+    console.log('🚫 Banning champion:', championId);
+    socketRef.current.emit('banChampion', {
       gameId,
       playerId: user.id,
       championId,
@@ -277,12 +263,12 @@ export const useBanPick = (gameId: string) => {
 
   const pickChampion = (championId: string) => {
     if (!socketRef.current || !user || !gameId) {
-      toast.error("Not connected to ban/pick server");
+      toast.error('Not connected to ban/pick server');
       return;
     }
 
-    if (!banPickState || banPickState.phase !== "pick") {
-      toast.error("Not in pick phase");
+    if (!banPickState || banPickState.phase !== 'pick') {
+      toast.error('Not in pick phase');
       return;
     }
 
@@ -291,8 +277,8 @@ export const useBanPick = (gameId: string) => {
       return;
     }
 
-    console.log("✅ Picking champion:", championId);
-    socketRef.current.emit("pickChampion", {
+    console.log('✅ Picking champion:', championId);
+    socketRef.current.emit('pickChampion', {
       gameId,
       playerId: user.id,
       championId,
@@ -301,12 +287,12 @@ export const useBanPick = (gameId: string) => {
 
   const skipBan = () => {
     if (!socketRef.current || !user || !gameId) {
-      toast.error("Not connected to ban/pick server");
+      toast.error('Not connected to ban/pick server');
       return;
     }
 
-    if (!banPickState || banPickState.phase !== "ban") {
-      toast.error("Not in ban phase");
+    if (!banPickState || banPickState.phase !== 'ban') {
+      toast.error('Not in ban phase');
       return;
     }
 
@@ -315,8 +301,8 @@ export const useBanPick = (gameId: string) => {
       return;
     }
 
-    console.log("⏭️ Skipping ban");
-    socketRef.current.emit("skipBan", {
+    console.log('⏭️ Skipping ban');
+    socketRef.current.emit('skipBan', {
       gameId,
       playerId: user.id,
     });
@@ -325,22 +311,22 @@ export const useBanPick = (gameId: string) => {
   const getBanPickState = () => {
     if (!socketRef.current || !gameId) return;
 
-    socketRef.current.emit("getBanPickState", { gameId });
+    socketRef.current.emit('getBanPickState', { gameId });
   };
 
   const reorderChampions = (newOrder: string[]) => {
     if (!socketRef.current || !user || !gameId) {
-      toast.error("Not connected to ban/pick server");
+      toast.error('Not connected to ban/pick server');
       return;
     }
 
-    if (!banPickState || banPickState.phase !== "reorder") {
-      toast.error("Not in reorder phase");
+    if (!banPickState || banPickState.phase !== 'reorder') {
+      toast.error('Not in reorder phase');
       return;
     }
 
-    console.log("🔄 Reordering champions:", newOrder);
-    socketRef.current.emit("reorderChampions", {
+    console.log('🔄 Reordering champions:', newOrder);
+    socketRef.current.emit('reorderChampions', {
       gameId,
       playerId: user.id,
       newOrder,
@@ -349,17 +335,17 @@ export const useBanPick = (gameId: string) => {
 
   const setReady = (ready: boolean) => {
     if (!socketRef.current || !user || !gameId) {
-      toast.error("Not connected to ban/pick server");
+      toast.error('Not connected to ban/pick server');
       return;
     }
 
-    if (!banPickState || banPickState.phase !== "reorder") {
-      toast.error("Not in reorder phase");
+    if (!banPickState || banPickState.phase !== 'reorder') {
+      toast.error('Not in reorder phase');
       return;
     }
 
-    console.log(`${ready ? "✅" : "❌"} Setting ready status:`, ready);
-    socketRef.current.emit("setReady", {
+    console.log(`${ready ? '✅' : '❌'} Setting ready status:`, ready);
+    socketRef.current.emit('setReady', {
       gameId,
       playerId: user.id,
       ready,
@@ -368,17 +354,17 @@ export const useBanPick = (gameId: string) => {
 
   const setSummonerSpells = (spellAssignments: Record<string, SummonerSpellType>) => {
     if (!socketRef.current || !user || !gameId) {
-      toast.error("Not connected to ban/pick server");
+      toast.error('Not connected to ban/pick server');
       return;
     }
 
-    if (!banPickState || banPickState.phase !== "reorder") {
-      toast.error("Not in reorder phase");
+    if (!banPickState || banPickState.phase !== 'reorder') {
+      toast.error('Not in reorder phase');
       return;
     }
 
-    console.log("🔮 Setting summoner spells:", spellAssignments);
-    socketRef.current.emit("setSummonerSpells", {
+    console.log('🔮 Setting summoner spells:', spellAssignments);
+    socketRef.current.emit('setSummonerSpells', {
       gameId,
       playerId: user.id,
       spellAssignments,
@@ -386,12 +372,11 @@ export const useBanPick = (gameId: string) => {
   };
 
   const isMyTurn = banPickState?.currentTurn === playerSide;
-  const currentAction = banPickState?.phase === "ban" ? "ban" : "pick";
+  const currentAction = banPickState?.phase === 'ban' ? 'ban' : 'pick';
 
   // Get current player's summoner spell assignments
-  const mySummonerSpells = playerSide === "blue" 
-    ? banPickState?.blueSummonerSpells 
-    : banPickState?.redSummonerSpells;
+  const mySummonerSpells =
+    playerSide === 'blue' ? banPickState?.blueSummonerSpells : banPickState?.redSummonerSpells;
 
   return {
     isConnected,

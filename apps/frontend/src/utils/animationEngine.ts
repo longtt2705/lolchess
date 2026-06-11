@@ -1,17 +1,17 @@
-import { getSkillAnimationRenderer } from "../animations/SkillAnimator";
-import { ChessPosition, GameState } from "../hooks/useGame";
+import { getSkillAnimationRenderer } from '../animations/SkillAnimator';
+import { ChessPosition, GameState } from '../hooks/useGame';
 
 export interface AnimationAction {
   id: string;
   type:
-    | "move"
-    | "attack"
-    | "skill"
-    | "summoner_spell"
-    | "damage"
-    | "stat_change"
-    | "death"
-    | "buy_item";
+    | 'move'
+    | 'attack'
+    | 'skill'
+    | 'summoner_spell'
+    | 'damage'
+    | 'stat_change'
+    | 'death'
+    | 'buy_item';
   timestamp: number;
   delay: number; // When to start this animation (in ms from sequence start)
   duration: number; // How long the animation lasts
@@ -97,7 +97,7 @@ export class AnimationEngine {
    */
   static generateAnimationSequence(
     gameState: GameState,
-    previousGameState: GameState | null
+    previousGameState: GameState | null,
   ): AnimationAction[] {
     const animations: AnimationAction[] = [];
 
@@ -110,7 +110,7 @@ export class AnimationEngine {
 
     // 1. Handle movement animation
     if (
-      lastAction.actionType === "move_chess" &&
+      lastAction.actionType === 'move_chess' &&
       lastAction.fromPosition &&
       lastAction.targetPosition
     ) {
@@ -118,7 +118,7 @@ export class AnimationEngine {
       if (piece) {
         animations.push({
           id: `move_${lastAction.timestamp}`,
-          type: "move",
+          type: 'move',
           timestamp: lastAction.timestamp,
           delay: currentDelay,
           duration: 500,
@@ -133,34 +133,32 @@ export class AnimationEngine {
     }
 
     // 2. Handle attack animation
-    if (lastAction.actionType === "attack_chess" && lastAction.targetId) {
-      const attacker = gameState.board.find(
-        (p) => p.id === lastAction.casterId
-      );
+    if (lastAction.actionType === 'attack_chess' && lastAction.targetId) {
+      const attacker = gameState.board.find((p) => p.id === lastAction.casterId);
 
       if (attacker) {
         // Check for Critical Flank (minion diagonal execution)
         // This replaces the normal attack animation with a special execution animation
         if (lastAction.criticalFlankProc) {
-          const skillRenderer = getSkillAnimationRenderer("The Critical Flank");
+          const skillRenderer = getSkillAnimationRenderer('The Critical Flank');
 
           const criticalFlankAnimationData = {
             casterId: lastAction.casterId,
             casterPosition: lastAction.casterPosition,
-            skillName: "The Critical Flank",
+            skillName: 'The Critical Flank',
             targetPosition: lastAction.targetPosition,
             targetId: lastAction.targetId,
             criticalFlankAdvancePosition: lastAction.criticalFlankAdvancePosition,
           } as SkillAnimationData;
 
           const calculatedDuration =
-            typeof skillRenderer.duration === "function"
+            typeof skillRenderer.duration === 'function'
               ? skillRenderer.duration(criticalFlankAnimationData)
               : skillRenderer.duration;
 
           animations.push({
             id: `critical_flank_${lastAction.timestamp}`,
-            type: "skill",
+            type: 'skill',
             timestamp: lastAction.timestamp,
             delay: currentDelay,
             duration: calculatedDuration,
@@ -171,7 +169,7 @@ export class AnimationEngine {
           // Normal attack animation
           animations.push({
             id: `attack_${lastAction.timestamp}`,
-            type: "attack",
+            type: 'attack',
             timestamp: lastAction.timestamp,
             delay: currentDelay,
             duration: 600,
@@ -192,27 +190,25 @@ export class AnimationEngine {
         // Handle Yasuo's whirlwind animation (triggered on critical strike)
         // The whirlwind animation plays whenever whirlwindTargets is set (even if empty)
         if (lastAction.whirlwindTargets) {
-          const skillRenderer = getSkillAnimationRenderer(
-            "Way of the Wanderer"
-          );
+          const skillRenderer = getSkillAnimationRenderer('Way of the Wanderer');
 
           const whirlwindAnimationData = {
             casterId: lastAction.casterId,
             casterPosition: lastAction.casterPosition,
-            skillName: "Way of the Wanderer",
+            skillName: 'Way of the Wanderer',
             targetPosition: lastAction.targetPosition,
             targetId: lastAction.targetId,
             whirlwindTargets: lastAction.whirlwindTargets,
           } as SkillAnimationData;
 
           const calculatedDuration =
-            typeof skillRenderer.duration === "function"
+            typeof skillRenderer.duration === 'function'
               ? skillRenderer.duration(whirlwindAnimationData)
               : skillRenderer.duration;
 
           animations.push({
             id: `whirlwind_${lastAction.timestamp}`,
-            type: "skill",
+            type: 'skill',
             timestamp: lastAction.timestamp,
             delay: currentDelay,
             duration: calculatedDuration,
@@ -222,17 +218,14 @@ export class AnimationEngine {
         }
 
         // Handle Sand Soldier chain attacks (additional attacks from nearby Sand Soldiers)
-        if (
-          lastAction.additionalAttacks &&
-          lastAction.additionalAttacks.length > 0
-        ) {
+        if (lastAction.additionalAttacks && lastAction.additionalAttacks.length > 0) {
           // All chain attacks animate simultaneously (same delay)
           const CHAIN_ATTACK_DURATION = 400; // Shorter duration for chain attacks
 
           lastAction.additionalAttacks.forEach((chainAttack, index) => {
             animations.push({
               id: `chain_attack_${index}_${lastAction.timestamp}`,
-              type: "attack",
+              type: 'attack',
               timestamp: lastAction.timestamp,
               delay: currentDelay, // All chain attacks start at the same time
               duration: CHAIN_ATTACK_DURATION,
@@ -255,7 +248,7 @@ export class AnimationEngine {
     }
 
     // 3. Handle skill animation
-    if (lastAction.actionType === "skill" && lastAction.skillName) {
+    if (lastAction.actionType === 'skill' && lastAction.skillName) {
       const caster = gameState.board.find((p) => p.id === lastAction.casterId);
 
       if (caster) {
@@ -278,13 +271,13 @@ export class AnimationEngine {
 
         // Calculate duration - support both static and dynamic duration
         const calculatedDuration =
-          typeof skillRenderer.duration === "function"
+          typeof skillRenderer.duration === 'function'
             ? skillRenderer.duration(skillAnimationData)
             : skillRenderer.duration;
 
         animations.push({
           id: `skill_${lastAction.timestamp}`,
-          type: "skill",
+          type: 'skill',
           timestamp: lastAction.timestamp,
           delay: currentDelay,
           duration: calculatedDuration, // Use calculated duration
@@ -295,7 +288,7 @@ export class AnimationEngine {
     }
 
     // 4. Handle summoner spell animation
-    if (lastAction.actionType === "use_summoner_spell" && lastAction.summonerSpellType) {
+    if (lastAction.actionType === 'use_summoner_spell' && lastAction.summonerSpellType) {
       const caster = gameState.board.find((p) => p.id === lastAction.casterId);
 
       if (caster) {
@@ -313,13 +306,13 @@ export class AnimationEngine {
 
         // Calculate duration - support both static and dynamic duration
         const calculatedDuration =
-          typeof spellRenderer.duration === "function"
+          typeof spellRenderer.duration === 'function'
             ? spellRenderer.duration(spellAnimationData)
             : spellRenderer.duration;
 
         animations.push({
           id: `summoner_spell_${lastAction.timestamp}`,
-          type: "summoner_spell",
+          type: 'summoner_spell',
           timestamp: lastAction.timestamp,
           delay: currentDelay,
           duration: calculatedDuration,
@@ -337,7 +330,7 @@ export class AnimationEngine {
         if (piece && damage > 0) {
           animations.push({
             id: `self_damage_${pieceId}_${lastAction.timestamp}`,
-            type: "damage",
+            type: 'damage',
             timestamp: lastAction.timestamp,
             delay: currentDelay,
             duration: 1200,
@@ -360,21 +353,20 @@ export class AnimationEngine {
     // 6. Handle stat changes (with floating text)
     if (lastAction.statChanges) {
       Object.entries(lastAction.statChanges).forEach(([key, change]) => {
-        const [pieceId, stat] = key.split(".");
+        const [pieceId, stat] = key.split('.');
         const piece = gameState.board.find((p) => p.id === pieceId);
 
         if (piece && stat) {
           // Only show HP changes as damage/heal, other stats as stat changes
-          if (stat === "hp") {
+          if (stat === 'hp') {
             const hpDiff = change.newValue - change.oldValue;
             // Only show NET stat changes if not already covered by selfDamage
             // Skip showing if the piece had selfDamage and the change is negative (already shown)
-            const hasSelfDamage =
-              lastAction.selfDamage && lastAction.selfDamage[pieceId];
+            const hasSelfDamage = lastAction.selfDamage && lastAction.selfDamage[pieceId];
             if (hpDiff !== 0 && !(hasSelfDamage && hpDiff < 0)) {
               animations.push({
                 id: `damage_${pieceId}_${lastAction.timestamp}`,
-                type: "damage",
+                type: 'damage',
                 timestamp: lastAction.timestamp,
                 delay: currentDelay,
                 duration: 1200,
@@ -390,7 +382,7 @@ export class AnimationEngine {
             // Show other stat changes
             animations.push({
               id: `stat_${pieceId}_${stat}_${lastAction.timestamp}`,
-              type: "stat_change",
+              type: 'stat_change',
               timestamp: lastAction.timestamp,
               delay: currentDelay,
               duration: 1500,
@@ -418,26 +410,20 @@ export class AnimationEngine {
         // Try to get the piece's last known position from previousGameState
         let position: ChessPosition | undefined;
         if (previousGameState) {
-          const deadPiece = previousGameState.board.find(
-            (p) => p.id === pieceId
-          );
+          const deadPiece = previousGameState.board.find((p) => p.id === pieceId);
           if (deadPiece) {
             position = deadPiece.position;
           }
         }
 
-        if (
-          !position &&
-          lastAction.targetId === pieceId &&
-          lastAction.targetPosition
-        ) {
+        if (!position && lastAction.targetId === pieceId && lastAction.targetPosition) {
           position = lastAction.targetPosition;
         }
 
         if (position) {
           animations.push({
             id: `death_${pieceId}_${lastAction.timestamp}`,
-            type: "death",
+            type: 'death',
             timestamp: lastAction.timestamp,
             delay: currentDelay,
             duration: 800,
@@ -455,10 +441,10 @@ export class AnimationEngine {
     }
 
     // 8. Handle item purchase
-    if (lastAction.actionType === "buy_item" && lastAction.itemId) {
+    if (lastAction.actionType === 'buy_item' && lastAction.itemId) {
       animations.push({
         id: `buy_item_${lastAction.timestamp}`,
-        type: "buy_item",
+        type: 'buy_item',
         timestamp: lastAction.timestamp,
         delay: currentDelay,
         duration: 500,
@@ -475,10 +461,7 @@ export class AnimationEngine {
   /**
    * Check if animations should be played for this game state update
    */
-  static shouldPlayAnimations(
-    gameState: GameState,
-    previousGameState: GameState | null
-  ): boolean {
+  static shouldPlayAnimations(gameState: GameState, previousGameState: GameState | null): boolean {
     // Don't play animations if there's no previous state (initial load)
     if (!previousGameState) {
       return false;

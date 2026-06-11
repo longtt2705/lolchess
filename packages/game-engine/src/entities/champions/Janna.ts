@@ -1,7 +1,7 @@
-import { Chess, Debuff, Square, Game } from "../../types";
-import { ChessObject } from "../ChessObject";
-import { ChessFactory } from "../ChessFactory";
-import { getAdjacentSquares, getChessAtPosition } from "../../utils/helpers";
+import { Chess, Debuff, Square, Game } from '../../types';
+import { ChessObject } from '../ChessObject';
+import { ChessFactory } from '../ChessFactory';
+import { getAdjacentSquares, getChessAtPosition } from '../../utils/helpers';
 
 export class Janna extends ChessObject {
   constructor(chess: Chess, game: Game) {
@@ -10,20 +10,20 @@ export class Janna extends ChessObject {
 
   createSpeedBoostDebuff(): Debuff {
     return {
-      id: "speed_boost",
-      name: "Speed Boost",
-      description: "Increases speed by 2",
+      id: 'speed_boost',
+      name: 'Speed Boost',
+      description: 'Increases speed by 2',
       duration: 2,
       maxDuration: 2,
       effects: [
         {
-          stat: "speed",
+          stat: 'speed',
           modifier: 2,
-          type: "add",
+          type: 'add',
         },
       ],
       damagePerTurn: 0,
-      damageType: "physical",
+      damageType: 'physical',
       healPerTurn: 0,
       unique: true,
       appliedAt: Date.now(),
@@ -41,32 +41,27 @@ export class Janna extends ChessObject {
   skill(position?: Square): void {
     // Add +2 Move Speed to nearby allies for 2 turns (does not stack with aura)
     getAdjacentSquares(this.chess.position).forEach((square) => {
-      const targetChess = getChessAtPosition(
-        this.game,
-        this.chess.blue,
-        square
-      );
+      const targetChess = getChessAtPosition(this.game, this.chess.blue, square);
       if (targetChess) {
-        const targetChessObject = ChessFactory.createChess(
-          targetChess,
-          this.game
-        );
+        const targetChessObject = ChessFactory.createChess(targetChess, this.game);
         // Only apply if the target doesn't already have the speed boost
-        const hasSpeedBoost = targetChess.debuffs.some(
-          (d) => d.id === "speed_boost"
-        );
+        const hasSpeedBoost = targetChess.debuffs.some((d) => d.id === 'speed_boost');
         if (!hasSpeedBoost) {
           this.applySpeedBoost(targetChessObject);
         }
 
-        targetChessObject.applyShield(20 + this.ap * 1, 2, `janna_shield_${targetChessObject.chess.id}`);
+        targetChessObject.applyShield(
+          20 + this.ap * 1,
+          2,
+          `janna_shield_${targetChessObject.chess.id}`,
+        );
       }
     });
   }
 
   protected getActiveSkillPotential(): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -86,7 +81,7 @@ export class Janna extends ChessObject {
 
   public getActiveSkillValue(targetPosition?: Square | null): number {
     const skill = this.chess.skill;
-    if (!skill || skill.type !== "active" || skill.currentCooldown > 0) {
+    if (!skill || skill.type !== 'active' || skill.currentCooldown > 0) {
       return 0;
     }
 
@@ -95,17 +90,18 @@ export class Janna extends ChessObject {
     if (!targetPosition) {
       return 40; // Good value for AOE shields and buffs
     }
-    
+
     const targetPiece = getChessAtPosition(this.game, this.chess.blue, targetPosition);
     if (!targetPiece) {
       return 0;
     }
     const target = ChessFactory.createChess(targetPiece, this.game);
-    
+
     // Check if target is adjacent ally
-    const isAdjacent = Math.abs(this.chess.position.x - target.chess.position.x) <= 1 &&
-                      Math.abs(this.chess.position.y - target.chess.position.y) <= 1;
-    
+    const isAdjacent =
+      Math.abs(this.chess.position.x - target.chess.position.x) <= 1 &&
+      Math.abs(this.chess.position.y - target.chess.position.y) <= 1;
+
     if (!isAdjacent || target.chess.blue !== this.chess.blue) {
       return 0; // Target not adjacent or is enemy
     }
@@ -114,7 +110,7 @@ export class Janna extends ChessObject {
 
     // Shield: 20 + 100% AP
     const shieldAmount = 20 + this.ap * 1.0;
-    
+
     // Shield is more valuable if target is low HP or under threat
     const targetHpPercent = target.chess.stats.hp / target.chess.stats.maxHp;
     const urgencyMultiplier = 1 + (1 - targetHpPercent) * 0.5; // 1.0 to 1.5x

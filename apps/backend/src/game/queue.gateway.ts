@@ -6,19 +6,19 @@ import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
-} from "@nestjs/websockets";
-import { Server, Socket } from "socket.io";
-import { GameService } from "./game.service";
-import { QueueService, QueuePlayer } from "./queue.service";
-import { SimpleBotService } from "./simple-bot.service";
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { GameService } from './game.service';
+import { QueueService, QueuePlayer } from './queue.service';
+import { SimpleBotService } from './simple-bot.service';
 
 // Delay for bot actions to make them feel more natural
 const BOT_ACTION_DELAY_MS = 1500;
 
 @WebSocketGateway({
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
+    origin: '*',
+    methods: ['GET', 'POST'],
   },
   // No namespace - this handles the root namespace for queue/matchmaking
 })
@@ -31,7 +31,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly gameService: GameService,
     private readonly queueService: QueueService,
-    private readonly simpleBotService: SimpleBotService
+    private readonly simpleBotService: SimpleBotService,
   ) {}
 
   handleConnection(client: Socket) {
@@ -50,10 +50,10 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage("joinQueue")
+  @SubscribeMessage('joinQueue')
   async handleJoinQueue(
     @MessageBody() data: { userId: string; username: string },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     try {
       const { userId, username } = data;
@@ -61,13 +61,11 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(`User ${username} (${userId}) joining queue`);
 
       // Check if user is already in an active game
-      const activeGameResult =
-        await this.gameService.getActiveGameForUser(userId);
+      const activeGameResult = await this.gameService.getActiveGameForUser(userId);
       if (activeGameResult.hasActiveGame) {
-        client.emit("alreadyInGame", {
+        client.emit('alreadyInGame', {
           game: activeGameResult.game,
-          message:
-            "You are already in an active game. Please finish or leave that game first.",
+          message: 'You are already in an active game. Please finish or leave that game first.',
         });
         return;
       }
@@ -87,21 +85,18 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const queueStatus = this.queueService.addToQueue(queuePlayer);
 
       // Notify client they joined the queue
-      client.emit("queueJoined", queueStatus);
+      client.emit('queueJoined', queueStatus);
 
       // Check for match immediately
       this.checkForMatches();
     } catch (error) {
-      console.error("Error joining queue:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error joining queue:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
-  @SubscribeMessage("leaveQueue")
-  handleLeaveQueue(
-    @MessageBody() data: { userId: string },
-    @ConnectedSocket() client: Socket
-  ) {
+  @SubscribeMessage('leaveQueue')
+  handleLeaveQueue(@MessageBody() data: { userId: string }, @ConnectedSocket() client: Socket) {
     try {
       const { userId } = data;
 
@@ -110,36 +105,33 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const removed = this.queueService.removeFromQueue(userId);
 
       if (removed) {
-        client.emit("queueLeft", { message: "Left queue successfully" });
+        client.emit('queueLeft', { message: 'Left queue successfully' });
       }
 
       // Clean up socket mapping
       this.socketUsers.delete(client.id);
     } catch (error) {
-      console.error("Error leaving queue:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error leaving queue:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
-  @SubscribeMessage("getQueueStatus")
-  handleGetQueueStatus(
-    @MessageBody() data: { userId: string },
-    @ConnectedSocket() client: Socket
-  ) {
+  @SubscribeMessage('getQueueStatus')
+  handleGetQueueStatus(@MessageBody() data: { userId: string }, @ConnectedSocket() client: Socket) {
     try {
       const { userId } = data;
 
       const position = this.queueService.getQueuePosition(userId);
       const queueSize = this.queueService.getQueueSize();
 
-      client.emit("queueStatus", {
+      client.emit('queueStatus', {
         position: position > 0 ? position : null,
         queueSize,
         inQueue: position > 0,
       });
     } catch (error) {
-      console.error("Error getting queue status:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error getting queue status:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
@@ -174,17 +166,14 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const game = gameResult.game;
 
       if (!game) {
-        throw new Error("Failed to create game");
+        throw new Error('Failed to create game');
       }
 
       // Add both players to the game
-      const addPlayersResult = await this.gameService.addPlayersToGameForQueue(
-        game.id,
-        [
-          { userId: player1.userId, username: player1.username },
-          { userId: player2.userId, username: player2.username },
-        ]
-      );
+      const addPlayersResult = await this.gameService.addPlayersToGameForQueue(game.id, [
+        { userId: player1.userId, username: player1.username },
+        { userId: player2.userId, username: player2.username },
+      ]);
 
       if (!addPlayersResult.game) {
         throw new Error(addPlayersResult.message);
@@ -195,13 +184,13 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Notify both players of the match
       const matchData = {
         game: updatedGameData,
-        phase: "ban_pick", // Start with ban/pick phase
+        phase: 'ban_pick', // Start with ban/pick phase
       };
 
       // Send to player 1
       const socket1 = this.server.sockets.sockets.get(player1.socketId);
       if (socket1) {
-        socket1.emit("matchFound", {
+        socket1.emit('matchFound', {
           ...matchData,
           opponent: { id: player2.userId, username: player2.username },
         });
@@ -210,28 +199,28 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Send to player 2
       const socket2 = this.server.sockets.sockets.get(player2.socketId);
       if (socket2) {
-        socket2.emit("matchFound", {
+        socket2.emit('matchFound', {
           ...matchData,
           opponent: { id: player1.userId, username: player1.username },
         });
       }
     } catch (error) {
-      console.error("Error creating match:", error);
+      console.error('Error creating match:', error);
 
       // Re-add players to queue if match creation failed
       try {
         this.queueService.addToQueue(player1);
         this.queueService.addToQueue(player2);
       } catch (requeueError) {
-        console.error("Error re-adding players to queue:", requeueError);
+        console.error('Error re-adding players to queue:', requeueError);
       }
     }
   }
 
-  @SubscribeMessage("joinBanPickPhase")
+  @SubscribeMessage('joinBanPickPhase')
   async handleJoinBanPickPhase(
     @MessageBody() data: { gameId: string; playerId: string },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     try {
       const { gameId, playerId } = data;
@@ -245,31 +234,31 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Get current game state and send to client
       const gameResult = await this.gameService.findOne(gameId);
       if (gameResult.game && gameResult.game.banPickState) {
-        client.emit("banPickStateUpdate", {
+        client.emit('banPickStateUpdate', {
           game: gameResult.game,
           banPickState: gameResult.game.banPickState,
         });
 
         // Notify other players
-        client.to(gameId).emit("playerJoinedBanPick", {
+        client.to(gameId).emit('playerJoinedBanPick', {
           playerId,
-          message: "Player joined ban/pick phase",
+          message: 'Player joined ban/pick phase',
         });
 
         // Check if it's a bot's turn to act
         await this.checkAndProcessBotBanPickTurn(gameId, gameResult.game);
       }
     } catch (error) {
-      console.error("Error joining ban-pick phase:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error joining ban-pick phase:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
-  @SubscribeMessage("banChampion")
+  @SubscribeMessage('banChampion')
   async handleBanChampion(
     @MessageBody()
     data: { gameId: string; playerId: string; championId: string },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     try {
       const { gameId, playerId, championId } = data;
@@ -279,16 +268,16 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId,
         playerId,
         championId,
-        "ban"
+        'ban',
       );
 
       if (result) {
         // Broadcast updated state to all players in the room
-        this.server.to(gameId).emit("banPickStateUpdate", {
+        this.server.to(gameId).emit('banPickStateUpdate', {
           game: result,
           banPickState: result.banPickState,
           lastAction: {
-            type: "ban",
+            type: 'ban',
             championId,
             playerId,
             timestamp: Date.now(),
@@ -299,16 +288,16 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await this.checkAndProcessBotBanPickTurn(gameId, result);
       }
     } catch (error) {
-      console.error("Error processing ban:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error processing ban:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
-  @SubscribeMessage("pickChampion")
+  @SubscribeMessage('pickChampion')
   async handlePickChampion(
     @MessageBody()
     data: { gameId: string; playerId: string; championId: string },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     try {
       const { gameId, playerId, championId } = data;
@@ -318,16 +307,16 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId,
         playerId,
         championId,
-        "pick"
+        'pick',
       );
 
       if (result) {
         // Broadcast updated state to all players in the room
-        this.server.to(gameId).emit("banPickStateUpdate", {
+        this.server.to(gameId).emit('banPickStateUpdate', {
           game: result,
           banPickState: result.banPickState,
           lastAction: {
-            type: "pick",
+            type: 'pick',
             championId,
             playerId,
             timestamp: Date.now(),
@@ -335,7 +324,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
 
         // Check if entered reorder phase
-        if (result.banPickState?.phase === "reorder") {
+        if (result.banPickState?.phase === 'reorder') {
           // If bot is in the game, automatically reorder and set ready
           await this.checkAndProcessBotReorderTurn(gameId, result);
         } else {
@@ -344,34 +333,29 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       }
     } catch (error) {
-      console.error("Error processing pick:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error processing pick:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
-  @SubscribeMessage("skipBan")
+  @SubscribeMessage('skipBan')
   async handleSkipBan(
     @MessageBody() data: { gameId: string; playerId: string },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     try {
       const { gameId, playerId } = data;
 
       // Process the skip ban action (pass null as championId)
-      const result = await this.gameService.processBanPickAction(
-        gameId,
-        playerId,
-        null,
-        "ban"
-      );
+      const result = await this.gameService.processBanPickAction(gameId, playerId, null, 'ban');
 
       if (result) {
         // Broadcast updated state to all players in the room
-        this.server.to(gameId).emit("banPickStateUpdate", {
+        this.server.to(gameId).emit('banPickStateUpdate', {
           game: result,
           banPickState: result.banPickState,
           lastAction: {
-            type: "skip_ban",
+            type: 'skip_ban',
             playerId,
             timestamp: Date.now(),
           },
@@ -381,67 +365,63 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await this.checkAndProcessBotBanPickTurn(gameId, result);
       }
     } catch (error) {
-      console.error("Error processing skip ban:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error processing skip ban:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
-  @SubscribeMessage("getBanPickState")
+  @SubscribeMessage('getBanPickState')
   async handleGetBanPickState(
     @MessageBody() data: { gameId: string },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     try {
       const { gameId } = data;
 
       const gameResult = await this.gameService.findOne(gameId);
       if (gameResult.game && gameResult.game.banPickState) {
-        client.emit("banPickStateUpdate", {
+        client.emit('banPickStateUpdate', {
           game: gameResult.game,
           banPickState: gameResult.game.banPickState,
         });
       }
     } catch (error) {
-      console.error("Error getting ban-pick state:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error getting ban-pick state:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
-  @SubscribeMessage("reorderChampions")
+  @SubscribeMessage('reorderChampions')
   async handleReorderChampions(
     @MessageBody()
     data: { gameId: string; playerId: string; newOrder: string[] },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     try {
       const { gameId, playerId, newOrder } = data;
 
       // Process the reorder action
-      const result = await this.gameService.processReorderAction(
-        gameId,
-        playerId,
-        newOrder
-      );
+      const result = await this.gameService.processReorderAction(gameId, playerId, newOrder);
 
       if (result) {
         // Broadcast updated state to all players in the room
-        this.server.to(gameId).emit("banPickStateUpdate", {
+        this.server.to(gameId).emit('banPickStateUpdate', {
           game: result,
           banPickState: result.banPickState,
           lastAction: {
-            type: "reorder",
+            type: 'reorder',
             playerId,
             timestamp: Date.now(),
           },
         });
       }
     } catch (error) {
-      console.error("Error processing champion reorder:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error processing champion reorder:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
-  @SubscribeMessage("setSummonerSpells")
+  @SubscribeMessage('setSummonerSpells')
   async handleSetSummonerSpells(
     @MessageBody()
     data: {
@@ -449,7 +429,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       playerId: string;
       spellAssignments: Record<string, string>;
     },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     try {
       const { gameId, playerId, spellAssignments } = data;
@@ -458,50 +438,46 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const result = await this.gameService.setSummonerSpells(
         gameId,
         playerId,
-        spellAssignments as Record<string, any>
+        spellAssignments as Record<string, any>,
       );
 
       if (result) {
         // Broadcast updated state to all players in the room
-        this.server.to(gameId).emit("banPickStateUpdate", {
+        this.server.to(gameId).emit('banPickStateUpdate', {
           game: result,
           banPickState: result.banPickState,
           lastAction: {
-            type: "setSummonerSpells",
+            type: 'setSummonerSpells',
             playerId,
             timestamp: Date.now(),
           },
         });
       }
     } catch (error) {
-      console.error("Error setting summoner spells:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error setting summoner spells:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
-  @SubscribeMessage("setReady")
+  @SubscribeMessage('setReady')
   async handleSetReady(
     @MessageBody()
     data: { gameId: string; playerId: string; ready: boolean },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     try {
       const { gameId, playerId, ready } = data;
 
       // Process the ready action
-      const result = await this.gameService.setPlayerReady(
-        gameId,
-        playerId,
-        ready
-      );
+      const result = await this.gameService.setPlayerReady(gameId, playerId, ready);
 
       if (result.game) {
         // Broadcast updated state to all players in the room
-        this.server.to(gameId).emit("banPickStateUpdate", {
+        this.server.to(gameId).emit('banPickStateUpdate', {
           game: result.game,
           banPickState: result.game.banPickState,
           lastAction: {
-            type: "setReady",
+            type: 'setReady',
             playerId,
             ready,
             timestamp: Date.now(),
@@ -511,37 +487,29 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // If both players are ready, initialize gameplay and emit banPickComplete
         if (result.shouldStartGame) {
           await this.gameService.initializeGameplay(gameId);
-          this.server.to(gameId).emit("banPickComplete", {
+          this.server.to(gameId).emit('banPickComplete', {
             game: result.game,
-            message: "Both players ready! Starting game...",
+            message: 'Both players ready! Starting game...',
           });
         }
       }
     } catch (error) {
-      console.error("Error setting ready status:", error);
-      client.emit("error", { message: error.message });
+      console.error('Error setting ready status:', error);
+      client.emit('error', { message: error.message });
     }
   }
 
   /**
    * Check if it's a bot's turn and automatically process bot's ban/pick action
    */
-  private async checkAndProcessBotBanPickTurn(
-    gameId: string,
-    game: any
-  ): Promise<void> {
+  private async checkAndProcessBotBanPickTurn(gameId: string, game: any): Promise<void> {
     const banPickState = game.banPickState;
-    if (
-      !banPickState ||
-      banPickState.phase === "reorder" ||
-      banPickState.phase === "complete"
-    ) {
+    if (!banPickState || banPickState.phase === 'reorder' || banPickState.phase === 'complete') {
       return;
     }
 
     // Determine current player
-    const currentPlayerId =
-      banPickState.currentTurn === "blue" ? game.bluePlayer : game.redPlayer;
+    const currentPlayerId = banPickState.currentTurn === 'blue' ? game.bluePlayer : game.redPlayer;
 
     // Check if current player is a bot
     if (!this.simpleBotService.isBotPlayer(currentPlayerId)) {
@@ -553,26 +521,25 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       let championChoice: string | null = null;
-      let actionType: "ban" | "pick" = banPickState.phase;
+      const actionType: 'ban' | 'pick' = banPickState.phase;
 
-      if (banPickState.phase === "ban") {
+      if (banPickState.phase === 'ban') {
         // Bot selects a champion to ban
         championChoice = this.simpleBotService.getBotBanChoice(
           banPickState.bannedChampions,
           banPickState.blueBans,
-          banPickState.redBans
+          banPickState.redBans,
         );
-      } else if (banPickState.phase === "pick") {
+      } else if (banPickState.phase === 'pick') {
         // Bot selects a champion to pick
-        const botSide = currentPlayerId === game.bluePlayer ? "blue" : "red";
-        const botPicks =
-          botSide === "blue" ? banPickState.bluePicks : banPickState.redPicks;
+        const botSide = currentPlayerId === game.bluePlayer ? 'blue' : 'red';
+        const botPicks = botSide === 'blue' ? banPickState.bluePicks : banPickState.redPicks;
         const allPicked = [...banPickState.bluePicks, ...banPickState.redPicks];
 
         championChoice = this.simpleBotService.getBotPickChoice(
           banPickState.bannedChampions,
           allPicked,
-          botPicks
+          botPicks,
         );
       }
 
@@ -581,12 +548,12 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         gameId,
         currentPlayerId,
         championChoice,
-        actionType
+        actionType,
       );
 
       if (result) {
         // Broadcast bot's action
-        this.server.to(gameId).emit("banPickStateUpdate", {
+        this.server.to(gameId).emit('banPickStateUpdate', {
           game: result,
           banPickState: result.banPickState,
           lastAction: {
@@ -599,7 +566,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
 
         // Check if entered reorder phase
-        if (result.banPickState?.phase === "reorder") {
+        if (result.banPickState?.phase === 'reorder') {
           await this.checkAndProcessBotReorderTurn(gameId, result);
         } else {
           // Recursively check for next bot turn
@@ -608,7 +575,7 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     } catch (error) {
       console.error(`Error processing bot ban/pick action:`, error);
-      this.server.to(gameId).emit("bot-error", {
+      this.server.to(gameId).emit('bot-error', {
         playerId: currentPlayerId,
         error: error.message,
       });
@@ -618,12 +585,9 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
   /**
    * Check if bot needs to reorder and set ready
    */
-  private async checkAndProcessBotReorderTurn(
-    gameId: string,
-    game: any
-  ): Promise<void> {
+  private async checkAndProcessBotReorderTurn(gameId: string, game: any): Promise<void> {
     const banPickState = game.banPickState;
-    if (!banPickState || banPickState.phase !== "reorder") {
+    if (!banPickState || banPickState.phase !== 'reorder') {
       return;
     }
 
@@ -642,21 +606,21 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Process bot reorder if needed
       if (isBotBlue && banPickState.blueChampionOrder.length > 0) {
         const reorderedChampions = this.simpleBotService.getBotChampionOrder(
-          banPickState.blueChampionOrder
+          banPickState.blueChampionOrder,
         );
 
         const reorderResult = await this.gameService.processReorderAction(
           gameId,
           game.bluePlayer,
-          reorderedChampions
+          reorderedChampions,
         );
 
         if (reorderResult) {
-          this.server.to(gameId).emit("banPickStateUpdate", {
+          this.server.to(gameId).emit('banPickStateUpdate', {
             game: reorderResult,
             banPickState: reorderResult.banPickState,
             lastAction: {
-              type: "reorder",
+              type: 'reorder',
               playerId: game.bluePlayer,
               timestamp: Date.now(),
               isBot: true,
@@ -669,21 +633,21 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (isBotRed && banPickState.redChampionOrder.length > 0) {
         const reorderedChampions = this.simpleBotService.getBotChampionOrder(
-          banPickState.redChampionOrder
+          banPickState.redChampionOrder,
         );
 
         const reorderResult = await this.gameService.processReorderAction(
           gameId,
           game.redPlayer,
-          reorderedChampions
+          reorderedChampions,
         );
 
         if (reorderResult) {
-          this.server.to(gameId).emit("banPickStateUpdate", {
+          this.server.to(gameId).emit('banPickStateUpdate', {
             game: reorderResult,
             banPickState: reorderResult.banPickState,
             lastAction: {
-              type: "reorder",
+              type: 'reorder',
               playerId: game.redPlayer,
               timestamp: Date.now(),
               isBot: true,
@@ -695,28 +659,26 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       // Add another small delay before setting summoner spells
-      await new Promise((resolve) =>
-        setTimeout(resolve, BOT_ACTION_DELAY_MS / 2)
-      );
+      await new Promise((resolve) => setTimeout(resolve, BOT_ACTION_DELAY_MS / 2));
 
       // Set bot summoner spells
       if (isBotBlue && banPickState.blueChampionOrder.length > 0) {
         const spellAssignments = this.simpleBotService.getBotSpellAssignments(
-          banPickState.blueChampionOrder
+          banPickState.blueChampionOrder,
         );
 
         const spellResult = await this.gameService.setSummonerSpells(
           gameId,
           game.bluePlayer,
-          spellAssignments
+          spellAssignments,
         );
 
         if (spellResult) {
-          this.server.to(gameId).emit("banPickStateUpdate", {
+          this.server.to(gameId).emit('banPickStateUpdate', {
             game: spellResult,
             banPickState: spellResult.banPickState,
             lastAction: {
-              type: "setSummonerSpells",
+              type: 'setSummonerSpells',
               playerId: game.bluePlayer,
               timestamp: Date.now(),
               isBot: true,
@@ -729,21 +691,21 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (isBotRed && banPickState.redChampionOrder.length > 0) {
         const spellAssignments = this.simpleBotService.getBotSpellAssignments(
-          banPickState.redChampionOrder
+          banPickState.redChampionOrder,
         );
 
         const spellResult = await this.gameService.setSummonerSpells(
           gameId,
           game.redPlayer,
-          spellAssignments
+          spellAssignments,
         );
 
         if (spellResult) {
-          this.server.to(gameId).emit("banPickStateUpdate", {
+          this.server.to(gameId).emit('banPickStateUpdate', {
             game: spellResult,
             banPickState: spellResult.banPickState,
             lastAction: {
-              type: "setSummonerSpells",
+              type: 'setSummonerSpells',
               playerId: game.redPlayer,
               timestamp: Date.now(),
               isBot: true,
@@ -755,24 +717,18 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       // Add another small delay before setting ready
-      await new Promise((resolve) =>
-        setTimeout(resolve, BOT_ACTION_DELAY_MS / 2)
-      );
+      await new Promise((resolve) => setTimeout(resolve, BOT_ACTION_DELAY_MS / 2));
 
       // Set bot(s) as ready
       if (isBotBlue) {
-        const readyResult = await this.gameService.setPlayerReady(
-          gameId,
-          game.bluePlayer,
-          true
-        );
+        const readyResult = await this.gameService.setPlayerReady(gameId, game.bluePlayer, true);
 
         if (readyResult.game) {
-          this.server.to(gameId).emit("banPickStateUpdate", {
+          this.server.to(gameId).emit('banPickStateUpdate', {
             game: readyResult.game,
             banPickState: readyResult.game.banPickState,
             lastAction: {
-              type: "setReady",
+              type: 'setReady',
               playerId: game.bluePlayer,
               ready: true,
               timestamp: Date.now(),
@@ -783,9 +739,9 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
           // Check if game should start
           if (readyResult.shouldStartGame) {
             await this.gameService.initializeGameplay(gameId);
-            this.server.to(gameId).emit("banPickComplete", {
+            this.server.to(gameId).emit('banPickComplete', {
               game: readyResult.game,
-              message: "Both players ready! Starting game...",
+              message: 'Both players ready! Starting game...',
             });
           }
 
@@ -794,18 +750,14 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       if (isBotRed) {
-        const readyResult = await this.gameService.setPlayerReady(
-          gameId,
-          game.redPlayer,
-          true
-        );
+        const readyResult = await this.gameService.setPlayerReady(gameId, game.redPlayer, true);
 
         if (readyResult.game) {
-          this.server.to(gameId).emit("banPickStateUpdate", {
+          this.server.to(gameId).emit('banPickStateUpdate', {
             game: readyResult.game,
             banPickState: readyResult.game.banPickState,
             lastAction: {
-              type: "setReady",
+              type: 'setReady',
               playerId: game.redPlayer,
               ready: true,
               timestamp: Date.now(),
@@ -816,16 +768,16 @@ export class QueueGateway implements OnGatewayConnection, OnGatewayDisconnect {
           // Check if game should start
           if (readyResult.shouldStartGame) {
             await this.gameService.initializeGameplay(gameId);
-            this.server.to(gameId).emit("banPickComplete", {
+            this.server.to(gameId).emit('banPickComplete', {
               game: readyResult.game,
-              message: "Both players ready! Starting game...",
+              message: 'Both players ready! Starting game...',
             });
           }
         }
       }
     } catch (error) {
       console.error(`Error processing bot reorder/ready:`, error);
-      this.server.to(gameId).emit("bot-error", {
+      this.server.to(gameId).emit('bot-error', {
         error: error.message,
       });
     }

@@ -5,9 +5,9 @@ import {
   GameEngine,
   ChessFactory,
   getPieceAtPosition,
-} from "@lolchess/game-engine";
-import { ScoredAction } from "../types";
-import { ThreatEvaluator } from "../evaluation/ThreatEvaluator";
+} from '@lolchess/game-engine';
+import { ScoredAction } from '../types';
+import { ThreatEvaluator } from '../evaluation/ThreatEvaluator';
 
 /**
  * Orders combat actions for efficient search
@@ -21,18 +21,14 @@ import { ThreatEvaluator } from "../evaluation/ThreatEvaluator";
 export class MoveOrdering {
   constructor(
     private threatEvaluator: ThreatEvaluator,
-    private gameEngine?: GameEngine
-  ) { }
+    private gameEngine?: GameEngine,
+  ) {}
 
   /**
    * Order combat actions by priority
    * Priority: Poro attacks > Kills > Low HP targets > High value targets
    */
-  orderCombatActions(
-    game: Game,
-    actions: EventPayload[],
-    playerId: string
-  ): ScoredAction[] {
+  orderCombatActions(game: Game, actions: EventPayload[], playerId: string): ScoredAction[] {
     const scored: ScoredAction[] = [];
 
     for (const action of actions) {
@@ -55,7 +51,7 @@ export class MoveOrdering {
   private scoreCombatAction(
     game: Game,
     action: EventPayload,
-    playerId: string
+    playerId: string,
   ): { score: number; isKiller: boolean; isCapture: boolean } {
     let score = 0;
     let isKiller = false;
@@ -72,7 +68,7 @@ export class MoveOrdering {
 
           if (target && caster) {
             // Priority 1: Attacking Poro (win condition)
-            if (target.name === "Poro") {
+            if (target.name === 'Poro') {
               score += 1000;
             }
 
@@ -108,7 +104,7 @@ export class MoveOrdering {
               score += 30;
 
               // Priority 1: Skills targeting Poro
-              if (target.name === "Poro") {
+              if (target.name === 'Poro') {
                 score += 500;
               }
 
@@ -120,8 +116,9 @@ export class MoveOrdering {
                 try {
                   const caster = getPieceAtPosition(game, action.casterPosition);
                   if (caster) {
-                    const skillValue = ChessFactory.createChess(caster, game)
-                      .getActiveSkillValue(action.targetPosition);
+                    const skillValue = ChessFactory.createChess(caster, game).getActiveSkillValue(
+                      action.targetPosition,
+                    );
                     if (target.stats.hp <= skillValue) {
                       isKiller = true;
                       score += 500 + (target.stats.goldValue || 0);
@@ -157,11 +154,7 @@ export class MoveOrdering {
    * Order all actions (legacy support)
    * Delegates to specialized ordering based on action type
    */
-  orderActions(
-    game: Game,
-    actions: EventPayload[],
-    playerId: string
-  ): ScoredAction[] {
+  orderActions(game: Game, actions: EventPayload[], playerId: string): ScoredAction[] {
     const scored: ScoredAction[] = [];
 
     // Danger map for escape-aware move ordering. Without it, move scores are
@@ -177,10 +170,7 @@ export class MoveOrdering {
     for (const action of actions) {
       let score: { score: number; isKiller: boolean; isCapture: boolean };
 
-      if (
-        action.event === GameEvent.ATTACK_CHESS ||
-        action.event === GameEvent.SKILL
-      ) {
+      if (action.event === GameEvent.ATTACK_CHESS || action.event === GameEvent.SKILL) {
         score = this.scoreCombatAction(game, action, playerId);
       } else {
         score = this.scoreNonCombatAction(game, action, playerId);
@@ -230,20 +220,14 @@ export class MoveOrdering {
    * into it is bad, and escaping (or entering) lethal danger dominates the
    * quiet-move scale so such moves survive the candidate cut.
    */
-  private escapeScore(
-    game: Game,
-    action: EventPayload,
-    dangerMap: Map<string, number>
-  ): number {
+  private escapeScore(game: Game, action: EventPayload, dangerMap: Map<string, number>): number {
     if (!action.casterPosition || !action.targetPosition) return 0;
     const piece = getPieceAtPosition(game, action.casterPosition);
     if (!piece) return 0;
 
     const hp = piece.stats.hp;
-    const dSrc =
-      dangerMap.get(`${action.casterPosition.x},${action.casterPosition.y}`) ?? 0;
-    const dDst =
-      dangerMap.get(`${action.targetPosition.x},${action.targetPosition.y}`) ?? 0;
+    const dSrc = dangerMap.get(`${action.casterPosition.x},${action.casterPosition.y}`) ?? 0;
+    const dDst = dangerMap.get(`${action.targetPosition.x},${action.targetPosition.y}`) ?? 0;
 
     let score = Math.min(dSrc, hp) - Math.min(dDst, hp);
     if (dSrc >= hp && dDst < hp) score += 250; // escapes lethal danger
@@ -257,7 +241,7 @@ export class MoveOrdering {
   private scoreNonCombatAction(
     game: Game,
     action: EventPayload,
-    playerId: string
+    playerId: string,
   ): { score: number; isKiller: boolean; isCapture: boolean } {
     let score = 0;
 
@@ -301,11 +285,7 @@ export class MoveOrdering {
   /**
    * Get only killer moves (attacks that can kill)
    */
-  getKillerMoves(
-    game: Game,
-    actions: EventPayload[],
-    playerId: string
-  ): ScoredAction[] {
+  getKillerMoves(game: Game, actions: EventPayload[], playerId: string): ScoredAction[] {
     const ordered = this.orderCombatActions(game, actions, playerId);
     return ordered.filter((a) => a.isKiller);
   }
@@ -313,11 +293,7 @@ export class MoveOrdering {
   /**
    * Get capture moves (attacks and enemy-targeting skills)
    */
-  getCaptureMoves(
-    game: Game,
-    actions: EventPayload[],
-    playerId: string
-  ): ScoredAction[] {
+  getCaptureMoves(game: Game, actions: EventPayload[], playerId: string): ScoredAction[] {
     const ordered = this.orderCombatActions(game, actions, playerId);
     return ordered.filter((a) => a.isCapture);
   }
@@ -329,7 +305,7 @@ export class MoveOrdering {
     game: Game,
     actions: EventPayload[],
     playerId: string,
-    n: number
+    n: number,
   ): ScoredAction[] {
     const ordered = this.orderCombatActions(game, actions, playerId);
     return ordered.slice(0, n);
@@ -338,12 +314,7 @@ export class MoveOrdering {
   /**
    * Get top N moves (legacy support)
    */
-  getTopMoves(
-    game: Game,
-    actions: EventPayload[],
-    playerId: string,
-    n: number
-  ): ScoredAction[] {
+  getTopMoves(game: Game, actions: EventPayload[], playerId: string, n: number): ScoredAction[] {
     const ordered = this.orderActions(game, actions, playerId);
     return ordered.slice(0, n);
   }

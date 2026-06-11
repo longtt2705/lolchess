@@ -12,14 +12,10 @@ export {
   getViktorModuleById,
   getViktorModuleByIndex,
   getViktorModulesCount,
-} from "@lolchess/game-engine";
+} from '@lolchess/game-engine';
 
 // Export types
-export type {
-  ItemData,
-  ItemEffect,
-  ItemConditionContext,
-} from "@lolchess/game-engine";
+export type { ItemData, ItemEffect, ItemConditionContext } from '@lolchess/game-engine';
 
 // Also re-export ChessStats for the applyItemStats function
-export type { ChessStats } from "@lolchess/game-engine";
+export type { ChessStats } from '@lolchess/game-engine';

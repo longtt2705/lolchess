@@ -1,32 +1,32 @@
-import React from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
-import styled from 'styled-components'
-import Header from './components/Header'
-import ProtectedRoute from './components/ProtectedRoute'
-import HomePage from './pages/HomePage'
-import LoginPage from './pages/LoginPage'
-import RegisterPage from './pages/RegisterPage'
-import ForgotPasswordPage from './pages/ForgotPasswordPage'
-import ResetPasswordPage from './pages/ResetPasswordPage'
-import GameLobbyPage from './pages/GameLobbyPage'
-import BanPickPage from './pages/BanPickPage'
-import GamePage from './pages/GamePage'
-import ProfilePage from './pages/ProfilePage'
-import InstructionsPage from './pages/InstructionsPage'
-import DatabasePage from './pages/DatabasePage'
-import { useAuthInit } from './hooks/useAuthInit'
+import React from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import styled from 'styled-components';
+import Header from './components/Header';
+import ProtectedRoute from './components/ProtectedRoute';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import GameLobbyPage from './pages/GameLobbyPage';
+import BanPickPage from './pages/BanPickPage';
+import GamePage from './pages/GamePage';
+import ProfilePage from './pages/ProfilePage';
+import InstructionsPage from './pages/InstructionsPage';
+import DatabasePage from './pages/DatabasePage';
+import { useAuthInit } from './hooks/useAuthInit';
 
 const AppContainer = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-`
+`;
 
 const MainContent = styled.main<{ isGamePage?: boolean }>`
   flex: 1;
-  padding: ${props => props.isGamePage ? '0' : '20px'};
-  overflow: ${props => props.isGamePage ? 'hidden' : 'auto'};
-`
+  padding: ${(props) => (props.isGamePage ? '0' : '20px')};
+  overflow: ${(props) => (props.isGamePage ? 'hidden' : 'auto')};
+`;
 
 const LoadingContainer = styled.div`
   min-height: 100vh;
@@ -36,7 +36,7 @@ const LoadingContainer = styled.div`
   flex-direction: column;
   background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
   color: var(--primary-text);
-  
+
   .spinner {
     width: 50px;
     height: 50px;
@@ -46,30 +46,34 @@ const LoadingContainer = styled.div`
     animation: spin 1s linear infinite;
     margin-bottom: 20px;
   }
-  
+
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
   }
-  
+
   h2 {
     color: var(--gold);
     margin-bottom: 10px;
   }
-  
+
   p {
     color: var(--secondary-text);
   }
-`
+`;
 
 function App() {
-  const { isInitialized, loading } = useAuthInit()
-  const location = useLocation()
+  const { isInitialized, loading } = useAuthInit();
+  const location = useLocation();
 
   // Check if current route is a game page or ban-pick page
-  const isGamePage = location.pathname.startsWith('/game/')
-  const isBanPickPage = location.pathname.startsWith('/ban-pick/')
-  const hideHeader = isGamePage || isBanPickPage
+  const isGamePage = location.pathname.startsWith('/game/');
+  const isBanPickPage = location.pathname.startsWith('/ban-pick/');
+  const hideHeader = isGamePage || isBanPickPage;
 
   // Show loading screen while initializing auth
   if (!isInitialized) {
@@ -79,7 +83,7 @@ function App() {
         <h2>Loading LOL Chess</h2>
         <p>Initializing your session...</p>
       </LoadingContainer>
-    )
+    );
   }
 
   return (
@@ -95,30 +99,42 @@ function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/instructions" element={<InstructionsPage />} />
           <Route path="/database" element={<DatabasePage />} />
-          <Route path="/lobby" element={
-            <ProtectedRoute>
-              <GameLobbyPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/ban-pick/:gameId" element={
-            <ProtectedRoute>
-              <BanPickPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/game/:gameId" element={
-            <ProtectedRoute>
-              <GamePage />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/lobby"
+            element={
+              <ProtectedRoute>
+                <GameLobbyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ban-pick/:gameId"
+            element={
+              <ProtectedRoute>
+                <BanPickPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/game/:gameId"
+            element={
+              <ProtectedRoute>
+                <GamePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </MainContent>
     </AppContainer>
-  )
+  );
 }
 
-export default App
+export default App;

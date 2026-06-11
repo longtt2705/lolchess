@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import styled from 'styled-components'
-import { motion } from 'framer-motion'
-import { LogIn, User, Lock } from 'lucide-react'
-import { useAppSelector, useAppDispatch } from '../hooks/redux'
-import { loginUser } from '../store/authSlice'
+import React, { useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import { LogIn, User, Lock } from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '../hooks/redux';
+import { loginUser } from '../store/authSlice';
 
 const LoginContainer = styled.div`
   min-height: calc(100vh - 200px);
@@ -13,7 +13,7 @@ const LoginContainer = styled.div`
   align-items: center;
   justify-content: center;
   padding: 40px;
-`
+`;
 
 const LoginCard = styled(motion.div)`
   background: var(--secondary-bg);
@@ -23,7 +23,7 @@ const LoginCard = styled(motion.div)`
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   width: 100%;
   max-width: 400px;
-`
+`;
 
 const Title = styled.h1`
   text-align: center;
@@ -34,41 +34,41 @@ const Title = styled.h1`
   align-items: center;
   justify-content: center;
   gap: 12px;
-  
+
   .icon {
     color: var(--gold);
   }
-`
+`;
 
 const Subtitle = styled.p`
   text-align: center;
   color: var(--secondary-text);
   margin-bottom: 30px;
-`
+`;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 20px;
-`
+`;
 
 const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  
+
   label {
     color: var(--primary-text);
     font-weight: 500;
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     .icon {
       color: var(--gold);
     }
   }
-`
+`;
 
 const Input = styled.input`
   padding: 12px 16px;
@@ -78,22 +78,22 @@ const Input = styled.input`
   color: var(--primary-text);
   font-size: 16px;
   transition: all 0.2s ease;
-  
+
   &:focus {
     outline: none;
     border-color: var(--gold);
     box-shadow: 0 0 0 3px rgba(200, 155, 60, 0.1);
   }
-  
+
   &::placeholder {
     color: var(--secondary-text);
   }
-`
+`;
 
 const ErrorMessage = styled.span`
   color: var(--red);
   font-size: 14px;
-`
+`;
 
 const LoginButton = styled(motion.button)`
   background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
@@ -105,28 +105,28 @@ const LoginButton = styled(motion.button)`
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }
-`
+`;
 
 const RegisterLink = styled.div`
   text-align: center;
   margin-top: 20px;
   color: var(--secondary-text);
-  
+
   a {
     color: var(--gold);
     text-decoration: none;
     font-weight: bold;
-    
+
     &:hover {
       color: var(--hover);
     }
   }
-`
+`;
 
 const ForgotLink = styled.div`
   text-align: center;
@@ -141,31 +141,35 @@ const ForgotLink = styled.div`
       color: var(--gold);
     }
   }
-`
+`;
 
 interface LoginFormData {
-  username: string
-  password: string
+  username: string;
+  password: string;
 }
 
 const LoginPage: React.FC = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>()
-  const { loading, isAuthenticated } = useAppSelector(state => state.auth)
-  const dispatch = useAppDispatch()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>();
+  const { loading, isAuthenticated } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (isAuthenticated) {
       // Redirect to the page they were trying to access, or default to lobby
-      const from = (location.state as any)?.from?.pathname || '/lobby'
-      navigate(from, { replace: true })
+      const from = (location.state as any)?.from?.pathname || '/lobby';
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location])
+  }, [isAuthenticated, navigate, location]);
 
   const onSubmit = (data: LoginFormData) => {
-    dispatch(loginUser(data))
-  }
+    dispatch(loginUser(data));
+  };
 
   return (
     <LoginContainer>
@@ -191,7 +195,7 @@ const LoginPage: React.FC = () => {
               placeholder="Enter your username or email"
               {...register('username', {
                 required: 'Username or email is required',
-                minLength: { value: 3, message: 'Username or email must be at least 3 characters' }
+                minLength: { value: 3, message: 'Username or email must be at least 3 characters' },
               })}
             />
             {errors.username && <ErrorMessage>{errors.username.message}</ErrorMessage>}
@@ -207,7 +211,7 @@ const LoginPage: React.FC = () => {
               placeholder="Enter your password"
               {...register('password', {
                 required: 'Password is required',
-                minLength: { value: 6, message: 'Password must be at least 6 characters' }
+                minLength: { value: 6, message: 'Password must be at least 6 characters' },
               })}
             />
             {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
@@ -228,12 +232,11 @@ const LoginPage: React.FC = () => {
         </ForgotLink>
 
         <RegisterLink>
-          Don't have an account?{' '}
-          <Link to="/register">Register here</Link>
+          Don't have an account? <Link to="/register">Register here</Link>
         </RegisterLink>
       </LoginCard>
     </LoginContainer>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;

@@ -1,4 +1,4 @@
-import { ChessPosition } from "@/hooks/useGame";
+import { ChessPosition } from '@/hooks/useGame';
 
 export interface AttackAnimation {
   attackerId: string;

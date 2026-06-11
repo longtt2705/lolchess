@@ -14,8 +14,8 @@ interface AttackRangeIndicatorProps {
 const IndicatorContainer = styled.div<{ size: number }>`
   position: relative;
   display: inline-block;
-  width: ${props => props.size}px;
-  height: ${props => props.size}px;
+  width: ${(props) => props.size}px;
+  height: ${(props) => props.size}px;
   cursor: help;
 
   .tooltip {
@@ -33,7 +33,9 @@ const IndicatorContainer = styled.div<{ size: number }>`
     white-space: nowrap;
     font-size: 12px;
     z-index: 1000;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      visibility 0.2s ease;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     pointer-events: none;
   }
@@ -60,30 +62,30 @@ const SVGContainer = styled.svg`
   display: block;
 `;
 
-export const AttackRangeIndicator: React.FC<AttackRangeIndicatorProps> = ({ 
-  attackRange, 
-  size = 48 
+export const AttackRangeIndicator: React.FC<AttackRangeIndicatorProps> = ({
+  attackRange,
+  size = 48,
 }) => {
   const center = size / 2;
   const lineLength = size * 0.35;
   const centerSquareSize = size * 0.15;
   const lShapeDotRadius = size * 0.06;
-  
+
   // Knight movement offsets (normalized to grid positions)
   const knightOffsets = [
-    { x: 2, y: 1 },   // Right 2, Up 1
-    { x: 2, y: -1 },  // Right 2, Down 1
-    { x: -2, y: 1 },  // Left 2, Up 1
+    { x: 2, y: 1 }, // Right 2, Up 1
+    { x: 2, y: -1 }, // Right 2, Down 1
+    { x: -2, y: 1 }, // Left 2, Up 1
     { x: -2, y: -1 }, // Left 2, Down 1
-    { x: 1, y: 2 },   // Right 1, Up 2
-    { x: 1, y: -2 },  // Right 1, Down 2
-    { x: -1, y: 2 },  // Left 1, Up 2
+    { x: 1, y: 2 }, // Right 1, Up 2
+    { x: 1, y: -2 }, // Right 1, Down 2
+    { x: -1, y: 2 }, // Left 1, Up 2
     { x: -1, y: -2 }, // Left 1, Down 2
   ];
 
   // Scale knight offsets to pixel positions
   const knightScale = size * 0.15;
-  const knightPositions = knightOffsets.map(offset => ({
+  const knightPositions = knightOffsets.map((offset) => ({
     x: center + offset.x * knightScale,
     y: center - offset.y * knightScale, // Invert y for SVG coordinates
   }));
@@ -95,42 +97,33 @@ export const AttackRangeIndicator: React.FC<AttackRangeIndicatorProps> = ({
     if (attackRange.vertical) directions.push('Vertical');
     if (attackRange.diagonal) directions.push('Diagonal');
     if (attackRange.lShape) directions.push('L-Shape (Knight)');
-    
-    return directions.length > 0 
-      ? directions.join(', ')
-      : 'No attack range';
+
+    return directions.length > 0 ? directions.join(', ') : 'No attack range';
   };
 
   return (
     <IndicatorContainer size={size}>
       <SVGContainer viewBox={`0 0 ${size} ${size}`}>
         {/* Background */}
-        <rect 
-          x="0" 
-          y="0" 
-          width={size} 
-          height={size} 
-          fill="var(--accent-bg)" 
-          rx="4"
-        />
+        <rect x="0" y="0" width={size} height={size} fill="var(--accent-bg)" rx="4" />
 
         {/* Grid lines for visual reference */}
-        <line 
-          x1={center} 
-          y1="0" 
-          x2={center} 
-          y2={size} 
-          stroke="var(--border)" 
-          strokeWidth="0.5" 
+        <line
+          x1={center}
+          y1="0"
+          x2={center}
+          y2={size}
+          stroke="var(--border)"
+          strokeWidth="0.5"
           opacity="0.3"
         />
-        <line 
-          x1="0" 
-          y1={center} 
-          x2={size} 
-          y2={center} 
-          stroke="var(--border)" 
-          strokeWidth="0.5" 
+        <line
+          x1="0"
+          y1={center}
+          x2={size}
+          y2={center}
+          stroke="var(--border)"
+          strokeWidth="0.5"
           opacity="0.3"
         />
 
@@ -187,15 +180,10 @@ export const AttackRangeIndicator: React.FC<AttackRangeIndicatorProps> = ({
         )}
 
         {/* L-Shape dots (knight positions) */}
-        {attackRange.lShape && knightPositions.map((pos, index) => (
-          <circle
-            key={index}
-            cx={pos.x}
-            cy={pos.y}
-            r={lShapeDotRadius}
-            fill="var(--gold)"
-          />
-        ))}
+        {attackRange.lShape &&
+          knightPositions.map((pos, index) => (
+            <circle key={index} cx={pos.x} cy={pos.y} r={lShapeDotRadius} fill="var(--gold)" />
+          ))}
 
         {/* Center square representing the piece */}
         <rect
@@ -215,4 +203,3 @@ export const AttackRangeIndicator: React.FC<AttackRangeIndicatorProps> = ({
     </IndicatorContainer>
   );
 };
-
