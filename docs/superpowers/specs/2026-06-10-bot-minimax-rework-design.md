@@ -2,7 +2,18 @@
 
 **Date:** 2026-06-10
 **Branch:** `bot-smart-enhance`
-**Status:** Approved design, pending implementation plan
+**Status:** Implemented (see deviations below)
+
+> **Implementation deviations (2026-06-11):** Candidate pruning was widened
+> during validation (K = 24 root / 16 node + a 6-move quota + never-pruned
+> escapes, vs the K = 12/8 sketched below) after self-play exposed pruning
+> pathologies (Poro/piece escapes starved out). Expert preset is depth 4 /
+> 20 s, not unbounded. The harness validates deep-vs-shallow (d3 vs d1)
+> rather than k vs k+1. Minion-synergy and explicit item-value evaluation
+> components were deferred; an economy component (gold + ready skills) was
+> added instead. The 80% self-play gate landed at ~59-70% vs a baseline
+> that itself benefits from this branch's evaluator fixes — see the final
+> branch report for the full numbers and analysis.
 
 ## Problem
 

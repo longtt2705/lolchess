@@ -5,6 +5,7 @@
  *   npm run selfplay --workspace=packages/bot-engine            # default 10 games
  *   npm run selfplay --workspace=packages/bot-engine -- 30      # 30 games
  *   npm run selfplay --workspace=packages/bot-engine -- 30 5000 # 30 games, 5s/move
+ *   npm run selfplay --workspace=packages/bot-engine -- 10 5000 2000 # seeds 2000..2009
  *
  * Acceptance gate from the spec: new bot wins >= 80% of decided games.
  */
