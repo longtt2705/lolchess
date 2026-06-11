@@ -166,7 +166,7 @@ function main() {
   console.log(`Self-play: ${numGames} games, ${timeLimit}ms/move, new(alphabeta) vs legacy(greedy)\n`);
 
   for (let i = 0; i < numGames; i++) {
-    const seed = 1000 + i;
+    const seed = parseInt(process.argv[4] ?? "1000", 10) + i;
     const newIsBlue = i % 2 === 0; // alternate colors
     const t0 = Date.now();
     const rec = playGame(seed, newIsBlue, timeLimit);
