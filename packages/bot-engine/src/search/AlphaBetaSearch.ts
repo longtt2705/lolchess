@@ -57,7 +57,13 @@ export class AlphaBetaSearch {
   search(game: Game, rootPlayerId: string, options: AlphaBetaOptions): SearchResult {
     this.nodesSearched = 0;
     this.startTime = Date.now();
-    this.timeLimit = options.timeLimit;
+    // Guard against a non-finite/non-positive budget: `elapsed > NaN` is
+    // always false, which would disable checkTime entirely and let the
+    // search run unbounded to maxDepth.
+    this.timeLimit =
+      isFinite(options.timeLimit) && options.timeLimit > 0
+        ? options.timeLimit
+        : 3000;
 
     const root = cloneGameState(game);
     root.gameSettings = { ...root.gameSettings, disableCrit: true };

@@ -25,6 +25,9 @@ interface GameRecord {
   outcome: Outcome;
   rounds: number;
   avgNewMoveMs: number;
+  maxNewMoveMs: number;
+  /** Wall-clock ms not backed by monotonic time (process was suspended). */
+  suspendedMs: number;
 }
 
 function playGame(seed: number, newIsBlue: boolean, timeLimit: number): GameRecord {
@@ -48,6 +51,7 @@ function playGame(seed: number, newIsBlue: boolean, timeLimit: number): GameReco
   const newBotId = newIsBlue ? BLUE_ID : RED_ID;
 
   const newMoveTimes: number[] = [];
+  let suspendedMs = 0;
   let actionsThisRound = 0;
   let lastRound = game.currentRound;
 
@@ -62,14 +66,34 @@ function playGame(seed: number, newIsBlue: boolean, timeLimit: number): GameReco
     actionsThisRound++;
 
     let action;
+    // Wall vs monotonic clock: Date.now() keeps advancing while the process
+    // is suspended (system sleep / SIGSTOP) but performance.now() does not.
+    // A move whose wall time far exceeds its monotonic time was stalled by
+    // the environment, not by the bot.
     const t0 = Date.now();
+    const m0 = performance.now();
     try {
       action = bots[pid].getAction(game, pid);
     } catch (e) {
       console.error(`  [seed ${seed}] bot ${pid} threw:`, e);
-      return record(seed, newIsBlue, "error", game, newMoveTimes);
+      return record(seed, newIsBlue, "error", game, newMoveTimes, suspendedMs);
     }
-    if (pid === newBotId) newMoveTimes.push(Date.now() - t0);
+    const wallMs = Date.now() - t0;
+    const monoMs = performance.now() - m0;
+    if (wallMs - monoMs > 500) {
+      suspendedMs += wallMs - monoMs;
+      console.error(
+        `  [seed ${seed}] process suspension detected during ${pid} move: ` +
+          `wall=${wallMs}ms mono=${Math.round(monoMs)}ms`
+      );
+    }
+    if (pid === newBotId) newMoveTimes.push(Math.round(monoMs));
+    if (monoMs > timeLimit * 1.5) {
+      console.error(
+        `  [seed ${seed}] SLOW MOVE by ${pid}: mono=${Math.round(monoMs)}ms ` +
+          `(budget ${timeLimit}ms) round=${game.currentRound}`
+      );
+    }
 
     // Safety valve: if a bot loops on free actions, force a board action.
     if (actionsThisRound > MAX_ACTIONS_PER_TURN || !action) {
@@ -83,7 +107,7 @@ function playGame(seed: number, newIsBlue: boolean, timeLimit: number): GameReco
         );
       if (!fallback) {
         // No board action at all: stalemate -> draw
-        return record(seed, newIsBlue, "draw", game, newMoveTimes);
+        return record(seed, newIsBlue, "draw", game, newMoveTimes, suspendedMs);
       }
       action = fallback;
     }
@@ -91,21 +115,21 @@ function playGame(seed: number, newIsBlue: boolean, timeLimit: number): GameReco
     const result = engine.processAction(game, action);
     if (!result.success) {
       console.error(`  [seed ${seed}] illegal action by ${pid}: ${result.error}`, JSON.stringify(action));
-      return record(seed, newIsBlue, "error", game, newMoveTimes);
+      return record(seed, newIsBlue, "error", game, newMoveTimes, suspendedMs);
     }
     game = result.game;
   }
 
   if (!engine.isGameOver(game)) {
-    return record(seed, newIsBlue, "draw", game, newMoveTimes);
+    return record(seed, newIsBlue, "draw", game, newMoveTimes, suspendedMs);
   }
 
   const winner = engine.getWinner(game); // "blue" | "red" | null
   if (winner === null || winner === undefined) {
-    return record(seed, newIsBlue, "draw", game, newMoveTimes);
+    return record(seed, newIsBlue, "draw", game, newMoveTimes, suspendedMs);
   }
   const newWon = (winner === "blue") === newIsBlue;
-  return record(seed, newIsBlue, newWon ? "new" : "legacy", game, newMoveTimes);
+  return record(seed, newIsBlue, newWon ? "new" : "legacy", game, newMoveTimes, suspendedMs);
 }
 
 function record(
@@ -113,7 +137,8 @@ function record(
   newIsBlue: boolean,
   outcome: Outcome,
   game: Game,
-  newMoveTimes: number[]
+  newMoveTimes: number[],
+  suspendedMs: number
 ): GameRecord {
   const avg =
     newMoveTimes.length > 0
@@ -125,12 +150,17 @@ function record(
     outcome,
     rounds: game.currentRound,
     avgNewMoveMs: Math.round(avg),
+    maxNewMoveMs: newMoveTimes.length > 0 ? Math.max(...newMoveTimes) : 0,
+    suspendedMs: Math.round(suspendedMs),
   };
 }
 
 function main() {
   const numGames = parseInt(process.argv[2] ?? "10", 10);
-  const timeLimit = parseInt(process.argv[3] ?? "3000", 10);
+  const timeLimitArg = parseInt(process.argv[3] ?? "3000", 10);
+  // A NaN time limit would silently disable every time check downstream.
+  const timeLimit =
+    isFinite(timeLimitArg) && timeLimitArg > 0 ? timeLimitArg : 3000;
   const records: GameRecord[] = [];
 
   console.log(`Self-play: ${numGames} games, ${timeLimit}ms/move, new(alphabeta) vs legacy(greedy)\n`);
@@ -144,7 +174,9 @@ function main() {
     console.log(
       `game ${i + 1}/${numGames} seed=${seed} new=${newIsBlue ? "blue" : "red"} -> ` +
         `${rec.outcome.toUpperCase()} in ${rec.rounds} rounds ` +
-        `(avg new-bot move ${rec.avgNewMoveMs}ms, game took ${Math.round((Date.now() - t0) / 1000)}s)`
+        `(avg new-bot move ${rec.avgNewMoveMs}ms, max ${rec.maxNewMoveMs}ms` +
+        `${rec.suspendedMs > 0 ? `, SUSPENDED ${rec.suspendedMs}ms` : ""}, ` +
+        `game took ${Math.round((Date.now() - t0) / 1000)}s)`
     );
   }
 

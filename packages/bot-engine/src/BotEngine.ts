@@ -63,7 +63,14 @@ export class BotEngine {
       difficulty,
       searchDepth: config.searchDepth ?? defaults.searchDepth ?? 2,
       randomness: config.randomness ?? defaults.randomness ?? 0.15,
-      timeLimit: config.timeLimit ?? defaults.timeLimit ?? 3000,
+      // sanitizeTimeLimit, not ??: a NaN timeLimit (e.g. parseInt of a bad
+      // CLI arg) passes ?? untouched and then disables EVERY time check —
+      // `Date.now() - start > NaN` is always false, so the search never
+      // times out.
+      timeLimit:
+        BotEngine.sanitizeTimeLimit(config.timeLimit) ??
+        defaults.timeLimit ??
+        3000,
       engine: config.engine ?? "alphabeta",
     };
 
@@ -212,6 +219,11 @@ export class BotEngine {
     return after >= before + SPELL_MARGIN;
   }
 
+  /** A usable time budget is a finite positive number; anything else is rejected. */
+  private static sanitizeTimeLimit(t: number | undefined): number | undefined {
+    return typeof t === "number" && isFinite(t) && t > 0 ? t : undefined;
+  }
+
   /**
    * Pick random element
    */
@@ -349,7 +361,8 @@ export class BotEngine {
       this.config.randomness = config.randomness;
     }
     if (config.timeLimit !== undefined) {
-      this.config.timeLimit = config.timeLimit;
+      this.config.timeLimit =
+        BotEngine.sanitizeTimeLimit(config.timeLimit) ?? this.config.timeLimit;
     }
     if (config.engine !== undefined) {
       this.config.engine = config.engine;
