@@ -2,6 +2,7 @@ import {
   Game,
   EventPayload,
   GameEvent,
+  GameEngine,
   ChessFactory,
   getPieceAtPosition,
 } from "@lolchess/game-engine";
@@ -18,7 +19,10 @@ import { ThreatEvaluator } from "../evaluation/ThreatEvaluator";
  * Better ordering = more pruning in alpha-beta = faster search
  */
 export class MoveOrdering {
-  constructor(private threatEvaluator: ThreatEvaluator) { }
+  constructor(
+    private threatEvaluator: ThreatEvaluator,
+    private gameEngine?: GameEngine
+  ) { }
 
   /**
    * Order combat actions by priority
@@ -160,6 +164,16 @@ export class MoveOrdering {
   ): ScoredAction[] {
     const scored: ScoredAction[] = [];
 
+    // Danger map for escape-aware move ordering. Without it, move scores are
+    // pure forward/center bias, so retreats of pieces standing in enemy fire
+    // order at the bottom and get pruned out of the candidate set — the
+    // search literally cannot save a threatened piece. Built lazily: only
+    // when there are moves to score and an engine is available.
+    const dangerMap =
+      this.gameEngine && actions.some((a) => a.event === GameEvent.MOVE_CHESS)
+        ? this.buildDangerMap(game, playerId)
+        : null;
+
     for (const action of actions) {
       let score: { score: number; isKiller: boolean; isCapture: boolean };
 
@@ -170,6 +184,9 @@ export class MoveOrdering {
         score = this.scoreCombatAction(game, action, playerId);
       } else {
         score = this.scoreNonCombatAction(game, action, playerId);
+        if (dangerMap && action.event === GameEvent.MOVE_CHESS) {
+          score.score += this.escapeScore(game, action, dangerMap);
+        }
       }
 
       scored.push({
@@ -181,6 +198,57 @@ export class MoveOrdering {
     }
 
     return scored.sort((a, b) => b.score - a.score);
+  }
+
+  /**
+   * Sum of rough enemy damage reaching each square right now.
+   * Damage estimate is stat-based (AD + AP/2) — this is an ordering
+   * heuristic, not an evaluation; exactness doesn't pay for itself here.
+   */
+  private buildDangerMap(game: Game, playerId: string): Map<string, number> {
+    const map = new Map<string, number>();
+    const isBlue = game.bluePlayer === playerId;
+
+    for (const enemy of game.board) {
+      if (enemy.stats.hp <= 0) continue;
+      if (enemy.blue === isBlue) continue;
+      if (enemy.cannotAttack) continue;
+
+      const dmg = (enemy.stats.ad || 0) + (enemy.stats.ap || 0) * 0.5;
+      if (dmg <= 0) continue;
+
+      for (const pos of this.gameEngine!.getValidAttacks(game, enemy.id)) {
+        const key = `${pos.x},${pos.y}`;
+        map.set(key, (map.get(key) || 0) + dmg);
+      }
+    }
+    return map;
+  }
+
+  /**
+   * Score the danger differential of a move: leaving fire is good, walking
+   * into it is bad, and escaping (or entering) lethal danger dominates the
+   * quiet-move scale so such moves survive the candidate cut.
+   */
+  private escapeScore(
+    game: Game,
+    action: EventPayload,
+    dangerMap: Map<string, number>
+  ): number {
+    if (!action.casterPosition || !action.targetPosition) return 0;
+    const piece = getPieceAtPosition(game, action.casterPosition);
+    if (!piece) return 0;
+
+    const hp = piece.stats.hp;
+    const dSrc =
+      dangerMap.get(`${action.casterPosition.x},${action.casterPosition.y}`) ?? 0;
+    const dDst =
+      dangerMap.get(`${action.targetPosition.x},${action.targetPosition.y}`) ?? 0;
+
+    let score = Math.min(dSrc, hp) - Math.min(dDst, hp);
+    if (dSrc >= hp && dDst < hp) score += 250; // escapes lethal danger
+    if (dDst >= hp && dSrc < hp) score -= 250; // steps into lethal danger
+    return score;
   }
 
   /**

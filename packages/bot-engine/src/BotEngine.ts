@@ -73,7 +73,7 @@ export class BotEngine {
     const materialEvaluator = new MaterialEvaluator();
     this.threatEvaluator = new ThreatEvaluator(this.gameEngine, materialEvaluator);
     this.actionGenerator = new ActionGenerator(this.gameEngine);
-    this.moveOrdering = new MoveOrdering(this.threatEvaluator);
+    this.moveOrdering = new MoveOrdering(this.threatEvaluator, this.gameEngine);
     this.alphaBeta = new AlphaBetaSearch(
       this.gameEngine,
       this.positionEvaluator,

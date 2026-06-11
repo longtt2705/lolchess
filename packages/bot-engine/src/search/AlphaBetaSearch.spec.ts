@@ -20,7 +20,8 @@ function makeSearch() {
   const evaluator = new PositionEvaluator(engine);
   const actionGenerator = new ActionGenerator(engine);
   const moveOrdering = new MoveOrdering(
-    new ThreatEvaluator(engine, new MaterialEvaluator())
+    new ThreatEvaluator(engine, new MaterialEvaluator()),
+    engine
   );
   const search = new AlphaBetaSearch(engine, evaluator, actionGenerator, moveOrdering);
   return { engine, search };
@@ -131,6 +132,31 @@ describe("AlphaBetaSearch", () => {
     expect(result.bestAction!.casterPosition).toEqual({ x: 0, y: 4 });
     // Not a mate score: the escape line survives the horizon.
     expect(result.score).toBeGreaterThan(-50000);
+  });
+
+  it("retreats a nearly-dead champion from lethal danger on a full board", () => {
+    const { engine, search } = makeSearch();
+    const game = makeGame(engine);
+
+    // Full armies on the board: the candidate cut is saturated with
+    // forward/center-biased moves. Blue Janna stands one hit from death in a
+    // red melee minion's range; she cannot kill it back, so the only good
+    // action is a retreat — a move that orders terribly under pure
+    // forward/center bias. Regression (seed-1000 autopsy): such retreats were
+    // pruned out of the candidate set, so threatened pieces were never saved
+    // and bled away over the game.
+    const janna = findPiece(game, "Janna", true);
+    const redMinion = findPiece(game, "Melee Minion", false);
+    janna.position = { x: 3, y: 4 };
+    janna.stats.hp = 26;
+    redMinion.position = { x: 3, y: 5 };
+    game.currentRound = 1; // blue to move
+
+    const result = search.search(game, BLUE, { maxDepth: 2, timeLimit: 20000 });
+
+    expect(result.bestAction).not.toBeNull();
+    expect(result.bestAction!.event).toBe(GameEvent.MOVE_CHESS);
+    expect(result.bestAction!.casterPosition).toEqual({ x: 3, y: 4 });
   });
 
   it("is deterministic: same position, same chosen action", () => {
